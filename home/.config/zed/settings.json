@@ -1,0 +1,254 @@
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run the `open default settings` command
+// from the command palette or from `Zed` application menu.
+{
+  "project_panel": {
+    "dock": "left",
+  },
+  "base_keymap": "Cursor",
+  "theme": "Atelier Dune Dark",
+  "ui_font_size": 16,
+  "buffer_font_size": 16,
+  "collaboration_panel": {
+    "button": false,
+  },
+  "lsp": {
+    "oxlint": {
+      "initialization_options": {
+        "settings": {
+          "configPath": null,
+          "run": "onType",
+          "disableNestedConfig": false,
+          "fixKind": "safe_fix",
+          "unusedDisableDirectives": "deny",
+        },
+      },
+    },
+    "oxfmt": {
+      "initialization_options": {
+        "settings": {
+          "fmt.configPath": null,
+          "run": "onSave",
+        },
+      },
+    },
+  },
+  "languages": {
+    "CSS": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false,
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt",
+          },
+        },
+      ],
+    },
+    "GraphQL": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false,
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt",
+          },
+        },
+      ],
+    },
+    "Handlebars": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false,
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt",
+          },
+        },
+      ],
+    },
+    "HTML": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false,
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt",
+          },
+        },
+      ],
+    },
+    "JavaScript": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false,
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt",
+          },
+        },
+        {
+          "code_action": "source.fixAll.oxc",
+        },
+      ],
+    },
+    "JSON": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false,
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt",
+          },
+        },
+      ],
+    },
+    "JSON5": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false,
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt",
+          },
+        },
+      ],
+    },
+    "JSONC": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false,
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt",
+          },
+        },
+      ],
+    },
+    "Less": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false,
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt",
+          },
+        },
+      ],
+    },
+    "Markdown": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false,
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt",
+          },
+        },
+      ],
+    },
+    "MDX": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false,
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt",
+          },
+        },
+      ],
+    },
+    "SCSS": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false,
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt",
+          },
+        },
+      ],
+    },
+    "TypeScript": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false,
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt",
+          },
+        },
+      ],
+    },
+    "TSX": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false,
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt",
+          },
+        },
+      ],
+    },
+    "Vue.js": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false,
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt",
+          },
+        },
+      ],
+    },
+    "YAML": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false,
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt",
+          },
+        },
+      ],
+    },
+  },
+}

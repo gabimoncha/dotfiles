@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+ensure_homebrew() {
+  if command -v brew >/dev/null 2>&1; then
+    return 0
+  fi
+
+  NONINTERACTIVE=1 /bin/bash -c \
+    "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+}
+
+ensure_homebrew
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+git -C "${repo_root}" submodule update --init --recursive || {
+  printf 'Submodule init failed. The current nvim submodule URL is ../nvim; clone that repo adjacent to dotfiles or replace the submodule URL with a real remote, then rerun bootstrap.\n' >&2
+}
+
+brew bundle install --no-upgrade --file "${repo_root}/Brewfile"
+
+"${repo_root}/bin/link-dotfiles"
+
+if command -v mise >/dev/null 2>&1; then
+  mise install
+fi
+
+"${repo_root}/macos/defaults.sh"
+
+cat <<'EOF'
+
+Manual follow-up:
+- Sign in to App Store / iCloud and install any non-Homebrew apps.
+- Install or finish first-run setup for Xcode and Android Studio, then create AVDs.
+- Import or generate SSH keys and add them to GitHub.
+- Re-auth tools that keep credentials outside this repo.
+- Re-grant Accessibility / Automation permissions for Karabiner, Aerospace, and similar tools.
+EOF

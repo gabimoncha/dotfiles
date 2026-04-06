@@ -1,0 +1,19 @@
+// Place your key bindings in this file to override the defaults
+[
+  {
+    "key": "cmd+shift+l",
+    "command": "editor.action.insertSnippet",
+    "when": "editorTextFocus",
+    "args": {
+      "snippet": "console.log('${TM_SELECTED_TEXT}:', ${TM_SELECTED_TEXT})$0;"
+    }
+  },
+  {
+    "key": "cmd+shift+j",
+    "command": "editor.action.insertSnippet",
+    "when": "editorTextFocus",
+    "args": {
+      "snippet": "console.log(JSON.stringify(${TM_SELECTED_TEXT}$1, null, 2))$0;"
+    }
+  }
+]

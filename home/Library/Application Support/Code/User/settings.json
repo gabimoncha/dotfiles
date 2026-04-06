@@ -1,0 +1,169 @@
+{
+  "editor.tabSize": 2,
+  "editor.fontSize": 13,
+  "editor.fontFamily": "Menlo, Monaco, monospace",
+  "workbench.iconTheme": "material-icon-theme",
+  "editor.minimap.enabled": false,
+  "editor.cursorBlinking": "expand",
+  "editor.fontLigatures": false,
+  "editor.wordWrap": "on",
+  "editor.cursorSmoothCaretAnimation": "on",
+  "editor.tabCompletion": "on",
+  "editor.parameterHints.enabled": true,
+  "editor.formatOnPaste": false,
+  "workbench.editor.enablePreview": false,
+  "window.restoreFullscreen": true,
+  "window.title": "${activeEditorShort}${separator}${rootName}",
+  "search.exclude": {
+    ".expo": true,
+    ".gitignore": true,
+    ".vscode": true,
+    "**/*.code-search": true,
+    "**/node_modules": true,
+    "package-lock.json": true,
+    "yarn.lock": true
+  },
+  "explorer.confirmDelete": false,
+  "explorer.openEditors.visible": 0,
+  // Integrated Terminal
+  "terminal.integrated.shell.osx": "zsh",
+  "terminal.external.osxExec": "iTerm2.app",
+  "terminal.integrated.fontSize": 12,
+  "bracket-pair-colorizer-2.colors": ["#F72585", "#94b4a4", "#a3d8f4"],
+  "highlight-matching-tag.styles": {
+    "opening": {
+      "name": {
+        // surround is border
+        "surround": "yellow"
+      }
+    }
+  },
+  "npm-intellisense.importES6": true,
+  "typescript.suggest.paths": false,
+  // Prettier
+  "prettier.singleQuote": true,
+  "prettier.jsxSingleQuote": true,
+  "prettier.trailingComma": "es5",
+  "prettier.quoteProps": "as-needed",
+  "prettier.jsxBracketSameLine": true,
+  "prettier.bracketSpacing": true,
+  "prettier.useTabs": false,
+  "prettier.semi": true,
+  // Macros
+  "macros": {
+    "collapseAndClose": [
+      "workbench.files.action.collapseExplorerFolders",
+      "workbench.action.closeAllEditors"
+    ]
+  },
+  // Markdown
+  "[markdown]": {
+    "editor.quickSuggestions": {
+      "comments": "on",
+      "strings": "on",
+      "other": "on"
+    }
+  },
+  "json.schemas": [],
+  "editor.inlineHints.fontFamily": "Menlo, Monaco, monospace",
+  "workbench.startupEditor": "welcomePage",
+  "terminal.integrated.copyOnSelection": true,
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "cSpell.showAutocompleteSuggestions": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "cSpell.userWords": [
+    "appcenter",
+    "avdmanager",
+    "circleci",
+    "gradlew",
+    "iphonesimulator",
+    "keychain",
+    "ncpu",
+    "netinfo",
+    "reduxjs",
+    "scrollable",
+    "sdkmanager",
+    "selfapy",
+    "startuptime",
+    "unstake",
+    "webm",
+    "webp",
+    "xcodebuild",
+    "xcodeproj",
+    "xcworkspace"
+  ],
+  "editor.suggestSelection": "first",
+  "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "diffEditor.ignoreTrimWhitespace": false,
+  "window.openFilesInNewWindow": "on",
+  "editor.inlineSuggest.enabled": true,
+  "github.copilot.enable": {
+    "*": true,
+    "yaml": false,
+    "plaintext": false,
+    "markdown": false
+  },
+  "workbench.editor.wrapTabs": true,
+  "workbench.editor.highlightModifiedTabs": true,
+  "editor.detectIndentation": false,
+  "editor.stickyTabStops": true,
+  "redhat.telemetry.enabled": false,
+  "files.exclude": {
+    "**/.classpath": true,
+    "**/.project": true,
+    "**/.settings": true,
+    "**/.factorypath": true
+  },
+  "react-native-tools.showUserTips": false,
+  "[html]": {
+    "editor.defaultFormatter": "vscode.html-language-features"
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": "active",
+  "eslint.format.enable": true,
+  "[javascript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "npm.keybindingsChangedWarningShown": true,
+  "auto-close-tag.activationOnLanguage": [
+    "xml",
+    "php",
+    "blade",
+    "ejs",
+    "jinja",
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "plaintext",
+    "markdown",
+    "vue",
+    "liquid",
+    "erb",
+    "lang-cfml",
+    "cfml",
+    "HTML (EEx)",
+    "HTML (Eex)",
+    "plist"
+  ],
+  "gitlens.defaultDateLocale": null,
+  "gitlens.defaultDateFormat": "DD MMMM YYYY",
+  "gitlens.defaultTimeFormat": "HH:MM",
+  "gitlens.defaultDateShortFormat": "DD/MM/YYYY",
+  "editor.accessibilitySupport": "off",
+  "jest.autoRun": "off",
+  "workbench.colorTheme": "Default Dark+"
+}

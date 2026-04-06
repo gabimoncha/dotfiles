@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+timestamp="$(date +%Y%m%d-%H%M%S)"
+backup_root="${HOME}/.dotfiles-backups/${timestamp}"
+created_backup_root=0
+
+managed_sources=(
+  "${repo_root}/home/.gitconfig"
+  "${repo_root}/home/.tmux.conf"
+  "${repo_root}/home/.config/mise/config.toml"
+  "${repo_root}/home/.config/karabiner/karabiner.json"
+  "${repo_root}/home/.config/zed/settings.json"
+  "${repo_root}/home/.config/zed/keymap.json"
+  "${repo_root}/home/Library/Application Support/Code/User/settings.json"
+  "${repo_root}/home/Library/Application Support/Code/User/keybindings.json"
+  "${repo_root}/home/Library/Application Support/Cursor/User/settings.json"
+  "${repo_root}/home/Library/Application Support/Cursor/User/keybindings.json"
+  "${repo_root}/home/scripts/toggle_function_keys.sh"
+)
+
+if [[ -d "${repo_root}/nvim" ]]; then
+  managed_sources+=("${repo_root}/nvim")
+fi
+
+backup_target() {
+  local target="$1"
+  local relative_target backup_path
+
+  [[ ${created_backup_root} -eq 1 ]] || {
+    mkdir -p "${backup_root}"
+    created_backup_root=1
+  }
+
+  relative_target="${target#${HOME}/}"
+  backup_path="${backup_root}/${relative_target}"
+  mkdir -p "$(dirname "${backup_path}")"
+  mv "${target}" "${backup_path}"
+  printf 'Backed up %s -> %s\n' "${target}" "${backup_path}"
+}
+
+link_path() {
+  local source="$1"
+  local target="${HOME}/${source#${repo_root}/home/}"
+
+  if [[ "${source}" == "${repo_root}/nvim" ]]; then
+    target="${HOME}/.config/nvim"
+  fi
+
+  mkdir -p "$(dirname "${target}")"
+
+  if [[ -L "${target}" && "$(readlink "${target}")" == "${source}" ]]; then
+    printf 'Already linked %s\n' "${target}"
+    return 0
+  fi
+
+  if [[ -e "${target}" || -L "${target}" ]]; then
+    backup_target "${target}"
+  fi
+
+  ln -s "${source}" "${target}"
+  printf 'Linked %s -> %s\n' "${target}" "${source}"
+}
+
+for source in "${managed_sources[@]}"; do
+  if [[ ! -e "${source}" && ! -L "${source}" ]]; then
+    printf 'Skipping missing source %s\n' "${source}"
+    continue
+  fi
+
+  link_path "${source}"
+done

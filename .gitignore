@@ -1,0 +1,9 @@
+.DS_Store
+*.bak
+*.orig
+
+# Future local-only shell config and secrets.
+home/.config/local/
+
+# Local worktree noise from nested repos/submodules.
+.submodule-seed/
