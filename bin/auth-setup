@@ -166,8 +166,6 @@ github_public_key_scope_error() {
 }
 
 ensure_github_public_key_scope() {
-  local output
-
   if [[ ! -t 0 ]]; then
     warn "GitHub CLI needs the admin:public_key scope to upload SSH keys."
     warn "Rerun ./bin/auth-setup interactively, or run: gh auth refresh -h github.com -s admin:public_key"
@@ -175,12 +173,10 @@ ensure_github_public_key_scope() {
   fi
 
   log "Refreshing GitHub CLI public-key scope"
-  output="$(run_gh auth refresh --hostname github.com --scopes admin:public_key 2>&1)" || {
-    warn "Could not refresh GitHub CLI public-key scope: ${output}"
+  run_gh auth refresh --hostname github.com --scopes admin:public_key || {
+    warn "Could not refresh GitHub CLI public-key scope"
     return 1
   }
-
-  [[ -z "$output" ]] || printf '%s\n' "$output"
 }
 
 ensure_github_auth() {
