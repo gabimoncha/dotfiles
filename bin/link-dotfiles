@@ -52,6 +52,30 @@ backup_target() {
   printf 'Backed up %s -> %s\n' "${target}" "${backup_path}"
 }
 
+preserve_git_identity() {
+  local target="$1"
+  local local_config="${HOME}/.gitconfig.local"
+  local name email
+
+  [[ "$target" == "${HOME}/.gitconfig" ]] || return 0
+  [[ -e "$target" || -L "$target" ]] || return 0
+
+  name="$(git config --file "$target" --get user.name 2>/dev/null || true)"
+  email="$(git config --file "$target" --get user.email 2>/dev/null || true)"
+
+  if [[ -n "$name" && -z "$(git config --file "$local_config" --get user.name 2>/dev/null || true)" ]]; then
+    git config --file "$local_config" user.name "$name"
+    chmod 600 "$local_config"
+    printf 'Preserved Git user.name in %s\n' "$local_config"
+  fi
+
+  if [[ -n "$email" && -z "$(git config --file "$local_config" --get user.email 2>/dev/null || true)" ]]; then
+    git config --file "$local_config" user.email "$email"
+    chmod 600 "$local_config"
+    printf 'Preserved Git user.email in %s\n' "$local_config"
+  fi
+}
+
 link_path() {
   local source="$1"
   local target="${HOME}/${source#${repo_root}/home/}"
@@ -68,6 +92,7 @@ link_path() {
   fi
 
   if [[ -e "${target}" || -L "${target}" ]]; then
+    preserve_git_identity "${target}"
     backup_target "${target}"
   fi
 

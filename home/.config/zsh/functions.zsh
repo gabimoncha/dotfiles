@@ -10,6 +10,148 @@ mkcd() {
   mkdir -p "$1" && cd "$1" || return
 }
 
+extract() {
+  if [[ -z "$1" ]]; then
+    print "Usage: extract <archive>"
+    return 1
+  fi
+
+  if [[ ! -f "$1" ]]; then
+    print "'$1' is not a valid file"
+    return 1
+  fi
+
+  case "$1" in
+    *.tar.bz2|*.tbz2) command tar xjf "$1" ;;
+    *.tar.gz|*.tgz) command tar xzf "$1" ;;
+    *.tar.xz|*.txz) command tar xJf "$1" ;;
+    *.tar) command tar xf "$1" ;;
+    *.bz2) command bunzip2 "$1" ;;
+    *.gz) command gunzip "$1" ;;
+    *.zip) command unzip "$1" ;;
+    *.Z) command uncompress "$1" ;;
+    *.rar) command unrar x "$1" ;;
+    *.7z) command 7z x "$1" ;;
+    *) print "'$1' cannot be extracted by extract" && return 1 ;;
+  esac
+}
+
+psgrep() {
+  if [[ -z "$1" ]]; then
+    print "Usage: psgrep <process-name>"
+    return 1
+  fi
+
+  command ps aux | command grep -i -e VSZ -e "$1" | command grep -v "grep -i -e VSZ -e"
+}
+
+killnamed() {
+  if [[ -z "$1" ]]; then
+    print "Usage: killnamed <process-name>"
+    return 1
+  fi
+
+  print "Matching processes:"
+  if ! pgrep -fil "$1"; then
+    print "No processes found matching '$1'"
+    return 1
+  fi
+
+  print
+  print -n "Kill these processes? [y/N] "
+  read -r reply
+  if [[ "$reply" != [Yy]* ]]; then
+    print "Aborted."
+    return 1
+  fi
+
+  pkill -i "$1"
+  sleep 2
+
+  if pgrep -fi "$1" >/dev/null 2>&1; then
+    print "Some processes are still running; sending SIGKILL."
+    pkill -9 -i "$1"
+  fi
+}
+
+serve() {
+  local port="${1:-8000}"
+
+  if ! [[ "$port" == <-> ]]; then
+    print "Usage: serve [port]"
+    return 1
+  fi
+
+  open "http://localhost:${port}/" >/dev/null 2>&1 &
+  python3 -m http.server "$port"
+}
+
+backup() {
+  if [[ -z "$1" ]]; then
+    print "Usage: backup <file-or-directory>"
+    return 1
+  fi
+
+  if [[ ! -e "$1" ]]; then
+    print "'$1' does not exist"
+    return 1
+  fi
+
+  command cp -R "$1" "$1.backup-$(date +%Y%m%d-%H%M%S)"
+}
+
+dirsize() {
+  local target="${1:-.}"
+  local -a entries
+
+  if [[ ! -d "$target" ]]; then
+    print "'$target' is not a directory"
+    return 1
+  fi
+
+  entries=("$target"/*(N) "$target"/.[!.]*(N) "$target"/..?*(N))
+  if (( ${#entries[@]} == 0 )); then
+    command du -sh "$target"
+    return
+  fi
+
+  command du -sh "${entries[@]}" 2>/dev/null | command sort -hr
+}
+
+findlarge() {
+  local size="${1:-100M}"
+
+  if [[ "$size" == <-> ]]; then
+    size="${size}M"
+  fi
+
+  command find . -type f -size +"$size" -exec ls -lh {} \; 2>/dev/null | command awk '{
+    size=$5
+    $1=$2=$3=$4=$5=$6=$7=$8=""
+    sub(/^ +/, "")
+    print $0 ": " size
+  }'
+}
+
+codesearch() {
+  if [[ -z "$1" ]]; then
+    print "Usage: codesearch <term>"
+    return 1
+  fi
+
+  command rg -p "$@" | less -R
+}
+
+edit-profile() {
+  "${EDITOR:-nvim}" "$HOME/.zshrc" && source "$HOME/.zshrc"
+}
+
+reload-shell() {
+  print "Reloading shell configuration..."
+  source "$HOME/.zshrc"
+  print "Shell reloaded"
+}
+
 _claude_bin() {
   local bin="$HOME/.local/bin/claude"
 
@@ -234,6 +376,14 @@ use-my-mac() {
 dotfiles             - cd to the dotfiles repo
 dotfiles-update      - update dotfiles and Homebrew-owned tools
 mkcd <dir>           - create a directory and cd into it
+extract <file>       - extract common archive formats
+psgrep <name>        - search running processes by name
+killnamed <name>     - ask before killing processes by name
+serve [port]         - serve the current directory over HTTP
+backup <path>        - create a timestamped backup copy
+dirsize [path]       - show child directory/file sizes sorted
+findlarge [size]     - find large files, default over 100M
+codesearch <term>    - search code with ripgrep and less
 ll                   - list files with git status
 la                   - list all files
 tree                 - show tree excluding .git
@@ -246,6 +396,8 @@ fix-my-network       - diagnose common DNS, proxy, routing, and HTTP issues
 cleanup              - delete .DS_Store files below the current directory
 hosts                - edit /etc/hosts with nvim
 brewup               - brew update, upgrade, and cleanup
+edit-profile         - edit ~/.zshrc and reload it
+reload-shell         - reload ~/.zshrc in the current shell
 claude               - run Claude with skipped permission prompts
 claude-safe          - run Claude without skipped permission prompts
 cc                   - short alias for claude

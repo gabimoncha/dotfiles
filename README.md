@@ -139,14 +139,18 @@ macOS defaults disable Spotlight hotkeys so Raycast can own Command-Space.
 
 ## Git Identity
 
-The tracked git config keeps shared defaults plus `user.name`.
+The tracked git config keeps shared defaults and includes `~/.gitconfig.local`.
+`./bin/auth-setup` prompts for missing Git identity and writes it to that local-only file.
 
-Set your private machine-local email in `~/.gitconfig.local`:
+You can also edit it manually:
 
 ```ini
 [user]
+	name = your-name
 	email = your-github-private-email@users.noreply.github.com
 ```
+
+Do not sync this through Mackup or commit it to the repo; it can contain private account identity.
 
 ## Future Shell Cleanup
 

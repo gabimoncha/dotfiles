@@ -23,7 +23,11 @@ load_homebrew_shellenv() {
 }
 
 default_git_email() {
-  git config --global user.email 2>/dev/null || true
+  git config --global --includes user.email 2>/dev/null || true
+}
+
+default_git_name() {
+  git config --global --includes user.name 2>/dev/null || true
 }
 
 default_key_comment() {
@@ -31,6 +35,46 @@ default_key_comment() {
 
   host="$(scutil --get ComputerName 2>/dev/null || hostname -s 2>/dev/null || hostname)"
   printf '%s@%s\n' "$(whoami)" "$host"
+}
+
+ensure_git_identity() {
+  local local_config="${HOME}/.gitconfig.local"
+  local name email default_name default_email
+
+  if git -c user.useConfigOnly=true var GIT_AUTHOR_IDENT >/dev/null 2>&1; then
+    log "Git identity is configured"
+    return 0
+  fi
+
+  if [[ ! -t 0 ]]; then
+    warn "Git identity is missing; create ~/.gitconfig.local or rerun ./bin/auth-setup interactively."
+    return 0
+  fi
+
+  default_name="$(default_git_name)"
+  if [[ -z "$default_name" ]]; then
+    default_name="$(whoami)"
+  fi
+
+  default_email="$(default_git_email)"
+
+  log "Configuring Git identity in ${local_config}"
+
+  read -r -p "Git user.name [${default_name}]: " name
+  name="${name:-$default_name}"
+
+  while [[ -z "${email:-}" ]]; do
+    if [[ -n "$default_email" ]]; then
+      read -r -p "Git user.email [${default_email}]: " email
+      email="${email:-$default_email}"
+    else
+      read -r -p "Git user.email: " email
+    fi
+  done
+
+  git config --file "$local_config" user.name "$name"
+  git config --file "$local_config" user.email "$email"
+  chmod 600 "$local_config"
 }
 
 ensure_ssh_key() {
@@ -119,7 +163,7 @@ ensure_github_auth() {
 
 upload_ssh_key_to_github() {
   local key_path="${HOME}/.ssh/id_ed25519.pub"
-  local key_contents title
+  local key_contents title output
 
   if [[ ! -f "$key_path" ]]; then
     warn "No SSH public key found to upload"
@@ -131,14 +175,24 @@ upload_ssh_key_to_github() {
     return 0
   fi
 
-  key_contents="$(tr -d '\n' < "$key_path")"
+  key_contents="$(awk '{ print $1 " " $2 }' "$key_path")"
   if gh api user/keys --jq '.[].key' 2>/dev/null | grep -Fxq "$key_contents"; then
     log "SSH key already exists on GitHub"
     return 0
   fi
 
   title="$(scutil --get ComputerName 2>/dev/null || hostname)"
-  gh ssh-key add "$key_path" --title "$title"
+  output="$(gh ssh-key add "$key_path" --title "$title" 2>&1)" || {
+    warn "Could not upload SSH key to GitHub: ${output}"
+    return 0
+  }
+
+  if [[ "$output" == *"already exists"* ]]; then
+    log "SSH key already exists on GitHub"
+    return 0
+  fi
+
+  [[ -z "$output" ]] || printf '%s\n' "$output"
   log "Uploaded SSH key to GitHub"
 }
 
@@ -168,6 +222,7 @@ EOF
 }
 
 load_homebrew_shellenv
+ensure_git_identity
 ensure_ssh_key
 add_ssh_key_to_agent
 ensure_github_known_host
