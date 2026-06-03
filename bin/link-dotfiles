@@ -8,21 +8,29 @@ backup_root="${HOME}/.dotfiles-backups/${timestamp}"
 created_backup_root=0
 
 managed_sources=(
+  "${repo_root}/home/.zshenv"
+  "${repo_root}/home/.zprofile"
+  "${repo_root}/home/.zshrc"
+  "${repo_root}/home/.p10k.zsh"
+  "${repo_root}/home/.mackup.cfg"
   "${repo_root}/home/.gitconfig"
+  "${repo_root}/home/.rgrc"
   "${repo_root}/home/.tmux.conf"
   "${repo_root}/home/.config/mise/config.toml"
+  "${repo_root}/home/.config/zsh/path.zsh"
+  "${repo_root}/home/.config/zsh/aliases.zsh"
+  "${repo_root}/home/.config/zsh/functions.zsh"
+  "${repo_root}/home/.config/zsh/check-updates.zsh"
   "${repo_root}/home/.config/karabiner/karabiner.json"
   "${repo_root}/home/.config/zed/settings.json"
   "${repo_root}/home/.config/zed/keymap.json"
-  "${repo_root}/home/Library/Application Support/Code/User/settings.json"
-  "${repo_root}/home/Library/Application Support/Code/User/keybindings.json"
-  "${repo_root}/home/Library/Application Support/Cursor/User/settings.json"
-  "${repo_root}/home/Library/Application Support/Cursor/User/keybindings.json"
   "${repo_root}/home/scripts/toggle_function_keys.sh"
 )
 
-if [[ -d "${repo_root}/nvim" ]]; then
+if [[ -d "${repo_root}/nvim" ]] && find "${repo_root}/nvim" -mindepth 1 -maxdepth 1 -print -quit | grep -q .; then
   managed_sources+=("${repo_root}/nvim")
+else
+  printf 'Skipping nvim link; submodule is not initialized\n'
 fi
 
 backup_target() {

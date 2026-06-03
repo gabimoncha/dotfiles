@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+timestamp="$(date +%Y%m%d-%H%M%S)"
+backup_dir="${repo_root}/.sync-backups/${timestamp}"
+temp_brewfile="$(mktemp)"
+
+cleanup() {
+  rm -f "$temp_brewfile"
+}
+
+trap cleanup EXIT
+
+log() {
+  printf '==> %s\n' "$1"
+}
+
+mkdir -p "$backup_dir"
+
+if command -v brew >/dev/null 2>&1; then
+  log "Capturing current Homebrew bundle to a temp file"
+  brew bundle dump --file "$temp_brewfile" --force
+  cp "${repo_root}/Brewfile" "${backup_dir}/Brewfile"
+  git --no-pager diff --no-index "${repo_root}/Brewfile" "$temp_brewfile" || true
+else
+  log "Homebrew is not available; skipping Brewfile comparison"
+fi
+
+if command -v mise >/dev/null 2>&1; then
+  log "Current mise tool state"
+  (cd "$repo_root" && mise current || true)
+else
+  log "mise is not available; skipping mise current"
+fi
+
+cat <<EOF
+
+prepare-sync complete.
+Backups are in: ${backup_dir}
+
+This script only reports drift. Update tracked files intentionally, then run validation.
+EOF

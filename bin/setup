@@ -1,0 +1,204 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+manifest="${repo_root}/apps/manifest.tsv"
+dry_run=0
+
+log() {
+  printf '==> %s\n' "$1"
+}
+
+warn() {
+  printf '!! %s\n' "$1" >&2
+}
+
+usage() {
+  printf 'Usage: ./bin/setup [--dry-run]\n' >&2
+}
+
+load_homebrew_shellenv() {
+  if command -v brew >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+  fi
+}
+
+app_installed() {
+  local app_bundle="$1"
+  [[ -n "$app_bundle" && "$app_bundle" != "-" && -d "/Applications/${app_bundle}.app" ]]
+}
+
+mas_is_installed() {
+  local app_id="$1"
+
+  if command -v mas >/dev/null 2>&1; then
+    mas list | awk '{print $1}' | grep -Fxq "$app_id"
+    return $?
+  fi
+
+  if command -v mise >/dev/null 2>&1; then
+    (cd "$repo_root" && mise exec -- mas list | awk '{print $1}' | grep -Fxq "$app_id")
+    return $?
+  fi
+
+  return 1
+}
+
+latest_rayconfig() {
+  local icloud_dir="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+
+  if [[ -d "$icloud_dir" ]]; then
+    find "$icloud_dir" -name '*.rayconfig' -print 2>/dev/null | sort | tail -1 || true
+  fi
+}
+
+print_manifest_summary() {
+  local key type token_or_url app_bundle notes
+  local installed_count=0 skipped_count=0 deferred_count=0 manual_count=0
+  local manual_items=()
+
+  if [[ ! -f "$manifest" ]]; then
+    warn "Missing app manifest: ${manifest}"
+    return 0
+  fi
+
+  load_homebrew_shellenv
+
+  while IFS=$'\t' read -r key type token_or_url app_bundle notes || [[ -n "${key:-}" ]]; do
+    [[ -z "${key:-}" || "$key" == \#* ]] && continue
+
+    case "$type" in
+      cask)
+        if app_installed "$app_bundle"; then
+          skipped_count=$((skipped_count + 1))
+        elif command -v brew >/dev/null 2>&1 && brew list --cask "$token_or_url" >/dev/null 2>&1; then
+          installed_count=$((installed_count + 1))
+        else
+          deferred_count=$((deferred_count + 1))
+        fi
+        ;;
+      formula)
+        if command -v brew >/dev/null 2>&1 && brew list --formula "$token_or_url" >/dev/null 2>&1; then
+          installed_count=$((installed_count + 1))
+        else
+          deferred_count=$((deferred_count + 1))
+        fi
+        ;;
+      mise)
+        if command -v mise >/dev/null 2>&1; then
+          installed_count=$((installed_count + 1))
+        else
+          deferred_count=$((deferred_count + 1))
+        fi
+        ;;
+      mas)
+        if app_installed "$app_bundle"; then
+          skipped_count=$((skipped_count + 1))
+        elif mas_is_installed "$token_or_url"; then
+          installed_count=$((installed_count + 1))
+        else
+          deferred_count=$((deferred_count + 1))
+        fi
+        ;;
+      manual)
+        if app_installed "$app_bundle"; then
+          skipped_count=$((skipped_count + 1))
+        else
+          manual_count=$((manual_count + 1))
+          manual_items+=("$key")
+        fi
+        ;;
+      *)
+        deferred_count=$((deferred_count + 1))
+        ;;
+    esac
+  done < "$manifest"
+
+  cat <<EOF
+
+Setup summary:
+- installed/managed: ${installed_count}
+- skipped/already present: ${skipped_count}
+- deferred until prerequisites are ready: ${deferred_count}
+- manual/vendor apps: ${manual_count}
+EOF
+
+  if [[ ${#manual_items[@]} -gt 0 ]]; then
+    printf 'Manual app keys: %s\n' "${manual_items[*]}"
+  fi
+}
+
+run_interactive_followup() {
+  local rayconfig
+
+  cat <<'EOF'
+
+Press Enter to continue interactive auth/restore steps, or rerun `./bin/setup` later.
+EOF
+
+  if [[ ! -t 0 ]]; then
+    warn "Non-interactive shell; skipping auth and restore follow-up"
+    return 0
+  fi
+
+  read -r _
+
+  "${repo_root}/bin/auth-setup"
+  "${repo_root}/bin/mackup-restore"
+
+  rayconfig="$(latest_rayconfig)"
+  if [[ -n "$rayconfig" && -f "$rayconfig" ]]; then
+    "${repo_root}/bin/raycast-restore" "$rayconfig"
+  else
+    warn "No .rayconfig export found in iCloud Drive; Raycast restore is deferred"
+  fi
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run)
+      dry_run=1
+      shift
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+log "Running preflight"
+"${repo_root}/bin/preflight"
+
+if [[ $dry_run -eq 1 ]]; then
+  log "dry-run: would run ./bin/bootstrap"
+  "${repo_root}/bin/install-apps" --dry-run
+  print_manifest_summary
+  exit 0
+fi
+
+log "Running bootstrap"
+"${repo_root}/bin/bootstrap"
+
+if ! xcode-select -p >/dev/null 2>&1; then
+  warn "Xcode Command Line Tools are not ready yet; skipping the remaining setup steps"
+  warn "Finish the installer popup, then rerun: ./bin/setup"
+  exit 0
+fi
+
+log "Installing extra apps from manifest"
+"${repo_root}/bin/install-apps"
+
+print_manifest_summary
+run_interactive_followup

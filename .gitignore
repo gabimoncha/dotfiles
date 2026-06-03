@@ -1,6 +1,9 @@
 .DS_Store
 *.bak
 *.orig
+.env
+.sync-backups/
+*.rayconfig
 
 # Future local-only shell config and secrets.
 home/.config/local/

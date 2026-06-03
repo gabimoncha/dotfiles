@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+log() {
+  printf '==> %s\n' "$1"
+}
+
+warn() {
+  printf '!! %s\n' "$1" >&2
+}
+
+default_git_email() {
+  git config --global user.email 2>/dev/null || true
+}
+
+default_key_comment() {
+  local host
+
+  host="$(scutil --get ComputerName 2>/dev/null || hostname -s 2>/dev/null || hostname)"
+  printf '%s@%s\n' "$(whoami)" "$host"
+}
+
+ensure_ssh_key() {
+  local key_path="${HOME}/.ssh/id_ed25519"
+  local email
+
+  mkdir -p "${HOME}/.ssh"
+  chmod 700 "${HOME}/.ssh"
+
+  if [[ -f "$key_path" && ! -f "${key_path}.pub" ]]; then
+    log "Rebuilding SSH public key: ${key_path}.pub"
+    ssh-keygen -y -f "$key_path" > "${key_path}.pub"
+  fi
+
+  if [[ -f "$key_path" && -f "${key_path}.pub" ]]; then
+    log "SSH key exists: ${key_path}"
+    return 0
+  fi
+
+  email="$(default_git_email)"
+  if [[ -z "$email" ]]; then
+    email="$(default_key_comment)"
+  fi
+
+  log "Generating SSH key: ${key_path}"
+  ssh-keygen -t ed25519 -C "$email" -f "$key_path" -N ""
+}
+
+add_ssh_key_to_agent() {
+  local key_path="${HOME}/.ssh/id_ed25519"
+
+  if [[ ! -f "$key_path" ]]; then
+    warn "No SSH private key found to add to the agent"
+    return 0
+  fi
+
+  log "Adding SSH key to macOS keychain-backed agent"
+  ssh-add --apple-use-keychain "$key_path" 2>/dev/null || ssh-add "$key_path" || true
+}
+
+configure_gh_git_protocol() {
+  gh config set git_protocol ssh --host github.com >/dev/null 2>&1 || {
+    warn "Could not set gh git_protocol=ssh"
+  }
+}
+
+ensure_github_auth() {
+  if ! command -v gh >/dev/null 2>&1; then
+    warn "gh is not installed yet. Run ./bin/bootstrap first."
+    return 0
+  fi
+
+  if gh auth status --hostname github.com >/dev/null 2>&1; then
+    log "GitHub CLI is authenticated"
+    configure_gh_git_protocol
+    return 0
+  fi
+
+  if [[ ! -t 0 ]]; then
+    warn "GitHub CLI authentication requires an interactive terminal; rerun ./bin/auth-setup"
+    return 0
+  fi
+
+  log "Authenticating GitHub CLI with SSH git protocol"
+  gh auth login --hostname github.com --git-protocol ssh --skip-ssh-key
+  configure_gh_git_protocol
+}
+
+upload_ssh_key_to_github() {
+  local key_path="${HOME}/.ssh/id_ed25519.pub"
+  local key_contents title
+
+  if [[ ! -f "$key_path" ]]; then
+    warn "No SSH public key found to upload"
+    return 0
+  fi
+
+  if ! command -v gh >/dev/null 2>&1 || ! gh auth status --hostname github.com >/dev/null 2>&1; then
+    warn "GitHub CLI is not authenticated; cannot upload SSH key"
+    return 0
+  fi
+
+  key_contents="$(tr -d '\n' < "$key_path")"
+  if gh api user/keys --jq '.[].key' 2>/dev/null | grep -Fxq "$key_contents"; then
+    log "SSH key already exists on GitHub"
+    return 0
+  fi
+
+  title="$(scutil --get ComputerName 2>/dev/null || hostname)"
+  gh ssh-key add "$key_path" --title "$title"
+  log "Uploaded SSH key to GitHub"
+}
+
+verify_github_ssh() {
+  local output
+
+  set +e
+  output="$(ssh -o BatchMode=yes -o ConnectTimeout=5 -T git@github.com 2>&1)"
+  set -e
+
+  if [[ "$output" == *"successfully authenticated"* ]]; then
+    log "GitHub SSH works"
+  else
+    warn "GitHub SSH is not verified yet: ${output}"
+  fi
+}
+
+print_manual_followup() {
+  cat <<'EOF'
+
+Manual account and permission steps:
+- Sign in to Apple ID, App Store, and iCloud.
+- Sign in to Cursor, VS Code Settings Sync if desired, Notion, Synology Drive, superwhisper, and DaVinci Resolve.
+- Grant Accessibility / Automation / Microphone / network permissions when macOS prompts.
+- Run `gh auth status` and `ssh -T git@github.com` if GitHub access still looks wrong.
+EOF
+}
+
+ensure_ssh_key
+add_ssh_key_to_agent
+ensure_github_auth
+upload_ssh_key_to_github
+verify_github_ssh
+print_manual_followup

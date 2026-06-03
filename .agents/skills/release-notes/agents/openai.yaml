@@ -1,0 +1,7 @@
+interface:
+  display_name: "Release Notes"
+  short_description: "Draft app release note bullets"
+  default_prompt: "Use $release-notes to update the native release notes modal for this build."
+
+policy:
+  allow_implicit_invocation: false

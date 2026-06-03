@@ -1,0 +1,272 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+manifest="${repo_root}/apps/manifest.tsv"
+manual_count=0
+dry_run=0
+mas_account_checked=0
+mas_available=0
+
+log() {
+  printf '==> %s\n' "$1"
+}
+
+warn() {
+  printf '!! %s\n' "$1" >&2
+}
+
+load_homebrew_shellenv() {
+  if command -v brew >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+  fi
+}
+
+app_installed() {
+  local app_bundle="$1"
+  [[ -n "$app_bundle" && "$app_bundle" != "-" && -d "/Applications/${app_bundle}.app" ]]
+}
+
+run_cask_postinstall() {
+  local token="$1"
+  local app_bundle="$2"
+
+  case "$token" in
+    neardrop | grishka/grishka/neardrop)
+      if [[ "$dry_run" -eq 1 ]]; then
+        log "dry-run: would remove quarantine attribute from /Applications/NearDrop.app"
+      elif app_installed "$app_bundle"; then
+        log "Removing NearDrop quarantine attribute"
+        sudo xattr -r -d com.apple.quarantine "/Applications/${app_bundle}.app" 2>/dev/null || true
+      fi
+      ;;
+  esac
+}
+
+install_cask() {
+  local token="$1"
+  local app_bundle="$2"
+
+  if app_installed "$app_bundle"; then
+    log "${app_bundle}.app already exists"
+    run_cask_postinstall "$token" "$app_bundle"
+    return 0
+  fi
+
+  if brew list --cask "$token" >/dev/null 2>&1; then
+    log "cask ${token} already installed"
+    run_cask_postinstall "$token" "$app_bundle"
+    return 0
+  fi
+
+  if [[ $dry_run -eq 1 ]]; then
+    log "dry-run: would install cask ${token}"
+    run_cask_postinstall "$token" "$app_bundle"
+    return 0
+  fi
+
+  log "Installing cask ${token}"
+  brew install --cask "$token"
+  run_cask_postinstall "$token" "$app_bundle"
+}
+
+install_formula() {
+  local token="$1"
+
+  if ! command -v brew >/dev/null 2>&1; then
+    warn "Homebrew is required to install formula ${token}"
+    return 0
+  fi
+
+  if brew list --formula "$token" >/dev/null 2>&1; then
+    log "formula ${token} already installed"
+    return 0
+  fi
+
+  if [[ $dry_run -eq 1 ]]; then
+    log "dry-run: would install formula ${token}"
+    return 0
+  fi
+
+  log "Installing formula ${token}"
+  brew install "$token"
+}
+
+install_mise_tool() {
+  local token="$1"
+
+  if ! command -v mise >/dev/null 2>&1; then
+    warn "mise is required to install ${token}"
+    return 0
+  fi
+
+  if [[ $dry_run -eq 1 ]]; then
+    log "dry-run: would ensure mise tool ${token}"
+    return 0
+  fi
+
+  log "Ensuring mise tool ${token}"
+  (cd "$repo_root" && mise install "$token")
+}
+
+ensure_mas_available() {
+  if [[ $mas_account_checked -eq 1 ]]; then
+    return 0
+  fi
+
+  mas_account_checked=1
+
+  if [[ $dry_run -eq 1 ]]; then
+    mas_available=1
+    return 0
+  fi
+
+  if command -v mas >/dev/null 2>&1; then
+    if mas config >/dev/null 2>&1; then
+      mas_available=1
+    else
+      warn "mas is installed but is not usable yet; skipping mas apps"
+    fi
+    return 0
+  fi
+
+  if command -v mise >/dev/null 2>&1; then
+    (cd "$repo_root" && mise install mas >/dev/null 2>&1) || true
+    if (cd "$repo_root" && mise exec -- mas config >/dev/null 2>&1); then
+      mas_available=1
+    else
+      warn "mas is managed by mise, but is not usable yet; skipping mas apps"
+    fi
+  else
+    warn "mas is required for App Store apps; run ./bin/bootstrap first"
+  fi
+}
+
+mas_is_installed() {
+  local app_id="$1"
+
+  if command -v mas >/dev/null 2>&1; then
+    mas list | awk '{print $1}' | grep -Fxq "$app_id"
+    return $?
+  fi
+
+  if command -v mise >/dev/null 2>&1; then
+    (cd "$repo_root" && mise exec -- mas list | awk '{print $1}' | grep -Fxq "$app_id")
+    return $?
+  fi
+
+  return 1
+}
+
+install_mas_app() {
+  local app_id="$1"
+  local app_bundle="$2"
+
+  if app_installed "$app_bundle"; then
+    log "${app_bundle}.app already exists"
+    return 0
+  fi
+
+  ensure_mas_available
+
+  if [[ $dry_run -eq 1 ]]; then
+    log "dry-run: would install App Store app ${app_id}"
+    return 0
+  fi
+
+  if [[ $mas_available -ne 1 ]]; then
+    return 0
+  fi
+
+  if mas_is_installed "$app_id"; then
+    log "App Store app ${app_id} already installed"
+    return 0
+  fi
+
+  log "Installing App Store app ${app_id}"
+  if command -v mas >/dev/null 2>&1; then
+    mas install "$app_id"
+  else
+    (cd "$repo_root" && mise exec -- mas install "$app_id")
+  fi
+}
+
+report_manual() {
+  local key="$1"
+  local url="$2"
+  local app_bundle="$3"
+  local notes="$4"
+
+  if app_installed "$app_bundle"; then
+    log "${app_bundle}.app already exists"
+    return 0
+  fi
+
+  manual_count=$((manual_count + 1))
+  cat <<EOF
+
+Manual app: ${key}
+URL: ${url}
+Notes: ${notes}
+EOF
+}
+
+if [[ "${1:-}" == "--dry-run" ]]; then
+  dry_run=1
+elif [[ $# -gt 0 ]]; then
+  warn "Usage: ./bin/install-apps [--dry-run]"
+  exit 1
+fi
+
+if [[ ! -f "$manifest" ]]; then
+  warn "Missing app manifest: ${manifest}"
+  exit 1
+fi
+
+load_homebrew_shellenv
+
+while IFS=$'\t' read -r key type token_or_url app_bundle notes || [[ -n "${key:-}" ]]; do
+  [[ -z "${key:-}" || "$key" == \#* ]] && continue
+
+  case "$type" in
+    cask)
+      if ! command -v brew >/dev/null 2>&1; then
+        warn "Homebrew is required to install ${key}"
+        continue
+      fi
+      install_cask "$token_or_url" "$app_bundle"
+      ;;
+    formula)
+      install_formula "$token_or_url"
+      ;;
+    mise)
+      install_mise_tool "$token_or_url"
+      ;;
+    mas)
+      install_mas_app "$token_or_url" "$app_bundle"
+      ;;
+    manual)
+      report_manual "$key" "$token_or_url" "$app_bundle" "$notes"
+      ;;
+    *)
+      warn "Unknown app type '${type}' for ${key}"
+      ;;
+  esac
+done < "$manifest"
+
+if [[ $manual_count -gt 0 ]]; then
+  cat <<'EOF'
+
+Manual/Codex-assisted apps remain.
+After bootstrap installs Codex, use it to drive the vendor download flow where a stable package source is unavailable.
+EOF
+fi
+
+log "App install pass complete"

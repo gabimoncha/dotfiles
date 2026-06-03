@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+rayconfig="${1:-}"
+
+if [[ -z "$rayconfig" ]]; then
+  rayconfig="$(find "${HOME}/Library/Mobile Documents/com~apple~CloudDocs" -name '*.rayconfig' -print 2>/dev/null | sort | tail -1 || true)"
+fi
+
+if [[ -z "$rayconfig" || ! -f "$rayconfig" ]]; then
+  printf 'No .rayconfig file found. Pass a path: ./bin/raycast-restore /path/to/export.rayconfig\n' >&2
+  exit 1
+fi
+
+open -a Raycast 2>/dev/null || true
+open "$rayconfig"
+
+printf 'Opened Raycast export: %s\n' "$rayconfig"
+printf 'Use Raycast Import Settings & Data and enter the export passphrase when prompted.\n'

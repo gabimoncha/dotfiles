@@ -3,39 +3,244 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+macos_defaults_flag="${HOME}/.macos-defaults-applied"
+temp_brewfile=""
 
-ensure_homebrew() {
-  if command -v brew >/dev/null 2>&1; then
+cleanup() {
+  if [[ -n "$temp_brewfile" ]]; then
+    rm -f "$temp_brewfile"
+  fi
+}
+
+trap cleanup EXIT
+
+log() {
+  printf '==> %s\n' "$1"
+}
+
+warn() {
+  printf '!! %s\n' "$1" >&2
+}
+
+ensure_xcode_command_line_tools() {
+  if xcode-select -p >/dev/null 2>&1; then
+    log "Xcode Command Line Tools are installed"
     return 0
   fi
 
+  warn "Xcode Command Line Tools are required before bootstrap can continue."
+  log "Opening the Xcode Command Line Tools installer"
+  xcode-select --install >/dev/null 2>&1 || {
+    warn "The installer may already be open. If not, run: xcode-select --install"
+  }
+
+  cat <<'EOF'
+
+Finish the Xcode Command Line Tools installer popup, then rerun:
+
+  ./bin/setup
+EOF
+  exit 0
+}
+
+ensure_homebrew() {
+  if command -v brew >/dev/null 2>&1; then
+    log "Homebrew is installed"
+    return 0
+  fi
+
+  log "Installing Homebrew"
   NONINTERACTIVE=1 /bin/bash -c \
     "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 }
 
-ensure_homebrew
-eval "$(/opt/homebrew/bin/brew shellenv)"
+load_homebrew_shellenv() {
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+    return 0
+  fi
 
-git -C "${repo_root}" submodule update --init --recursive || {
-  printf 'Submodule init failed. The current nvim submodule URL is ../nvim; clone that repo adjacent to dotfiles or replace the submodule URL with a real remote, then rerun bootstrap.\n' >&2
+  if [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+    return 0
+  fi
+
+  if command -v brew >/dev/null 2>&1; then
+    eval "$(brew shellenv)"
+    return 0
+  fi
+
+  warn "Homebrew installed, but brew was not found on PATH."
+  exit 1
 }
 
-brew bundle install --no-upgrade --file "${repo_root}/Brewfile"
+cask_app_bundle_name() {
+  case "$1" in
+    beeper) printf 'Beeper' ;;
+    blackhole-2ch) printf 'BlackHole 2ch' ;;
+    chatgpt) printf 'ChatGPT' ;;
+    claude) printf 'Claude' ;;
+    codex) printf 'Codex' ;;
+    cursor) printf 'Cursor' ;;
+    cyberduck) printf 'Cyberduck' ;;
+    discord) printf 'Discord' ;;
+    expo-orbit) printf 'Orbit' ;;
+    figma) printf 'Figma' ;;
+    font-hack-nerd-font) printf '' ;;
+    ghostty) printf 'Ghostty' ;;
+    google-chrome) printf 'Google Chrome' ;;
+    helium-browser) printf 'Helium' ;;
+    iina) printf 'IINA' ;;
+    iterm2) printf 'iTerm' ;;
+    karabiner-elements) printf 'Karabiner-Elements' ;;
+    mole-app) printf 'Mole' ;;
+    multipass) printf 'Multipass' ;;
+    neardrop | grishka/grishka/neardrop) printf 'NearDrop' ;;
+    ngrok) printf 'ngrok' ;;
+    nikitabobko/tap/aerospace | aerospace) printf 'AeroSpace' ;;
+    notion-calendar) printf 'Notion Calendar' ;;
+    obsidian) printf 'Obsidian' ;;
+    orbstack) printf 'OrbStack' ;;
+    pgadmin4) printf 'pgAdmin 4' ;;
+    raycast) printf 'Raycast' ;;
+    rectangle) printf 'Rectangle' ;;
+    signal) printf 'Signal' ;;
+    slack) printf 'Slack' ;;
+    spotify) printf 'Spotify' ;;
+    stats) printf 'Stats' ;;
+    superwhisper) printf 'superwhisper' ;;
+    synology-drive) printf 'Synology Drive Client' ;;
+    t3-code) printf 'T3 Code (Alpha)' ;;
+    tailscale-app) printf 'Tailscale' ;;
+    the-unarchiver) printf 'The Unarchiver' ;;
+    visual-studio-code) printf 'Visual Studio Code' ;;
+    warp) printf 'Warp' ;;
+    whatsapp) printf 'WhatsApp' ;;
+    yaak) printf 'Yaak' ;;
+    zen) printf 'Zen' ;;
+    zoom) printf 'zoom.us' ;;
+    zulu@17) printf '' ;;
+    *) printf '' ;;
+  esac
+}
 
+filter_brewfile_for_existing_apps() {
+  local source_file="$1"
+  local target_file="$2"
+  local line cask_name app_name
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" =~ ^cask[[:space:]]+\"([^\"]+)\" ]]; then
+      cask_name="${BASH_REMATCH[1]}"
+      app_name="$(cask_app_bundle_name "$cask_name")"
+
+      if [[ -n "$app_name" && -d "/Applications/${app_name}.app" ]]; then
+        warn "Skipping cask ${cask_name}; /Applications/${app_name}.app already exists"
+        printf '# Skipped existing app: %s\n' "$line" >> "$target_file"
+        continue
+      fi
+    fi
+
+    printf '%s\n' "$line" >> "$target_file"
+  done < "$source_file"
+}
+
+install_brewfile() {
+  temp_brewfile="$(mktemp)"
+
+  filter_brewfile_for_existing_apps "${repo_root}/Brewfile" "$temp_brewfile"
+
+  log "Installing Homebrew bundle"
+  brew bundle install --no-upgrade --file "$temp_brewfile"
+}
+
+remove_neardrop_quarantine() {
+  local app_path="/Applications/NearDrop.app"
+
+  if [[ ! -d "$app_path" ]]; then
+    return 0
+  fi
+
+  log "Removing NearDrop quarantine attribute"
+  sudo xattr -r -d com.apple.quarantine "$app_path" 2>/dev/null || true
+}
+
+initialize_submodules() {
+  log "Initializing git submodules"
+  git -C "$repo_root" submodule sync --recursive
+  git -C "$repo_root" submodule update --init --recursive || {
+    warn "Submodule init failed. Check network access and rerun: git submodule update --init --recursive"
+    return 1
+  }
+}
+
+install_mise_tools() {
+  if ! command -v mise >/dev/null 2>&1; then
+    warn "mise is not available after brew bundle; skipping mise install"
+    return 0
+  fi
+
+  log "Installing mise tools"
+  (cd "$repo_root" && mise install)
+}
+
+install_shell_framework() {
+  local omz_dir="${HOME}/.oh-my-zsh"
+  local p10k_dir="${ZSH_CUSTOM:-${omz_dir}/custom}/themes/powerlevel10k"
+
+  if [[ ! -d "$omz_dir" ]]; then
+    log "Installing Oh My Zsh"
+    git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$omz_dir"
+  else
+    log "Oh My Zsh is already installed"
+  fi
+
+  if [[ ! -d "$p10k_dir" ]]; then
+    log "Installing Powerlevel10k"
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$p10k_dir"
+  else
+    log "Powerlevel10k is already installed"
+  fi
+}
+
+apply_macos_defaults_once() {
+  if [[ "${DOTFILES_SKIP_MACOS_DEFAULTS:-}" == "1" ]]; then
+    warn "Skipping macOS defaults because DOTFILES_SKIP_MACOS_DEFAULTS=1"
+    return 0
+  fi
+
+  if [[ -f "$macos_defaults_flag" ]]; then
+    log "macOS defaults already applied"
+    return 0
+  fi
+
+  log "Applying macOS defaults"
+  "${repo_root}/macos/defaults.sh"
+  touch "$macos_defaults_flag"
+}
+
+ensure_xcode_command_line_tools
+ensure_homebrew
+load_homebrew_shellenv
+initialize_submodules
+install_brewfile
+remove_neardrop_quarantine
+install_shell_framework
+
+log "Linking dotfiles"
 "${repo_root}/bin/link-dotfiles"
 
-if command -v mise >/dev/null 2>&1; then
-  mise install
-fi
-
-"${repo_root}/macos/defaults.sh"
+install_mise_tools
+apply_macos_defaults_once
 
 cat <<'EOF'
 
-Manual follow-up:
-- Sign in to App Store / iCloud and install any non-Homebrew apps.
-- Install or finish first-run setup for Xcode and Android Studio, then create AVDs.
-- Import or generate SSH keys and add them to GitHub.
-- Re-auth tools that keep credentials outside this repo.
-- Re-grant Accessibility / Automation permissions for Karabiner, Aerospace, and similar tools.
+Bootstrap complete.
+
+Recommended next steps:
+- Run ./bin/auth-setup to configure SSH and GitHub access.
+- Run ./bin/install-apps to install extra casks and report manual vendor apps.
+- Sign in to Apple ID, App Store, and iCloud.
+- Re-grant Accessibility / Automation / network permissions for Karabiner, AeroSpace, NearDrop, Synology Drive, superwhisper, and similar tools.
+- Finish first-run setup for Xcode, Android Studio, OrbStack, and DaVinci Resolve.
 EOF

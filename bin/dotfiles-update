@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+log() {
+  printf '==> %s\n' "$1"
+}
+
+log "Updating dotfiles repo"
+git -C "$repo_root" pull --ff-only
+
+log "Applying bootstrap-managed updates"
+DOTFILES_SKIP_MACOS_DEFAULTS=1 "${repo_root}/bin/bootstrap"
+
+log "Dotfiles update complete"

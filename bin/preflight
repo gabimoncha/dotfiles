@@ -1,0 +1,171 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+failures=0
+
+pass() {
+  printf 'ok  - %s\n' "$1"
+}
+
+warn() {
+  printf 'warn - %s\n' "$1"
+}
+
+fail() {
+  printf 'fail - %s\n' "$1" >&2
+  failures=$((failures + 1))
+}
+
+check_macos() {
+  if [[ "$(uname)" == "Darwin" ]]; then
+    pass "running on macOS"
+  else
+    fail "this bootstrap is only for macOS"
+  fi
+}
+
+check_xcode_clt() {
+  if xcode-select -p >/dev/null 2>&1; then
+    pass "Xcode Command Line Tools installed"
+  else
+    warn "Xcode Command Line Tools missing; ./bin/bootstrap will launch the installer and exit for a rerun"
+  fi
+}
+
+check_homebrew() {
+  if command -v brew >/dev/null 2>&1; then
+    pass "Homebrew found"
+    if brew --prefix >/dev/null 2>&1; then
+      pass "Homebrew prefix is usable"
+    else
+      fail "brew exists but brew --prefix failed"
+    fi
+  else
+    warn "Homebrew not found; ./bin/bootstrap will install it"
+  fi
+}
+
+check_github_ssh() {
+  local output status
+
+  if ! command -v ssh >/dev/null 2>&1; then
+    warn "ssh is not available; run ./bin/auth-setup after bootstrap"
+    return 0
+  fi
+
+  set +e
+  output="$(ssh -o BatchMode=yes -o ConnectTimeout=5 -T git@github.com 2>&1)"
+  status=$?
+  set -e
+
+  if [[ "$output" == *"successfully authenticated"* ]]; then
+    pass "GitHub SSH authenticated"
+  elif [[ $status -eq 255 ]]; then
+    warn "GitHub SSH is not ready; run ./bin/auth-setup after bootstrap"
+  else
+    warn "GitHub SSH returned: ${output}"
+  fi
+}
+
+check_submodule_url() {
+  local url
+
+  url="$(git -C "$repo_root" config --file .gitmodules --get submodule.nvim.url || true)"
+  case "$url" in
+    ../nvim | https://github.com/gabimoncha/nvim | https://github.com/gabimoncha/nvim.git)
+      pass "nvim submodule uses public-friendly URL"
+      ;;
+    git@github.com:* | ssh://*)
+      fail "nvim submodule URL requires SSH: ${url}"
+      ;;
+    *)
+      fail "nvim submodule URL should be ../nvim or HTTPS, got: ${url:-missing}"
+      ;;
+  esac
+}
+
+check_script_syntax() {
+  local script
+  local scripts=(
+    "bin/bootstrap"
+    "bin/setup"
+    "bin/link-dotfiles"
+    "bin/preflight"
+    "bin/auth-setup"
+    "bin/install-apps"
+    "bin/dotfiles-update"
+    "bin/prepare-sync"
+    "bin/mackup-backup"
+    "bin/mackup-restore"
+    "bin/raycast-backup"
+    "bin/raycast-restore"
+    "macos/defaults.sh"
+  )
+
+  for script in "${scripts[@]}"; do
+    if [[ -f "${repo_root}/${script}" ]]; then
+      if bash -n "${repo_root}/${script}"; then
+        pass "syntax: ${script}"
+      else
+        fail "syntax error: ${script}"
+      fi
+    else
+      fail "missing script: ${script}"
+    fi
+  done
+}
+
+check_repo_state() {
+  if git -C "$repo_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    pass "dotfiles git repo detected"
+  else
+    fail "not inside a git repo"
+  fi
+
+  if [[ -f "${repo_root}/Brewfile" ]]; then
+    pass "Brewfile present"
+  else
+    fail "Brewfile missing"
+  fi
+
+  if [[ -f "${repo_root}/home/.config/mise/config.toml" ]]; then
+    pass "mise config present"
+  else
+    fail "mise config missing"
+  fi
+
+  if [[ -f "${repo_root}/apps/manifest.tsv" ]]; then
+    pass "app manifest present"
+  else
+    fail "app manifest missing"
+  fi
+}
+
+check_app_manifest() {
+  local bad_rows
+
+  bad_rows="$(awk -F '\t' 'NF != 5 && $0 !~ /^#/ && $0 != "" { print NR }' "${repo_root}/apps/manifest.tsv")"
+  if [[ -z "$bad_rows" ]]; then
+    pass "app manifest has five TSV columns"
+  else
+    fail "app manifest malformed rows: ${bad_rows}"
+  fi
+}
+
+check_macos
+check_xcode_clt
+check_homebrew
+check_github_ssh
+check_submodule_url
+check_repo_state
+check_app_manifest
+check_script_syntax
+
+if [[ $failures -gt 0 ]]; then
+  printf '\nPreflight failed with %s issue(s).\n' "$failures" >&2
+  exit 1
+fi
+
+printf '\nPreflight passed.\n'
