@@ -6,13 +6,27 @@ log() {
   printf '==> %s\n' "$1"
 }
 
-disable_symbolic_hotkey() {
+set_disabled_symbolic_hotkey() {
   local key="$1"
+  local key_code="$2"
+  local modifiers="$3"
   local plist="${HOME}/Library/Preferences/com.apple.symbolichotkeys.plist"
 
-  if /usr/libexec/PlistBuddy -c "Print :AppleSymbolicHotKeys:${key}" "$plist" >/dev/null 2>&1; then
-    /usr/libexec/PlistBuddy -c "Set :AppleSymbolicHotKeys:${key}:enabled false" "$plist" >/dev/null 2>&1 || true
+  if ! /usr/libexec/PlistBuddy -c "Print :AppleSymbolicHotKeys" "$plist" >/dev/null 2>&1; then
+    /usr/libexec/PlistBuddy -c "Add :AppleSymbolicHotKeys dict" "$plist" >/dev/null 2>&1
   fi
+
+  /usr/libexec/PlistBuddy -c "Delete :AppleSymbolicHotKeys:${key}" "$plist" >/dev/null 2>&1 || true
+  /usr/libexec/PlistBuddy \
+    -c "Add :AppleSymbolicHotKeys:${key} dict" \
+    -c "Add :AppleSymbolicHotKeys:${key}:enabled bool false" \
+    -c "Add :AppleSymbolicHotKeys:${key}:value dict" \
+    -c "Add :AppleSymbolicHotKeys:${key}:value:type string standard" \
+    -c "Add :AppleSymbolicHotKeys:${key}:value:parameters array" \
+    -c "Add :AppleSymbolicHotKeys:${key}:value:parameters:0 integer 32" \
+    -c "Add :AppleSymbolicHotKeys:${key}:value:parameters:1 integer ${key_code}" \
+    -c "Add :AppleSymbolicHotKeys:${key}:value:parameters:2 integer ${modifiers}" \
+    "$plist" >/dev/null
 }
 
 log "Applying global keyboard and locale defaults"
@@ -72,8 +86,8 @@ defaults write com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
 defaults write com.apple.SoftwareUpdate AutomaticDownload -bool true
 
 log "Disabling Spotlight shortcuts for Raycast"
-disable_symbolic_hotkey 64
-disable_symbolic_hotkey 65
+set_disabled_symbolic_hotkey 64 49 1048576
+set_disabled_symbolic_hotkey 65 49 1572864
 
 log "Reloading affected macOS services"
 killall cfprefsd >/dev/null 2>&1 || true

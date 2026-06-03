@@ -32,13 +32,11 @@ latest_rayconfig() {
 
 spotlight_hotkey_enabled() {
   local key="$1"
-  defaults read com.apple.symbolichotkeys AppleSymbolicHotKeys 2>/dev/null |
-    awk -v key="$key" '
-      $1 == key { in_key = 1 }
-      in_key && /enabled = 1/ { found = 1 }
-      in_key && /^    [0-9]+ =/ && $1 != key { in_key = 0 }
-      END { exit found ? 0 : 1 }
-    '
+  local plist="${HOME}/Library/Preferences/com.apple.symbolichotkeys.plist"
+  local enabled
+
+  enabled="$(/usr/libexec/PlistBuddy -c "Print :AppleSymbolicHotKeys:${key}:enabled" "$plist" 2>/dev/null || true)"
+  [[ -z "$enabled" || "$enabled" == "true" || "$enabled" == "1" ]]
 }
 
 check_ghostty() {
