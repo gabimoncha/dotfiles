@@ -159,6 +159,30 @@ configure_gh_git_protocol() {
   }
 }
 
+github_public_key_scope_error() {
+  local output="$1"
+
+  [[ "$output" == *"admin:public_key"* || "$output" == *"public_key"* || "$output" == *"HTTP 404"* ]]
+}
+
+ensure_github_public_key_scope() {
+  local output
+
+  if [[ ! -t 0 ]]; then
+    warn "GitHub CLI needs the admin:public_key scope to upload SSH keys."
+    warn "Rerun ./bin/auth-setup interactively, or run: gh auth refresh -h github.com -s admin:public_key"
+    return 1
+  fi
+
+  log "Refreshing GitHub CLI public-key scope"
+  output="$(run_gh auth refresh --hostname github.com --scopes admin:public_key 2>&1)" || {
+    warn "Could not refresh GitHub CLI public-key scope: ${output}"
+    return 1
+  }
+
+  [[ -z "$output" ]] || printf '%s\n' "$output"
+}
+
 ensure_github_auth() {
   if ! gh_available; then
     warn "gh is not available through PATH or mise. Run ./bin/setup, or run: cd ${repo_root} && mise install gh"
@@ -183,7 +207,7 @@ ensure_github_auth() {
 
 upload_ssh_key_to_github() {
   local key_path="${HOME}/.ssh/id_ed25519.pub"
-  local key_contents title output
+  local key_contents keys title output status
 
   if [[ ! -f "$key_path" ]]; then
     warn "No SSH public key found to upload"
@@ -196,15 +220,43 @@ upload_ssh_key_to_github() {
   fi
 
   key_contents="$(awk '{ print $1 " " $2 }' "$key_path")"
-  if run_gh api user/keys --jq '.[].key' 2>/dev/null | grep -Fxq "$key_contents"; then
+  set +e
+  keys="$(run_gh api user/keys --jq '.[].key' 2>&1)"
+  status=$?
+  set -e
+
+  if [[ $status -ne 0 ]]; then
+    if github_public_key_scope_error "$keys"; then
+      ensure_github_public_key_scope || return 0
+      set +e
+      keys="$(run_gh api user/keys --jq '.[].key' 2>&1)"
+      status=$?
+      set -e
+    fi
+
+    if [[ $status -ne 0 ]]; then
+      warn "Could not list GitHub SSH keys: ${keys}"
+      return 0
+    fi
+  fi
+
+  if printf '%s\n' "$keys" | grep -Fxq "$key_contents"; then
     log "SSH key already exists on GitHub"
     return 0
   fi
 
   title="$(scutil --get ComputerName 2>/dev/null || hostname)"
   output="$(run_gh ssh-key add "$key_path" --title "$title" 2>&1)" || {
-    warn "Could not upload SSH key to GitHub: ${output}"
-    return 0
+    if github_public_key_scope_error "$output"; then
+      ensure_github_public_key_scope || return 0
+      output="$(run_gh ssh-key add "$key_path" --title "$title" 2>&1)" || {
+        warn "Could not upload SSH key to GitHub: ${output}"
+        return 0
+      }
+    else
+      warn "Could not upload SSH key to GitHub: ${output}"
+      return 0
+    fi
   }
 
   if [[ "$output" == *"already exists"* ]]; then
