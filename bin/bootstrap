@@ -236,7 +236,7 @@ ensure_xcodes_cli() {
   fi
 
   log "Installing xcodes"
-  (cd "$repo_root" && mise install xcodes)
+  mise install xcodes@latest
 }
 
 ensure_mas_cli() {
@@ -261,7 +261,7 @@ install_xcode_with_xcodes() {
   fi
 
   log "Installing latest Xcode with xcodes"
-  if ! (cd "$repo_root" && mise exec -- xcodes install --latest); then
+  if ! mise exec xcodes@latest -- xcodes install --latest; then
     warn "Xcode install with xcodes failed. Sign in when prompted or set XCODES_USERNAME/XCODES_PASSWORD, then rerun ./bin/setup."
     return 1
   fi
