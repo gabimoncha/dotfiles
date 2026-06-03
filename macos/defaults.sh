@@ -29,6 +29,15 @@ set_disabled_symbolic_hotkey() {
     "$plist" >/dev/null
 }
 
+apply_symbolic_hotkey_changes() {
+  local activate_settings="/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings"
+
+  defaults read com.apple.symbolichotkeys AppleSymbolicHotKeys >/dev/null 2>&1 || true
+  if [[ -x "$activate_settings" ]]; then
+    "$activate_settings" -u >/dev/null 2>&1 || true
+  fi
+}
+
 log "Applying global keyboard and locale defaults"
 defaults write NSGlobalDomain AppleLocale -string "en_US@currency=RON"
 defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
@@ -88,6 +97,7 @@ defaults write com.apple.SoftwareUpdate AutomaticDownload -bool true
 log "Disabling Spotlight shortcuts for Raycast"
 set_disabled_symbolic_hotkey 64 49 1048576
 set_disabled_symbolic_hotkey 65 49 1572864
+apply_symbolic_hotkey_changes
 
 log "Reloading affected macOS services"
 killall cfprefsd >/dev/null 2>&1 || true
