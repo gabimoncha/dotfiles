@@ -6,7 +6,7 @@ Bootstrap a new Mac from the current machine state without tracking shell secret
 
 - Homebrew packages, App Store apps, and editor extensions through `Brewfile`
 - Global `mise` tool versions
-- Git, zsh, tmux, Karabiner, Zed, superwhisper preferences, Mackup, and selected helper scripts
+- Git, zsh, tmux, Karabiner, Zed, AeroSpace, Ghostty, superwhisper preferences, Mackup, and selected helper scripts
 - VS Code and Cursor user settings/keymaps through Mackup
 - macOS defaults that are safe to automate
 - Neovim as a separate git repo wired in here as a submodule
@@ -84,6 +84,8 @@ NearDrop is installed from the `grishka/grishka` Homebrew tap. Bootstrap and `in
 
 superwhisper is installed as a Homebrew cask, and `bin/link-dotfiles` symlinks the tracked settings file to `~/Documents/superwhisper/settings/settings.json`. App auth and macOS permissions still need to be granted outside git.
 
+AeroSpace and Ghostty are installed as Homebrew casks, but their configs are tracked directly in this repo. `bin/link-dotfiles` only links `~/.aerospace.toml` and `~/Library/Application Support/com.mitchellh.ghostty/config` after the matching app bundle exists in `/Applications`; setup reruns the link step after app installation so fresh machines get these links at the right time.
+
 Run:
 
 ```bash
@@ -121,22 +123,28 @@ Mackup is configured in copy mode with iCloud storage:
 
 Both helpers read the tracked `home/.mackup.cfg` and defer cleanly if iCloud Drive is not signed in yet. Mackup does not restore Raycast in this repo.
 
-Raycast is restored through an encrypted `.rayconfig` export saved outside git, preferably under `iCloud Drive/Raycast`:
+Raycast is restored through an encrypted `.rayconfig` export saved outside git under `iCloud Drive/Raycast`:
 
 ```bash
+# old Mac: create the export
 ./bin/raycast-backup
+
+# new Mac: open the export after iCloud syncs it
 ./bin/raycast-restore
 ```
 
 You can still pass an explicit export path to `./bin/raycast-restore /path/to/export.rayconfig`.
 
-macOS defaults disable Spotlight hotkeys so Raycast can own Command-Space.
+Do not commit `.rayconfig` files or export passphrases. Raycast encrypts exports, but they still contain app settings and extension state; keep the passphrase in Keychain or another private store.
 
-Run `./bin/app-state-doctor` when Ghostty, tmux plugins, or Raycast hotkeys look incomplete after a fresh-machine setup. It checks for the Ghostty Mackup restore target, missing tmux plugins, Raycast exports, and whether Spotlight is still holding Command-Space.
+macOS defaults disable Spotlight's Command-Space hotkeys. Raycast owning Command-Space comes from the restored Raycast export or from setting the hotkey manually in Raycast preferences.
+
+Run `./bin/app-state-doctor` when AeroSpace, Ghostty, tmux plugins, or Raycast hotkeys look incomplete after a fresh-machine setup. It checks for the tracked app config links, missing tmux plugins, Raycast exports, and whether Spotlight is still holding Command-Space.
 
 ## Managed Files
 
 - `home/.gitconfig`
+- `home/.aerospace.toml`
 - `home/.zshenv`, `home/.zprofile`, and `home/.zshrc`
 - `home/.p10k.zsh`
 - `home/.mackup.cfg`
@@ -147,6 +155,7 @@ Run `./bin/app-state-doctor` when Ghostty, tmux plugins, or Raycast hotkeys look
 - `home/.config/karabiner/karabiner.json`
 - `home/.config/zed/settings.json`
 - `home/.config/zed/keymap.json`
+- `home/Library/Application Support/com.mitchellh.ghostty/config`
 - `home/Documents/superwhisper/settings/settings.json`
 - `home/scripts/toggle_function_keys.sh`
 - `nvim/` as `~/.config/nvim`

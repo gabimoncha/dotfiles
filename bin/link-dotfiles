@@ -31,6 +31,11 @@ managed_sources=(
   "${repo_root}/home/scripts/toggle_function_keys.sh"
 )
 
+managed_app_sources=(
+  "AeroSpace|${repo_root}/home/.aerospace.toml"
+  "Ghostty|${repo_root}/home/Library/Application Support/com.mitchellh.ghostty/config"
+)
+
 if [[ -d "${repo_root}/nvim" ]] && find "${repo_root}/nvim" -mindepth 1 -maxdepth 1 -print -quit | grep -q .; then
   managed_sources+=("${repo_root}/nvim")
 else
@@ -100,6 +105,23 @@ link_path() {
   ln -s "${source}" "${target}"
   printf 'Linked %s -> %s\n' "${target}" "${source}"
 }
+
+append_installed_app_sources() {
+  local entry app_bundle source
+
+  for entry in "${managed_app_sources[@]}"; do
+    app_bundle="${entry%%|*}"
+    source="${entry#*|}"
+
+    if [[ -d "/Applications/${app_bundle}.app" ]]; then
+      managed_sources+=("${source}")
+    else
+      printf 'Skipping %s config link; /Applications/%s.app is not installed\n' "${app_bundle}" "${app_bundle}"
+    fi
+  done
+}
+
+append_installed_app_sources
 
 for source in "${managed_sources[@]}"; do
   if [[ ! -e "${source}" && ! -L "${source}" ]]; then

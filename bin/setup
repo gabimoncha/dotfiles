@@ -151,7 +151,15 @@ EOF
   if [[ -n "$rayconfig" && -f "$rayconfig" ]]; then
     "${repo_root}/bin/raycast-restore" "$rayconfig"
   else
-    warn "No Raycast .rayconfig export found in iCloud Drive/Raycast; export Raycast settings there, then rerun ./bin/raycast-restore"
+    log "Raycast restore deferred"
+    cat <<'EOF'
+No Raycast .rayconfig export was found in iCloud Drive/Raycast.
+
+On the old Mac, run ./bin/raycast-backup and export Raycast settings to iCloud Drive/Raycast.
+On this Mac, rerun ./bin/setup or ./bin/raycast-restore after iCloud syncs the export.
+
+This is expected until the encrypted Raycast export exists. Do not commit .rayconfig files or their passphrases.
+EOF
   fi
 }
 
@@ -195,6 +203,9 @@ fi
 
 log "Installing extra apps from manifest"
 "${repo_root}/bin/install-apps"
+
+log "Linking app dotfiles"
+"${repo_root}/bin/link-dotfiles"
 
 print_manifest_summary
 run_interactive_followup

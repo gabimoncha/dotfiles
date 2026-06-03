@@ -42,13 +42,37 @@ spotlight_hotkey_enabled() {
 }
 
 check_ghostty() {
-  if [[ -f "${HOME}/.config/ghostty/config" || -L "${HOME}/.config/ghostty/config" ]]; then
-    ok "Ghostty config exists at ~/.config/ghostty/config"
+  local source="${repo_root}/home/Library/Application Support/com.mitchellh.ghostty/config"
+  local target="${HOME}/Library/Application Support/com.mitchellh.ghostty/config"
+
+  if [[ -L "$target" && "$(readlink "$target")" == "$source" ]]; then
+    ok "Ghostty config is linked at ~/Library/Application Support/com.mitchellh.ghostty/config"
     return 0
   fi
 
-  warn "Ghostty config is missing at ~/.config/ghostty/config"
-  info "If the old Mac has the right Ghostty setup, run ./bin/mackup-backup there, wait for iCloud, then run ./bin/mackup-restore here."
+  if [[ -e "$target" || -L "$target" ]]; then
+    warn "Ghostty config exists but is not linked to this repo"
+  else
+    warn "Ghostty config is missing at ~/Library/Application Support/com.mitchellh.ghostty/config"
+  fi
+  info "Run ./bin/link-dotfiles after Ghostty is installed."
+}
+
+check_aerospace() {
+  local source="${repo_root}/home/.aerospace.toml"
+  local target="${HOME}/.aerospace.toml"
+
+  if [[ -L "$target" && "$(readlink "$target")" == "$source" ]]; then
+    ok "AeroSpace config is linked at ~/.aerospace.toml"
+    return 0
+  fi
+
+  if [[ -e "$target" || -L "$target" ]]; then
+    warn "AeroSpace config exists but is not linked to this repo"
+  else
+    warn "AeroSpace config is missing at ~/.aerospace.toml"
+  fi
+  info "Run ./bin/link-dotfiles after AeroSpace is installed."
 }
 
 check_tmux() {
@@ -104,6 +128,7 @@ check_raycast() {
   fi
 }
 
+check_aerospace
 check_ghostty
 check_tmux
 check_raycast

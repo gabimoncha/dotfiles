@@ -10,10 +10,14 @@ open -a Raycast 2>/dev/null || true
 cat <<EOF
 Raycast backup is app-driven.
 
+On the old Mac:
 1. In Raycast, run "Export Settings & Data".
 2. Set or confirm an export passphrase.
-3. Save the .rayconfig file in a synced folder, preferably:
+3. Save the encrypted .rayconfig file in:
    ${backup_dir}
 
-Raycast encrypts .rayconfig exports; keep the passphrase in Keychain or another private store.
+On the new Mac, rerun ./bin/setup or ./bin/raycast-restore after iCloud syncs the export.
+
+Raycast encrypts .rayconfig exports, but they still contain app settings and extension state.
+Keep the export and passphrase outside git; store the passphrase in Keychain or another private store.
 EOF

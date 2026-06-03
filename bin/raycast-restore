@@ -17,7 +17,21 @@ if [[ -z "$rayconfig" ]]; then
 fi
 
 if [[ -z "$rayconfig" || ! -f "$rayconfig" ]]; then
-  printf 'No Raycast .rayconfig export found in iCloud Drive/Raycast. Export Raycast settings there, or pass a path: ./bin/raycast-restore /path/to/export.rayconfig\n' >&2
+  cat >&2 <<'EOF'
+No Raycast .rayconfig export found.
+
+Expected locations:
+- iCloud Drive/Raycast/*.rayconfig
+- any explicit path passed as: ./bin/raycast-restore /path/to/export.rayconfig
+
+On the old Mac:
+1. Run ./bin/raycast-backup.
+2. In Raycast, run "Export Settings & Data".
+3. Save the encrypted .rayconfig export to iCloud Drive/Raycast.
+
+On this Mac, rerun ./bin/raycast-restore after iCloud syncs the export.
+Keep the export passphrase in Keychain or another private store; do not commit .rayconfig files or passphrases.
+EOF
   exit 1
 fi
 

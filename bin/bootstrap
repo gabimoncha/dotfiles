@@ -637,6 +637,8 @@ log "Linking dotfiles"
 
 start_mise_install
 install_brewfile
+log "Linking app dotfiles"
+"${repo_root}/bin/link-dotfiles"
 wait_for_mise_install
 install_deferred_xcode_formulae
 remove_neardrop_quarantine
