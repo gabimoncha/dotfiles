@@ -95,14 +95,9 @@ Dry-run without installing:
 
 The tracked shell layout is:
 
-- `home/.zshrc`
-- `home/.zprofile`
-- `home/.zshenv`
+- `home/.zshenv`, `home/.zprofile`, and `home/.zshrc` as thin zsh entrypoints
 - `home/.p10k.zsh`
-- `home/.config/zsh/path.zsh`
-- `home/.config/zsh/aliases.zsh`
-- `home/.config/zsh/functions.zsh`
-- `home/.config/zsh/check-updates.zsh`
+- `home/.config/zsh/*.zsh` for the actual shared zsh configuration
 
 Machine-local secrets and exports belong in `~/.config/local/*.zsh`, which is ignored by this repo and sourced by `.zshrc`.
 
@@ -129,18 +124,13 @@ macOS defaults disable Spotlight hotkeys so Raycast can own Command-Space.
 ## Managed Files
 
 - `home/.gitconfig`
-- `home/.zshenv`
-- `home/.zprofile`
-- `home/.zshrc`
+- `home/.zshenv`, `home/.zprofile`, and `home/.zshrc`
 - `home/.p10k.zsh`
 - `home/.mackup.cfg`
 - `home/.rgrc`
 - `home/.tmux.conf`
 - `home/.config/mise/config.toml`
-- `home/.config/zsh/path.zsh`
-- `home/.config/zsh/aliases.zsh`
-- `home/.config/zsh/functions.zsh`
-- `home/.config/zsh/check-updates.zsh`
+- `home/.config/zsh/*.zsh`
 - `home/.config/karabiner/karabiner.json`
 - `home/.config/zed/settings.json`
 - `home/.config/zed/keymap.json`

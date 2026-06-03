@@ -10,6 +10,18 @@ warn() {
   printf '!! %s\n' "$1" >&2
 }
 
+load_homebrew_shellenv() {
+  if command -v brew >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+  fi
+}
+
 default_git_email() {
   git config --global user.email 2>/dev/null || true
 }
@@ -57,6 +69,24 @@ add_ssh_key_to_agent() {
 
   log "Adding SSH key to macOS keychain-backed agent"
   ssh-add --apple-use-keychain "$key_path" 2>/dev/null || ssh-add "$key_path" || true
+}
+
+ensure_github_known_host() {
+  local known_hosts="${HOME}/.ssh/known_hosts"
+
+  mkdir -p "${HOME}/.ssh"
+  chmod 700 "${HOME}/.ssh"
+  touch "$known_hosts"
+  chmod 600 "$known_hosts"
+
+  if ssh-keygen -F github.com -f "$known_hosts" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  log "Adding github.com to SSH known_hosts"
+  ssh-keyscan github.com >> "$known_hosts" 2>/dev/null || {
+    warn "Could not add github.com to SSH known_hosts"
+  }
 }
 
 configure_gh_git_protocol() {
@@ -137,8 +167,10 @@ Manual account and permission steps:
 EOF
 }
 
+load_homebrew_shellenv
 ensure_ssh_key
 add_ssh_key_to_agent
+ensure_github_known_host
 ensure_github_auth
 upload_ssh_key_to_github
 verify_github_ssh
