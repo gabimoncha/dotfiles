@@ -1,6 +1,7 @@
 # Curated from the current machine state.
-# Homebrew owns GUI apps, system packages, and CLIs that are not already managed
-# by mise. Runtimes and overlapping developer tools stay in mise instead.
+# Homebrew owns GUI apps, App Store apps, system packages, and CLIs that are not
+# already managed by mise. Runtimes and overlapping developer tools stay in mise
+# instead.
 
 tap "facebook/fb"
 tap "grishka/grishka"
@@ -25,6 +26,7 @@ brew "facebook/fb/idb-companion"
 brew "idb-companion"
 brew "ios-deploy"
 brew "mackup"
+brew "mas"
 brew "mise"
 brew "mole"
 brew "neofetch"
@@ -48,6 +50,15 @@ brew "wix/brew/applesimutils"
 brew "yakitrak/yakitrak/obsidian-cli"
 brew "zegervdv/zathura/zathura-cb"
 brew "zegervdv/zathura/zathura-pdf-mupdf"
+
+# Mac App Store
+mas "Amphetamine", id: 937984704
+mas "Draw Things", id: 6444050820
+mas "SiteSucker", id: 442168834
+mas "TestFlight", id: 899247664
+mas "The Unarchiver", id: 425424353
+mas "WhatsApp", id: 310633997
+mas "Xcode", id: 497799835
 
 cask "nikitabobko/tap/aerospace"
 cask "beeper"

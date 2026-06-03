@@ -4,7 +4,7 @@ Bootstrap a new Mac from the current machine state without tracking shell secret
 
 ## What This Repo Owns
 
-- Homebrew packages through `Brewfile`
+- Homebrew packages, App Store apps, and editor extensions through `Brewfile`
 - Global `mise` tool versions
 - Git, zsh, tmux, Karabiner, Zed, Mackup, and selected helper scripts
 - VS Code and Cursor user settings/keymaps through Mackup
@@ -45,7 +45,7 @@ The lower-level `bin/bootstrap` script:
 1. Launches the Xcode Command Line Tools installer if needed, then exits for a rerun.
 2. Installs Homebrew if needed.
 3. Initializes git submodules.
-4. Installs packages from a filtered `Brewfile` so existing apps in `/Applications` do not break the run.
+4. Installs packages, App Store apps, and editor extensions from a filtered `Brewfile` so existing apps in `/Applications` or unsigned App Store state do not break the run.
 5. Installs Oh My Zsh and Powerlevel10k if missing.
 6. Symlinks managed files from `home/` into `$HOME`.
 7. Installs global `mise` tools.
@@ -64,14 +64,15 @@ Run `./bin/auth-setup` after bootstrap to configure GitHub SSH for day-to-day de
 
 ## Extra Apps
 
-`Brewfile` owns normal Homebrew formulae and casks. `apps/manifest.tsv` is the typed setup ledger for tools and apps that deserve explicit status.
+`Brewfile` owns normal Homebrew formulae, casks, VS Code extensions, and App Store apps via `mas`. App Store installs require an Apple ID signed in to the App Store; if setup skips them, sign in and rerun `./bin/setup`.
+
+`apps/manifest.tsv` is the typed setup ledger for extra tools and apps that need explicit handling outside the main `Brewfile` pass.
 
 Manifest types:
 
-- `cask`: Homebrew GUI apps.
-- `formula`: Homebrew CLIs that `mise ls-remote <tool>` does not support.
+- `cask`: Supplemental Homebrew GUI apps.
+- `formula`: Supplemental Homebrew CLIs that `mise ls-remote <tool>` does not support.
 - `mise`: CLIs that are owned by `home/.config/mise/config.toml`.
-- `mas`: App Store apps installed after `mise install` provides `mas`.
 - `manual`: vendor/account flows such as DaVinci Resolve and Pinokio.
 
 NearDrop is installed from the `grishka/grishka` Homebrew tap. Bootstrap and `install-apps` both remove the app quarantine attribute after install so the app can launch cleanly.

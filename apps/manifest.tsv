@@ -1,7 +1,6 @@
 # key	type	token_or_url	app_bundle	notes
 act	mise	act	-	GitHub Actions local runner; mise-supported.
 aerospace	cask	nikitabobko/tap/aerospace	AeroSpace	Homebrew cask because mise ls-remote aerospace errors.
-amphetamine	mas	937984704	Amphetamine	App Store install; requires signed-in Apple ID.
 awscli	mise	awscli	-	AWS CLI v2; mise-supported.
 bat	mise	bat	-	Modern cat replacement; mise-supported.
 beeper	cask	beeper	Beeper	Homebrew cask.
@@ -16,7 +15,6 @@ cursor	cask	cursor	Cursor	Homebrew cask.
 cyberduck	cask	cyberduck	Cyberduck	Homebrew cask.
 davinci-resolve	manual	https://www.blackmagicdesign.com/products/davinciresolve	DaVinci Resolve	Blackmagic requires a vendor download/account flow; install manually or use Codex-assisted browser automation after bootstrap.
 discord	cask	discord	Discord	Homebrew cask.
-draw-things	mas	6444050820	Draw Things	App Store install; requires signed-in Apple ID.
 eza	mise	eza	-	Modern ls replacement; mise-supported.
 fastlane	formula	fastlane	-	Homebrew formula because mise ls-remote fastlane errors.
 figma	cask	figma	Figma	Homebrew cask.
@@ -45,23 +43,18 @@ raycast	cask	raycast	Raycast	Homebrew cask; restore settings with a .rayconfig e
 rectangle	cask	rectangle	Rectangle	Homebrew cask.
 scc	formula	scc	-	Homebrew formula because mise ls-remote scc errors.
 signal	cask	signal	Signal	Homebrew cask.
-sitesucker	mas	442168834	SiteSucker	App Store install; requires signed-in Apple ID.
 slack	cask	slack	Slack	Homebrew cask.
 spotify	cask	spotify	Spotify	Homebrew cask.
 superwhisper	cask	superwhisper	superwhisper	Homebrew cask.
 synology-drive	cask	synology-drive	Synology Drive Client	Homebrew cask.
 t3-code	cask	t3-code	T3 Code (Alpha)	Homebrew cask; stable package route found.
 tailscale	cask	tailscale-app	Tailscale	Homebrew cask for the menu-bar app and full Mac UX.
-testflight	mas	899247664	TestFlight	App Store install; requires signed-in Apple ID.
-the-unarchiver	mas	425424353	The Unarchiver	App Store install; requires signed-in Apple ID.
 tig	formula	tig	-	Homebrew formula because mise ls-remote tig errors.
 tldr	formula	tldr	-	Homebrew formula because mise ls-remote tldr errors.
 tree	formula	tree	-	Homebrew formula because mise ls-remote tree errors.
 typst	mise	typst	-	Typesetting CLI; mise-supported.
 visual-studio-code	cask	visual-studio-code	Visual Studio Code	Homebrew cask; settings restored by Mackup.
 warp	cask	warp	Warp	Homebrew cask.
-whatsapp	mas	310633997	WhatsApp	App Store install; requires signed-in Apple ID.
-xcode	mas	497799835	Xcode	App Store install; requires signed-in Apple ID.
 yaak	cask	yaak	Yaak	Homebrew cask; GUI companion to @yaakapp/cli in mise.
 zen-browser	cask	zen	Zen	Homebrew cask token is zen.
 zoxide	mise	zoxide	-	Smarter cd helper; mise-supported.

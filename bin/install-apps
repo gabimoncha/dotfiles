@@ -6,8 +6,6 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 manifest="${repo_root}/apps/manifest.tsv"
 manual_count=0
 dry_run=0
-mas_account_checked=0
-mas_available=0
 
 log() {
   printf '==> %s\n' "$1"
@@ -116,88 +114,6 @@ install_mise_tool() {
   (cd "$repo_root" && mise install "$token")
 }
 
-ensure_mas_available() {
-  if [[ $mas_account_checked -eq 1 ]]; then
-    return 0
-  fi
-
-  mas_account_checked=1
-
-  if [[ $dry_run -eq 1 ]]; then
-    mas_available=1
-    return 0
-  fi
-
-  if command -v mas >/dev/null 2>&1; then
-    if mas config >/dev/null 2>&1; then
-      mas_available=1
-    else
-      warn "mas is installed but is not usable yet; skipping mas apps"
-    fi
-    return 0
-  fi
-
-  if command -v mise >/dev/null 2>&1; then
-    (cd "$repo_root" && mise install mas >/dev/null 2>&1) || true
-    if (cd "$repo_root" && mise exec -- mas config >/dev/null 2>&1); then
-      mas_available=1
-    else
-      warn "mas is managed by mise, but is not usable yet; skipping mas apps"
-    fi
-  else
-    warn "mas is required for App Store apps; run ./bin/bootstrap first"
-  fi
-}
-
-mas_is_installed() {
-  local app_id="$1"
-
-  if command -v mas >/dev/null 2>&1; then
-    mas list | awk '{print $1}' | grep -Fxq "$app_id"
-    return $?
-  fi
-
-  if command -v mise >/dev/null 2>&1; then
-    (cd "$repo_root" && mise exec -- mas list | awk '{print $1}' | grep -Fxq "$app_id")
-    return $?
-  fi
-
-  return 1
-}
-
-install_mas_app() {
-  local app_id="$1"
-  local app_bundle="$2"
-
-  if app_installed "$app_bundle"; then
-    log "${app_bundle}.app already exists"
-    return 0
-  fi
-
-  ensure_mas_available
-
-  if [[ $dry_run -eq 1 ]]; then
-    log "dry-run: would install App Store app ${app_id}"
-    return 0
-  fi
-
-  if [[ $mas_available -ne 1 ]]; then
-    return 0
-  fi
-
-  if mas_is_installed "$app_id"; then
-    log "App Store app ${app_id} already installed"
-    return 0
-  fi
-
-  log "Installing App Store app ${app_id}"
-  if command -v mas >/dev/null 2>&1; then
-    mas install "$app_id"
-  else
-    (cd "$repo_root" && mise exec -- mas install "$app_id")
-  fi
-}
-
 report_manual() {
   local key="$1"
   local url="$2"
@@ -248,9 +164,6 @@ while IFS=$'\t' read -r key type token_or_url app_bundle notes || [[ -n "${key:-
       ;;
     mise)
       install_mise_tool "$token_or_url"
-      ;;
-    mas)
-      install_mas_app "$token_or_url" "$app_bundle"
       ;;
     manual)
       report_manual "$key" "$token_or_url" "$app_bundle" "$notes"

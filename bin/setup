@@ -44,22 +44,6 @@ app_installed() {
   [[ -n "$app_bundle" && "$app_bundle" != "-" && -d "/Applications/${app_bundle}.app" ]]
 }
 
-mas_is_installed() {
-  local app_id="$1"
-
-  if command -v mas >/dev/null 2>&1; then
-    mas list | awk '{print $1}' | grep -Fxq "$app_id"
-    return $?
-  fi
-
-  if command -v mise >/dev/null 2>&1; then
-    (cd "$repo_root" && mise exec -- mas list | awk '{print $1}' | grep -Fxq "$app_id")
-    return $?
-  fi
-
-  return 1
-}
-
 latest_rayconfig() {
   local icloud_dir="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
 
@@ -102,15 +86,6 @@ print_manifest_summary() {
         ;;
       mise)
         if command -v mise >/dev/null 2>&1; then
-          installed_count=$((installed_count + 1))
-        else
-          deferred_count=$((deferred_count + 1))
-        fi
-        ;;
-      mas)
-        if app_installed "$app_bundle"; then
-          skipped_count=$((skipped_count + 1))
-        elif mas_is_installed "$token_or_url"; then
           installed_count=$((installed_count + 1))
         else
           deferred_count=$((deferred_count + 1))
