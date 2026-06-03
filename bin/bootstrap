@@ -6,6 +6,8 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 macos_defaults_flag="${HOME}/.macos-defaults-applied"
 temp_brewfile=""
 xcode_brewfile=""
+mas_brewfile=""
+vscode_brewfile=""
 sudo_keepalive_pid=""
 mas_checked=0
 mas_available=0
@@ -17,6 +19,14 @@ cleanup() {
 
   if [[ -n "$xcode_brewfile" ]]; then
     rm -f "$xcode_brewfile"
+  fi
+
+  if [[ -n "$mas_brewfile" ]]; then
+    rm -f "$mas_brewfile"
+  fi
+
+  if [[ -n "$vscode_brewfile" ]]; then
+    rm -f "$vscode_brewfile"
   fi
 
   if [[ -n "$sudo_keepalive_pid" ]]; then
@@ -158,6 +168,18 @@ cask_app_bundle_name() {
     zoom) printf 'zoom.us' ;;
     zulu@17) printf '' ;;
     *) printf '' ;;
+  esac
+}
+
+mas_app_bundle_name() {
+  case "$1" in
+    Amphetamine) printf 'Amphetamine' ;;
+    "Draw Things") printf 'Draw Things' ;;
+    SiteSucker) printf 'SiteSucker' ;;
+    TestFlight) printf 'TestFlight' ;;
+    "The Unarchiver") printf 'The Unarchiver' ;;
+    WhatsApp) printf 'WhatsApp' ;;
+    *) printf '%s' "$1" ;;
   esac
 }
 
@@ -307,11 +329,99 @@ mas_available_for_brewfile() {
   return 1
 }
 
+mas_app_installed() {
+  local app_id="$1"
+
+  mas list | awk '{print $1}' | grep -Fxq "$app_id"
+}
+
+install_mas_apps() {
+  local line app_name app_id app_bundle
+
+  if [[ ! -s "$mas_brewfile" ]]; then
+    return 0
+  fi
+
+  if ! mas_available_for_brewfile; then
+    warn "Skipped Mac App Store apps. Sign in to the App Store, then rerun ./bin/setup."
+    return 0
+  fi
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" =~ ^mas[[:space:]]+\"([^\"]+)\"\,\ id:\ ([0-9]+) ]]; then
+      app_name="${BASH_REMATCH[1]}"
+      app_id="${BASH_REMATCH[2]}"
+      app_bundle="$(mas_app_bundle_name "$app_name")"
+
+      if [[ -d "/Applications/${app_bundle}.app" ]]; then
+        log "${app_bundle}.app already exists"
+        continue
+      fi
+
+      if mas_app_installed "$app_id"; then
+        log "App Store app ${app_name} already installed"
+        continue
+      fi
+
+      log "Installing App Store app ${app_name}"
+      mas install "$app_id" || {
+        warn "Skipping ${app_name}; App Store did not start the download. Open it in the App Store once, then rerun ./bin/setup."
+      }
+    fi
+  done < "$mas_brewfile"
+}
+
+code_cli() {
+  if command -v code >/dev/null 2>&1; then
+    command -v code
+    return 0
+  fi
+
+  if [[ -x "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" ]]; then
+    printf '/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code\n'
+    return 0
+  fi
+
+  return 1
+}
+
+install_vscode_extensions() {
+  local code_cmd line extension_id
+
+  if [[ ! -s "$vscode_brewfile" ]]; then
+    return 0
+  fi
+
+  code_cmd="$(code_cli || true)"
+  if [[ -z "$code_cmd" ]]; then
+    warn "Skipped VS Code extensions; code CLI is not available yet"
+    return 0
+  fi
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" =~ ^vscode[[:space:]]+\"([^\"]+)\" ]]; then
+      extension_id="${BASH_REMATCH[1]}"
+
+      if "$code_cmd" --list-extensions 2>/dev/null | grep -Fixq "$extension_id"; then
+        log "VS Code extension ${extension_id} already installed"
+        continue
+      fi
+
+      log "Installing VS Code extension ${extension_id}"
+      "$code_cmd" --install-extension "$extension_id" || {
+        warn "Skipping VS Code extension ${extension_id}; it is unavailable or failed to install"
+      }
+    fi
+  done < "$vscode_brewfile"
+}
+
 filter_brewfile_for_existing_apps() {
   local source_file="$1"
   local target_file="$2"
   local deferred_xcode_file="$3"
-  local line brew_name cask_name app_name
+  local mas_file="$4"
+  local vscode_file="$5"
+  local line brew_name cask_name app_name mas_name mas_id mas_bundle
 
   while IFS= read -r line || [[ -n "$line" ]]; do
     if [[ "$line" =~ ^brew[[:space:]]+\"([^\"]+)\" ]]; then
@@ -325,11 +435,29 @@ filter_brewfile_for_existing_apps() {
       fi
     fi
 
-    if [[ "$line" =~ ^mas[[:space:]]+\"([^\"]+)\" ]]; then
-      if ! mas_available_for_brewfile; then
-        printf '# Skipped until App Store is signed in: %s\n' "$line" >> "$target_file"
+    if [[ "$line" =~ ^mas[[:space:]]+\"([^\"]+)\"\,\ id:\ ([0-9]+) ]]; then
+      mas_name="${BASH_REMATCH[1]}"
+      mas_id="${BASH_REMATCH[2]}"
+      mas_bundle="$(mas_app_bundle_name "$mas_name")"
+
+      printf '# Installed separately by bootstrap: %s\n' "$line" >> "$target_file"
+
+      if [[ -d "/Applications/${mas_bundle}.app" ]]; then
+        warn "Skipping App Store app ${mas_name}; /Applications/${mas_bundle}.app already exists"
+        continue
+      elif command -v mas >/dev/null 2>&1 && mas_app_installed "$mas_id"; then
+        warn "Skipping App Store app ${mas_name}; already installed"
         continue
       fi
+
+      printf '%s\n' "$line" >> "$mas_file"
+      continue
+    fi
+
+    if [[ "$line" =~ ^vscode[[:space:]]+\"([^\"]+)\" ]]; then
+      printf '# Installed separately by bootstrap: %s\n' "$line" >> "$target_file"
+      printf '%s\n' "$line" >> "$vscode_file"
+      continue
     fi
 
     if [[ "$line" =~ ^cask[[:space:]]+\"([^\"]+)\" ]]; then
@@ -350,11 +478,13 @@ filter_brewfile_for_existing_apps() {
 install_brewfile() {
   temp_brewfile="$(mktemp)"
   xcode_brewfile="$(mktemp)"
+  mas_brewfile="$(mktemp)"
+  vscode_brewfile="$(mktemp)"
 
   ensure_mas_cli || true
   install_xcode_with_xcodes || true
   configure_full_xcode || true
-  filter_brewfile_for_existing_apps "${repo_root}/Brewfile" "$temp_brewfile" "$xcode_brewfile"
+  filter_brewfile_for_existing_apps "${repo_root}/Brewfile" "$temp_brewfile" "$xcode_brewfile" "$mas_brewfile" "$vscode_brewfile"
 
   log "Refreshing sudo timestamp for Homebrew cask installs"
   sudo -v
@@ -372,6 +502,9 @@ install_brewfile() {
   elif [[ -s "$xcode_brewfile" ]]; then
     warn "Skipped Xcode-dependent formulae. Install Xcode from the App Store, then rerun ./bin/setup."
   fi
+
+  install_mas_apps
+  install_vscode_extensions
 
   kill "$sudo_keepalive_pid" 2>/dev/null || true
   wait "$sudo_keepalive_pid" 2>/dev/null || true
@@ -428,18 +561,20 @@ install_shell_framework() {
 }
 
 apply_macos_defaults_once() {
+  local defaults_script="${repo_root}/macos/defaults.sh"
+
   if [[ "${DOTFILES_SKIP_MACOS_DEFAULTS:-}" == "1" ]]; then
     warn "Skipping macOS defaults because DOTFILES_SKIP_MACOS_DEFAULTS=1"
     return 0
   fi
 
-  if [[ -f "$macos_defaults_flag" ]]; then
+  if [[ -f "$macos_defaults_flag" && ! "$defaults_script" -nt "$macos_defaults_flag" ]]; then
     log "macOS defaults already applied"
     return 0
   fi
 
   log "Applying macOS defaults"
-  "${repo_root}/macos/defaults.sh"
+  "$defaults_script"
   touch "$macos_defaults_flag"
 }
 

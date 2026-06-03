@@ -69,6 +69,9 @@ log "Disabling Spotlight shortcuts for Raycast"
 disable_symbolic_hotkey 64
 disable_symbolic_hotkey 65
 
+log "Reloading affected macOS services"
+killall cfprefsd >/dev/null 2>&1 || true
+killall SystemUIServer >/dev/null 2>&1 || true
 killall Dock >/dev/null 2>&1 || true
 killall Finder >/dev/null 2>&1 || true
 
