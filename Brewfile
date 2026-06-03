@@ -54,7 +54,7 @@ brew "zegervdv/zathura/zathura-pdf-mupdf"
 # Mac App Store
 mas "Amphetamine", id: 937984704
 mas "Draw Things", id: 6444050820
-mas "SiteSucker", id: 442168834
+mas "Endel", id: 1346247457
 mas "TestFlight", id: 899247664
 mas "The Unarchiver", id: 425424353
 mas "WhatsApp", id: 310633997
