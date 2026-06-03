@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+shim_dir="${HOME}/.local/share/mise/shims"
+smoke_commands=(
+  tmux
+  gh
+  bun
+  node
+  python
+  ruby
+  pnpm
+  uv
+  rg
+  fd
+  fzf
+  jq
+  yq
+  lazygit
+  nvim
+  turbo
+  vercel
+)
+
+log() {
+  printf '==> %s\n' "$1"
+}
+
+warn() {
+  printf '!! %s\n' "$1" >&2
+}
+
+load_homebrew_shellenv() {
+  if command -v brew >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+  fi
+}
+
+load_homebrew_shellenv
+export PATH="${shim_dir}:${PATH}"
+
+if ! command -v mise >/dev/null 2>&1; then
+  warn "mise is not available; run ./bin/setup or ./bin/bootstrap first."
+  exit 1
+fi
+
+missing="$(cd "$repo_root" && mise ls --current --missing --no-header 2>/dev/null || true)"
+if [[ -n "$missing" ]]; then
+  warn "Some configured mise tools are still missing:"
+  printf '%s\n' "$missing" >&2
+  warn "Rerun: cd ${repo_root} && mise install"
+  exit 1
+fi
+
+log "Refreshing mise shims"
+(cd "$repo_root" && mise reshim)
+
+missing_commands=()
+non_shim_commands=()
+for command_name in "${smoke_commands[@]}"; do
+  resolved="$(command -v "$command_name" 2>/dev/null || true)"
+  if [[ -z "$resolved" ]]; then
+    missing_commands+=("$command_name")
+  elif [[ "$resolved" != "${shim_dir}/"* ]]; then
+    non_shim_commands+=("${command_name}:${resolved}")
+  fi
+done
+
+if [[ ${#missing_commands[@]} -gt 0 ]]; then
+  warn "Mise tools are installed, but these commands are not on PATH: ${missing_commands[*]}"
+  warn "Expected mise shims on PATH: ${shim_dir}"
+  exit 1
+fi
+
+if [[ ${#non_shim_commands[@]} -gt 0 ]]; then
+  warn "These mise-owned commands resolved outside the shim directory:"
+  printf '%s\n' "${non_shim_commands[@]}" >&2
+  warn "Expected mise shims on PATH before Homebrew: ${shim_dir}"
+  exit 1
+fi
+
+log "Mise tools are installed and smoke commands are on PATH"

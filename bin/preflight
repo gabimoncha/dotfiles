@@ -107,6 +107,7 @@ check_script_syntax() {
     "bin/link-dotfiles"
     "bin/preflight"
     "bin/auth-setup"
+    "bin/check-mise-tools"
     "bin/install-apps"
     "bin/dotfiles-update"
     "bin/prepare-sync"

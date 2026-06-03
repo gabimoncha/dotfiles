@@ -111,7 +111,7 @@ install_mise_tool() {
   fi
 
   log "Ensuring mise tool ${token}"
-  (cd "$repo_root" && mise install "$token")
+  (cd "$repo_root" && mise install "$token" && mise reshim)
 }
 
 report_manual() {

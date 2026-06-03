@@ -46,6 +46,16 @@ app_installed() {
 
 latest_rayconfig() {
   local icloud_dir="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+  local raycast_dir="${icloud_dir}/Raycast"
+  local rayconfig
+
+  if [[ -d "$raycast_dir" ]]; then
+    rayconfig="$(find "$raycast_dir" -name '*.rayconfig' -print 2>/dev/null | sort | tail -1 || true)"
+    if [[ -n "$rayconfig" ]]; then
+      printf '%s\n' "$rayconfig"
+      return 0
+    fi
+  fi
 
   if [[ -d "$icloud_dir" ]]; then
     find "$icloud_dir" -name '*.rayconfig' -print 2>/dev/null | sort | tail -1 || true
@@ -141,7 +151,7 @@ EOF
   if [[ -n "$rayconfig" && -f "$rayconfig" ]]; then
     "${repo_root}/bin/raycast-restore" "$rayconfig"
   else
-    warn "No .rayconfig export found in iCloud Drive; Raycast restore is deferred"
+    warn "No Raycast .rayconfig export found in iCloud Drive/Raycast; export Raycast settings there, then rerun ./bin/raycast-restore"
   fi
 }
 

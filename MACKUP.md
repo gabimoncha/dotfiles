@@ -6,6 +6,13 @@ The config uses iCloud storage and a small app allowlist. Do not remove the allo
 
 Do not add apps whose settings are already tracked under `home/`. VS Code and Cursor are intentionally owned by Mackup instead of direct repo symlinks, because Mackup supports their user settings, keybindings, prompts, and snippets.
 
+Raycast is not managed by Mackup here. Restore it from an encrypted `.rayconfig` export saved outside git, preferably in `iCloud Drive/Raycast`, with:
+
+```bash
+./bin/raycast-backup
+./bin/raycast-restore
+```
+
 Use copy-mode commands only:
 
 ```bash

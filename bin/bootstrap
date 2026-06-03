@@ -9,10 +9,16 @@ xcode_brewfile=""
 mas_brewfile=""
 vscode_brewfile=""
 sudo_keepalive_pid=""
+mise_install_pid=""
 mas_checked=0
 mas_available=0
 
 cleanup() {
+  if [[ -n "$mise_install_pid" ]]; then
+    kill "$mise_install_pid" 2>/dev/null || true
+    wait "$mise_install_pid" 2>/dev/null || true
+  fi
+
   if [[ -n "$temp_brewfile" ]]; then
     rm -f "$temp_brewfile"
   fi
@@ -270,6 +276,7 @@ ensure_xcodes_cli() {
 
   log "Installing xcodes"
   mise install xcodes@latest
+  mise reshim
 }
 
 ensure_mas_cli() {
@@ -482,7 +489,6 @@ install_brewfile() {
   vscode_brewfile="$(mktemp)"
 
   ensure_mas_cli || true
-  install_xcode_with_xcodes || true
   configure_full_xcode || true
   filter_brewfile_for_existing_apps "${repo_root}/Brewfile" "$temp_brewfile" "$xcode_brewfile" "$mas_brewfile" "$vscode_brewfile"
 
@@ -505,10 +511,21 @@ install_brewfile() {
 
   install_mas_apps
   install_vscode_extensions
+}
 
-  kill "$sudo_keepalive_pid" 2>/dev/null || true
-  wait "$sudo_keepalive_pid" 2>/dev/null || true
-  sudo_keepalive_pid=""
+install_deferred_xcode_formulae() {
+  if [[ ! -s "$xcode_brewfile" ]]; then
+    return 0
+  fi
+
+  install_xcode_with_xcodes || true
+
+  if configure_full_xcode; then
+    log "Installing Xcode-dependent Homebrew formulae"
+    brew bundle install --no-upgrade --verbose --file "$xcode_brewfile"
+  else
+    warn "Skipped Xcode-dependent formulae. Install Xcode from the App Store, then rerun ./bin/setup."
+  fi
 }
 
 remove_neardrop_quarantine() {
@@ -533,12 +550,41 @@ initialize_submodules() {
 
 install_mise_tools() {
   if ! command -v mise >/dev/null 2>&1; then
-    warn "mise is not available after brew bundle; skipping mise install"
-    return 0
+    warn "mise is not available; cannot install mise tools"
+    return 1
   fi
 
   log "Installing mise tools"
-  (cd "$repo_root" && mise install)
+  (cd "$repo_root" && mise install && mise reshim)
+}
+
+start_mise_install() {
+  install_mise_tools &
+  mise_install_pid=$!
+  log "Started mise tool install in background (pid ${mise_install_pid})"
+}
+
+wait_for_mise_install() {
+  local status
+
+  if [[ -z "$mise_install_pid" ]]; then
+    return 0
+  fi
+
+  log "Waiting for background mise tool install"
+  set +e
+  wait "$mise_install_pid"
+  status=$?
+  set -e
+  mise_install_pid=""
+
+  if [[ $status -ne 0 ]]; then
+    warn "Background mise tool install failed"
+    return "$status"
+  fi
+
+  log "Background mise tool install completed"
+  "${repo_root}/bin/check-mise-tools"
 }
 
 install_shell_framework() {
@@ -583,15 +629,18 @@ ensure_admin_user
 ensure_xcode_command_line_tools
 ensure_homebrew
 load_homebrew_shellenv
+ensure_mise_cli
 initialize_submodules
-install_brewfile
-remove_neardrop_quarantine
-install_shell_framework
 
 log "Linking dotfiles"
 "${repo_root}/bin/link-dotfiles"
 
-install_mise_tools
+start_mise_install
+install_brewfile
+wait_for_mise_install
+install_deferred_xcode_formulae
+remove_neardrop_quarantine
+install_shell_framework
 apply_macos_defaults_once
 
 cat <<'EOF'

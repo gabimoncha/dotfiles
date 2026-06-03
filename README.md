@@ -44,12 +44,14 @@ The lower-level `bin/bootstrap` script:
 
 1. Launches the Xcode Command Line Tools installer if needed, then exits for a rerun.
 2. Installs Homebrew if needed.
-3. Initializes git submodules.
-4. Installs packages, App Store apps, and editor extensions from a filtered `Brewfile` so existing apps in `/Applications` or unsigned App Store state do not break the run.
-5. Installs Oh My Zsh and Powerlevel10k if missing.
-6. Symlinks managed files from `home/` into `$HOME`.
-7. Installs global `mise` tools.
-8. Applies tracked macOS defaults once, unless `DOTFILES_SKIP_MACOS_DEFAULTS=1` is set.
+3. Installs `mise` if needed.
+4. Initializes git submodules.
+5. Symlinks managed files from `home/` into `$HOME` so the global mise config and shims are available.
+6. Installs global `mise` tools in the background while Homebrew continues.
+7. Installs packages, App Store apps, and editor extensions from a filtered `Brewfile` so existing apps in `/Applications` or unsigned App Store state do not break the run.
+8. Verifies configured mise tools with `bin/check-mise-tools`, then installs any Xcode-dependent formulae once Xcode is ready.
+9. Installs Oh My Zsh and Powerlevel10k if missing.
+10. Applies tracked macOS defaults once, unless `DOTFILES_SKIP_MACOS_DEFAULTS=1` is set.
 
 ## Neovim Submodule
 
@@ -66,7 +68,7 @@ Run `./bin/auth-setup` after bootstrap to configure GitHub SSH for day-to-day de
 
 `Brewfile` owns normal Homebrew formulae, casks, VS Code extensions, and App Store apps via `mas`. App Store installs require an Apple ID signed in to the App Store; if setup skips them, sign in and rerun `./bin/setup`.
 
-Full Xcode is installed before the main Homebrew bundle through the `xcodes` CLI managed by `mise`, then selected with `xcode-select` and license-accepted if needed. This keeps Xcode-dependent formulae such as `idb-companion` and `sourcekitten` from blocking a fresh setup when Xcode is not ready yet.
+Full Xcode is installed through the `xcodes` CLI managed by `mise`, then selected with `xcode-select` and license-accepted if needed. Xcode-dependent formulae such as `idb-companion` and `sourcekitten` are deferred until after the mise tool install completes so setup does not run competing `mise install` jobs.
 
 `apps/manifest.tsv` is the typed setup ledger for extra tools and apps that need explicit handling outside the main `Brewfile` pass.
 
@@ -101,6 +103,8 @@ The tracked shell layout is:
 
 Machine-local secrets and exports belong in `~/.config/local/*.zsh`, which is ignored by this repo and sourced by `.zshrc`.
 
+Mise-owned command shims live at `~/.local/share/mise/shims` and are placed on `PATH` by `home/.config/zsh/path.zsh`. After bootstrap, `./bin/check-mise-tools` verifies that every configured mise tool is installed and that critical commands such as `tmux`, `gh`, `bun`, and `vercel` resolve through the shell.
+
 ## Mackup and Raycast
 
 Mackup is configured in copy mode with iCloud storage:
@@ -110,14 +114,16 @@ Mackup is configured in copy mode with iCloud storage:
 ./bin/mackup-restore
 ```
 
-Both helpers read the tracked `home/.mackup.cfg` and defer cleanly if iCloud Drive is not signed in yet.
+Both helpers read the tracked `home/.mackup.cfg` and defer cleanly if iCloud Drive is not signed in yet. Mackup does not restore Raycast in this repo.
 
-Raycast should be restored primarily through an encrypted `.rayconfig` export:
+Raycast is restored through an encrypted `.rayconfig` export saved outside git, preferably under `iCloud Drive/Raycast`:
 
 ```bash
 ./bin/raycast-backup
-./bin/raycast-restore /path/to/export.rayconfig
+./bin/raycast-restore
 ```
+
+You can still pass an explicit export path to `./bin/raycast-restore /path/to/export.rayconfig`.
 
 macOS defaults disable Spotlight hotkeys so Raycast can own Command-Space.
 

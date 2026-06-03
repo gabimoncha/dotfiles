@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 log() {
   printf '==> %s\n' "$1"
 }
@@ -20,6 +22,24 @@ load_homebrew_shellenv() {
   elif [[ -x /usr/local/bin/brew ]]; then
     eval "$(/usr/local/bin/brew shellenv)"
   fi
+}
+
+run_gh() {
+  if command -v gh >/dev/null 2>&1; then
+    gh "$@"
+    return $?
+  fi
+
+  if command -v mise >/dev/null 2>&1; then
+    (cd "$repo_root" && mise exec -- gh "$@")
+    return $?
+  fi
+
+  return 127
+}
+
+gh_available() {
+  run_gh --version >/dev/null 2>&1
 }
 
 default_git_email() {
@@ -134,18 +154,18 @@ ensure_github_known_host() {
 }
 
 configure_gh_git_protocol() {
-  gh config set git_protocol ssh --host github.com >/dev/null 2>&1 || {
+  run_gh config set git_protocol ssh --host github.com >/dev/null 2>&1 || {
     warn "Could not set gh git_protocol=ssh"
   }
 }
 
 ensure_github_auth() {
-  if ! command -v gh >/dev/null 2>&1; then
-    warn "gh is not installed yet. Run ./bin/bootstrap first."
+  if ! gh_available; then
+    warn "gh is not available through PATH or mise. Run ./bin/setup, or run: cd ${repo_root} && mise install gh"
     return 0
   fi
 
-  if gh auth status --hostname github.com >/dev/null 2>&1; then
+  if run_gh auth status --hostname github.com >/dev/null 2>&1; then
     log "GitHub CLI is authenticated"
     configure_gh_git_protocol
     return 0
@@ -157,7 +177,7 @@ ensure_github_auth() {
   fi
 
   log "Authenticating GitHub CLI with SSH git protocol"
-  gh auth login --hostname github.com --git-protocol ssh --skip-ssh-key
+  run_gh auth login --hostname github.com --git-protocol ssh --skip-ssh-key
   configure_gh_git_protocol
 }
 
@@ -170,19 +190,19 @@ upload_ssh_key_to_github() {
     return 0
   fi
 
-  if ! command -v gh >/dev/null 2>&1 || ! gh auth status --hostname github.com >/dev/null 2>&1; then
+  if ! gh_available || ! run_gh auth status --hostname github.com >/dev/null 2>&1; then
     warn "GitHub CLI is not authenticated; cannot upload SSH key"
     return 0
   fi
 
   key_contents="$(awk '{ print $1 " " $2 }' "$key_path")"
-  if gh api user/keys --jq '.[].key' 2>/dev/null | grep -Fxq "$key_contents"; then
+  if run_gh api user/keys --jq '.[].key' 2>/dev/null | grep -Fxq "$key_contents"; then
     log "SSH key already exists on GitHub"
     return 0
   fi
 
   title="$(scutil --get ComputerName 2>/dev/null || hostname)"
-  output="$(gh ssh-key add "$key_path" --title "$title" 2>&1)" || {
+  output="$(run_gh ssh-key add "$key_path" --title "$title" 2>&1)" || {
     warn "Could not upload SSH key to GitHub: ${output}"
     return 0
   }
