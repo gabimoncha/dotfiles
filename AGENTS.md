@@ -7,6 +7,7 @@ This repo is the source of truth for setting up a new MacBook. It owns machine b
 ## What This Repo Owns
 
 - `Brewfile` for Homebrew formulae, casks, taps, and VS Code extensions
+- `mise` for runtimes and cli tools
 - `home/` for files that will be symlinked into `$HOME`
 - `bin/setup` for one-command first-run machine setup
 - `bin/bootstrap` for lower-level bootstrap work
@@ -18,8 +19,9 @@ This repo is the source of truth for setting up a new MacBook. It owns machine b
 
 - Edit the tracked source in this repo, not the live file under `$HOME`.
 - Keep package ownership clean:
-  - `Brewfile` owns system packages, GUI apps, and CLIs that should come from Homebrew.
-  - `home/.config/mise/config.toml` owns language runtimes and globally installed dev tools managed by `mise`.
+  - Prefer `mas` for GUI apps that exist in the Mac App Store.
+  - Prefer `home/.config/mise/config.toml` for language runtimes and globally installed developer tools when `mise` supports them.
+  - Use `Brewfile` for Homebrew formulae, casks, taps, VS Code extensions, and anything that does not belong in `mas` or `mise`.
 - Do not add secrets, tokens, private emails, machine-local paths, or auth exports to tracked files.
 - Preserve the repo's bootstrap model: clone repo, run `./bin/setup`, and end in a usable state on a fresh Mac.
 - Preserve idempotency. Re-running bootstrap or link steps should not corrupt an existing machine.
@@ -47,11 +49,12 @@ git diff --check
 
 For dependency changes, also sanity-check the ownership split:
 
-- Homebrew packages belong in `Brewfile`
-- Runtime/tool versions belong in `home/.config/mise/config.toml`
+- Mac App Store apps belong in the `mas` inventory.
+- Runtime/tool versions belong in `home/.config/mise/config.toml` when supported by `mise`.
+- Homebrew packages belong in `Brewfile` only after `mas` and `mise` have been ruled out.
 
 ## Notes For Agents
 
 - Be practical and keep this repo boring. Reliability matters more than cleverness.
-- When the user asks to add or update a tool, decide whether it belongs in Homebrew or `mise` instead of blindly following the request.
+- When the user asks to add or update an app or tool, choose ownership in this order: `mas` for Mac App Store apps, then `mise` for supported runtimes/developer tools, then Homebrew through `Brewfile`.
 - If you notice config drift between the README, bootstrap scripts, and managed files, fix it rather than documenting a lie.

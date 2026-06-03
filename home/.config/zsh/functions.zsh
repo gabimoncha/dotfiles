@@ -370,46 +370,63 @@ use-my-mac() {
     return 1
   fi
 
-  local selected command_line command_name
+  local selected command_line
   selected="$(
-    command cat <<'EOF' | fzf --height=80% --border --prompt="Search commands: " --header="enter: copy command, ctrl-e: execute, esc: quit" --preview='echo {}' --preview-window=up:3:wrap --bind='ctrl-e:execute-silent(echo {} | awk "{print \$1}" | pbcopy)+abort'
-dotfiles             - cd to the dotfiles repo
-dotfiles-update      - update dotfiles and Homebrew-owned tools
-mkcd <dir>           - create a directory and cd into it
-extract <file>       - extract common archive formats
-psgrep <name>        - search running processes by name
-killnamed <name>     - ask before killing processes by name
-serve [port]         - serve the current directory over HTTP
-backup <path>        - create a timestamped backup copy
-dirsize [path]       - show child directory/file sizes sorted
-findlarge [size]     - find large files, default over 100M
-codesearch <term>    - search code with ripgrep and less
-ll                   - list files with git status
-la                   - list all files
-tree                 - show tree excluding .git
-myip                 - show public IP address
-localip              - show local en0 IP address
-ports                - list listening TCP ports
-portfind <port>      - show the process using a port
-killport <port>      - ask before killing a process listening on a port
-fix-my-network       - diagnose common DNS, proxy, routing, and HTTP issues
-cleanup              - delete .DS_Store files below the current directory
-hosts                - edit /etc/hosts with nvim
-brewup               - brew update, upgrade, and cleanup
-edit-profile         - edit ~/.zshrc and reload it
-reload-shell         - reload ~/.zshrc in the current shell
-claude               - run Claude with skipped permission prompts
-claude-safe          - run Claude without skipped permission prompts
-cc                   - short alias for claude
-cc-safe              - short alias for claude-safe
-use-my-mac           - open this searchable command menu
+    command cat <<'EOF' | fzf --height=80% --border --prompt="Search commands: " --header="enter: copy command, ctrl-e: copy command, esc: quit" --preview='echo {}' --preview-window=up:3:wrap --bind='ctrl-e:execute-silent(echo {} | sed "s/[[:space:]][[:space:]]*- .*//" | pbcopy)+abort'
+dotfiles                         - cd to the dotfiles repo
+dotfiles-update                  - update dotfiles and Homebrew-owned tools
+./bin/setup                      - run the full fresh-Mac setup flow
+./bin/setup --dry-run            - preview setup and app installation without changing the machine
+./bin/bootstrap                  - run lower-level bootstrap work
+./bin/preflight                  - check setup prerequisites, script syntax, manifest shape, and repo state
+./bin/link-dotfiles              - symlink managed files from home/ into $HOME
+./bin/auth-setup                 - configure local Git identity, GitHub SSH, and gh auth
+./bin/install-apps               - install extra apps from apps/manifest.tsv
+./bin/install-apps --dry-run     - preview extra app installation
+./bin/mackup-backup              - back up Mackup-managed app settings to iCloud
+./bin/mackup-restore             - restore Mackup-managed app settings from iCloud
+./bin/raycast-backup             - export Raycast settings to iCloud
+./bin/raycast-restore <file>     - restore Raycast settings from a .rayconfig export
+./bin/prepare-sync               - prepare repo state before syncing dotfiles changes
+mkcd <dir>                       - create a directory and cd into it
+extract <file>                   - extract common archive formats
+psgrep <name>                    - search running processes by name
+killnamed <name>                 - ask before killing processes by name
+serve [port]                     - serve the current directory over HTTP
+backup <path>                    - create a timestamped backup copy
+dirsize [path]                   - show child directory/file sizes sorted
+findlarge [size]                 - find large files, default over 100M
+codesearch <term>                - search code with ripgrep and less
+edit-profile                     - edit ~/.zshrc and reload it
+reload-shell                     - reload ~/.zshrc in the current shell
+ports                            - list listening TCP ports
+portfind <port>                  - show the process using a port
+killport <port>                  - ask before killing a process listening on a port
+fix-my-network                   - diagnose common DNS, proxy, routing, and HTTP issues
+grep                             - alias for rg
+cat                              - alias for bat
+ls                               - alias for eza
+ll                               - list files with git status
+la                               - list all files
+tree                             - show tree excluding .git
+g                                - alias for git
+myip                             - show public IP address
+localip                          - show local en0 IP address
+cleanup                          - delete .DS_Store files below the current directory
+hosts                            - edit /etc/hosts with nvim
+brewup                           - brew update, upgrade, and cleanup
+claude                           - run Claude with skipped permission prompts
+claude-safe                      - run Claude without skipped permission prompts
+cc                               - short alias for claude
+cc-safe                          - short alias for claude-safe
+help                             - alias for use-my-mac
+use-my-mac                       - open this searchable command menu
 EOF
   )"
 
   [[ -z "$selected" ]] && return 0
 
-  command_name="${selected%% *}"
-  command_line="$command_name"
+  command_line="$(print -r -- "$selected" | sed 's/[[:space:]][[:space:]]*- .*//')"
   print -n "$command_line" | pbcopy
   print "Copied to clipboard: $command_line"
 

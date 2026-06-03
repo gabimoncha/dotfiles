@@ -1,0 +1,4 @@
+interface:
+  display_name: "Update Use My Mac"
+  short_description: "Refresh dotfiles command menu"
+  default_prompt: "Use $update-use-my-mac to refresh the dotfiles use-my-mac command menu after setup changes."
