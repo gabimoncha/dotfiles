@@ -229,6 +229,17 @@ ensure_mise_cli() {
   command -v mise >/dev/null 2>&1
 }
 
+ensure_aria2_cli() {
+  if command -v aria2c >/dev/null 2>&1; then
+    return 0
+  fi
+
+  log "Installing aria2"
+  brew install aria2
+  hash -r
+  command -v aria2c >/dev/null 2>&1
+}
+
 ensure_xcodes_cli() {
   if ! ensure_mise_cli; then
     warn "Skipping Xcode install; mise is not available"
@@ -259,6 +270,8 @@ install_xcode_with_xcodes() {
   if ! ensure_xcodes_cli; then
     return 1
   fi
+
+  ensure_aria2_cli || warn "aria2 is not available; xcodes will use the slower default downloader"
 
   log "Installing latest Xcode with xcodes"
   if ! mise exec xcodes@latest -- xcodes install --latest; then

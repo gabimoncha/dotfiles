@@ -11,6 +11,7 @@ tap "yakitrak/yakitrak"
 tap "zegervdv/zathura"
 
 brew "apktool"
+brew "aria2"
 brew "bfg"
 brew "cloc"
 brew "curl"
