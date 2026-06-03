@@ -66,6 +66,8 @@ Run `./bin/auth-setup` after bootstrap to configure GitHub SSH for day-to-day de
 
 `Brewfile` owns normal Homebrew formulae, casks, VS Code extensions, and App Store apps via `mas`. App Store installs require an Apple ID signed in to the App Store; if setup skips them, sign in and rerun `./bin/setup`.
 
+Full Xcode is installed before the main Homebrew bundle through the `xcodes` CLI managed by `mise`, then selected with `xcode-select` and license-accepted if needed. This keeps Xcode-dependent formulae such as `idb-companion` and `sourcekitten` from blocking a fresh setup when Xcode is not ready yet.
+
 `apps/manifest.tsv` is the typed setup ledger for extra tools and apps that need explicit handling outside the main `Brewfile` pass.
 
 Manifest types:

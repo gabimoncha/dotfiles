@@ -5,6 +5,7 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 macos_defaults_flag="${HOME}/.macos-defaults-applied"
 temp_brewfile=""
+xcode_brewfile=""
 sudo_keepalive_pid=""
 mas_checked=0
 mas_available=0
@@ -12,6 +13,10 @@ mas_available=0
 cleanup() {
   if [[ -n "$temp_brewfile" ]]; then
     rm -f "$temp_brewfile"
+  fi
+
+  if [[ -n "$xcode_brewfile" ]]; then
+    rm -f "$xcode_brewfile"
   fi
 
   if [[ -n "$sudo_keepalive_pid" ]]; then
@@ -156,6 +161,117 @@ cask_app_bundle_name() {
   esac
 }
 
+preferred_xcode_developer_dir() {
+  local app
+
+  if [[ -d "/Applications/Xcode.app/Contents/Developer" ]]; then
+    printf '/Applications/Xcode.app/Contents/Developer\n'
+    return 0
+  fi
+
+  while IFS= read -r app; do
+    if [[ -d "${app}/Contents/Developer" ]]; then
+      printf '%s/Contents/Developer\n' "$app"
+      return 0
+    fi
+  done < <(ls -dt /Applications/Xcode*.app 2>/dev/null || true)
+
+  return 1
+}
+
+full_xcode_selected() {
+  local developer_dir
+
+  developer_dir="$(preferred_xcode_developer_dir || true)"
+  [[ -n "$developer_dir" && "$(xcode-select -p 2>/dev/null || true)" == "$developer_dir" ]]
+}
+
+configure_full_xcode() {
+  local developer_dir
+
+  developer_dir="$(preferred_xcode_developer_dir || true)"
+  if [[ -z "$developer_dir" ]]; then
+    return 1
+  fi
+
+  if ! full_xcode_selected; then
+    log "Selecting full Xcode"
+    sudo xcode-select -s "$developer_dir"
+  fi
+
+  if ! sudo xcodebuild -license check >/dev/null 2>&1; then
+    log "Accepting Xcode license"
+    sudo xcodebuild -license accept
+  fi
+
+  full_xcode_selected
+}
+
+xcode_dependent_formula() {
+  case "$1" in
+    facebook/fb/idb-companion | idb-companion | sourcekitten)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+ensure_mise_cli() {
+  if command -v mise >/dev/null 2>&1; then
+    return 0
+  fi
+
+  log "Installing mise"
+  brew install mise
+  hash -r
+  command -v mise >/dev/null 2>&1
+}
+
+ensure_xcodes_cli() {
+  if ! ensure_mise_cli; then
+    warn "Skipping Xcode install; mise is not available"
+    return 1
+  fi
+
+  log "Installing xcodes"
+  (cd "$repo_root" && mise install xcodes)
+}
+
+ensure_mas_cli() {
+  if command -v mas >/dev/null 2>&1; then
+    return 0
+  fi
+
+  log "Installing mas"
+  brew install mas
+  hash -r
+  command -v mas >/dev/null 2>&1
+}
+
+install_xcode_with_xcodes() {
+  if preferred_xcode_developer_dir >/dev/null 2>&1; then
+    configure_full_xcode
+    return $?
+  fi
+
+  if ! ensure_xcodes_cli; then
+    return 1
+  fi
+
+  log "Installing latest Xcode with xcodes"
+  if ! (cd "$repo_root" && mise exec -- xcodes install --latest); then
+    warn "Xcode install with xcodes failed. Sign in when prompted or set XCODES_USERNAME/XCODES_PASSWORD, then rerun ./bin/setup."
+    return 1
+  fi
+
+  configure_full_xcode || {
+    warn "Xcode is installed but not ready yet. Finish first launch if prompted, then rerun ./bin/setup."
+    return 1
+  }
+}
+
 mas_available_for_brewfile() {
   if [[ $mas_checked -eq 1 ]]; then
     [[ $mas_available -eq 1 ]]
@@ -181,9 +297,21 @@ mas_available_for_brewfile() {
 filter_brewfile_for_existing_apps() {
   local source_file="$1"
   local target_file="$2"
-  local line cask_name app_name
+  local deferred_xcode_file="$3"
+  local line brew_name cask_name app_name
 
   while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" =~ ^brew[[:space:]]+\"([^\"]+)\" ]]; then
+      brew_name="${BASH_REMATCH[1]}"
+
+      if xcode_dependent_formula "$brew_name" && ! full_xcode_selected; then
+        warn "Deferring ${brew_name}; full Xcode is required"
+        printf '# Deferred until full Xcode is selected: %s\n' "$line" >> "$target_file"
+        printf '%s\n' "$line" >> "$deferred_xcode_file"
+        continue
+      fi
+    fi
+
     if [[ "$line" =~ ^mas[[:space:]]+\"([^\"]+)\" ]]; then
       if ! mas_available_for_brewfile; then
         printf '# Skipped until App Store is signed in: %s\n' "$line" >> "$target_file"
@@ -208,8 +336,12 @@ filter_brewfile_for_existing_apps() {
 
 install_brewfile() {
   temp_brewfile="$(mktemp)"
+  xcode_brewfile="$(mktemp)"
 
-  filter_brewfile_for_existing_apps "${repo_root}/Brewfile" "$temp_brewfile"
+  ensure_mas_cli || true
+  install_xcode_with_xcodes || true
+  configure_full_xcode || true
+  filter_brewfile_for_existing_apps "${repo_root}/Brewfile" "$temp_brewfile" "$xcode_brewfile"
 
   log "Refreshing sudo timestamp for Homebrew cask installs"
   sudo -v
@@ -220,6 +352,13 @@ install_brewfile() {
 
   log "Installing Homebrew bundle"
   brew bundle install --no-upgrade --verbose --file "$temp_brewfile"
+
+  if [[ -s "$xcode_brewfile" ]] && configure_full_xcode; then
+    log "Installing Xcode-dependent Homebrew formulae"
+    brew bundle install --no-upgrade --verbose --file "$xcode_brewfile"
+  elif [[ -s "$xcode_brewfile" ]]; then
+    warn "Skipped Xcode-dependent formulae. Install Xcode from the App Store, then rerun ./bin/setup."
+  fi
 
   kill "$sudo_keepalive_pid" 2>/dev/null || true
   wait "$sudo_keepalive_pid" 2>/dev/null || true

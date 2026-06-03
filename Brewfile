@@ -23,7 +23,6 @@ brew "glyph"
 brew "grpc"
 brew "httpie"
 brew "facebook/fb/idb-companion"
-brew "idb-companion"
 brew "ios-deploy"
 brew "mackup"
 brew "mas"
@@ -57,7 +56,6 @@ mas "SiteSucker", id: 442168834
 mas "TestFlight", id: 899247664
 mas "The Unarchiver", id: 425424353
 mas "WhatsApp", id: 310633997
-mas "Xcode", id: 497799835
 
 cask "nikitabobko/tap/aerospace"
 cask "beeper"
