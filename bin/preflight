@@ -109,6 +109,8 @@ check_script_syntax() {
     "bin/auth-setup"
     "bin/check-mise-tools"
     "bin/install-apps"
+    "bin/setup-tmux"
+    "bin/app-state-doctor"
     "bin/dotfiles-update"
     "bin/prepare-sync"
     "bin/mackup-backup"

@@ -640,6 +640,8 @@ install_brewfile
 wait_for_mise_install
 install_deferred_xcode_formulae
 remove_neardrop_quarantine
+log "Installing tmux plugins"
+"${repo_root}/bin/setup-tmux" || warn "tmux plugin setup failed; rerun ./bin/setup-tmux after network access is ready"
 install_shell_framework
 apply_macos_defaults_once
 

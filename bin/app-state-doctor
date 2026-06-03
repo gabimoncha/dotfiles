@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+icloud_dir="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+issues=0
+
+ok() {
+  printf 'ok   %s\n' "$1"
+}
+
+warn() {
+  printf 'warn %s\n' "$1"
+  issues=$((issues + 1))
+}
+
+info() {
+  printf 'info %s\n' "$1"
+}
+
+latest_rayconfig() {
+  if [[ -d "${icloud_dir}/Raycast" ]]; then
+    find "${icloud_dir}/Raycast" -name '*.rayconfig' -print 2>/dev/null | sort | tail -1
+    return 0
+  fi
+
+  if [[ -d "$icloud_dir" ]]; then
+    find "$icloud_dir" -name '*.rayconfig' -print 2>/dev/null | sort | tail -1
+  fi
+}
+
+spotlight_hotkey_enabled() {
+  local key="$1"
+  defaults read com.apple.symbolichotkeys AppleSymbolicHotKeys 2>/dev/null |
+    awk -v key="$key" '
+      $1 == key { in_key = 1 }
+      in_key && /enabled = 1/ { found = 1 }
+      in_key && /^    [0-9]+ =/ && $1 != key { in_key = 0 }
+      END { exit found ? 0 : 1 }
+    '
+}
+
+check_ghostty() {
+  if [[ -f "${HOME}/.config/ghostty/config" || -L "${HOME}/.config/ghostty/config" ]]; then
+    ok "Ghostty config exists at ~/.config/ghostty/config"
+    return 0
+  fi
+
+  warn "Ghostty config is missing at ~/.config/ghostty/config"
+  info "If the old Mac has the right Ghostty setup, run ./bin/mackup-backup there, wait for iCloud, then run ./bin/mackup-restore here."
+}
+
+check_tmux() {
+  local missing=()
+  local plugin
+  local plugin_name
+
+  if [[ -f "${HOME}/.tmux.conf" || -L "${HOME}/.tmux.conf" ]]; then
+    ok "tmux config exists at ~/.tmux.conf"
+  else
+    warn "tmux config is missing; run ./bin/link-dotfiles"
+  fi
+
+  while IFS= read -r plugin || [[ -n "$plugin" ]]; do
+    [[ -z "$plugin" || "$plugin" == "tmux-plugins/tpm" ]] && continue
+    plugin_name="${plugin##*/}"
+    plugin_name="${plugin_name%%#*}"
+    if [[ ! -d "${HOME}/.tmux/plugins/${plugin_name}" ]]; then
+      missing+=("$plugin_name")
+    fi
+  done < <(sed -n "s/^[[:space:]]*set -g @plugin ['\"]\\([^'\"]*\\)['\"].*/\\1/p" "${repo_root}/home/.tmux.conf")
+
+  if [[ ${#missing[@]} -eq 0 ]]; then
+    ok "tmux plugins are installed"
+  else
+    warn "tmux plugins missing: ${missing[*]}"
+    info "Run ./bin/setup-tmux to install missing TPM plugins."
+  fi
+}
+
+check_raycast() {
+  local rayconfig
+
+  if [[ -d "/Applications/Raycast.app" ]]; then
+    ok "Raycast.app is installed"
+  else
+    warn "Raycast.app is missing; run ./bin/setup or ./bin/install-apps"
+  fi
+
+  if spotlight_hotkey_enabled 64 || spotlight_hotkey_enabled 65; then
+    warn "Spotlight Command-Space hotkeys are enabled"
+    info "Run ./macos/defaults.sh, then log out and back in if Spotlight still captures Command-Space."
+  else
+    ok "Spotlight Command-Space hotkeys are disabled"
+  fi
+
+  rayconfig="$(latest_rayconfig || true)"
+  if [[ -n "$rayconfig" && -f "$rayconfig" ]]; then
+    ok "Raycast export found: ${rayconfig}"
+  else
+    warn "No Raycast .rayconfig export found in iCloud Drive/Raycast"
+    info "On the old Mac, run ./bin/raycast-backup and use Raycast's Export Settings & Data flow."
+  fi
+}
+
+check_ghostty
+check_tmux
+check_raycast
+
+if [[ $issues -gt 0 ]]; then
+  printf '\nFound %s app-state issue(s).\n' "$issues"
+  exit 1
+fi
+
+printf '\nApp state looks ready.\n'

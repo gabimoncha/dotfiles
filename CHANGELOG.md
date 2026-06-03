@@ -8,4 +8,5 @@
 - Add modular zsh, Oh My Zsh, Powerlevel10k, local secret loading, and update notifier.
 - Add Mackup copy-mode iCloud config and explicit backup/restore helpers.
 - Add Raycast `.rayconfig` backup/restore helpers and Spotlight shortcut defaults.
+- Add tmux TPM bootstrap and app-state diagnostics for Ghostty, tmux, and Raycast restore gaps.
 - Add optional Docker Compose services for local Postgres and Redis.

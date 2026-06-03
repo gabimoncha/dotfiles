@@ -20,6 +20,8 @@ The lower-level commands still exist for targeted reruns:
 ./bin/bootstrap
 ./bin/install-apps
 ./bin/auth-setup
+./bin/setup-tmux
+./bin/app-state-doctor
 ```
 
 GitHub SSH is configured after bootstrap with `./bin/auth-setup`.
@@ -36,3 +38,5 @@ Some setup still needs account login or OS permissions:
 - GitHub, Cursor, VS Code, Notion, Synology Drive, superwhisper
 - Accessibility / Automation / Microphone permissions
 - First-run setup for Xcode, Android Studio, OrbStack, and DaVinci Resolve
+
+If Ghostty, tmux plugins, or Raycast hotkeys do not look restored after setup, run `./bin/app-state-doctor` for the concrete missing piece.

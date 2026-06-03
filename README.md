@@ -6,7 +6,7 @@ Bootstrap a new Mac from the current machine state without tracking shell secret
 
 - Homebrew packages, App Store apps, and editor extensions through `Brewfile`
 - Global `mise` tool versions
-- Git, zsh, tmux, Karabiner, Zed, Mackup, and selected helper scripts
+- Git, zsh, tmux, Karabiner, Zed, superwhisper preferences, Mackup, and selected helper scripts
 - VS Code and Cursor user settings/keymaps through Mackup
 - macOS defaults that are safe to automate
 - Neovim as a separate git repo wired in here as a submodule
@@ -14,7 +14,7 @@ Bootstrap a new Mac from the current machine state without tracking shell secret
 ## What This Repo Does Not Own
 
 - Shell secrets and machine-local exports under `~/.config/local/*.zsh`
-- Token-bearing app configs, Raycast export passphrases, and app auth state
+- Token-bearing app configs, Raycast export passphrases, and app auth/permission state
 - Cache-like config files, histories, databases, and workspace/session state
 
 ## Bootstrap
@@ -50,8 +50,9 @@ The lower-level `bin/bootstrap` script:
 6. Installs global `mise` tools in the background while Homebrew continues.
 7. Installs packages, App Store apps, and editor extensions from a filtered `Brewfile` so existing apps in `/Applications` or unsigned App Store state do not break the run.
 8. Verifies configured mise tools with `bin/check-mise-tools`, then installs any Xcode-dependent formulae once Xcode is ready.
-9. Installs Oh My Zsh and Powerlevel10k if missing.
-10. Applies tracked macOS defaults once, unless `DOTFILES_SKIP_MACOS_DEFAULTS=1` is set.
+9. Installs missing tmux plugins through TPM.
+10. Installs Oh My Zsh and Powerlevel10k if missing.
+11. Applies tracked macOS defaults once, unless `DOTFILES_SKIP_MACOS_DEFAULTS=1` is set.
 
 ## Neovim Submodule
 
@@ -81,6 +82,8 @@ Manifest types:
 
 NearDrop is installed from the `grishka/grishka` Homebrew tap. Bootstrap and `install-apps` both remove the app quarantine attribute after install so the app can launch cleanly.
 
+superwhisper is installed as a Homebrew cask, and `bin/link-dotfiles` symlinks the tracked settings file to `~/Documents/superwhisper/settings/settings.json`. App auth and macOS permissions still need to be granted outside git.
+
 Run:
 
 ```bash
@@ -105,6 +108,8 @@ Machine-local secrets and exports belong in `~/.config/local/*.zsh`, which is ig
 
 Mise-owned command shims live at `~/.local/share/mise/shims` and are placed on `PATH` by `home/.config/zsh/path.zsh`. After bootstrap, `./bin/check-mise-tools` verifies that every configured mise tool is installed and that critical commands such as `tmux`, `gh`, `bun`, and `vercel` resolve through the shell.
 
+tmux plugins are installed by `./bin/setup-tmux`, which bootstrap runs after `mise install`. Rerun it directly if tmux starts with keybindings but without the theme/status/plugins.
+
 ## Mackup and Raycast
 
 Mackup is configured in copy mode with iCloud storage:
@@ -127,6 +132,8 @@ You can still pass an explicit export path to `./bin/raycast-restore /path/to/ex
 
 macOS defaults disable Spotlight hotkeys so Raycast can own Command-Space.
 
+Run `./bin/app-state-doctor` when Ghostty, tmux plugins, or Raycast hotkeys look incomplete after a fresh-machine setup. It checks for the Ghostty Mackup restore target, missing tmux plugins, Raycast exports, and whether Spotlight is still holding Command-Space.
+
 ## Managed Files
 
 - `home/.gitconfig`
@@ -140,6 +147,7 @@ macOS defaults disable Spotlight hotkeys so Raycast can own Command-Space.
 - `home/.config/karabiner/karabiner.json`
 - `home/.config/zed/settings.json`
 - `home/.config/zed/keymap.json`
+- `home/Documents/superwhisper/settings/settings.json`
 - `home/scripts/toggle_function_keys.sh`
 - `nvim/` as `~/.config/nvim`
 

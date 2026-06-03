@@ -27,6 +27,7 @@ managed_sources=(
   "${repo_root}/home/.config/karabiner/karabiner.json"
   "${repo_root}/home/.config/zed/settings.json"
   "${repo_root}/home/.config/zed/keymap.json"
+  "${repo_root}/home/Documents/superwhisper/settings/settings.json"
   "${repo_root}/home/scripts/toggle_function_keys.sh"
 )
 

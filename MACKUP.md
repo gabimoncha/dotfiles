@@ -25,3 +25,5 @@ Do not use Mackup link mode on modern macOS. Upstream warns that symlinked prefe
 Set up iCloud Drive before running either helper. The helpers read the tracked `home/.mackup.cfg`, expect `engine = icloud`, and defer cleanly if iCloud Drive is not available yet.
 
 If Mackup reports a conflict with a file already managed by this repo, keep this repo as the source of truth and remove that app from `home/.mackup.cfg`.
+
+Ghostty is Mackup-managed here. If `~/.config/ghostty/config` is missing on a new Mac, the fix is to run `./bin/mackup-backup` on the Mac with the desired Ghostty config, wait for iCloud, then run `./bin/mackup-restore` on the new Mac.

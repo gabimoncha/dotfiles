@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+tmux_conf="${HOME}/.tmux.conf"
+plugin_root="${HOME}/.tmux/plugins"
+tpm_dir="${plugin_root}/tpm"
+
+log() {
+  printf '==> %s\n' "$1"
+}
+
+warn() {
+  printf '!! %s\n' "$1" >&2
+}
+
+ensure_tpm() {
+  mkdir -p "$plugin_root"
+
+  if [[ -d "${tpm_dir}/.git" ]]; then
+    log "TPM is already installed"
+    return 0
+  fi
+
+  if [[ -e "$tpm_dir" ]]; then
+    warn "${tpm_dir} exists but is not a git checkout; leaving it untouched"
+    return 1
+  fi
+
+  log "Installing TPM"
+  git clone --depth=1 https://github.com/tmux-plugins/tpm "$tpm_dir"
+}
+
+ensure_tmux_conf() {
+  if [[ -f "$tmux_conf" || -L "$tmux_conf" ]]; then
+    return 0
+  fi
+
+  log "Linking tmux config"
+  "${repo_root}/bin/link-dotfiles"
+}
+
+install_plugins() {
+  local missing_plugins=()
+  local plugin
+  local plugin_name
+  local installer="${tpm_dir}/bin/install_plugins"
+
+  while IFS= read -r plugin || [[ -n "$plugin" ]]; do
+    [[ -z "$plugin" || "$plugin" == "tmux-plugins/tpm" ]] && continue
+    plugin_name="${plugin##*/}"
+    plugin_name="${plugin_name%%#*}"
+    if [[ ! -d "${plugin_root}/${plugin_name}" ]]; then
+      missing_plugins+=("$plugin_name")
+    fi
+  done < <(sed -n "s/^[[:space:]]*set -g @plugin ['\"]\\([^'\"]*\\)['\"].*/\\1/p" "${repo_root}/home/.tmux.conf")
+
+  if [[ ${#missing_plugins[@]} -eq 0 ]]; then
+    log "tmux plugins are already installed"
+    return 0
+  fi
+
+  if [[ ! -x "$installer" ]]; then
+    warn "TPM installer is missing or not executable: ${installer}"
+    return 1
+  fi
+
+  log "Installing missing tmux plugins: ${missing_plugins[*]}"
+  TMUX_PLUGIN_MANAGER_PATH="${plugin_root}/" "$installer"
+}
+
+reload_tmux_if_running() {
+  if command -v tmux >/dev/null 2>&1 && tmux list-sessions >/dev/null 2>&1; then
+    log "Reloading tmux config in the running server"
+    tmux source-file "$tmux_conf"
+  fi
+}
+
+ensure_tmux_conf
+ensure_tpm
+install_plugins
+reload_tmux_if_running
+
+printf 'tmux setup complete.\n'

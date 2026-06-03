@@ -1,0 +1,82 @@
+{
+  "favoriteModelIDs" : [
+
+  ],
+  "modeKeys" : [
+    "default",
+    "message"
+  ],
+  "replacements" : [
+    {
+      "id" : "C4C72D75-AF99-4DD6-A6D1-6DA0AAA1357A",
+      "original" : "Ewing",
+      "with" : "EU-INC"
+    },
+    {
+      "id" : "67C625B2-FB55-4886-92AA-C77464FDA44B",
+      "original" : "GPT 5.3 codex spark",
+      "with" : "gpt-5.3-codex-spark"
+    },
+    {
+      "id" : "F6BB8D60-A3BC-40E9-A26C-670E8C54AD15",
+      "original" : "\/find docs",
+      "with" : "\/find-docs"
+    },
+    {
+      "id" : "E4F94554-2263-4303-B65E-AC26A1938238",
+      "original" : "package JSON",
+      "with" : "package.json"
+    },
+    {
+      "id" : "CAC9209B-93B5-43FD-8E74-857E7E52FA3E",
+      "original" : ".files",
+      "with" : "dotfiles"
+    },
+    {
+      "id" : "40412359-ABC1-4855-A76E-F0CEA382B2C8",
+      "original" : "agents.md",
+      "with" : "AGENTS.md"
+    }
+  ],
+  "vocabulary" : [
+    "superwhisper",
+    "React Native",
+    "Expo",
+    "Bun",
+    "JavaScriptCore",
+    "SuperJSON",
+    "Zustand",
+    "TurboModules",
+    "react-native-mmkv",
+    "react-native-skia",
+    "Margelo",
+    "useRef",
+    "useState",
+    "FlashList",
+    "FlatList",
+    "devtools",
+    "Jest",
+    "Hermes",
+    "Detox",
+    "Flexbox",
+    "a11y",
+    "shouldComponentUpdate",
+    "shouldRenderProps",
+    "useEffect",
+    "useLayoutEffect",
+    "componentDidMount",
+    "componentDidUpdate",
+    "componentWillUnmount",
+    "remux",
+    "remuxed",
+    "remix",
+    "remixed",
+    "ios-simulator mcp",
+    "maestro mcp",
+    "mcp",
+    "hierarchy",
+    "testID",
+    "tmux",
+    "gpt-5.3-codex-spark"
+  ]
+}
