@@ -18,6 +18,16 @@ fail() {
   failures=$((failures + 1))
 }
 
+homebrew_bin() {
+  if command -v brew >/dev/null 2>&1; then
+    command -v brew
+  elif [[ -x /opt/homebrew/bin/brew ]]; then
+    printf '/opt/homebrew/bin/brew\n'
+  elif [[ -x /usr/local/bin/brew ]]; then
+    printf '/usr/local/bin/brew\n'
+  fi
+}
+
 check_macos() {
   if [[ "$(uname)" == "Darwin" ]]; then
     pass "running on macOS"
@@ -35,9 +45,12 @@ check_xcode_clt() {
 }
 
 check_homebrew() {
-  if command -v brew >/dev/null 2>&1; then
+  local brew_cmd
+
+  brew_cmd="$(homebrew_bin || true)"
+  if [[ -n "$brew_cmd" ]]; then
     pass "Homebrew found"
-    if brew --prefix >/dev/null 2>&1; then
+    if "$brew_cmd" --prefix >/dev/null 2>&1; then
       pass "Homebrew prefix is usable"
     else
       fail "brew exists but brew --prefix failed"

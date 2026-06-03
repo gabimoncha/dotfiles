@@ -76,6 +76,11 @@ ensure_homebrew() {
     return 0
   fi
 
+  if [[ -x /opt/homebrew/bin/brew || -x /usr/local/bin/brew ]]; then
+    log "Homebrew is installed but not on PATH"
+    return 0
+  fi
+
   log "Installing Homebrew"
   warn "Homebrew may ask for your macOS password to create its install directories."
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
