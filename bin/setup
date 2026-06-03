@@ -18,6 +18,15 @@ usage() {
   printf 'Usage: ./bin/setup [--dry-run]\n' >&2
 }
 
+ensure_not_root() {
+  if [[ "${EUID}" -eq 0 ]]; then
+    warn "Do not run ./bin/setup with sudo or as root."
+    warn "Run: ./bin/setup"
+    warn "The scripts will ask for sudo only when a specific privileged step needs it."
+    exit 1
+  fi
+}
+
 load_homebrew_shellenv() {
   if command -v brew >/dev/null 2>&1; then
     return 0
@@ -177,6 +186,8 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+ensure_not_root
 
 log "Running preflight"
 "${repo_root}/bin/preflight"

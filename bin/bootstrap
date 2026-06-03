@@ -5,10 +5,16 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 macos_defaults_flag="${HOME}/.macos-defaults-applied"
 temp_brewfile=""
+sudo_keepalive_pid=""
 
 cleanup() {
   if [[ -n "$temp_brewfile" ]]; then
     rm -f "$temp_brewfile"
+  fi
+
+  if [[ -n "$sudo_keepalive_pid" ]]; then
+    kill "$sudo_keepalive_pid" 2>/dev/null || true
+    wait "$sudo_keepalive_pid" 2>/dev/null || true
   fi
 }
 
@@ -20,6 +26,25 @@ log() {
 
 warn() {
   printf '!! %s\n' "$1" >&2
+}
+
+ensure_not_root() {
+  if [[ "${EUID}" -eq 0 ]]; then
+    warn "Do not run ./bin/bootstrap with sudo or as root."
+    warn "Run: ./bin/bootstrap"
+    warn "The script will ask for sudo only when a specific privileged step needs it."
+    exit 1
+  fi
+}
+
+ensure_admin_user() {
+  if id -Gn | tr ' ' '\n' | grep -qx admin; then
+    return 0
+  fi
+
+  warn "Homebrew needs sudo access on macOS."
+  warn "Add this user to the admin group or run setup from an administrator account."
+  exit 1
 }
 
 ensure_xcode_command_line_tools() {
@@ -50,8 +75,8 @@ ensure_homebrew() {
   fi
 
   log "Installing Homebrew"
-  NONINTERACTIVE=1 /bin/bash -c \
-    "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  warn "Homebrew may ask for your macOS password to create its install directories."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 }
 
 load_homebrew_shellenv() {
@@ -150,8 +175,19 @@ install_brewfile() {
 
   filter_brewfile_for_existing_apps "${repo_root}/Brewfile" "$temp_brewfile"
 
+  log "Refreshing sudo timestamp for Homebrew cask installs"
+  sudo -v
+
+  log "Starting background sudo keepalive"
+  (while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null) &
+  sudo_keepalive_pid=$!
+
   log "Installing Homebrew bundle"
-  brew bundle install --no-upgrade --file "$temp_brewfile"
+  brew bundle install --no-upgrade --verbose --file "$temp_brewfile"
+
+  kill "$sudo_keepalive_pid" 2>/dev/null || true
+  wait "$sudo_keepalive_pid" 2>/dev/null || true
+  sudo_keepalive_pid=""
 }
 
 remove_neardrop_quarantine() {
@@ -219,6 +255,8 @@ apply_macos_defaults_once() {
   touch "$macos_defaults_flag"
 }
 
+ensure_not_root
+ensure_admin_user
 ensure_xcode_command_line_tools
 ensure_homebrew
 load_homebrew_shellenv
