@@ -290,10 +290,9 @@ It:
 8. defers App Store apps until `mas` and App Store sign-in are usable
 9. defers the heavyweight mobile dev stack to `./bin/install-mobile-dev`
 10. verifies `mise` tools with `bin/check-mise-tools`
-11. removes NearDrop quarantine after install
-12. installs tmux plugins through TPM
-13. installs Oh My Zsh and Powerlevel10k when missing
-14. applies tracked macOS defaults once
+11. installs tmux plugins through TPM
+12. installs Oh My Zsh and Powerlevel10k when missing
+13. applies tracked macOS defaults once
 
 Touch ID for `sudo` can be managed directly:
 

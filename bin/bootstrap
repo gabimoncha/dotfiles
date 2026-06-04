@@ -450,6 +450,12 @@ install_brewfile() {
   ensure_mas_cli || true
   filter_brewfile_for_existing_apps "${repo_root}/Brewfile" "$temp_brewfile" "$xcode_brewfile" "$mas_brewfile" "$vscode_brewfile"
 
+  if "${repo_root}/bin/configure-sudo-touch-id" --check >/dev/null 2>&1; then
+    log "Touch ID for sudo is enabled"
+  else
+    warn "Touch ID for sudo is not enabled yet; the next sudo prompt will require your password."
+  fi
+
   log "Refreshing sudo timestamp for Homebrew cask installs"
   sudo -v
 
@@ -478,17 +484,6 @@ report_mobile_dev_deferred() {
   fi
 
   warn "Mobile dev stack is deferred. Run ./bin/install-mobile-dev for full Xcode, Android Studio, idb-companion, and sourcekitten."
-}
-
-remove_neardrop_quarantine() {
-  local app_path="/Applications/NearDrop.app"
-
-  if [[ ! -d "$app_path" ]]; then
-    return 0
-  fi
-
-  log "Removing NearDrop quarantine attribute"
-  sudo xattr -r -d com.apple.quarantine "$app_path" 2>/dev/null || true
 }
 
 initialize_submodules() {
@@ -602,7 +597,6 @@ log "Linking app dotfiles"
 "${repo_root}/bin/link-dotfiles"
 wait_for_mise_install
 report_mobile_dev_deferred
-remove_neardrop_quarantine
 log "Installing tmux plugins"
 "${repo_root}/bin/setup-tmux" || warn "tmux plugin setup failed; rerun ./bin/setup-tmux after network access is ready"
 install_shell_framework

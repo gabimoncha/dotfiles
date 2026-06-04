@@ -157,6 +157,8 @@ install_new_file() {
   local source="$1"
 
   if [[ "$pam_dir" == "/etc/pam.d" ]]; then
+    log "Requesting administrator access to update ${sudo_local_file}"
+    sudo -v
     sudo install -o root -g wheel -m 0644 "$source" "$sudo_local_file"
   else
     install -m 0644 "$source" "$sudo_local_file"
@@ -208,6 +210,11 @@ apply_change() {
 
   backup_existing_file
   install_new_file "$temp_file"
+
+  if [[ "$mode" == "enable" ]] && ! touch_id_enabled; then
+    warn "Touch ID sudo setup did not verify after updating ${sudo_local_file}"
+    return 1
+  fi
 
   case "$mode" in
     enable) log "Touch ID for sudo is enabled" ;;
