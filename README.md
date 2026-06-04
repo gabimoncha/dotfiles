@@ -1,23 +1,9 @@
 # dotfiles
 
-Bootstrap a new Mac from the current machine state without tracking shell secrets.
+Source of truth for rebuilding my macOS development environment without
+committing secrets, auth state, or machine-local noise.
 
-## What This Repo Owns
-
-- Homebrew packages, App Store apps, and editor extensions through `Brewfile`
-- Global `mise` tool versions
-- Git, zsh, tmux, Karabiner, Zed, AeroSpace, Ghostty, superwhisper preferences, Mackup, and selected helper scripts
-- VS Code and Cursor user settings/keymaps through Mackup
-- macOS defaults that are safe to automate
-- Neovim as a separate git repo wired in here as a submodule
-
-## What This Repo Does Not Own
-
-- Shell secrets and machine-local exports under `~/.config/local/*.zsh`
-- Token-bearing app configs, Raycast export passphrases, and app auth/permission state
-- Cache-like config files, histories, databases, and workspace/session state
-
-## Bootstrap
+The main path is intentionally simple:
 
 ```bash
 mkdir -p ~/development
@@ -26,13 +12,62 @@ cd ~/development/dotfiles
 ./bin/setup
 ```
 
-`bin/setup` is the fresh-machine entrypoint. It runs preflight, bootstrap, and app installation first, then offers to continue into interactive auth and restore steps. It is safe to rerun as iCloud, App Store, Mackup, and Raycast prerequisites become ready.
+Run `./bin/setup` without `sudo`. The scripts ask for a password only when a
+specific privileged macOS or Homebrew step needs it.
 
-If Xcode Command Line Tools are missing, setup launches the Apple installer popup and exits. Finish that installer, then rerun:
+## Setup Steps
+
+### Step 1: Prepare the old Mac
+
+Do this before moving to a new machine, or whenever you want to check whether
+the repo still reflects the current Mac.
+
+```bash
+cd ~/development/dotfiles
+./bin/prepare-sync
+./bin/mackup-backup
+./bin/raycast-backup
+```
+
+`bin/prepare-sync` is a drift report, not an auto-writer. It compares the
+current Homebrew bundle, prints the current `mise` state, and saves backups
+under `.sync-backups/` so changes can be made intentionally.
+
+`bin/mackup-backup` copies the small Mackup allowlist to iCloud. Raycast is not
+managed by Mackup here; `bin/raycast-backup` opens Raycast and tells you to save
+an encrypted `.rayconfig` export under `iCloud Drive/Raycast`.
+
+Commit and push any intentional repo changes before switching machines.
+
+### Step 2: Clone on the new Mac
+
+```bash
+mkdir -p ~/development
+git clone https://github.com/gabimoncha/dotfiles.git ~/development/dotfiles
+cd ~/development/dotfiles
+./bin/setup
+```
+
+If Xcode Command Line Tools are missing, setup opens Apple's installer popup
+and exits. Finish the installer, then rerun:
 
 ```bash
 ./bin/setup
 ```
+
+### Step 3: Let setup do the unattended work
+
+`bin/setup` is the fresh-machine entrypoint. It runs:
+
+1. `bin/preflight`
+2. `bin/bootstrap`
+3. `bin/install-apps`
+4. `bin/link-dotfiles`
+5. setup summary
+6. optional interactive auth and restore follow-up
+
+It is safe to rerun as Apple ID, App Store, iCloud, Xcode, or app permissions
+become ready.
 
 Dry-run the install pass without changing the machine:
 
@@ -40,154 +75,254 @@ Dry-run the install pass without changing the machine:
 ./bin/setup --dry-run
 ```
 
-The lower-level `bin/bootstrap` script:
+### Step 4: Finish auth and restore
 
-1. Launches the Xcode Command Line Tools installer if needed, then exits for a rerun.
-2. Installs Homebrew if needed.
-3. Installs `mise` if needed.
-4. Initializes git submodules.
-5. Symlinks managed files from `home/` into `$HOME` so the global mise config and shims are available.
-6. Installs global `mise` tools in the background while Homebrew continues.
-7. Installs packages, App Store apps, and editor extensions from a filtered `Brewfile` so existing apps in `/Applications` or unsigned App Store state do not break the run.
-8. Verifies configured mise tools with `bin/check-mise-tools`, then installs any Xcode-dependent formulae once Xcode is ready.
-9. Installs missing tmux plugins through TPM.
-10. Installs Oh My Zsh and Powerlevel10k if missing.
-11. Applies tracked macOS defaults once, unless `DOTFILES_SKIP_MACOS_DEFAULTS=1` is set.
-
-## Neovim Submodule
-
-`nvim/` is wired as a git submodule using the public-friendly relative URL `../nvim`. HTTPS clones of this repo resolve it to the public `gabimoncha/nvim` repo without requiring GitHub SSH first.
-
-`bin/link-dotfiles` links that submodule to `~/.config/nvim`, so the setup is both:
-
-- submodule for separate Neovim repo history
-- symlink for the path Neovim expects on macOS
-
-Run `./bin/auth-setup` after bootstrap to configure GitHub SSH for day-to-day development.
-
-## Extra Apps
-
-`Brewfile` owns normal Homebrew formulae, casks, VS Code extensions, and App Store apps via `mas`. App Store installs require an Apple ID signed in to the App Store; if setup skips them, sign in and rerun `./bin/setup`.
-
-Full Xcode is installed through the `xcodes` CLI managed by `mise`, then selected with `xcode-select` and license-accepted if needed. Xcode-dependent formulae such as `idb-companion` and `sourcekitten` are deferred until after the mise tool install completes so setup does not run competing `mise install` jobs.
-
-`apps/manifest.tsv` is the typed setup ledger for extra tools and apps that need explicit handling outside the main `Brewfile` pass.
-
-Manifest types:
-
-- `cask`: Supplemental Homebrew GUI apps.
-- `formula`: Supplemental Homebrew CLIs that `mise ls-remote <tool>` does not support.
-- `mise`: CLIs that are owned by `home/.config/mise/config.toml`.
-- `manual`: vendor/account flows such as DaVinci Resolve and Pinokio.
-
-NearDrop is installed from the `grishka/grishka` Homebrew tap. Bootstrap and `install-apps` both remove the app quarantine attribute after install so the app can launch cleanly.
-
-superwhisper is installed as a Homebrew cask, and `bin/link-dotfiles` symlinks the tracked settings file to `~/Documents/superwhisper/settings/settings.json`. App auth and macOS permissions still need to be granted outside git.
-
-AeroSpace and Ghostty are installed as Homebrew casks, but their configs are tracked directly in this repo. `bin/link-dotfiles` only links `~/.aerospace.toml` and `~/Library/Application Support/com.mitchellh.ghostty/config` after the matching app bundle exists in `/Applications`; setup reruns the link step after app installation so fresh machines get these links at the right time.
-
-Run:
+At the end of setup, press Enter to continue the interactive follow-up. You can
+also run the pieces directly later:
 
 ```bash
-./bin/install-apps
+./bin/auth-setup
+./bin/mackup-restore
+./bin/raycast-restore
 ```
 
-Dry-run without installing:
+`bin/auth-setup` configures local Git identity, creates or reuses an Ed25519 SSH
+key, authenticates GitHub CLI, uploads the SSH key when possible, and verifies
+GitHub SSH.
+
+`bin/mackup-restore` expects iCloud Drive and the tracked `home/.mackup.cfg`.
+`bin/raycast-restore` opens the newest `.rayconfig` it can find under iCloud
+Drive, or an explicit path passed as an argument.
+
+### Step 5: Handle manual account and permission work
+
+Some state cannot be safely automated:
+
+- Apple ID, App Store, and iCloud sign-in
+- Cursor, VS Code Settings Sync, Notion, Synology Drive, superwhisper, and
+  DaVinci Resolve sign-in
+- Accessibility, Automation, Microphone, and network permissions
+- first-run setup for Xcode, Android Studio, OrbStack, and vendor-only apps
+
+Manual/vendor apps currently live in `apps/manifest.tsv` as `manual` rows.
+DaVinci Resolve and Pinokio are examples.
+
+### Step 6: Verify app state
+
+If the machine looks mostly set up but a few pieces feel incomplete, run:
 
 ```bash
-./bin/install-apps --dry-run
+./bin/app-state-doctor
 ```
 
-## Shell
+It checks the app-state edges this repo can reason about: AeroSpace and Ghostty
+config links, tmux plugins, Raycast install/export state, and whether Spotlight
+is still holding Command-Space.
 
-The tracked shell layout is:
+## What Setup Actually Does
 
-- `home/.zshenv`, `home/.zprofile`, and `home/.zshrc` as thin zsh entrypoints
-- `home/.p10k.zsh`
-- `home/.config/zsh/*.zsh` for the actual shared zsh configuration
+`bin/bootstrap` is the lower-level installer used by `bin/setup`.
 
-Machine-local secrets and exports belong in `~/.config/local/*.zsh`, which is ignored by this repo and sourced by `.zshrc`.
+It:
 
-Mise-owned command shims live at `~/.local/share/mise/shims` and are placed on `PATH` by `home/.config/zsh/path.zsh`. After bootstrap, `./bin/check-mise-tools` verifies that every configured mise tool is installed and that critical commands such as `tmux`, `gh`, `bun`, and `vercel` resolve through the shell.
+1. verifies macOS, admin access, Xcode Command Line Tools, Homebrew, and `mise`
+2. initializes the Neovim submodule
+3. links tracked files from `home/` into `$HOME`
+4. starts `mise install` in the background
+5. installs Homebrew formulae, casks, App Store apps, and VS Code extensions
+6. skips casks whose app bundle already exists in `/Applications`
+7. defers App Store apps until `mas` and App Store sign-in are usable
+8. defers Xcode-dependent formulae until full Xcode is selected
+9. verifies `mise` tools with `bin/check-mise-tools`
+10. removes NearDrop quarantine after install
+11. installs tmux plugins through TPM
+12. installs Oh My Zsh and Powerlevel10k when missing
+13. applies tracked macOS defaults once
 
-tmux plugins are installed by `./bin/setup-tmux`, which bootstrap runs after `mise install`. Rerun it directly if tmux starts with keybindings but without the theme/status/plugins.
+The macOS defaults can be skipped for a run:
+
+```bash
+DOTFILES_SKIP_MACOS_DEFAULTS=1 ./bin/bootstrap
+```
+
+## Ownership Model
+
+This repo is deliberately boring about ownership:
+
+- `Brewfile` owns Homebrew formulae, casks, taps, App Store apps through `mas`,
+  and VS Code extensions.
+- `home/.config/mise/config.toml` owns language runtimes and global developer
+  tools that `mise` supports.
+- `apps/manifest.tsv` is the typed ledger for extra install handling.
+- `home/` owns files that get symlinked into `$HOME`.
+- `macos/defaults.sh` owns conservative macOS defaults.
+- `nvim/` is a separate Neovim repo mounted here as a submodule.
+- Mackup owns only the allowlisted app settings in `home/.mackup.cfg`.
+- Raycast is restored from an encrypted `.rayconfig` export outside git.
+
+When adding a tool, use this order:
+
+1. Mac App Store via `mas`, if it is a GUI app available there
+2. `mise`, if `mise ls-remote <tool>` supports it
+3. Homebrew in `Brewfile`, if it does not belong in `mas` or `mise`
+4. `apps/manifest.tsv`, if it needs special handling or is manual/vendor-only
+
+Do not commit secrets, tokens, private emails, `.rayconfig` files, cache
+databases, session state, or machine-local exports.
+
+## Important Paths
+
+```text
+Brewfile                         Homebrew, mas, casks, VS Code extensions
+apps/manifest.tsv                extra typed app/tool ledger
+bin/setup                        fresh-Mac entrypoint
+bin/bootstrap                    lower-level bootstrap
+bin/link-dotfiles                symlink managed files into $HOME
+bin/preflight                    repo and machine checks
+bin/auth-setup                   Git/GitHub/SSH follow-up
+bin/install-apps                 manifest installer
+bin/app-state-doctor             post-setup app-state checks
+home/                            tracked $HOME sources
+home/.config/mise/config.toml    mise-owned tools
+home/.mackup.cfg                 Mackup allowlist using iCloud storage
+macos/defaults.sh                tracked macOS defaults
+nvim/                            Neovim submodule linked to ~/.config/nvim
+```
+
+## Managed Dotfiles
+
+`bin/link-dotfiles` links tracked files into `$HOME` and backs up replaced
+targets under `~/.dotfiles-backups/<timestamp>/`.
+
+Currently managed:
+
+- `~/.gitconfig`
+- `~/.aerospace.toml`
+- `~/.zshenv`, `~/.zprofile`, `~/.zshrc`
+- `~/.p10k.zsh`
+- `~/.mackup.cfg`
+- `~/.rgrc`
+- `~/.tmux.conf`
+- `~/.config/mise/config.toml`
+- `~/.config/zsh/*.zsh`
+- `~/.config/karabiner/karabiner.json`
+- `~/.config/zed/settings.json`
+- `~/.config/zed/keymap.json`
+- `~/Documents/superwhisper/settings/settings.json`
+- `~/Library/Application Support/com.mitchellh.ghostty/config`
+- `~/scripts/toggle_function_keys.sh`
+- `nvim/` as `~/.config/nvim`
+
+AeroSpace and Ghostty config links are only created after their app bundles
+exist in `/Applications`.
+
+## Shell Layout
+
+The tracked zsh files are thin entrypoints:
+
+- `home/.zshenv`
+- `home/.zprofile`
+- `home/.zshrc`
+- `home/.config/zsh/path.zsh`
+- `home/.config/zsh/env.zsh`
+- `home/.config/zsh/profile.zsh`
+- `home/.config/zsh/interactive.zsh`
+- `home/.config/zsh/aliases.zsh`
+- `home/.config/zsh/functions.zsh`
+- `home/.config/zsh/check-updates.zsh`
+
+Machine-local secrets and exports belong in ignored files under:
+
+```text
+~/.config/local/*.zsh
+```
+
+Use environment variables for secrets and the zsh `path` array for committable
+PATH setup.
+
+When a clean shell does not have `mise` shims on `PATH`, prefer:
+
+```bash
+mise exec -- <command>
+```
 
 ## Mackup and Raycast
 
-Mackup is configured in copy mode with iCloud storage:
+Mackup uses iCloud storage and an explicit app allowlist:
 
 ```bash
 ./bin/mackup-backup
 ./bin/mackup-restore
 ```
 
-Both helpers read the tracked `home/.mackup.cfg` and defer cleanly if iCloud Drive is not signed in yet. Mackup does not restore Raycast in this repo.
+The allowlist currently includes Cursor, Cyberduck, Rectangle, Spotify, VS Code,
+GitHub CLI, Lazygit, and Stats.
 
-Raycast is restored through an encrypted `.rayconfig` export saved outside git under `iCloud Drive/Raycast`:
+Use the helper scripts instead of raw Mackup link mode. This repo treats Mackup
+as an explicit copy-based backup/restore tool so tracked files under `home/`
+remain the source of truth.
+
+Raycast is separate:
 
 ```bash
-# old Mac: create the export
 ./bin/raycast-backup
-
-# new Mac: open the export after iCloud syncs it
 ./bin/raycast-restore
 ```
 
-You can still pass an explicit export path to `./bin/raycast-restore /path/to/export.rayconfig`.
+Keep `.rayconfig` exports and passphrases outside git.
 
-Do not commit `.rayconfig` files or export passphrases. Raycast encrypts exports, but they still contain app settings and extension state; keep the passphrase in Keychain or another private store.
+## Neovim
 
-macOS defaults disable Spotlight's Command-Space hotkeys. Raycast owning Command-Space comes from the restored Raycast export or from setting the hotkey manually in Raycast preferences. The defaults script also hides the Dock automatically, enables the U.S. and Romanian keyboard input sources alongside the existing input sources, and configures Dictation for Romanian and English. Input source setup uses Apple's Text Input Source API through `macos/ensure-input-sources.swift` because writing `com.apple.HIToolbox` alone does not reliably update System Settings on current macOS.
+`nvim/` is a git submodule with separate history. `bin/link-dotfiles` links it
+to:
 
-Battery Charge Limit is a native macOS Tahoe 26.4+ setting on Apple silicon Macs, but this repo does not currently script it because Apple documents the System Settings and Shortcuts flows, not a stable `defaults` or `pmset` setter. On a fresh Mac, set it from System Settings > Battery > Charging > Charge Limit > 80%.
-
-Run `./bin/app-state-doctor` when AeroSpace, Ghostty, tmux plugins, or Raycast hotkeys look incomplete after a fresh-machine setup. It checks for the tracked app config links, missing tmux plugins, Raycast exports, and whether Spotlight is still holding Command-Space.
-
-## Managed Files
-
-- `home/.gitconfig`
-- `home/.aerospace.toml`
-- `home/.zshenv`, `home/.zprofile`, and `home/.zshrc`
-- `home/.p10k.zsh`
-- `home/.mackup.cfg`
-- `home/.rgrc`
-- `home/.tmux.conf`
-- `home/.config/mise/config.toml`
-- `home/.config/zsh/*.zsh`
-- `home/.config/karabiner/karabiner.json`
-- `home/.config/zed/settings.json`
-- `home/.config/zed/keymap.json`
-- `home/Library/Application Support/com.mitchellh.ghostty/config`
-- `home/Documents/superwhisper/settings/settings.json`
-- `home/scripts/toggle_function_keys.sh`
-- `nvim/` as `~/.config/nvim`
-
-## Git Identity
-
-The tracked git config keeps shared defaults and includes `~/.gitconfig.local`.
-`./bin/auth-setup` prompts for missing Git identity and writes it to that local-only file.
-
-You can also edit it manually:
-
-```ini
-[user]
-	name = your-name
-	email = your-github-private-email@users.noreply.github.com
+```text
+~/.config/nvim
 ```
 
-Do not sync this through Mackup or commit it to the repo; it can contain private account identity.
+Do not edit the submodule from this repo unless the task is explicitly about
+the Neovim config repo.
 
-## Future Shell Cleanup
+## Updating an Existing Mac
 
-The intended commit-safe shell layout is:
+Pull repo updates and reapply bootstrap-managed changes:
 
-- tracked: `~/.config/zsh/path.zsh`, aliases, prompt-agnostic shell logic
-- ignored: `~/.config/local/env.zsh` for API keys and machine-specific exports
-
-Pattern:
-
-```zsh
-[ -f "$HOME/.config/local/env.zsh" ] && source "$HOME/.config/local/env.zsh"
+```bash
+dotfiles-update
 ```
 
-Keep API keys in environment variables, not in `PATH`. Use the zsh `path` array for the committable PATH setup.
+That command runs `git pull --ff-only` and then `bin/bootstrap` with macOS
+defaults skipped for the update run.
+
+For targeted reruns:
+
+```bash
+./bin/preflight
+./bin/bootstrap
+./bin/install-apps
+./bin/link-dotfiles
+./bin/setup-tmux
+./bin/app-state-doctor
+```
+
+## Validation
+
+After meaningful changes, run the smallest relevant checks:
+
+```bash
+bash -n bin/bootstrap
+bash -n bin/link-dotfiles
+bash -n macos/defaults.sh
+git diff --check
+```
+
+For setup or inventory changes, also run:
+
+```bash
+./bin/preflight
+./bin/install-apps --dry-run
+./bin/setup --dry-run
+```
+
+Keep `README.md`, `QUICKSTART.md`, scripts, and tracked config aligned. If the
+implementation changes, update the docs in the same patch.
