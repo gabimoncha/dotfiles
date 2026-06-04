@@ -19,6 +19,7 @@ The lower-level commands still exist for targeted reruns:
 ./bin/preflight
 ./bin/bootstrap
 ./bin/install-apps
+./bin/install-mobile-dev
 ./bin/auth-setup
 ./bin/setup-tmux
 ./bin/app-state-doctor
@@ -41,5 +42,9 @@ Some setup still needs account login or OS permissions:
 - Android Studio SDK setup for React Native: Android 15 SDK Platform 35,
   Sources for Android 35, Android SDK Build-Tools, Android Emulator, and at
   least one virtual device
+
+The full mobile dev stack is intentionally outside `./bin/setup` because Xcode
+and Android Studio are large downloads. Run `./bin/install-mobile-dev` when you
+want full Xcode, Android Studio, `idb-companion`, and `sourcekitten`.
 
 If Ghostty, tmux plugins, or Raycast hotkeys do not look restored after setup, run `./bin/app-state-doctor` for the concrete missing piece.

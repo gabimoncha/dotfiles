@@ -13,6 +13,7 @@ mise_install_pid=""
 mas_checked=0
 mas_available=0
 mise_shim_dir="${HOME}/.local/share/mise/shims"
+brew_bundle_jobs="${DOTFILES_BREW_BUNDLE_JOBS:-auto}"
 
 cleanup() {
   if [[ -n "$mise_install_pid" ]]; then
@@ -116,6 +117,11 @@ ensure_homebrew() {
 }
 
 load_homebrew_shellenv() {
+  if [[ -n "${HOMEBREW_PREFIX:-}" && -x "${HOMEBREW_PREFIX}/bin/brew" ]]; then
+    eval "$("${HOMEBREW_PREFIX}/bin/brew" shellenv)"
+    return 0
+  fi
+
   if [[ -x /opt/homebrew/bin/brew ]]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
     return 0
@@ -159,7 +165,6 @@ cask_app_bundle_name() {
     neardrop | grishka/grishka/neardrop) printf 'NearDrop' ;;
     ngrok) printf 'ngrok' ;;
     nikitabobko/tap/aerospace | aerospace) printf 'AeroSpace' ;;
-    android-studio) printf 'Android Studio' ;;
     notion-calendar) printf 'Notion Calendar' ;;
     obsidian) printf 'Obsidian' ;;
     orbstack) printf 'OrbStack' ;;
@@ -223,27 +228,6 @@ full_xcode_selected() {
   [[ -n "$developer_dir" && "$(xcode-select -p 2>/dev/null || true)" == "$developer_dir" ]]
 }
 
-configure_full_xcode() {
-  local developer_dir
-
-  developer_dir="$(preferred_xcode_developer_dir || true)"
-  if [[ -z "$developer_dir" ]]; then
-    return 1
-  fi
-
-  if ! full_xcode_selected; then
-    log "Selecting full Xcode"
-    sudo xcode-select -s "$developer_dir"
-  fi
-
-  if ! sudo xcodebuild -license check >/dev/null 2>&1; then
-    log "Accepting Xcode license"
-    sudo xcodebuild -license accept
-  fi
-
-  full_xcode_selected
-}
-
 xcode_dependent_formula() {
   case "$1" in
     facebook/fb/idb-companion | idb-companion | sourcekitten)
@@ -264,28 +248,6 @@ ensure_mise_cli() {
   brew install mise
   hash -r
   command -v mise >/dev/null 2>&1
-}
-
-ensure_aria2_cli() {
-  if command -v aria2c >/dev/null 2>&1; then
-    return 0
-  fi
-
-  log "Installing aria2"
-  brew install aria2
-  hash -r
-  command -v aria2c >/dev/null 2>&1
-}
-
-ensure_xcodes_cli() {
-  if ! ensure_mise_cli; then
-    warn "Skipping Xcode install; mise is not available"
-    return 1
-  fi
-
-  log "Installing xcodes"
-  mise install xcodes@latest
-  mise reshim
 }
 
 ensure_mas_cli() {
@@ -309,30 +271,6 @@ ensure_mas_cli() {
   brew install mas
   hash -r
   command -v mas >/dev/null 2>&1
-}
-
-install_xcode_with_xcodes() {
-  if preferred_xcode_developer_dir >/dev/null 2>&1; then
-    configure_full_xcode
-    return $?
-  fi
-
-  if ! ensure_xcodes_cli; then
-    return 1
-  fi
-
-  ensure_aria2_cli || warn "aria2 is not available; xcodes will use the slower default downloader"
-
-  log "Installing latest Xcode with xcodes"
-  if ! mise exec xcodes@latest -- xcodes install --latest; then
-    warn "Xcode install with xcodes failed. Sign in when prompted or set XCODES_USERNAME/XCODES_PASSWORD, then rerun ./bin/setup."
-    return 1
-  fi
-
-  configure_full_xcode || {
-    warn "Xcode is installed but not ready yet. Finish first launch if prompted, then rerun ./bin/setup."
-    return 1
-  }
 }
 
 mas_available_for_brewfile() {
@@ -510,7 +448,6 @@ install_brewfile() {
   vscode_brewfile="$(mktemp)"
 
   ensure_mas_cli || true
-  configure_full_xcode || true
   filter_brewfile_for_existing_apps "${repo_root}/Brewfile" "$temp_brewfile" "$xcode_brewfile" "$mas_brewfile" "$vscode_brewfile"
 
   log "Refreshing sudo timestamp for Homebrew cask installs"
@@ -520,33 +457,27 @@ install_brewfile() {
   (while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null) &
   sudo_keepalive_pid=$!
 
-  log "Installing Homebrew bundle"
-  brew bundle install --no-upgrade --verbose --file "$temp_brewfile"
-
-  if [[ -s "$xcode_brewfile" ]] && configure_full_xcode; then
-    log "Installing Xcode-dependent Homebrew formulae"
-    brew bundle install --no-upgrade --verbose --file "$xcode_brewfile"
-  elif [[ -s "$xcode_brewfile" ]]; then
-    warn "Skipped Xcode-dependent formulae. Install Xcode from the App Store, then rerun ./bin/setup."
-  fi
+  log "Installing Homebrew bundle with ${brew_bundle_jobs} parallel job(s)"
+  brew bundle install --jobs="$brew_bundle_jobs" --no-upgrade --verbose --file "$temp_brewfile"
 
   install_mas_apps
   install_vscode_extensions
 }
 
-install_deferred_xcode_formulae() {
-  if [[ ! -s "$xcode_brewfile" ]]; then
+mobile_dev_ready() {
+  full_xcode_selected &&
+    [[ -d "/Applications/Android Studio.app" ]] &&
+    brew list --formula "facebook/fb/idb-companion" >/dev/null 2>&1 &&
+    brew list --formula "sourcekitten" >/dev/null 2>&1
+}
+
+report_mobile_dev_deferred() {
+  if mobile_dev_ready; then
+    log "Mobile dev stack is already installed"
     return 0
   fi
 
-  install_xcode_with_xcodes || true
-
-  if configure_full_xcode; then
-    log "Installing Xcode-dependent Homebrew formulae"
-    brew bundle install --no-upgrade --verbose --file "$xcode_brewfile"
-  else
-    warn "Skipped Xcode-dependent formulae. Install Xcode from the App Store, then rerun ./bin/setup."
-  fi
+  warn "Mobile dev stack is deferred. Run ./bin/install-mobile-dev for full Xcode, Android Studio, idb-companion, and sourcekitten."
 }
 
 remove_neardrop_quarantine() {
@@ -670,7 +601,7 @@ install_brewfile
 log "Linking app dotfiles"
 "${repo_root}/bin/link-dotfiles"
 wait_for_mise_install
-install_deferred_xcode_formulae
+report_mobile_dev_deferred
 remove_neardrop_quarantine
 log "Installing tmux plugins"
 "${repo_root}/bin/setup-tmux" || warn "tmux plugin setup failed; rerun ./bin/setup-tmux after network access is ready"
@@ -687,7 +618,8 @@ Recommended next steps:
 - Open a new terminal, or reload this one with: source "$HOME/.zshrc"
 - Run ./bin/auth-setup to configure SSH and GitHub access.
 - Run ./bin/install-apps to install extra casks and report manual vendor apps.
+- Run ./bin/install-mobile-dev when you are ready for full Xcode, Android Studio, idb-companion, and sourcekitten.
 - Sign in to Apple ID, App Store, and iCloud.
 - Re-grant Accessibility / Automation / network permissions for Karabiner, AeroSpace, NearDrop, Synology Drive, superwhisper, and similar tools.
-- Finish first-run setup for Xcode, Android Studio, OrbStack, and DaVinci Resolve.
+- Finish first-run setup for Xcode, Android Studio, OrbStack, and DaVinci Resolve after installing the apps.
 EOF

@@ -57,51 +57,150 @@ and exits. Finish the installer, then rerun:
 
 ### Step 3: Let setup do the unattended work
 
-`bin/setup` is the fresh-machine entrypoint. Its runtime flow is:
+`bin/setup` is the fresh-machine entrypoint. Each container below is a script
+flow, and arrows between containers show where setup hands control to another
+script.
 
 ```mermaid
-flowchart TD
-  Start["./bin/setup"] --> Root{"Running as root?"}
-  Root -->|"yes"| RootExit["Exit: rerun without sudo"]
-  Root -->|"no"| Preflight["bin/preflight"]
+flowchart LR
+  subgraph Setup["bin/setup"]
+    direction TB
+    S0["Start"]
+    S1{"Running as root?"}
+    S2["Exit: rerun without sudo"]
+    S3["Call bin/preflight"]
+    S4{"--dry-run?"}
+    S5["Call bin/install-apps --dry-run"]
+    S6["Print setup summary"]
+    S7["Exit"]
+    S8["Call bin/bootstrap"]
+    S9{"Xcode CLT ready after bootstrap?"}
+    S10["Exit: finish installer, rerun ./bin/setup"]
+    S11["Call bin/install-apps"]
+    S12["Call bin/link-dotfiles"]
+    S13["Print setup summary"]
+    S14{"Interactive terminal?"}
+    S15["Skip auth and restore follow-up"]
+    S16["Call bin/auth-setup after Enter"]
+    S17["Call bin/mackup-restore"]
+    S18["Find .rayconfig and call bin/raycast-restore when present"]
+    S19["Print shell reload hint"]
 
-  Preflight --> DryRun{"--dry-run?"}
-  DryRun -->|"yes"| DryApps["bin/install-apps --dry-run"]
-  DryApps --> Summary["Print setup summary"]
-  Summary --> Done["Exit"]
+    S0 --> S1
+    S1 -->|"yes"| S2
+    S1 -->|"no"| S3
+    S3 --> S4
+    S4 -->|"yes"| S5 --> S6 --> S7
+    S4 -->|"no"| S8
+    S8 --> S9
+    S9 -->|"no"| S10
+    S9 -->|"yes"| S11 --> S12 --> S13 --> S14
+    S14 -->|"no"| S15 --> S19
+    S14 -->|"yes"| S16 --> S17 --> S18 --> S19
+  end
 
-  DryRun -->|"no"| Bootstrap["bin/bootstrap"]
+  subgraph Preflight["bin/preflight"]
+    direction TB
+    P1["Check macOS, Xcode CLT, Homebrew, GitHub SSH"]
+    P2["Check repo files and app manifest"]
+    P3["Run syntax checks for setup scripts"]
+    P4["Preflight passed"]
 
-  subgraph BootstrapFlow["bin/bootstrap"]
+    P1 --> P2 --> P3 --> P4
+  end
+
+  subgraph Bootstrap["bin/bootstrap"]
+    direction TB
     B1["Verify admin, Xcode CLT, Homebrew, mise"]
     B2["Configure sudo Touch ID unless skipped"]
     B3["Initialize nvim submodule"]
-    B4["bin/link-dotfiles"]
+    B4["Call bin/link-dotfiles"]
     B5["Start mise install in background"]
-    B6["Install Brewfile apps, mas apps, VS Code extensions"]
-    B7["bin/link-dotfiles again after apps exist"]
+    B6["Install Brewfile, mas apps, VS Code extensions"]
+    B7["Call bin/link-dotfiles again after apps exist"]
     B8["Wait for mise and run bin/check-mise-tools"]
-    B9["Install deferred Xcode formulae when possible"]
-    B10["bin/setup-tmux"]
-    B11["Install Oh My Zsh and Powerlevel10k"]
-    B12["macos/defaults.sh unless skipped or already applied"]
-    B13["bin/finder-sidebar-favorites"]
-    B1 --> B2 --> B3 --> B4 --> B5 --> B6 --> B7 --> B8 --> B9 --> B10 --> B11 --> B12 --> B13
+    B9["Report mobile-dev setup as deferred"]
+    B10["Run setup-tmux, shell framework, macOS defaults, Finder favorites"]
+    B11["Bootstrap complete"]
+
+    B1 --> B2 --> B3 --> B4 --> B5 --> B6 --> B7 --> B8 --> B9 --> B10 --> B11
   end
 
-  Bootstrap --> XcodeReady{"Xcode CLT ready after bootstrap?"}
-  XcodeReady -->|"no"| XcodeExit["Exit: finish installer, rerun ./bin/setup"]
-  XcodeReady -->|"yes"| InstallApps["bin/install-apps"]
-  InstallApps --> LinkApps["bin/link-dotfiles"]
-  LinkApps --> SetupSummary["Print setup summary"]
-  SetupSummary --> Interactive{"Interactive terminal?"}
+  subgraph InstallApps["bin/install-apps"]
+    direction TB
+    I1["Read apps/manifest.tsv"]
+    I2{"Manifest row type"}
+    I3["cask or formula: brew install or dry-run"]
+    I4["mise: mise install or dry-run"]
+    I5["manual: print vendor instructions"]
+    I6["App install pass complete"]
 
-  Interactive -->|"no"| SkipFollowup["Skip auth and restore follow-up"]
-  Interactive -->|"yes, after Enter"| Auth["bin/auth-setup"]
-  Auth --> Mackup["bin/mackup-restore"]
-  Mackup --> Raycast{"Raycast .rayconfig found in iCloud?"}
-  Raycast -->|"yes"| RaycastRestore["bin/raycast-restore"]
-  Raycast -->|"no"| RaycastDeferred["Defer Raycast restore"]
+    I1 --> I2
+    I2 --> I3 --> I6
+    I2 --> I4 --> I6
+    I2 --> I5 --> I6
+  end
+
+  subgraph MobileDev["bin/install-mobile-dev"]
+    direction TB
+    MD1["Ensure Homebrew, mise, and xcodes"]
+    MD2["Install Android Studio cask"]
+    MD3["Install and configure full Xcode"]
+    MD4["Install idb-companion and sourcekitten"]
+
+    MD1 --> MD2 --> MD3 --> MD4
+  end
+
+  subgraph LinkDotfiles["bin/link-dotfiles"]
+    direction TB
+    L1["Build managed source list"]
+    L2["Add app configs only when app bundles exist"]
+    L3["Back up replaced targets"]
+    L4["Create symlinks into HOME"]
+
+    L1 --> L2 --> L3 --> L4
+  end
+
+  subgraph AuthSetup["bin/auth-setup"]
+    direction TB
+    A1["Configure local Git identity"]
+    A2["Create or reuse SSH key"]
+    A3["Authenticate gh and upload key when possible"]
+    A4["Verify GitHub SSH"]
+
+    A1 --> A2 --> A3 --> A4
+  end
+
+  subgraph MackupRestore["bin/mackup-restore"]
+    direction TB
+    M1["Use tracked home/.mackup.cfg"]
+    M2["Restore allowlisted app settings from iCloud"]
+
+    M1 --> M2
+  end
+
+  subgraph RaycastRestore["bin/raycast-restore"]
+    direction TB
+    R1{"Raycast .rayconfig found in iCloud?"}
+    R2["Open newest .rayconfig"]
+    R3["Defer Raycast restore"]
+
+    R1 -->|"yes"| R2
+    R1 -->|"no"| R3
+  end
+
+  S3 -.-> P1
+  S5 -.-> I1
+  S8 -.-> B1
+  S11 -.-> I1
+  S12 -.-> L1
+  S13 -.->|optional later| MD1
+  S16 -.-> A1
+  S17 -.-> M1
+  S18 -.-> R1
+
+  B4 -.-> L1
+  B7 -.-> L1
 ```
 
 It is safe to rerun as Apple ID, App Store, iCloud, Xcode, or app permissions
@@ -151,6 +250,14 @@ Some state cannot be safely automated:
   35, Sources for Android 35, Android SDK Build-Tools, Android Emulator, and
   create at least one virtual device from Virtual Device Manager
 
+The heavyweight mobile dev stack is intentionally outside the default setup
+path. Run it when you are ready for the large Xcode and Android Studio
+downloads:
+
+```bash
+./bin/install-mobile-dev
+```
+
 Manual/vendor apps currently live in `apps/manifest.tsv` as `manual` rows.
 DaVinci Resolve and Pinokio are examples.
 
@@ -178,9 +285,10 @@ It:
 4. links tracked files from `home/` into `$HOME`
 5. starts `mise install` in the background
 6. installs Homebrew formulae, casks, App Store apps, and VS Code extensions
+   with `brew bundle --jobs="${DOTFILES_BREW_BUNDLE_JOBS:-auto}"`
 7. skips casks whose app bundle already exists in `/Applications`
 8. defers App Store apps until `mas` and App Store sign-in are usable
-9. defers Xcode-dependent formulae until full Xcode is selected
+9. defers the heavyweight mobile dev stack to `./bin/install-mobile-dev`
 10. verifies `mise` tools with `bin/check-mise-tools`
 11. removes NearDrop quarantine after install
 12. installs tmux plugins through TPM
@@ -209,6 +317,13 @@ The macOS defaults can be skipped for a run:
 
 ```bash
 DOTFILES_SKIP_MACOS_DEFAULTS=1 ./bin/bootstrap
+```
+
+Run the mobile dev stack separately when you want full Xcode, Android Studio,
+`idb-companion`, and `sourcekitten`:
+
+```bash
+./bin/install-mobile-dev
 ```
 
 ## Ownership Model
@@ -250,6 +365,7 @@ bin/preflight                    repo and machine checks
 bin/auth-setup                   Git/GitHub/SSH follow-up
 bin/configure-sudo-touch-id      Touch ID for sudo PAM setup
 bin/install-apps                 manifest installer
+bin/install-mobile-dev           heavyweight Xcode and Android Studio setup
 bin/finder-sidebar-favorites     add repo-owned Finder sidebar favorites
 bin/app-state-doctor             post-setup app-state checks
 home/                            tracked $HOME sources
@@ -313,8 +429,9 @@ PATH setup.
 For Android/React Native development, the tracked shell config exports
 `JAVA_HOME` to the Homebrew Zulu 17 JDK and `ANDROID_HOME` to
 `~/Library/Android/sdk`, then adds the Android emulator and platform-tools
-directories to `PATH`. Android Studio still owns installing the SDK packages
-and creating the emulator image.
+directories to `PATH`. Run `./bin/install-mobile-dev` to install Android
+Studio. Android Studio still owns installing the SDK packages and creating the
+emulator image.
 
 When a clean shell does not have `mise` shims on `PATH`, prefer:
 
@@ -376,6 +493,7 @@ For targeted reruns:
 ./bin/preflight
 ./bin/bootstrap
 ./bin/install-apps
+./bin/install-mobile-dev
 ./bin/link-dotfiles
 ./bin/setup-tmux
 ./bin/app-state-doctor
@@ -387,6 +505,7 @@ After meaningful changes, run the smallest relevant checks:
 
 ```bash
 bash -n bin/bootstrap
+bash -n bin/install-mobile-dev
 bash -n bin/link-dotfiles
 bash -n macos/defaults.sh
 git diff --check
@@ -397,6 +516,7 @@ For setup or inventory changes, also run:
 ```bash
 ./bin/preflight
 ./bin/install-apps --dry-run
+./bin/install-mobile-dev --dry-run
 ./bin/setup --dry-run
 ```
 

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Update Setup Mermaid"
+  short_description: "Sync README setup flow graph"
+  default_prompt: "Use $update-setup-mermaid to refresh the README setup-flow Mermaid graph after dotfiles setup script changes."
+
+policy:
+  allow_implicit_invocation: false

@@ -19,12 +19,14 @@ fail() {
 }
 
 homebrew_bin() {
-  if command -v brew >/dev/null 2>&1; then
-    command -v brew
+  if [[ -n "${HOMEBREW_PREFIX:-}" && -x "${HOMEBREW_PREFIX}/bin/brew" ]]; then
+    printf '%s/bin/brew\n' "$HOMEBREW_PREFIX"
   elif [[ -x /opt/homebrew/bin/brew ]]; then
     printf '/opt/homebrew/bin/brew\n'
   elif [[ -x /usr/local/bin/brew ]]; then
     printf '/usr/local/bin/brew\n'
+  elif command -v brew >/dev/null 2>&1; then
+    command -v brew
   fi
 }
 
@@ -110,6 +112,7 @@ check_script_syntax() {
     "bin/check-mise-tools"
     "bin/configure-sudo-touch-id"
     "bin/install-apps"
+    "bin/install-mobile-dev"
     "bin/finder-sidebar-favorites"
     "bin/setup-tmux"
     "bin/app-state-doctor"

@@ -28,7 +28,8 @@ ensure_not_root() {
 }
 
 load_homebrew_shellenv() {
-  if command -v brew >/dev/null 2>&1; then
+  if [[ -n "${HOMEBREW_PREFIX:-}" && -x "${HOMEBREW_PREFIX}/bin/brew" ]]; then
+    eval "$("${HOMEBREW_PREFIX}/bin/brew" shellenv)"
     return 0
   fi
 
@@ -36,6 +37,8 @@ load_homebrew_shellenv() {
     eval "$(/opt/homebrew/bin/brew shellenv)"
   elif [[ -x /usr/local/bin/brew ]]; then
     eval "$(/usr/local/bin/brew shellenv)"
+  elif command -v brew >/dev/null 2>&1; then
+    eval "$(brew shellenv)"
   fi
 }
 

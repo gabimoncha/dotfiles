@@ -1,0 +1,377 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+dry_run=0
+temp_brewfile=""
+mobile_status=0
+mise_shim_dir="${HOME}/.local/share/mise/shims"
+brew_bundle_jobs="${DOTFILES_BREW_BUNDLE_JOBS:-auto}"
+
+cleanup() {
+  if [[ -n "$temp_brewfile" ]]; then
+    rm -f "$temp_brewfile"
+  fi
+}
+
+trap cleanup EXIT
+
+log() {
+  printf '==> %s\n' "$1"
+}
+
+warn() {
+  printf '!! %s\n' "$1" >&2
+}
+
+usage() {
+  printf 'Usage: ./bin/install-mobile-dev [--dry-run]\n' >&2
+}
+
+prepend_mise_shims() {
+  case ":${PATH}:" in
+    *":${mise_shim_dir}:"*) ;;
+    *) export PATH="${mise_shim_dir}:${PATH}" ;;
+  esac
+}
+
+ensure_not_root() {
+  if [[ "${EUID}" -eq 0 ]]; then
+    warn "Do not run ./bin/install-mobile-dev with sudo or as root."
+    warn "Run: ./bin/install-mobile-dev"
+    warn "The script will ask for sudo only when a specific privileged step needs it."
+    exit 1
+  fi
+}
+
+ensure_xcode_command_line_tools() {
+  if xcode-select -p >/dev/null 2>&1; then
+    log "Xcode Command Line Tools are installed"
+    return 0
+  fi
+
+  if [[ "$dry_run" -eq 1 ]]; then
+    log "dry-run: would open the Xcode Command Line Tools installer"
+    return 0
+  fi
+
+  warn "Xcode Command Line Tools are required before mobile dev setup can continue."
+  log "Opening the Xcode Command Line Tools installer"
+  xcode-select --install >/dev/null 2>&1 || {
+    warn "The installer may already be open. If not, run: xcode-select --install"
+  }
+
+  cat <<'EOF'
+
+Finish the Xcode Command Line Tools installer popup, then rerun:
+
+  ./bin/install-mobile-dev
+EOF
+  exit 0
+}
+
+ensure_homebrew() {
+  if [[ -n "${HOMEBREW_PREFIX:-}" && -x "${HOMEBREW_PREFIX}/bin/brew" ]]; then
+    log "Homebrew is installed"
+    return 0
+  fi
+
+  if command -v brew >/dev/null 2>&1; then
+    log "Homebrew is installed"
+    return 0
+  fi
+
+  if [[ -x /opt/homebrew/bin/brew || -x /usr/local/bin/brew ]]; then
+    log "Homebrew is installed but not on PATH"
+    return 0
+  fi
+
+  if [[ "$dry_run" -eq 1 ]]; then
+    log "dry-run: would install Homebrew"
+    return 0
+  fi
+
+  log "Installing Homebrew"
+  warn "Homebrew may ask for your macOS password to create its install directories."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+}
+
+load_homebrew_shellenv() {
+  if [[ -n "${HOMEBREW_PREFIX:-}" && -x "${HOMEBREW_PREFIX}/bin/brew" ]]; then
+    eval "$("${HOMEBREW_PREFIX}/bin/brew" shellenv)"
+    return 0
+  fi
+
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+    return 0
+  fi
+
+  if [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+    return 0
+  fi
+
+  if command -v brew >/dev/null 2>&1; then
+    eval "$(brew shellenv)"
+    return 0
+  fi
+
+  if [[ "$dry_run" -eq 1 ]]; then
+    return 0
+  fi
+
+  warn "Homebrew installed, but brew was not found on PATH."
+  exit 1
+}
+
+ensure_mise_cli() {
+  prepend_mise_shims
+
+  if command -v mise >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if [[ "$dry_run" -eq 1 ]]; then
+    log "dry-run: would install mise"
+    return 0
+  fi
+
+  log "Installing mise"
+  brew install mise
+  hash -r
+  command -v mise >/dev/null 2>&1
+}
+
+preferred_xcode_developer_dir() {
+  local app
+
+  if [[ -d "/Applications/Xcode.app/Contents/Developer" ]]; then
+    printf '/Applications/Xcode.app/Contents/Developer\n'
+    return 0
+  fi
+
+  while IFS= read -r app; do
+    if [[ -d "${app}/Contents/Developer" ]]; then
+      printf '%s/Contents/Developer\n' "$app"
+      return 0
+    fi
+  done < <(ls -dt /Applications/Xcode*.app 2>/dev/null || true)
+
+  return 1
+}
+
+full_xcode_selected() {
+  local developer_dir
+
+  developer_dir="$(preferred_xcode_developer_dir || true)"
+  [[ -n "$developer_dir" && "$(xcode-select -p 2>/dev/null || true)" == "$developer_dir" ]]
+}
+
+run_xcode_first_launch_tasks() {
+  if ! xcodebuild -help 2>&1 | grep -q -- '-runFirstLaunch'; then
+    return 0
+  fi
+
+  if sudo xcodebuild -checkFirstLaunchStatus >/dev/null 2>&1; then
+    return 0
+  fi
+
+  log "Running Xcode first launch tasks"
+  sudo xcodebuild -runFirstLaunch
+}
+
+xcode_ios_platform_ready() {
+  xcodebuild -showsdks 2>/dev/null | grep -q 'iphonesimulator' &&
+    xcrun simctl list runtimes 2>/dev/null |
+      awk '/com\.apple\.CoreSimulator\.SimRuntime\.iOS-/ && $0 !~ /\(unavailable/ { found = 1 } END { exit found ? 0 : 1 }'
+}
+
+ensure_xcode_ios_platform() {
+  if xcode_ios_platform_ready; then
+    log "Xcode iOS platform support is installed"
+    return 0
+  fi
+
+  if ! xcodebuild -help 2>&1 | grep -q -- '-downloadPlatform'; then
+    warn "Xcode cannot install iOS platform support from the command line. Open Xcode > Settings > Components and install iOS manually."
+    return 1
+  fi
+
+  log "Installing Xcode iOS platform support"
+  if ! sudo xcodebuild -downloadPlatform iOS; then
+    warn "Xcode iOS platform support install failed. Open Xcode > Settings > Components and install iOS manually, then rerun ./bin/install-mobile-dev."
+    return 1
+  fi
+
+  if ! xcode_ios_platform_ready; then
+    warn "Xcode iOS platform support still does not look ready. Open Xcode > Settings > Components and verify iOS, then rerun ./bin/install-mobile-dev."
+    return 1
+  fi
+}
+
+configure_full_xcode() {
+  local developer_dir
+
+  developer_dir="$(preferred_xcode_developer_dir || true)"
+  if [[ -z "$developer_dir" ]]; then
+    return 1
+  fi
+
+  if [[ "$dry_run" -eq 1 ]]; then
+    log "dry-run: would select full Xcode, accept the license, and run first-launch setup"
+    log "dry-run: would ensure Xcode iOS platform support is installed"
+    return 0
+  fi
+
+  if ! full_xcode_selected; then
+    log "Selecting full Xcode"
+    sudo xcode-select -s "$developer_dir"
+  fi
+
+  if ! sudo xcodebuild -license check >/dev/null 2>&1; then
+    log "Accepting Xcode license"
+    sudo xcodebuild -license accept
+  fi
+
+  run_xcode_first_launch_tasks || return 1
+  ensure_xcode_ios_platform || return 1
+
+  full_xcode_selected
+}
+
+ensure_xcodes_cli() {
+  if ! ensure_mise_cli; then
+    warn "Skipping Xcode install; mise is not available"
+    return 1
+  fi
+
+  if [[ "$dry_run" -eq 1 ]]; then
+    log "dry-run: would ensure xcodes is installed through mise"
+    return 0
+  fi
+
+  log "Installing xcodes"
+  (cd "$repo_root" && mise install xcodes@latest && mise reshim)
+  prepend_mise_shims
+}
+
+report_aria2_state() {
+  if command -v aria2c >/dev/null 2>&1; then
+    log "aria2 is available for faster Xcode downloads"
+  else
+    warn "aria2 is not available; xcodes will use the slower default downloader"
+  fi
+}
+
+install_android_studio() {
+  if [[ -d "/Applications/Android Studio.app" ]]; then
+    log "Android Studio.app already exists"
+    return 0
+  fi
+
+  if command -v brew >/dev/null 2>&1 && brew list --cask android-studio >/dev/null 2>&1; then
+    log "cask android-studio already installed"
+    return 0
+  fi
+
+  if [[ "$dry_run" -eq 1 ]]; then
+    log "dry-run: would install cask android-studio"
+    return 0
+  fi
+
+  log "Installing cask android-studio"
+  brew install --cask android-studio
+}
+
+install_full_xcode() {
+  if preferred_xcode_developer_dir >/dev/null 2>&1; then
+    configure_full_xcode
+    return $?
+  fi
+
+  if ! ensure_xcodes_cli; then
+    return 1
+  fi
+
+  report_aria2_state
+
+  if [[ "$dry_run" -eq 1 ]]; then
+    log "dry-run: would install latest Xcode with xcodes"
+    return 0
+  fi
+
+  log "Installing latest Xcode with xcodes"
+  if ! (cd "$repo_root" && mise exec xcodes@latest -- xcodes install --latest); then
+    warn "Xcode install with xcodes failed. Sign in when prompted or set XCODES_USERNAME/XCODES_PASSWORD, then rerun ./bin/install-mobile-dev."
+    return 1
+  fi
+
+  configure_full_xcode || {
+    warn "Xcode is installed but not ready yet. Finish first launch if prompted, then rerun ./bin/install-mobile-dev."
+    return 1
+  }
+}
+
+install_xcode_dependent_formulae() {
+  if [[ "$dry_run" -eq 1 ]]; then
+    log "dry-run: would install Xcode-dependent formulae facebook/fb/idb-companion and sourcekitten"
+    return 0
+  fi
+
+  if ! full_xcode_selected; then
+    warn "Skipping Xcode-dependent formulae; full Xcode is not selected yet."
+    return 1
+  fi
+
+  temp_brewfile="$(mktemp)"
+  cat > "$temp_brewfile" <<'EOF'
+tap "facebook/fb"
+brew "facebook/fb/idb-companion"
+brew "sourcekitten"
+EOF
+
+  log "Installing Xcode-dependent Homebrew formulae with ${brew_bundle_jobs} parallel job(s)"
+  brew bundle install --jobs="$brew_bundle_jobs" --no-upgrade --verbose --file "$temp_brewfile"
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run)
+      dry_run=1
+      shift
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+ensure_not_root
+ensure_xcode_command_line_tools
+ensure_homebrew
+load_homebrew_shellenv
+ensure_mise_cli
+install_android_studio
+install_full_xcode || mobile_status=1
+install_xcode_dependent_formulae || mobile_status=1
+
+if [[ "$mobile_status" -ne 0 ]]; then
+  warn "Mobile dev setup completed with issues. Fix the warnings above, then rerun ./bin/install-mobile-dev."
+  exit "$mobile_status"
+fi
+
+cat <<'EOF'
+
+Mobile dev setup pass complete.
+
+Recommended next steps:
+- Open Android Studio and install Android 15 SDK Platform 35, Sources for Android 35, Android SDK Build-Tools, Android Emulator, and at least one virtual device.
+- Open Xcode once if macOS asks for additional first-run permissions or components.
+EOF
