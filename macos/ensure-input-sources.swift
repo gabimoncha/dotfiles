@@ -17,12 +17,33 @@ func propertyString(_ source: TISInputSource, _ key: CFString) -> String {
 
 func inputSource(withID id: String) -> TISInputSource? {
   let filter = [kTISPropertyInputSourceID as String: id] as CFDictionary
-  let matches = TISCreateInputSourceList(filter, false).takeRetainedValue() as NSArray
+  guard let unmanagedMatches = TISCreateInputSourceList(filter, false) else {
+    return nil
+  }
+
+  let matches = unmanagedMatches.takeRetainedValue() as NSArray
   guard let firstObject = matches.firstObject else {
     return nil
   }
 
   return (firstObject as! TISInputSource)
+}
+
+func inputSource(matching query: String) -> TISInputSource? {
+  guard let unmanagedSources = TISCreateInputSourceList(nil, false) else {
+    return nil
+  }
+
+  let sources = unmanagedSources.takeRetainedValue() as NSArray
+  for case let source as TISInputSource in sources {
+    let id = propertyString(source, kTISPropertyInputSourceID)
+    let name = propertyString(source, kTISPropertyLocalizedName)
+    if id.localizedCaseInsensitiveContains(query) || name.localizedCaseInsensitiveContains(query) {
+      return source
+    }
+  }
+
+  return nil
 }
 
 func writeError(_ message: String) {
@@ -32,7 +53,7 @@ func writeError(_ message: String) {
 let previousInputSource = TISCopyCurrentKeyboardInputSource().takeRetainedValue() as TISInputSource?
 
 for id in desiredInputSourceIDs {
-  guard let source = inputSource(withID: id) else {
+  guard let source = inputSource(withID: id) ?? inputSource(matching: "Romanian") else {
     writeError("Input source not found: \(id)")
     exit(1)
   }
