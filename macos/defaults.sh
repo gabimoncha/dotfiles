@@ -38,6 +38,15 @@ apply_symbolic_hotkey_changes() {
   fi
 }
 
+ensure_romanian_input_source() {
+  if defaults read com.apple.HIToolbox AppleEnabledInputSources 2>/dev/null | grep -q '"KeyboardLayout Name" = "Romanian-Standard"'; then
+    return 0
+  fi
+
+  defaults write com.apple.HIToolbox AppleEnabledInputSources -array-add \
+    '{ InputSourceKind = "Keyboard Layout"; "KeyboardLayout ID" = -38; "KeyboardLayout Name" = "Romanian-Standard"; }'
+}
+
 log "Applying global keyboard and locale defaults"
 defaults write NSGlobalDomain AppleLocale -string "en_US@currency=RON"
 defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
@@ -49,6 +58,13 @@ defaults write NSGlobalDomain NSAutomaticDashSubstitutionEnabled -bool true
 defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool true
 defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool true
 defaults write NSGlobalDomain com.apple.keyboard.fnState -bool true
+
+log "Applying input source and dictation defaults"
+ensure_romanian_input_source
+defaults write com.apple.assistant.support "Dictation Enabled" -bool true
+defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMNetworkBasedLocaleIdentifier -string "ro_RO"
+defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMPreferredLanguageIdentifiers -array "ro_RO" "en_US"
+defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs VisibleNetworkSRLocaleIdentifiers -dict "ro_RO" -bool true "en_US" -bool true
 
 log "Applying pointer and trackpad defaults"
 defaults write NSGlobalDomain com.apple.mouse.scaling -float 3
@@ -82,6 +98,7 @@ defaults write com.apple.screencapture type -string "png"
 defaults write com.apple.screencapture disable-shadow -bool true
 
 log "Applying Dock defaults"
+defaults write com.apple.dock autohide -bool true
 defaults write com.apple.dock largesize -int 51
 defaults write com.apple.dock magnification -bool true
 defaults write com.apple.dock orientation -string "bottom"
@@ -102,6 +119,7 @@ apply_symbolic_hotkey_changes
 log "Reloading affected macOS services"
 killall cfprefsd >/dev/null 2>&1 || true
 killall SystemUIServer >/dev/null 2>&1 || true
+killall TextInputMenuAgent >/dev/null 2>&1 || true
 killall Dock >/dev/null 2>&1 || true
 killall Finder >/dev/null 2>&1 || true
 
