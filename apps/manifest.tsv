@@ -4,11 +4,11 @@ aerospace	cask	nikitabobko/tap/aerospace	AeroSpace	Homebrew cask because mise ls
 awscli	mise	awscli	-	AWS CLI v2; mise-supported.
 bat	mise	bat	-	Modern cat replacement; mise-supported.
 beeper	cask	beeper	Beeper	Homebrew cask.
-bfg	formula	bfg	-	Homebrew formula because mise ls-remote bfg errors.
+bfg	mise	conda:bfg	-	Conda backend; verified with isolated bfg execution.
 chatgpt	cask	chatgpt	ChatGPT	Homebrew cask.
 claude	cask	claude	Claude	Homebrew cask.
 cloudflared	mise	cloudflared	-	Cloudflare tunnel CLI; mise-supported.
-cloc	formula	cloc	-	Homebrew formula because mise ls-remote cloc errors.
+cloc	mise	github:AlDanial/cloc	-	GitHub release backend; verified with mise ls-remote and isolated exec.
 cmake	mise	cmake	-	CMake CLI; mise-supported.
 codex-desktop	cask	codex	Codex	Homebrew cask.
 cursor	cask	cursor	Cursor	Homebrew cask.
@@ -16,18 +16,18 @@ cyberduck	cask	cyberduck	Cyberduck	Homebrew cask.
 davinci-resolve	manual	https://www.blackmagicdesign.com/products/davinciresolve	DaVinci Resolve	Blackmagic requires a vendor download/account flow; install manually or use Codex-assisted browser automation after bootstrap.
 discord	cask	discord	Discord	Homebrew cask.
 eza	mise	eza	-	Modern ls replacement; mise-supported.
-fastlane	formula	fastlane	-	Homebrew formula because mise ls-remote fastlane errors.
+fastlane	mise	gem:fastlane	-	Ruby gem backend; direct mise registry name is unavailable.
 figma	cask	figma	Figma	Homebrew cask.
 flyctl	mise	flyctl	-	Fly.io CLI; mise-supported.
 gcc	formula	gcc	-	Homebrew formula because mise ls-remote gcc errors.
 ghostty	cask	ghostty	Ghostty	Homebrew cask.
 google-chrome	cask	google-chrome	Google Chrome	Homebrew cask.
 helium-browser	cask	helium-browser	Helium	Homebrew cask.
-httpie	formula	httpie	-	Homebrew formula because mise ls-remote httpie errors.
+httpie	mise	pipx:httpie	-	Python package backend; direct mise registry name is unavailable.
 hub	mise	hub	-	GitHub helper CLI; mise-supported.
 iina	cask	iina	IINA	Homebrew cask.
 iterm2	cask	iterm2	iTerm	Homebrew cask.
-mackup	formula	mackup	-	Homebrew formula; used by explicit backup/restore helpers.
+mackup	mise	pipx:mackup	-	Python package backend; used by explicit backup/restore helpers.
 mkcert	mise	mkcert	-	Local certificate CLI; mise-supported.
 mole	formula	mole	-	Homebrew formula because mise ls-remote mole errors.
 mole-app	cask	mole-app	Mole	Homebrew cask for the Mole GUI app.
@@ -41,7 +41,7 @@ pinokio	manual	https://pinokio.computer/	Pinokio	No Homebrew cask currently exis
 postgresql	formula	postgresql@18	-	Homebrew formula because mise ls-remote postgresql errors.
 raycast	cask	raycast	Raycast	Homebrew cask; restore settings with a .rayconfig export.
 rectangle	cask	rectangle	Rectangle	Homebrew cask.
-scc	formula	scc	-	Homebrew formula because mise ls-remote scc errors.
+scc	mise	github:boyter/scc	-	GitHub release backend; direct mise registry name is unavailable.
 signal	cask	signal	Signal	Homebrew cask.
 slack	cask	slack	Slack	Homebrew cask.
 spotify	cask	spotify	Spotify	Homebrew cask.
@@ -49,9 +49,9 @@ superwhisper	cask	superwhisper	superwhisper	Homebrew cask.
 synology-drive	cask	synology-drive	Synology Drive Client	Homebrew cask.
 t3-code	cask	t3-code	T3 Code (Alpha)	Homebrew cask; stable package route found.
 tailscale	cask	tailscale-app	Tailscale	Homebrew cask for the menu-bar app and full Mac UX.
-tig	formula	tig	-	Homebrew formula because mise ls-remote tig errors.
-tldr	formula	tldr	-	Homebrew formula because mise ls-remote tldr errors.
-tree	formula	tree	-	Homebrew formula because mise ls-remote tree errors.
+tig	mise	conda:tig	-	Conda backend; verified with isolated tig execution.
+tldr	mise	pipx:tldr	-	Python package backend; direct mise registry name is unavailable.
+tree	mise	conda:tree	-	Conda backend; verified with isolated tree execution.
 typst	mise	typst	-	Typesetting CLI; mise-supported.
 visual-studio-code	cask	visual-studio-code	Visual Studio Code	Homebrew cask; settings restored by Mackup.
 warp	cask	warp	Warp	Homebrew cask.

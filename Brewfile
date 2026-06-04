@@ -7,47 +7,28 @@ tap "facebook/fb"
 tap "grishka/grishka"
 tap "nikitabobko/tap"
 tap "wix/brew"
-tap "yakitrak/yakitrak"
 tap "zegervdv/zathura"
 
 brew "apktool"
-brew "aria2"
-brew "bfg"
-brew "cloc"
 brew "curl"
-brew "easy-rsa"
-brew "fastlane"
 brew "gcc"
-brew "ghostscript"
 brew "git"
 brew "glyph"
 brew "grpc"
-brew "httpie"
 brew "facebook/fb/idb-companion"
-brew "ios-deploy"
-brew "mackup"
-brew "mas"
-brew "minisign"
 brew "mise"
 brew "mole"
 brew "openssl@3"
 brew "poppler"
 brew "postgresql@18"
 brew "proctools"
-brew "scc"
 brew "sourcekitten"
-brew "sox"
 brew "switchaudio-osx"
 brew "telnet"
-brew "tig"
-brew "tldr"
-brew "tree"
 brew "watchman"
 brew "webp"
-brew "wget"
 brew "zlib"
 brew "wix/brew/applesimutils"
-brew "yakitrak/yakitrak/obsidian-cli"
 brew "zegervdv/zathura/zathura-cb"
 brew "zegervdv/zathura/zathura-pdf-mupdf"
 
@@ -58,6 +39,10 @@ mas "Endel", id: 1346247457
 mas "TestFlight", id: 899247664
 mas "The Unarchiver", id: 425424353
 mas "WhatsApp", id: 310633997
+mas "Telegram", id: 747648890
+mas "Transporter", id: 1450874784
+mas "Portal", id: 1436994560
+mas "Harvest", id: 506189836
 
 cask "nikitabobko/tap/aerospace"
 cask "beeper"

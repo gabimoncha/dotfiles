@@ -126,10 +126,37 @@ check_raycast() {
   fi
 }
 
+check_sudo_touch_id() {
+  if [[ "$(uname)" != "Darwin" ]]; then
+    return 0
+  fi
+
+  if [[ ! -f /etc/pam.d/sudo ]]; then
+    warn "sudo PAM config is missing at /etc/pam.d/sudo"
+    return 0
+  fi
+
+  if ! awk '$1 == "auth" && $2 == "include" && $3 == "sudo_local" { found = 1 } END { exit found ? 0 : 1 }' /etc/pam.d/sudo; then
+    warn "sudo PAM config does not include sudo_local"
+    info "This repo will not edit Apple's managed /etc/pam.d/sudo file."
+    return 0
+  fi
+
+  if [[ -f /etc/pam.d/sudo_local ]] && awk '$1 == "auth" && $2 == "sufficient" && $3 == "pam_tid.so" { found = 1 } END { exit found ? 0 : 1 }' /etc/pam.d/sudo_local; then
+    ok "Touch ID for sudo is enabled"
+  else
+    warn "Touch ID for sudo is not enabled"
+    info "Run ./bin/configure-sudo-touch-id --enable."
+  fi
+
+  info "Apple Watch approval depends on macOS Auto Unlock settings and is not directly managed by this repo."
+}
+
 check_aerospace
 check_ghostty
 check_tmux
 check_raycast
+check_sudo_touch_id
 
 if [[ $issues -gt 0 ]]; then
   printf '\nFound %s app-state issue(s).\n' "$issues"

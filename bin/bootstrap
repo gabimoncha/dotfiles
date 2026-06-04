@@ -12,6 +12,7 @@ sudo_keepalive_pid=""
 mise_install_pid=""
 mas_checked=0
 mas_available=0
+mise_shim_dir="${HOME}/.local/share/mise/shims"
 
 cleanup() {
   if [[ -n "$mise_install_pid" ]]; then
@@ -49,6 +50,13 @@ log() {
 
 warn() {
   printf '!! %s\n' "$1" >&2
+}
+
+prepend_mise_shims() {
+  case ":${PATH}:" in
+    *":${mise_shim_dir}:"*) ;;
+    *) export PATH="${mise_shim_dir}:${PATH}" ;;
+  esac
 }
 
 ensure_not_root() {
@@ -280,8 +288,20 @@ ensure_xcodes_cli() {
 }
 
 ensure_mas_cli() {
+  prepend_mise_shims
+
   if command -v mas >/dev/null 2>&1; then
     return 0
+  fi
+
+  if command -v mise >/dev/null 2>&1; then
+    log "Installing mas with mise"
+    (cd "$repo_root" && mise install mas@latest && mise reshim)
+    prepend_mise_shims
+    hash -r
+    if command -v mas >/dev/null 2>&1; then
+      return 0
+    fi
   fi
 
   log "Installing mas"
@@ -549,6 +569,8 @@ initialize_submodules() {
 }
 
 install_mise_tools() {
+  prepend_mise_shims
+
   if ! command -v mise >/dev/null 2>&1; then
     warn "mise is not available; cannot install mise tools"
     return 1
@@ -626,6 +648,12 @@ apply_macos_defaults_once() {
 
 ensure_not_root
 ensure_admin_user
+if [[ "${DOTFILES_SKIP_SUDO_TOUCH_ID:-}" == "1" ]]; then
+  warn "Skipping Touch ID sudo setup because DOTFILES_SKIP_SUDO_TOUCH_ID=1"
+else
+  log "Configuring Touch ID for sudo"
+  "${repo_root}/bin/configure-sudo-touch-id" --enable || warn "Touch ID sudo setup was skipped; run ./bin/configure-sudo-touch-id --enable after setup."
+fi
 ensure_xcode_command_line_tools
 ensure_homebrew
 load_homebrew_shellenv
@@ -635,6 +663,7 @@ initialize_submodules
 log "Linking dotfiles"
 "${repo_root}/bin/link-dotfiles"
 
+ensure_mas_cli || true
 start_mise_install
 install_brewfile
 log "Linking app dotfiles"
@@ -646,6 +675,8 @@ log "Installing tmux plugins"
 "${repo_root}/bin/setup-tmux" || warn "tmux plugin setup failed; rerun ./bin/setup-tmux after network access is ready"
 install_shell_framework
 apply_macos_defaults_once
+log "Configuring Finder sidebar favorites"
+"${repo_root}/bin/finder-sidebar-favorites" || warn "Finder sidebar favorite setup failed; rerun ./bin/finder-sidebar-favorites after Finder permissions are ready"
 
 cat <<'EOF'
 

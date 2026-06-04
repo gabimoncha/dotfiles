@@ -152,39 +152,26 @@ reload-shell() {
   print "Shell reloaded"
 }
 
-_claude_bin() {
-  local bin="$HOME/.local/bin/claude"
-
-  if [[ -x "$bin" ]]; then
-    print -r -- "$bin"
-    return 0
-  fi
-
-  command find /opt/homebrew/Caskroom/claude-code -maxdepth 2 -name claude -type f 2>/dev/null | command sort | command tail -1
+_claude_available() {
+  whence -p claude >/dev/null 2>&1
 }
 
 claude() {
-  local bin
-
-  bin="$(_claude_bin)"
-  if [[ -z "$bin" ]]; then
-    print -u2 "claude: binary not found"
+  if ! _claude_available; then
+    print -u2 "claude: binary not found on PATH"
     return 1
   fi
 
-  "$bin" --dangerously-skip-permissions "$@"
+  command claude --dangerously-skip-permissions "$@"
 }
 
 claude-safe() {
-  local bin
-
-  bin="$(_claude_bin)"
-  if [[ -z "$bin" ]]; then
-    print -u2 "claude: binary not found"
+  if ! _claude_available; then
+    print -u2 "claude: binary not found on PATH"
     return 1
   fi
 
-  "$bin" "$@"
+  command claude "$@"
 }
 
 ports() {

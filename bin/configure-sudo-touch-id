@@ -1,0 +1,251 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+pam_dir="${DOTFILES_PAM_DIR:-/etc/pam.d}"
+sudo_file="${pam_dir}/sudo"
+sudo_local_file="${pam_dir}/sudo_local"
+sudo_local_template="${pam_dir}/sudo_local.template"
+touch_id_line="auth       sufficient     pam_tid.so"
+mode="enable"
+dry_run=0
+
+log() {
+  printf '==> %s\n' "$1"
+}
+
+warn() {
+  printf '!! %s\n' "$1" >&2
+}
+
+usage() {
+  cat <<'EOF' >&2
+Usage: ./bin/configure-sudo-touch-id [--enable|--disable|--check] [--dry-run]
+
+Enables or disables Touch ID for sudo through /etc/pam.d/sudo_local.
+This script never edits Apple's managed /etc/pam.d/sudo file.
+EOF
+}
+
+ensure_macos() {
+  if [[ "$(uname)" == "Darwin" ]]; then
+    return 0
+  fi
+
+  warn "Touch ID sudo authentication is only supported on macOS."
+  return 1
+}
+
+sudo_includes_sudo_local() {
+  [[ -f "$sudo_file" ]] || return 1
+
+  awk '
+    $1 == "auth" && $2 == "include" && $3 == "sudo_local" { found = 1 }
+    END { exit found ? 0 : 1 }
+  ' "$sudo_file"
+}
+
+touch_id_enabled() {
+  [[ -f "$sudo_local_file" ]] || return 1
+
+  awk '
+    $1 == "auth" && $2 == "sufficient" && $3 == "pam_tid.so" { found = 1 }
+    END { exit found ? 0 : 1 }
+  ' "$sudo_local_file"
+}
+
+ensure_supported() {
+  if sudo_includes_sudo_local; then
+    return 0
+  fi
+
+  warn "${sudo_file} does not include sudo_local."
+  warn "Refusing to edit Apple's managed sudo PAM file."
+  return 1
+}
+
+render_enabled_file() {
+  local source_file="$1"
+
+  awk -v line="$touch_id_line" '
+    /^[[:space:]]*#[[:space:]]*auth[[:space:]]+sufficient[[:space:]]+pam_tid\.so([[:space:]]|$)/ {
+      print line
+      added = 1
+      next
+    }
+    $1 == "auth" && $2 == "sufficient" && $3 == "pam_tid.so" {
+      print line
+      added = 1
+      next
+    }
+    {
+      print
+    }
+    END {
+      if (!added) {
+        print line
+      }
+    }
+  ' "$source_file"
+}
+
+render_disabled_file() {
+  awk '
+    $1 == "auth" && $2 == "sufficient" && $3 == "pam_tid.so" {
+      print "#" $0
+      next
+    }
+    {
+      print
+    }
+  ' "$sudo_local_file"
+}
+
+write_default_enabled_file() {
+  cat <<EOF
+# sudo_local: local config file which survives system update and is included for sudo
+${touch_id_line}
+EOF
+}
+
+write_new_content() {
+  local target="$1"
+
+  case "$mode" in
+    enable)
+      if [[ -f "$sudo_local_file" ]]; then
+        render_enabled_file "$sudo_local_file" > "$target"
+      elif [[ -f "$sudo_local_template" ]]; then
+        render_enabled_file "$sudo_local_template" > "$target"
+      else
+        write_default_enabled_file > "$target"
+      fi
+      ;;
+    disable)
+      if [[ -f "$sudo_local_file" ]]; then
+        render_disabled_file > "$target"
+      else
+        : > "$target"
+      fi
+      ;;
+    *)
+      warn "Unknown mode: ${mode}"
+      return 1
+      ;;
+  esac
+}
+
+backup_existing_file() {
+  local backup
+  local timestamp
+
+  [[ -f "$sudo_local_file" ]] || return 0
+
+  timestamp="$(date +%Y%m%d%H%M%S)"
+  backup="${sudo_local_file}.dotfiles-backup-${timestamp}"
+
+  if [[ "$pam_dir" == "/etc/pam.d" ]]; then
+    sudo cp -p "$sudo_local_file" "$backup"
+  else
+    cp -p "$sudo_local_file" "$backup"
+  fi
+
+  log "Backed up existing sudo_local to ${backup}"
+}
+
+install_new_file() {
+  local source="$1"
+
+  if [[ "$pam_dir" == "/etc/pam.d" ]]; then
+    sudo install -o root -g wheel -m 0644 "$source" "$sudo_local_file"
+  else
+    install -m 0644 "$source" "$sudo_local_file"
+  fi
+}
+
+check_status() {
+  ensure_macos
+  ensure_supported
+
+  if touch_id_enabled; then
+    log "Touch ID for sudo is enabled"
+    return 0
+  fi
+
+  warn "Touch ID for sudo is not enabled"
+  return 1
+}
+
+apply_change() {
+  local temp_file
+
+  ensure_macos
+  ensure_supported
+
+  if [[ "$mode" == "enable" ]] && touch_id_enabled; then
+    log "Touch ID for sudo is already enabled"
+    return 0
+  fi
+
+  if [[ "$mode" == "disable" ]] && ! touch_id_enabled; then
+    log "Touch ID for sudo is already disabled"
+    return 0
+  fi
+
+  temp_file="$(mktemp)"
+  trap 'rm -f "$temp_file"' RETURN
+  write_new_content "$temp_file"
+
+  if [[ -f "$sudo_local_file" ]] && cmp -s "$temp_file" "$sudo_local_file"; then
+    log "No sudo_local changes needed"
+    return 0
+  fi
+
+  if [[ $dry_run -eq 1 ]]; then
+    log "dry-run: would update ${sudo_local_file}"
+    return 0
+  fi
+
+  backup_existing_file
+  install_new_file "$temp_file"
+
+  case "$mode" in
+    enable) log "Touch ID for sudo is enabled" ;;
+    disable) log "Touch ID for sudo is disabled" ;;
+  esac
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --enable)
+      mode="enable"
+      shift
+      ;;
+    --disable)
+      mode="disable"
+      shift
+      ;;
+    --check)
+      mode="check"
+      shift
+      ;;
+    --dry-run)
+      dry_run=1
+      shift
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+if [[ "$mode" == "check" ]]; then
+  check_status
+else
+  apply_change
+fi

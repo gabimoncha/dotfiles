@@ -1,0 +1,153 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+helper_source=""
+helper_binary=""
+
+log() {
+  printf '==> %s\n' "$1"
+}
+
+warn() {
+  printf '!! %s\n' "$1" >&2
+}
+
+cleanup() {
+  [[ -n "$helper_source" ]] && rm -f "$helper_source"
+  [[ -n "$helper_binary" ]] && rm -f "$helper_binary"
+}
+
+trap cleanup EXIT
+
+compile_helper() {
+  if ! command -v clang >/dev/null 2>&1; then
+    warn "clang is unavailable; skipping Finder sidebar favorites"
+    return 1
+  fi
+
+  helper_source="$(mktemp "${TMPDIR:-/tmp}/finder-sidebar-favorites.XXXXXX.m")"
+  helper_binary="${helper_source%.m}"
+
+  cat >"$helper_source" <<'EOF'
+#import <Foundation/Foundation.h>
+#import <CoreServices/CoreServices.h>
+
+static NSString *StandardizedPath(NSURL *url) {
+  return [[url path] stringByStandardizingPath];
+}
+
+static NSArray *CopyItems(LSSharedFileListRef list) {
+  UInt32 seed = 0;
+  CFArrayRef snapshot = LSSharedFileListCopySnapshot(list, &seed);
+  return CFBridgingRelease(snapshot) ?: @[];
+}
+
+static void RemoveExistingMatches(LSSharedFileListRef list, NSString *name, NSURL *url) {
+  NSString *targetPath = StandardizedPath(url);
+
+  for (id rawItem in CopyItems(list)) {
+    LSSharedFileListItemRef item = (__bridge LSSharedFileListItemRef)rawItem;
+    BOOL shouldRemove = NO;
+
+    CFStringRef displayNameRef = LSSharedFileListItemCopyDisplayName(item);
+    NSString *displayName = CFBridgingRelease(displayNameRef);
+    if ([displayName isEqualToString:name]) {
+      shouldRemove = YES;
+    }
+
+    if (!shouldRemove) {
+      CFURLRef itemURLRef = NULL;
+      OSStatus status = LSSharedFileListItemResolve(item, 0, &itemURLRef, NULL);
+      if (status == noErr && itemURLRef) {
+        NSURL *itemURL = CFBridgingRelease(itemURLRef);
+        shouldRemove = [StandardizedPath(itemURL) isEqualToString:targetPath];
+      }
+    }
+
+    if (shouldRemove) {
+      LSSharedFileListItemRemove(list, item);
+    }
+  }
+}
+
+int main(int argc, const char *argv[]) {
+  @autoreleasepool {
+    if (argc != 3) {
+      fprintf(stderr, "usage: finder-sidebar-helper NAME PATH\n");
+      return 64;
+    }
+
+    NSString *name = [NSString stringWithUTF8String:argv[1]];
+    NSString *path = [[NSString stringWithUTF8String:argv[2]] stringByStandardizingPath];
+    NSURL *url = [NSURL fileURLWithPath:path isDirectory:YES];
+
+    LSSharedFileListRef list = LSSharedFileListCreate(NULL, kLSSharedFileListFavoriteItems, NULL);
+    if (!list) {
+      fprintf(stderr, "could not open Finder favorites list\n");
+      return 1;
+    }
+
+    RemoveExistingMatches(list, name, url);
+
+    LSSharedFileListItemRef inserted = LSSharedFileListInsertItemURL(
+      list,
+      kLSSharedFileListItemLast,
+      (__bridge CFStringRef)name,
+      NULL,
+      (__bridge CFURLRef)url,
+      NULL,
+      NULL
+    );
+
+    CFRelease(list);
+
+    if (!inserted) {
+      fprintf(stderr, "could not add %s to Finder favorites\n", [name UTF8String]);
+      return 1;
+    }
+
+    CFRelease(inserted);
+    printf("Added %s -> %s\n", [name UTF8String], [path UTF8String]);
+  }
+
+  return 0;
+}
+EOF
+
+  clang \
+    -fobjc-arc \
+    -Wno-deprecated-declarations \
+    -framework Foundation \
+    -framework CoreServices \
+    "$helper_source" \
+    -o "$helper_binary"
+}
+
+add_favorite() {
+  local name="$1"
+  local path="$2"
+
+  mkdir -p "$path"
+  "$helper_binary" "$name" "$path"
+}
+
+if [[ "$(uname -s)" != "Darwin" ]]; then
+  warn "Finder sidebar favorites are only supported on macOS"
+  exit 0
+fi
+
+log "Configuring Finder sidebar favorites"
+
+if ! compile_helper; then
+  exit 0
+fi
+
+add_favorite "development" "${HOME}/development" || warn "Could not add ~/development to Finder favorites"
+add_favorite "screenshots" "${HOME}/Screenshots" || warn "Could not add ~/Screenshots to Finder favorites"
+
+killall sharedfilelistd >/dev/null 2>&1 || true
+killall Finder >/dev/null 2>&1 || true
+
+printf 'Finder sidebar favorites configured from %s.\n' "$repo_root"

@@ -1,6 +1,6 @@
 # Mackup
 
-Mackup is installed by Homebrew and configured through `home/.mackup.cfg`.
+Mackup is installed by mise and configured through `home/.mackup.cfg`.
 
 The config uses iCloud storage and a small app allowlist. Do not remove the allowlist unless you have reviewed every app Mackup would sync; broad sync can capture noisy or private app state.
 

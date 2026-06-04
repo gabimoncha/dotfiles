@@ -11,8 +11,10 @@ alias cleanup='find . -name ".DS_Store" -delete'
 alias hosts='sudo nvim /etc/hosts'
 alias brewup='brew update && brew upgrade && brew cleanup'
 alias help='use-my-mac'
+alias c='cursor'
 alias cc='claude'
 alias cc-safe='claude-safe'
+alias n='nvim'
 
 if command -v zoxide >/dev/null 2>&1; then
   eval "$(zoxide init zsh)"
