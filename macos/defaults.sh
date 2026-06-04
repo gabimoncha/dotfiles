@@ -40,18 +40,23 @@ apply_symbolic_hotkey_changes() {
   fi
 }
 
-ensure_romanian_input_source() {
+ensure_keyboard_input_sources() {
   if command -v swift >/dev/null 2>&1 && [[ -f "${script_dir}/ensure-input-sources.swift" ]]; then
     swift "${script_dir}/ensure-input-sources.swift"
     return 0
   fi
 
-  if defaults read com.apple.HIToolbox AppleEnabledInputSources 2>/dev/null | grep -q '"KeyboardLayout Name" = "Romanian-Standard"'; then
+  if ! defaults read com.apple.HIToolbox AppleEnabledInputSources 2>/dev/null | grep -q '"KeyboardLayout Name" = "U.S."'; then
+    defaults write com.apple.HIToolbox AppleEnabledInputSources -array-add \
+      '{ InputSourceKind = "Keyboard Layout"; "KeyboardLayout ID" = 0; "KeyboardLayout Name" = "U.S."; }'
+  fi
+
+  if defaults read com.apple.HIToolbox AppleEnabledInputSources 2>/dev/null | grep -q '"KeyboardLayout Name" = "Romanian"'; then
     return 0
   fi
 
   defaults write com.apple.HIToolbox AppleEnabledInputSources -array-add \
-    '{ InputSourceKind = "Keyboard Layout"; "KeyboardLayout ID" = -38; "KeyboardLayout Name" = "Romanian-Standard"; }'
+    '{ InputSourceKind = "Keyboard Layout"; "KeyboardLayout ID" = -39; "KeyboardLayout Name" = "Romanian"; }'
 }
 
 log "Applying global keyboard and locale defaults"
@@ -67,7 +72,7 @@ defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool true
 defaults write NSGlobalDomain com.apple.keyboard.fnState -bool true
 
 log "Applying input source and dictation defaults"
-ensure_romanian_input_source
+ensure_keyboard_input_sources
 defaults write com.apple.assistant.support "Dictation Enabled" -bool true
 defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMNetworkBasedLocaleIdentifier -string "ro_RO"
 defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMPreferredLanguageIdentifiers -array "ro_RO" "en_US"

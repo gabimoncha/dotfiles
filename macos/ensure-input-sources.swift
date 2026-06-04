@@ -3,8 +3,14 @@
 import Carbon
 import Foundation
 
-let desiredInputSourceIDs = [
-  "com.apple.keylayout.Romanian-Standard"
+struct DesiredInputSource {
+  let id: String
+  let fallbackSearch: String
+}
+
+let desiredInputSources = [
+  DesiredInputSource(id: "com.apple.keylayout.US", fallbackSearch: "U.S."),
+  DesiredInputSource(id: "com.apple.keylayout.Romanian", fallbackSearch: "Romanian")
 ]
 
 func propertyString(_ source: TISInputSource, _ key: CFString) -> String {
@@ -17,7 +23,7 @@ func propertyString(_ source: TISInputSource, _ key: CFString) -> String {
 
 func inputSource(withID id: String) -> TISInputSource? {
   let filter = [kTISPropertyInputSourceID as String: id] as CFDictionary
-  guard let unmanagedMatches = TISCreateInputSourceList(filter, false) else {
+  guard let unmanagedMatches = TISCreateInputSourceList(filter, true) else {
     return nil
   }
 
@@ -30,7 +36,7 @@ func inputSource(withID id: String) -> TISInputSource? {
 }
 
 func inputSource(matching query: String) -> TISInputSource? {
-  guard let unmanagedSources = TISCreateInputSourceList(nil, false) else {
+  guard let unmanagedSources = TISCreateInputSourceList(nil, true) else {
     return nil
   }
 
@@ -52,21 +58,21 @@ func writeError(_ message: String) {
 
 let previousInputSource = TISCopyCurrentKeyboardInputSource().takeRetainedValue() as TISInputSource?
 
-for id in desiredInputSourceIDs {
-  guard let source = inputSource(withID: id) ?? inputSource(matching: "Romanian") else {
-    writeError("Input source not found: \(id)")
+for desiredInputSource in desiredInputSources {
+  guard let source = inputSource(withID: desiredInputSource.id) ?? inputSource(matching: desiredInputSource.fallbackSearch) else {
+    writeError("Input source not found: \(desiredInputSource.id)")
     exit(1)
   }
 
   let enableStatus = TISEnableInputSource(source)
   if enableStatus != noErr {
-    writeError("Failed to enable input source \(id): status \(enableStatus)")
+    writeError("Failed to enable input source \(desiredInputSource.id): status \(enableStatus)")
     exit(1)
   }
 
   let selectStatus = TISSelectInputSource(source)
   if selectStatus != noErr {
-    writeError("Failed to select input source \(id): status \(selectStatus)")
+    writeError("Failed to select input source \(desiredInputSource.id): status \(selectStatus)")
     exit(1)
   }
 
