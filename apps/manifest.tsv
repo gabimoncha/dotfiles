@@ -1,6 +1,7 @@
 # key	type	token_or_url	app_bundle	notes
 act	mise	act	-	GitHub Actions local runner; mise-supported.
 aerospace	cask	nikitabobko/tap/aerospace	AeroSpace	Homebrew cask because mise ls-remote aerospace errors.
+android-studio	cask	android-studio	Android Studio	Homebrew cask; Android SDK and emulator setup are completed through Android Studio first-run.
 awscli	mise	awscli	-	AWS CLI v2; mise-supported.
 bat	mise	bat	-	Modern cat replacement; mise-supported.
 beeper	cask	beeper	Beeper	Homebrew cask.

@@ -159,6 +159,7 @@ cask_app_bundle_name() {
     neardrop | grishka/grishka/neardrop) printf 'NearDrop' ;;
     ngrok) printf 'ngrok' ;;
     nikitabobko/tap/aerospace | aerospace) printf 'AeroSpace' ;;
+    android-studio) printf 'Android Studio' ;;
     notion-calendar) printf 'Notion Calendar' ;;
     obsidian) printf 'Obsidian' ;;
     orbstack) printf 'OrbStack' ;;
@@ -683,6 +684,7 @@ cat <<'EOF'
 Bootstrap complete.
 
 Recommended next steps:
+- Open a new terminal, or reload this one with: source "$HOME/.zshrc"
 - Run ./bin/auth-setup to configure SSH and GitHub access.
 - Run ./bin/install-apps to install extra casks and report manual vendor apps.
 - Sign in to Apple ID, App Store, and iCloud.

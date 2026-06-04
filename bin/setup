@@ -129,6 +129,15 @@ EOF
   fi
 }
 
+print_shell_reload_hint() {
+  cat <<'EOF'
+
+Shell environment updated.
+Open a new terminal, or reload this one with:
+  source "$HOME/.zshrc"
+EOF
+}
+
 run_interactive_followup() {
   local rayconfig
 
@@ -209,3 +218,4 @@ log "Linking app dotfiles"
 
 print_manifest_summary
 run_interactive_followup
+print_shell_reload_hint

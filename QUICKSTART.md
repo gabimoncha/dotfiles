@@ -38,5 +38,8 @@ Some setup still needs account login or OS permissions:
 - GitHub, Cursor, VS Code, Notion, Synology Drive, superwhisper
 - Accessibility / Automation / Microphone permissions
 - First-run setup for Xcode, Android Studio, OrbStack, and DaVinci Resolve
+- Android Studio SDK setup for React Native: Android 15 SDK Platform 35,
+  Sources for Android 35, Android SDK Build-Tools, Android Emulator, and at
+  least one virtual device
 
 If Ghostty, tmux plugins, or Raycast hotkeys do not look restored after setup, run `./bin/app-state-doctor` for the concrete missing piece.

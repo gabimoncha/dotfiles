@@ -147,6 +147,9 @@ Some state cannot be safely automated:
   DaVinci Resolve sign-in
 - Accessibility, Automation, Microphone, and network permissions
 - first-run setup for Xcode, Android Studio, OrbStack, and vendor-only apps
+- Android Studio SDK setup for React Native: install Android 15 SDK Platform
+  35, Sources for Android 35, Android SDK Build-Tools, Android Emulator, and
+  create at least one virtual device from Virtual Device Manager
 
 Manual/vendor apps currently live in `apps/manifest.tsv` as `manual` rows.
 DaVinci Resolve and Pinokio are examples.
@@ -306,6 +309,12 @@ Machine-local secrets and exports belong in ignored files under:
 
 Use environment variables for secrets and the zsh `path` array for committable
 PATH setup.
+
+For Android/React Native development, the tracked shell config exports
+`JAVA_HOME` to the Homebrew Zulu 17 JDK and `ANDROID_HOME` to
+`~/Library/Android/sdk`, then adds the Android emulator and platform-tools
+directories to `PATH`. Android Studio still owns installing the SDK packages
+and creating the emulator image.
 
 When a clean shell does not have `mise` shims on `PATH`, prefer:
 

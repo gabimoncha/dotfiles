@@ -46,6 +46,7 @@ mas "Portal", id: 1436994560
 mas "Harvest", id: 506189836
 
 cask "nikitabobko/tap/aerospace"
+cask "android-studio"
 cask "beeper"
 cask "blackhole-2ch"
 cask "chatgpt"
