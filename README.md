@@ -428,9 +428,16 @@ PATH setup.
 For Android/React Native development, the tracked shell config exports
 `JAVA_HOME` to the Homebrew Zulu 17 JDK and `ANDROID_HOME` to
 `~/Library/Android/sdk`, then adds the Android emulator and platform-tools
-directories to `PATH`. Run `./bin/install-mobile-dev` to install Android
-Studio. Android Studio still owns installing the SDK packages and creating the
-emulator image.
+directories to `PATH`. The JDK `bin` directory is placed before `mise` shims so
+Java tools such as `keytool` come from the configured JDK instead of stale
+runtime shims. Run `./bin/install-mobile-dev` to install Android Studio. Android
+Studio still owns installing the SDK packages and creating the emulator image.
+
+To get the Android debug signing SHA-1, use the real debug keystore path:
+
+```bash
+keytool -list -v -keystore "$HOME/.android/debug.keystore" -alias androiddebugkey -storepass android -keypass android
+```
 
 When a clean shell does not have `mise` shims on `PATH`, prefer:
 
