@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 log() {
   printf '==> %s\n' "$1"
 }
@@ -39,6 +41,11 @@ apply_symbolic_hotkey_changes() {
 }
 
 ensure_romanian_input_source() {
+  if command -v swift >/dev/null 2>&1 && [[ -f "${script_dir}/ensure-input-sources.swift" ]]; then
+    swift "${script_dir}/ensure-input-sources.swift"
+    return 0
+  fi
+
   if defaults read com.apple.HIToolbox AppleEnabledInputSources 2>/dev/null | grep -q '"KeyboardLayout Name" = "Romanian-Standard"'; then
     return 0
   fi

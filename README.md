@@ -137,7 +137,7 @@ You can still pass an explicit export path to `./bin/raycast-restore /path/to/ex
 
 Do not commit `.rayconfig` files or export passphrases. Raycast encrypts exports, but they still contain app settings and extension state; keep the passphrase in Keychain or another private store.
 
-macOS defaults disable Spotlight's Command-Space hotkeys. Raycast owning Command-Space comes from the restored Raycast export or from setting the hotkey manually in Raycast preferences. The defaults script also hides the Dock automatically, enables the Romanian keyboard input source alongside the existing input sources, and configures Dictation for Romanian and English.
+macOS defaults disable Spotlight's Command-Space hotkeys. Raycast owning Command-Space comes from the restored Raycast export or from setting the hotkey manually in Raycast preferences. The defaults script also hides the Dock automatically, enables the Romanian keyboard input source alongside the existing input sources, and configures Dictation for Romanian and English. Romanian input source setup uses Apple's Text Input Source API through `macos/ensure-input-sources.swift` because writing `com.apple.HIToolbox` alone does not reliably update System Settings on current macOS.
 
 Battery Charge Limit is a native macOS Tahoe 26.4+ setting on Apple silicon Macs, but this repo does not currently script it because Apple documents the System Settings and Shortcuts flows, not a stable `defaults` or `pmset` setter. On a fresh Mac, set it from System Settings > Battery > Charging > Charge Limit > 80%.
 
