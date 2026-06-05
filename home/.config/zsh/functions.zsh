@@ -174,6 +174,24 @@ claude-safe() {
   command claude "$@"
 }
 
+_cursor_available() {
+  whence -p cursor >/dev/null 2>&1
+}
+
+c() {
+  if ! _cursor_available; then
+    print -u2 "c: cursor binary not found on PATH"
+    print -u2 "Install it from Cursor: Command Palette -> 'Shell Command: Install cursor command in PATH'"
+    return 1
+  fi
+
+  if (( $# == 0 )); then
+    command cursor .
+  else
+    command cursor "$@"
+  fi
+}
+
 ports() {
   lsof -iTCP -sTCP:LISTEN -n -P
 }
@@ -406,6 +424,7 @@ hosts                            - edit /etc/hosts with nvim
 brewup                           - brew update, upgrade, and cleanup
 claude                           - run Claude with skipped permission prompts
 claude-safe                      - run Claude without skipped permission prompts
+c [path]                         - open Cursor in current directory or at path
 cc                               - short alias for claude
 cc-safe                          - short alias for claude-safe
 help                             - alias for use-my-mac
