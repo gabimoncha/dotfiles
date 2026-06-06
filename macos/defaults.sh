@@ -65,10 +65,12 @@ defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
 defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
 defaults write NSGlobalDomain InitialKeyRepeat -int 15
 defaults write NSGlobalDomain KeyRepeat -int 2
-defaults write NSGlobalDomain NSAutomaticCapitalizationEnabled -bool true
+defaults write NSGlobalDomain NSAutomaticCapitalizationEnabled -bool false
 defaults write NSGlobalDomain NSAutomaticDashSubstitutionEnabled -bool true
 defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool true
-defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool true
+defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
+defaults write NSGlobalDomain KB_SpellingLanguage -dict KB_SpellingLanguageIsAutomatic -bool true
+defaults write NSGlobalDomain NSSpellCheckerAutomaticallyIdentifiesLanguages -bool true
 defaults write NSGlobalDomain com.apple.keyboard.fnState -bool true
 
 log "Applying input source and dictation defaults"
