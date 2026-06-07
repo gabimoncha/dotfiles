@@ -118,6 +118,10 @@ defaults write com.apple.dock magnification -bool true
 defaults write com.apple.dock orientation -string "bottom"
 defaults write com.apple.dock tilesize -int 34
 
+log "Applying Control Center and menu bar defaults"
+defaults -currentHost write com.apple.controlcenter Battery -int 19
+defaults -currentHost write com.apple.controlcenter BatteryShowPercentage -bool true
+
 log "Applying Activity Monitor defaults"
 defaults write com.apple.ActivityMonitor SortDirection -int 1
 
@@ -132,6 +136,7 @@ apply_symbolic_hotkey_changes
 
 log "Reloading affected macOS services"
 killall cfprefsd >/dev/null 2>&1 || true
+killall ControlCenter >/dev/null 2>&1 || true
 killall SystemUIServer >/dev/null 2>&1 || true
 killall TextInputMenuAgent >/dev/null 2>&1 || true
 killall Dock >/dev/null 2>&1 || true
