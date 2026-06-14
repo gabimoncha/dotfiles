@@ -22,6 +22,7 @@ managed_sources=(
   "${repo_root}/home/.config/zsh/interactive.zsh"
   "${repo_root}/home/.config/zsh/path.zsh"
   "${repo_root}/home/.config/zsh/aliases.zsh"
+  "${repo_root}/home/.config/zsh/mise-npx.zsh"
   "${repo_root}/home/.config/zsh/functions.zsh"
   "${repo_root}/home/.config/zsh/check-updates.zsh"
   "${repo_root}/home/.config/karabiner/karabiner.json"

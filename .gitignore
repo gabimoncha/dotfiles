@@ -5,8 +5,10 @@
 .sync-backups/
 *.rayconfig
 
-# Future local-only shell config and secrets.
-home/.config/local/
+# Local-only shell config and secrets. Keep examples tracked.
+home/.config/local/*
+!home/.config/local/
+!home/.config/local/*.example
 
 # Local worktree noise from nested repos/submodules.
 .submodule-seed/

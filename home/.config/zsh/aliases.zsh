@@ -14,6 +14,7 @@ alias help='use-my-mac'
 alias cc='claude'
 alias cc-safe='claude-safe'
 alias n='nvim'
+alias lg='lazygit'
 
 if command -v zoxide >/dev/null 2>&1; then
   eval "$(zoxide init zsh)"

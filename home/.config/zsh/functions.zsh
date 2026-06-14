@@ -192,6 +192,68 @@ c() {
   fi
 }
 
+_infisical_available() {
+  whence -p infisical >/dev/null 2>&1
+}
+
+_infisical_context() {
+  local context="$1"
+  local token_var="$2"
+  local api_url_var="$3"
+  shift 3
+
+  local command_name="infisical-${context}"
+  local subcommand="${1:-}"
+
+  if [[ "$subcommand" == "--help" || "$subcommand" == "-h" ]]; then
+    print "Usage: ${command_name} <run|export|secrets> [infisical flags]"
+    print
+    print "Uses ${token_var} and optional ${api_url_var} from local zsh secrets."
+    return 0
+  fi
+
+  if [[ -z "$subcommand" ]]; then
+    print -u2 "Usage: ${command_name} <run|export|secrets> [infisical flags]"
+    return 1
+  fi
+
+  case "$subcommand" in
+    run|export|secrets) ;;
+    *)
+      print -u2 "${command_name}: unsupported subcommand '${subcommand}'"
+      print -u2 "Supported subcommands: run, export, secrets"
+      return 1
+      ;;
+  esac
+
+  if ! _infisical_available; then
+    print -u2 "${command_name}: infisical binary not found on PATH"
+    return 1
+  fi
+
+  local token="${(P)token_var}"
+  if [[ -z "$token" ]]; then
+    print -u2 "${command_name}: missing ${token_var}"
+    print -u2 "Add it to ~/.config/local/secrets.zsh or ${DOTFILES_ROOT:-$HOME/development/dotfiles}/home/.config/local/secrets.zsh"
+    return 1
+  fi
+
+  local api_url="${(P)api_url_var}"
+  if [[ -n "$api_url" ]]; then
+    INFISICAL_TOKEN="$token" command infisical --domain "$api_url" "$@"
+  else
+    INFISICAL_TOKEN="$token" command infisical "$@"
+  fi
+}
+
+infisical-work() {
+  _infisical_context "work" "INFISICAL_WORK_TOKEN" "INFISICAL_WORK_API_URL" "$@"
+}
+
+infisical-personal() {
+  _infisical_context "personal" "INFISICAL_PERSONAL_TOKEN" "INFISICAL_PERSONAL_API_URL" "$@"
+}
+
 ports() {
   lsof -iTCP -sTCP:LISTEN -n -P
 }
@@ -410,6 +472,8 @@ ports                            - list listening TCP ports
 portfind <port>                  - show the process using a port
 killport <port>                  - ask before killing a process listening on a port
 fix-my-network                   - diagnose common DNS, proxy, routing, and HTTP issues
+infisical-work <cmd>             - run Infisical with the work service token
+infisical-personal <cmd>         - run Infisical with the personal service token
 grep                             - alias for rg
 cat                              - alias for bat
 ls                               - alias for eza
@@ -427,6 +491,10 @@ claude-safe                      - run Claude without skipped permission prompts
 c [path]                         - open Cursor in current directory or at path
 cc                               - short alias for claude
 cc-safe                          - short alias for claude-safe
+lg                               - open lazygit
+npx <pkg>                        - run a package CLI through mise-selected bun, pnpm, or aube
+px <pkg>                         - short alias for the mise-aware npx wrapper
+bx <pkg>                         - run a package CLI explicitly with bunx
 help                             - alias for use-my-mac
 use-my-mac                       - open this searchable command menu
 EOF

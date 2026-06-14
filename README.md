@@ -413,6 +413,7 @@ The tracked zsh files are thin entrypoints:
 - `home/.config/zsh/profile.zsh`
 - `home/.config/zsh/interactive.zsh`
 - `home/.config/zsh/aliases.zsh`
+- `home/.config/zsh/mise-npx.zsh`
 - `home/.config/zsh/functions.zsh`
 - `home/.config/zsh/check-updates.zsh`
 
@@ -420,10 +421,36 @@ Machine-local secrets and exports belong in ignored files under:
 
 ```text
 ~/.config/local/*.zsh
+home/.config/local/*.zsh
 ```
+
+Use `home/.config/local/secrets.zsh.example` as the template for repo-local
+secret exports. The real `secrets.zsh` file stays untracked.
 
 Use environment variables for secrets and the zsh `path` array for committable
 PATH setup.
+
+Infisical wrappers are available for separate work and personal service tokens:
+
+```zsh
+infisical-work run --env=dev -- bun dev
+infisical-personal run --env=dev -- npm run dev
+infisical-work export --env=prod --format=json
+infisical-personal secrets get SOME_KEY --env=dev
+```
+
+They support `run`, `export`, and `secrets`, using `INFISICAL_WORK_TOKEN` or
+`INFISICAL_PERSONAL_TOKEN` from local secrets. Optional
+`INFISICAL_WORK_API_URL` and `INFISICAL_PERSONAL_API_URL` values are passed to
+the CLI as `--domain`.
+
+`home/.config/zsh/mise-npx.zsh` wraps `npx` and `px` so one-off npm package CLIs
+use the `[settings.npm].package_manager` value resolved by `mise`. The global
+default in `home/.config/mise/config.toml` is `bun`, while a project `mise.toml`
+can override it to `pnpm` or `aube`. Use `bx` or `bunx` when you explicitly want
+Bun regardless of the project setting, and use `command npx` for the real npm
+binary when an npx-only flag is required. The file includes comments with the
+minimal adoption steps for sharing it outside this repo.
 
 For Android/React Native development, the tracked shell config exports
 `JAVA_HOME` to the Homebrew Zulu 17 JDK and `ANDROID_HOME` to

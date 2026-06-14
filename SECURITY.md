@@ -15,9 +15,10 @@ Local-only shell state belongs under:
 
 ```text
 ~/.config/local/*.zsh
+home/.config/local/*.zsh
 ```
 
-The tracked shell config sources those files if present. Keep secrets there or in Keychain-backed tooling, not in tracked dotfiles.
+The tracked shell config sources those files if present. Keep secrets there or in Keychain-backed tooling, not in tracked dotfiles. Repo-local examples may be tracked as `*.example`; real `*.zsh` files must stay ignored.
 
 Before committing, run:
 
