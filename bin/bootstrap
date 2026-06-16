@@ -538,7 +538,10 @@ wait_for_mise_install() {
 
 install_shell_framework() {
   local omz_dir="${HOME}/.oh-my-zsh"
-  local p10k_dir="${ZSH_CUSTOM:-${omz_dir}/custom}/themes/powerlevel10k"
+  local custom_dir="${ZSH_CUSTOM:-${omz_dir}/custom}"
+  local p10k_dir="${custom_dir}/themes/powerlevel10k"
+  local autosuggestions_dir="${custom_dir}/plugins/zsh-autosuggestions"
+  local fzf_history_dir="${custom_dir}/plugins/zsh-fzf-history-search"
 
   if [[ ! -d "$omz_dir" ]]; then
     log "Installing Oh My Zsh"
@@ -552,6 +555,20 @@ install_shell_framework() {
     git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$p10k_dir"
   else
     log "Powerlevel10k is already installed"
+  fi
+
+  if [[ ! -d "$autosuggestions_dir" ]]; then
+    log "Installing zsh-autosuggestions"
+    git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions.git "$autosuggestions_dir"
+  else
+    log "zsh-autosuggestions is already installed"
+  fi
+
+  if [[ ! -d "$fzf_history_dir" ]]; then
+    log "Installing zsh-fzf-history-search"
+    git clone --depth=1 https://github.com/joshskidmore/zsh-fzf-history-search.git "$fzf_history_dir"
+  else
+    log "zsh-fzf-history-search is already installed"
   fi
 }
 

@@ -291,7 +291,7 @@ It:
 9. defers the heavyweight mobile dev stack to `./bin/install-mobile-dev`
 10. verifies `mise` tools with `bin/check-mise-tools`
 11. installs tmux plugins through TPM
-12. installs Oh My Zsh and Powerlevel10k when missing
+12. installs Oh My Zsh, Powerlevel10k, and shell plugins when missing
 13. applies tracked macOS defaults once
 
 Touch ID for `sudo` can be managed directly:

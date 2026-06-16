@@ -31,7 +31,7 @@ fi
 
 export ZSH="${ZSH:-$HOME/.oh-my-zsh}"
 ZSH_THEME=""
-plugins=(git)
+plugins=(git zsh-autosuggestions zsh-fzf-history-search)
 
 if [ -r "$ZSH/oh-my-zsh.sh" ]; then
   source "$ZSH/oh-my-zsh.sh"
