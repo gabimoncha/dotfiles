@@ -4,6 +4,10 @@
 # Feel free to omit keys that you don't use in your config.
 # If the key is absent in your config the default value is taken from this config
 
+# Config version for compatibility and deprecations
+# Fallback value (if you omit the key): config-version = 1
+config-version = 2
+
 # You can use it to add commands that run after login to macOS user session.
 # 'start-at-login' needs to be 'true' for 'after-login-command' to work
 # Available commands: https://nikitabobko.github.io/AeroSpace/commands
@@ -12,7 +16,11 @@ after-login-command = []
 # You can use it to add commands that run after AeroSpace startup.
 # 'after-startup-command' is run after 'after-login-command'
 # Available commands : https://nikitabobko.github.io/AeroSpace/commands
-after-startup-command = []
+after-startup-command = [
+    # JankyBorders has a built-in detection of already running process,
+    # so it won't be run twice on AeroSpace restart
+    'exec-and-forget borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=5.0'
+]
 
 # Start AeroSpace at login
 start-at-login = true
@@ -33,6 +41,29 @@ default-root-container-layout = 'tiles'
 # 'auto' means: wide monitor (anything wider than high) gets horizontal orientation,
 #               tall monitor (anything higher than wide) gets vertical orientation
 default-root-container-orientation = 'auto'
+
+# Mouse follows focus when focused monitor changes
+# Drop it from your config, if you don't like this behavior
+# See https://nikitabobko.github.io/AeroSpace/guide#on-focus-changed-callbacks
+# See https://nikitabobko.github.io/AeroSpace/commands#move-mouse
+# Fallback value (if you omit the key): on-focused-monitor-changed = []
+on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
+
+# You can effectively turn off macOS "Hide application" (cmd-h) feature by toggling this flag
+# Useful if you don't use this macOS feature, but accidentally hit cmd-h or cmd-alt-h key
+# Also see: https://nikitabobko.github.io/AeroSpace/goodies#disable-hide-app
+automatically-unhide-macos-hidden-apps = false
+
+# List of workspaces that should stay alive even when they contain no windows,
+# even when they are invisible.
+# This config version is only available since 'config-version = 2'
+# Fallback value (if you omit the key): persistent-workspaces = []
+persistent-workspaces = ["1", "2", "3", "4", "Q", "W", "E", "A", "S", "D"]
+
+# A callback that runs every time binding mode changes
+# See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
+# See: https://nikitabobko.github.io/AeroSpace/commands#mode
+on-mode-changed = []
 
 # Possible values: (qwerty|dvorak)
 # See https://nikitabobko.github.io/AeroSpace/guide#key-mapping
@@ -63,6 +94,10 @@ PATH = '/opt/homebrew/bin:/opt/homebrew/sbin:${PATH}'
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
 # 'main' binding mode must be always presented
 [mode.main.binding]
+
+# disable annoying and useless "hide application" shortcut
+cmd-h = [] # Disable "hide application"
+cmd-alt-h = [] # Disable "hide others"
 
 # All possible keys:
 # - Letters.        a, b, c, ..., z
@@ -109,6 +144,7 @@ alt-shift-equal = 'resize smart +50'
 alt-1 = 'workspace 1'
 alt-2 = 'workspace 2'
 alt-3 = 'workspace 3'
+alt-4 = 'workspace 4'
 alt-q = 'workspace Q'
 alt-w = 'workspace W'
 alt-e = 'workspace E'
@@ -120,6 +156,7 @@ alt-d = 'workspace D'
 alt-shift-1 = ['move-node-to-workspace 1', 'workspace 1']
 alt-shift-2 = ['move-node-to-workspace 2', 'workspace 2']
 alt-shift-3 = ['move-node-to-workspace 3', 'workspace 3']
+alt-shift-4 = ['move-node-to-workspace 4', 'workspace 4']
 alt-shift-q = ['move-node-to-workspace Q', 'workspace Q']
 alt-shift-w = ['move-node-to-workspace W', 'workspace W']
 alt-shift-e = ['move-node-to-workspace E', 'workspace E']
@@ -161,7 +198,6 @@ alt-shift-l = ['join-with right', 'mode main']
 2 = 'LS24AG30x' #'LG' # Simulators & Proxyman
 3 = 'LG' # Ghostty
 4 = 'LG' # ?
-5 = 'LG' # ?
 Q = 'built-in' # obsidian
 W = 'built-in' # chats
 E = 'built-in' # business chats
@@ -183,6 +219,11 @@ D = 'built-in' # defaults
 [[on-window-detected]]
 if.app-id = 'com.todesktop.230313mzl4w4u92'
 run = ['layout floating', 'move-node-to-workspace 1']
+
+### Cursor Agents
+[[on-window-detected]]
+if.window-title-regex-substring = 'Cursor Agents'
+run = ['layout floating', 'move-node-to-workspace 4']
 
 ### Zed
 [[on-window-detected]]
@@ -220,6 +261,11 @@ run = ['layout floating', 'move-node-to-workspace 3']
 [[on-window-detected]]
 if.app-id = 'com.mobiledev.maestro-studio'
 run = ['layout floating', 'move-node-to-workspace 3']
+
+### Cursor
+[[on-window-detected]]
+if.app-id = 'com.openai.codex'
+run = ['layout floating', 'move-node-to-workspace 4']
 
 ### Development emulator
 [[on-window-detected]]
@@ -260,6 +306,10 @@ run = ['layout floating', 'move-node-to-workspace W']
 if.app-id = 'org.whispersystems.signal-desktop'
 run = ['layout floating', 'move-node-to-workspace W']
 
+[[on-window-detected]]
+if.app-id = 'com.automattic.beeper.desktop'
+run = ['layout floating', 'move-node-to-workspace W']
+
 
 ### Arc browser
 [[on-window-detected]]
@@ -279,7 +329,7 @@ run = ['layout floating', 'move-node-to-workspace Q']
 ### Business chats
 [[on-window-detected]]
 if.app-id = 'com.tinyspeck.slackmacgap'
-run = ['layout tiling', 'move-node-to-workspace E']
+run = ['layout floating', 'move-node-to-workspace E']
 
 [[on-window-detected]]
 if.app-id = 'com.hnc.Discord'

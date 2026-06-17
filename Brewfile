@@ -4,12 +4,14 @@
 # instead.
 
 tap "facebook/fb"
+tap "felixkratz/formulae"
 tap "grishka/grishka"
 tap "nikitabobko/tap"
 tap "wix/brew"
 tap "zegervdv/zathura"
 
 brew "apktool"
+brew "borders"
 brew "curl"
 brew "gcc"
 brew "git"
