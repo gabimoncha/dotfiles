@@ -29,6 +29,7 @@ iina	cask	iina	IINA	Homebrew cask.
 iterm2	cask	iterm2	iTerm	Homebrew cask.
 lm-studio	cask	lm-studio	LM Studio	Homebrew cask; requires Apple Silicon.
 mackup	mise	pipx:mackup	-	Python package backend; used by explicit backup/restore helpers.
+macs-fan-control	cask	macs-fan-control	Macs Fan Control	Homebrew cask.
 mkcert	mise	mkcert	-	Local certificate CLI; mise-supported.
 mole	formula	mole	-	Homebrew formula because mise ls-remote mole errors.
 mole-app	cask	mole-app	Mole	Homebrew cask for the Mole GUI app.

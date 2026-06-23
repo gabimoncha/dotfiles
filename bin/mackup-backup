@@ -43,4 +43,4 @@ if [[ ! -d "$icloud_drive" ]]; then
   exit 0
 fi
 
-mackup --config-file "$mackup_config" backup
+mackup --config-file "$mackup_config" "$@" backup

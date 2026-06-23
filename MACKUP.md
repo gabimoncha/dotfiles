@@ -4,7 +4,13 @@ Mackup is installed by mise and configured through `home/.mackup.cfg`.
 
 The config uses iCloud storage and a small app allowlist. Do not remove the allowlist unless you have reviewed every app Mackup would sync; broad sync can capture noisy or private app state.
 
+Custom Mackup application definitions live under `home/.config/mackup/applications/` and are linked into `~/.config/mackup/applications/` by `bin/link-dotfiles`.
+
 Do not add apps whose settings are already tracked under `home/`. AeroSpace and Ghostty are intentionally direct repo-owned symlinks. VS Code and Cursor are intentionally owned by Mackup instead of direct repo symlinks, because Mackup supports their user settings, keybindings, prompts, and snippets.
+
+OBS is managed with Mackup's built-in `obs` definition. It backs up the core OBS
+preferences, `global.ini`, and `basic` profiles/scenes; it does not manage
+plugins, logs, profiler data, or update caches.
 
 Raycast is not managed by Mackup here. Restore it from an encrypted `.rayconfig` export saved outside git, preferably in `iCloud Drive/Raycast`, with:
 
@@ -19,6 +25,9 @@ Use copy-mode commands only:
 ./bin/mackup-backup
 ./bin/mackup-restore
 ```
+
+When replacing existing iCloud copies with the current machine state, pass Mackup
+options through the helper, for example `./bin/mackup-backup --force`.
 
 Do not use Mackup link mode on modern macOS. Upstream warns that symlinked preferences can break on macOS Sonoma and later, so this repo treats Mackup as an explicit backup/restore tool.
 

@@ -160,6 +160,7 @@ cask_app_bundle_name() {
     iina) printf 'IINA' ;;
     iterm2) printf 'iTerm' ;;
     karabiner-elements) printf 'Karabiner-Elements' ;;
+    macs-fan-control) printf 'Macs Fan Control' ;;
     mole-app) printf 'Mole' ;;
     multipass) printf 'Multipass' ;;
     neardrop | grishka/grishka/neardrop) printf 'NearDrop' ;;

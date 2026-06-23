@@ -482,7 +482,7 @@ Mackup uses iCloud storage and an explicit app allowlist:
 ```
 
 The allowlist currently includes Cursor, Cyberduck, Rectangle, Spotify, VS Code,
-GitHub CLI, Lazygit, and Stats.
+GitHub CLI, Lazygit, Macs Fan Control, OBS, and Stats.
 
 Use the helper scripts instead of raw Mackup link mode. This repo treats Mackup
 as an explicit copy-based backup/restore tool so tracked files under `home/`
