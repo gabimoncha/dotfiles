@@ -226,7 +226,8 @@ also run the pieces directly later:
 
 `bin/auth-setup` configures local Git identity, creates or reuses an Ed25519 SSH
 key, authenticates GitHub CLI, uploads the SSH key when possible, and verifies
-GitHub SSH.
+GitHub SSH. If this repo was cloned from its public HTTPS URL, it switches
+`origin` to `git@github.com:gabimoncha/dotfiles.git` after SSH is verified.
 
 `bin/mackup-restore` expects iCloud Drive and the tracked `home/.mackup.cfg`.
 `bin/raycast-restore` opens the newest `.rayconfig` it can find under iCloud

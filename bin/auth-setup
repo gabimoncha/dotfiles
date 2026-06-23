@@ -162,6 +162,41 @@ configure_gh_git_protocol() {
   }
 }
 
+github_ssh_authenticated() {
+  local output
+
+  set +e
+  output="$(ssh -o BatchMode=yes -o ConnectTimeout=5 -T git@github.com 2>&1)"
+  set -e
+
+  [[ "$output" == *"successfully authenticated"* ]]
+}
+
+configure_dotfiles_origin_remote() {
+  local current_url
+  local ssh_url="git@github.com:gabimoncha/dotfiles.git"
+
+  if ! git -C "$repo_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    return 0
+  fi
+
+  current_url="$(git -C "$repo_root" remote get-url origin 2>/dev/null || true)"
+
+  case "$current_url" in
+    "$ssh_url")
+      log "dotfiles origin already uses SSH"
+      ;;
+    https://github.com/gabimoncha/dotfiles | https://github.com/gabimoncha/dotfiles.git)
+      if github_ssh_authenticated; then
+        log "Switching dotfiles origin to SSH"
+        git -C "$repo_root" remote set-url origin "$ssh_url"
+      else
+        warn "dotfiles origin still uses HTTPS; rerun ./bin/auth-setup after GitHub SSH works"
+      fi
+      ;;
+  esac
+}
+
 github_public_key_scope_error() {
   local output="$1"
 
@@ -300,4 +335,5 @@ ensure_github_known_host
 ensure_github_auth
 upload_ssh_key_to_github
 verify_github_ssh
+configure_dotfiles_origin_remote
 print_manual_followup
