@@ -456,10 +456,13 @@ the CLI as `--domain`.
 `home/.config/zsh/mise-npx.zsh` wraps `npx` and `px` so one-off npm package CLIs
 use the `[settings.npm].package_manager` value resolved by `mise`. The global
 default in `home/.config/mise/config.toml` is `bun`, while a project `mise.toml`
-can override it to `pnpm` or `aube`. Use `bx` or `bunx` when you explicitly want
-Bun regardless of the project setting, and use `command npx` for the real npm
-binary when an npx-only flag is required. The file includes comments with the
-minimal adoption steps for sharing it outside this repo.
+can override it to `pnpm` or `aube`. Bun-selected projects delegate directly to
+`bunx`. Pnpm-selected projects use `pnpm exec` when the requested binary exists
+in local `node_modules/.bin`, otherwise they use `pnpm dlx` for one-off package
+commands. Use `bx` or `bunx` when you explicitly want Bun regardless of the
+project setting, and use `command npx` for the real npm binary when an npm-only
+flag is required. The file includes comments with the minimal adoption steps for
+sharing it outside this repo.
 
 For Android/React Native development, the tracked shell config exports
 `JAVA_HOME` to the Homebrew Zulu 17 JDK and `ANDROID_HOME` to

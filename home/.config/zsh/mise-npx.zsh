@@ -20,8 +20,9 @@
 #      [ -r "$HOME/.config/zsh/mise-npx.zsh" ] && source "$HOME/.config/zsh/mise-npx.zsh"
 #
 # Supported mise values are `bun`, `pnpm`, `aube`, and `auto`. This wrapper
-# deliberately refuses `npm` and `yarn`, and treats `auto` as aubx -> bunx ->
-# pnpm without falling back to npm.
+# delegates flags to the selected runner, prefers project-local binaries for
+# pnpm projects, deliberately refuses `npm` and `yarn`, and treats `auto` as
+# aubx -> bunx -> pnpm without falling back to npm.
 
 _mise_npm_package_manager() {
   local manager
@@ -106,54 +107,31 @@ _mise_npm_require_runner() {
   esac
 }
 
-_npx_reject_unsupported_leading_flags() {
-  local arg
+_mise_npm_has_local_bin() {
+  local bin="${1:-}"
 
-  while (( $# > 0 )); do
-    arg="$1"
+  [[ -n "$bin" && "$bin" != -* && "$bin" != */* && -x "node_modules/.bin/$bin" ]]
+}
 
-    case "$arg" in
-      --)
-        return 0
-        ;;
-      --help|-h)
-        return 0
-        ;;
-      --package|-p)
-        if (( $# < 2 )); then
-          print -u2 "npx: $arg requires a package name"
-          return 1
-        fi
-        shift 2
-        ;;
-      --package=*|--silent|--verbose)
-        shift
-        ;;
-      --*)
-        print -u2 "npx: unsupported npx option '$arg' for the mise-aware wrapper"
-        print -u2 "npx: use 'command npx $arg ...' for npm's real npx, or use bx/bunx for Bun-specific flags"
-        return 1
-        ;;
-      -*)
-        print -u2 "npx: unsupported npx option '$arg' for the mise-aware wrapper"
-        print -u2 "npx: use 'command npx $arg ...' for npm's real npx"
-        return 1
-        ;;
-      *)
-        return 0
-        ;;
-    esac
+_mise_npm_run_pnpm() {
+  local bin
+
+  bin="${1:-}"
+
+  while [[ "$bin" == "--yes" || "$bin" == "-y" ]]; do
+    shift
+    bin="${1:-}"
   done
+
+  if _mise_npm_has_local_bin "$bin"; then
+    command pnpm exec "$@"
+  else
+    command pnpm dlx "$@"
+  fi
 }
 
 npx() {
   local manager
-
-  while [[ "${1:-}" == "--yes" || "${1:-}" == "-y" ]]; do
-    shift
-  done
-
-  _npx_reject_unsupported_leading_flags "$@" || return
 
   manager="$(_mise_npm_effective_package_manager)" || return
   _mise_npm_require_runner "$manager" || return
@@ -163,7 +141,7 @@ npx() {
       command bunx "$@"
       ;;
     pnpm)
-      command pnpm dlx "$@"
+      _mise_npm_run_pnpm "$@"
       ;;
     aube)
       command aubx "$@"
