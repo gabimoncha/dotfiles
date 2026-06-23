@@ -319,12 +319,20 @@ The macOS defaults can be skipped for a run:
 DOTFILES_SKIP_MACOS_DEFAULTS=1 ./bin/bootstrap
 ```
 
+`bin/setup` and `bin/install-mobile-dev` temporarily export
+`HOMEBREW_NO_REQUIRE_TAP_TRUST=1` while they run, then restore the previous
+environment on exit. Keep this scoped to setup scripts only; Homebrew documents
+the variable as transitional and not recommended for persistent shell config.
+
 Run the mobile dev stack separately when you want full Xcode, Android Studio,
 `idb-companion`, and `sourcekitten`:
 
 ```bash
 ./bin/install-mobile-dev
 ```
+
+The mobile dev installer currently targets the latest Xcode 27 prerelease when
+no Xcode 27 app is installed.
 
 ## Ownership Model
 

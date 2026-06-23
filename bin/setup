@@ -5,6 +5,8 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 manifest="${repo_root}/apps/manifest.tsv"
 dry_run=0
+homebrew_no_require_tap_trust_was_set=0
+homebrew_no_require_tap_trust_original=""
 
 log() {
   printf '==> %s\n' "$1"
@@ -16,6 +18,23 @@ warn() {
 
 usage() {
   printf 'Usage: ./bin/setup [--dry-run]\n' >&2
+}
+
+enable_temporary_homebrew_tap_trust_bypass() {
+  if [[ ${HOMEBREW_NO_REQUIRE_TAP_TRUST+x} ]]; then
+    homebrew_no_require_tap_trust_was_set=1
+    homebrew_no_require_tap_trust_original="$HOMEBREW_NO_REQUIRE_TAP_TRUST"
+  fi
+
+  export HOMEBREW_NO_REQUIRE_TAP_TRUST=1
+}
+
+restore_homebrew_tap_trust_setting() {
+  if [[ "$homebrew_no_require_tap_trust_was_set" -eq 1 ]]; then
+    export HOMEBREW_NO_REQUIRE_TAP_TRUST="$homebrew_no_require_tap_trust_original"
+  else
+    unset HOMEBREW_NO_REQUIRE_TAP_TRUST
+  fi
 }
 
 ensure_not_root() {
@@ -191,6 +210,9 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+enable_temporary_homebrew_tap_trust_bypass
+trap restore_homebrew_tap_trust_setting EXIT
 
 ensure_not_root
 
