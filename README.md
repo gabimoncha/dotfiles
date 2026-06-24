@@ -131,14 +131,12 @@ flowchart LR
     I1["Read apps/manifest.tsv"]
     I2{"Manifest row type"}
     I3["cask or formula: brew install or dry-run"]
-    I4["mise: mise install or dry-run"]
-    I5["manual: print vendor instructions"]
-    I6["App install pass complete"]
+    I4["manual: print vendor instructions"]
+    I5["App install pass complete"]
 
     I1 --> I2
-    I2 --> I3 --> I6
-    I2 --> I4 --> I6
-    I2 --> I5 --> I6
+    I2 --> I3 --> I5
+    I2 --> I4 --> I5
   end
 
   subgraph MobileDev["bin/install-mobile-dev"]
@@ -343,7 +341,8 @@ This repo is deliberately boring about ownership:
 - `home/.config/mise/config.toml` owns language runtimes and global developer
   tools that `mise` supports, including backend-prefixed tools such as
   `gem:fastlane` and `conda:aria2`.
-- `apps/manifest.tsv` is the typed ledger for extra install handling.
+- `apps/manifest.tsv` is the typed ledger for cask, formula, and manual/vendor
+  install handling.
 - `home/` owns files that get symlinked into `$HOME`.
 - `macos/defaults.sh` owns conservative macOS defaults.
 - `nvim/` is a separate Neovim repo mounted here as a submodule.
@@ -356,7 +355,8 @@ When adding a tool, use this order:
 2. `mise`, if `mise ls-remote <tool>` or an appropriate backend-prefixed id
    supports it
 3. Homebrew in `Brewfile`, if it does not belong in `mas` or `mise`
-4. `apps/manifest.tsv`, if it needs special handling or is manual/vendor-only
+4. `apps/manifest.tsv`, if it needs cask/formula status tracking, post-install
+   handling, or manual/vendor follow-up
 
 Do not commit secrets, tokens, private emails, `.rayconfig` files, cache
 databases, session state, or machine-local exports.
@@ -365,7 +365,7 @@ databases, session state, or machine-local exports.
 
 ```text
 Brewfile                         Homebrew, mas, casks, VS Code extensions
-apps/manifest.tsv                extra typed app/tool ledger
+apps/manifest.tsv                extra cask/formula/manual app ledger
 bin/setup                        fresh-Mac entrypoint
 bin/bootstrap                    lower-level bootstrap
 bin/link-dotfiles                symlink managed files into $HOME
@@ -459,10 +459,23 @@ default in `home/.config/mise/config.toml` is `bun`, while a project `mise.toml`
 can override it to `pnpm` or `aube`. Bun-selected projects delegate directly to
 `bunx`. Pnpm-selected projects use `pnpm exec` when the requested binary exists
 in local `node_modules/.bin`, otherwise they use `pnpm dlx` for one-off package
-commands. Use `bx` or `bunx` when you explicitly want Bun regardless of the
-project setting, and use `command npx` for the real npm binary when an npm-only
-flag is required. The file includes comments with the minimal adoption steps for
-sharing it outside this repo.
+commands, with the pnpm path routed through Socket Firewall Free. Use `bx` or
+`bunx` when you explicitly want Bun regardless of the project setting, and use
+`command npx` for the real npm binary when an npm-only flag is required. The file
+includes comments with the minimal adoption steps for sharing it outside this
+repo.
+
+Socket Firewall Free is installed as `npm:sfw` through `mise`. Interactive zsh
+aliases route supported package managers through it when `sfw` is on `PATH`:
+`npm`, `pnpm`, `yarn`, `pip`, `uv`, and `cargo`. Use `command <tool>` for a
+single bypass when you need the underlying package manager without the shell
+alias. Bun and Bunx are intentionally not wrapped because Socket Firewall Free
+does not officially support them.
+
+Socket Firewall Free is a wrapper-mode safety layer, not a full private registry
+policy engine. It does not support private/custom registries, does not work
+offline, does not allow telemetry to be disabled, and blocks confirmed malware
+while warning on AI-detected potential malware.
 
 For Android/React Native development, the tracked shell config exports
 `JAVA_HOME` to the Homebrew Zulu 17 JDK and `ANDROID_HOME` to

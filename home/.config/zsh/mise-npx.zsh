@@ -21,8 +21,9 @@
 #
 # Supported mise values are `bun`, `pnpm`, `aube`, and `auto`. This wrapper
 # delegates flags to the selected runner, prefers project-local binaries for
-# pnpm projects, deliberately refuses `npm` and `yarn`, and treats `auto` as
-# aubx -> bunx -> pnpm without falling back to npm.
+# pnpm projects, routes pnpm through Socket Firewall Free, deliberately refuses
+# `npm` and `yarn`, and treats `auto` as aubx -> bunx -> pnpm without falling
+# back to npm.
 
 _mise_npm_package_manager() {
   local manager
@@ -93,6 +94,10 @@ _mise_npm_require_runner() {
         print -u2 "npx: mise selected pnpm, but pnpm is not on PATH"
         return 1
       }
+      command -v sfw >/dev/null 2>&1 || {
+        print -u2 "npx: mise selected pnpm, but sfw is not on PATH"
+        return 1
+      }
       ;;
     aube)
       command -v aubx >/dev/null 2>&1 || {
@@ -124,9 +129,9 @@ _mise_npm_run_pnpm() {
   done
 
   if _mise_npm_has_local_bin "$bin"; then
-    command pnpm exec "$@"
+    command sfw pnpm exec "$@"
   else
-    command pnpm dlx "$@"
+    command sfw pnpm dlx "$@"
   fi
 }
 

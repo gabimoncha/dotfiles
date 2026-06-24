@@ -12,6 +12,7 @@ smoke_commands=(
   python
   ruby
   pnpm
+  sfw
   uv
   rg
   fd

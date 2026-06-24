@@ -10,7 +10,7 @@ This keeps fresh-machine bootstrap simple while preserving the separate Neovim r
 
 - `Brewfile` owns Homebrew formulae, casks, taps, and VS Code extensions.
 - `home/.config/mise/config.toml` owns language runtimes and global dev tools managed by mise.
-- `apps/manifest.tsv` tracks apps that deserve explicit setup status, especially apps that are not cleanly scriptable.
+- `apps/manifest.tsv` tracks cask, formula, and manual/vendor installs that deserve explicit setup status.
 
 Prefer Homebrew casks first. Use vendor/manual fallback only when there is no stable cask or App Store route.
 

@@ -492,6 +492,13 @@ c [path]                         - open Cursor in current directory or at path
 cc                               - short alias for claude
 cc-safe                          - short alias for claude-safe
 lg                               - open lazygit
+npm <args>                       - run npm through Socket Firewall Free
+pnpm <args>                      - run pnpm through Socket Firewall Free
+yarn <args>                      - run Yarn through Socket Firewall Free
+pip <args>                       - run pip through Socket Firewall Free
+uv <args>                        - run uv through Socket Firewall Free
+cargo <args>                     - run Cargo through Socket Firewall Free
+command <tool> <args>            - bypass shell aliases for one package-manager call
 npx <pkg>                        - run a package CLI through mise-selected bun, pnpm, or aube
 px <pkg>                         - short alias for the mise-aware npx wrapper
 bx <pkg>                         - run a package CLI explicitly with bunx

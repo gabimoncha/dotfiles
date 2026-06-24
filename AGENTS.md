@@ -42,10 +42,14 @@ After meaningful changes, prefer the smallest relevant checks:
 
 ```bash
 bash -n bin/bootstrap
+bash -n bin/setup
 bash -n bin/link-dotfiles
+bash -n bin/install-apps
 bash -n macos/defaults.sh
 git diff --check
 ```
+
+For setup or app-install changes, also use the relevant dry-run path such as `./bin/setup --dry-run` or `./bin/install-apps --dry-run`.
 
 For dependency changes, also sanity-check the ownership split:
 
@@ -56,5 +60,6 @@ For dependency changes, also sanity-check the ownership split:
 ## Notes For Agents
 
 - Be practical and keep this repo boring. Reliability matters more than cleverness.
+- Before changing setup ownership, bootstrap boundaries, app install ownership, or other durable architecture decisions, read `DECISIONS.md` and update it when the rationale changes.
 - When the user asks to add or update an app or tool, choose ownership in this order: `mas` for Mac App Store apps, then `mise` for supported runtimes/developer tools, then Homebrew through `Brewfile`.
 - If you notice config drift between the README, bootstrap scripts, and managed files, fix it rather than documenting a lie.

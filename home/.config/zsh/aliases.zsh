@@ -16,6 +16,15 @@ alias cc-safe='claude-safe'
 alias n='nvim'
 alias lg='lazygit'
 
+if command -v sfw >/dev/null 2>&1; then
+  alias npm='sfw npm'
+  alias pnpm='sfw pnpm'
+  alias yarn='sfw yarn'
+  alias pip='sfw pip'
+  alias uv='sfw uv'
+  alias cargo='sfw cargo'
+fi
+
 if command -v zoxide >/dev/null 2>&1; then
   eval "$(zoxide init zsh)"
 fi
