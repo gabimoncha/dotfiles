@@ -15,6 +15,11 @@ cd ~/development/dotfiles
 Run `./bin/setup` without `sudo`. The scripts ask for a password only when a
 specific privileged macOS or Homebrew step needs it.
 
+By default, setup includes the full mobile development stack and overlaps safe
+download-heavy work such as Xcode, Homebrew, `mise`, Android Studio, MAS apps,
+and VS Code extensions. Use `./bin/setup --skip-mobile-dev` when you do not want
+the Xcode/Android downloads on a run, or `./bin/setup --serial` when debugging.
+
 ## Setup Steps
 
 ### Step 1: Prepare the old Mac
@@ -70,21 +75,21 @@ flowchart LR
     S2["Exit: rerun without sudo"]
     S3["Call bin/preflight"]
     S4{"--dry-run?"}
-    S5["Call bin/install-apps --dry-run"]
-    S6["Print setup summary"]
+    S5["Preview mobile-dev and app installs"]
+    S6["Print final actionable summary"]
     S7["Exit"]
     S8["Call bin/bootstrap"]
     S9{"Xcode CLT ready after bootstrap?"}
     S10["Exit: finish installer, rerun ./bin/setup"]
     S11["Call bin/install-apps"]
     S12["Call bin/link-dotfiles"]
-    S13["Print setup summary"]
+    S13["Print manifest summary"]
     S14{"Interactive terminal?"}
     S15["Skip auth and restore follow-up"]
     S16["Call bin/auth-setup after Enter"]
     S17["Call bin/mackup-restore"]
     S18["Find .rayconfig and call bin/raycast-restore when present"]
-    S19["Print shell reload hint"]
+    S19["Print shell reload hint and final actionable summary"]
 
     S0 --> S1
     S1 -->|"yes"| S2
@@ -115,11 +120,11 @@ flowchart LR
     B2["Configure sudo Touch ID unless skipped"]
     B3["Initialize nvim submodule"]
     B4["Call bin/link-dotfiles"]
-    B5["Start mise install in background"]
-    B6["Install Brewfile, mas apps, VS Code extensions"]
-    B7["Call bin/link-dotfiles again after apps exist"]
-    B8["Wait for mise and run bin/check-mise-tools"]
-    B9["Report mobile-dev setup as deferred"]
+    B5["Prepare xcodes and aria2, then start Xcode install"]
+    B6["Start mise install and run brew bundle"]
+    B7["Run Android Studio, MAS apps, and VS Code extensions"]
+    B8["Call bin/link-dotfiles again after apps exist"]
+    B9["Run iOS platform support and Xcode-dependent formulae"]
     B10["Run setup-tmux, shell framework, macOS defaults, Finder favorites"]
     B11["Bootstrap complete"]
 
@@ -141,12 +146,16 @@ flowchart LR
 
   subgraph MobileDev["bin/install-mobile-dev"]
     direction TB
-    MD1["Ensure Homebrew, mise, and xcodes"]
-    MD2["Install Android Studio cask"]
-    MD3["Install and configure full Xcode"]
-    MD4["Install applesimutils, idb-companion, and sourcekitten"]
+    MD1["Ensure Homebrew, mise, xcodes, and aria2"]
+    MD2["Install and select full Xcode"]
+    MD3["Install Android Studio cask"]
+    MD4["Install iOS platform support"]
+    MD5["Install applesimutils, idb-companion, and sourcekitten"]
 
-    MD1 --> MD2 --> MD3 --> MD4
+    MD1 --> MD2
+    MD1 --> MD3
+    MD2 --> MD4
+    MD2 --> MD5
   end
 
   subgraph LinkDotfiles["bin/link-dotfiles"]
@@ -249,16 +258,19 @@ Some state cannot be safely automated:
   35, Sources for Android 35, Android SDK Build-Tools, Android Emulator, and
   create at least one virtual device from Virtual Device Manager
 
-The heavyweight mobile dev stack is intentionally outside the default setup
-path. Run it when you are ready for the large Xcode and Android Studio
-downloads:
+The heavyweight mobile dev stack is part of the default setup path because Xcode
+and iOS platform support dominate a fresh-machine run. Skip it when you want a
+lighter pass:
+
+```bash
+./bin/setup --skip-mobile-dev
+```
+
+The dedicated mobile-dev installer remains available for targeted reruns:
 
 ```bash
 ./bin/install-mobile-dev
 ```
-
-If a full Xcode app is already installed, default setup runs an Xcode-only
-update pass before `brew bundle`. Set `DOTFILES_SKIP_XCODE_UPDATE=1` to skip it.
 
 Manual/vendor apps currently live in `apps/manifest.tsv` as `manual` rows.
 DaVinci Resolve and Pinokio are examples.
@@ -285,18 +297,25 @@ It:
 2. enables Touch ID for `sudo` through `/etc/pam.d/sudo_local` when supported
 3. initializes the Neovim submodule
 4. links tracked files from `home/` into `$HOME`
-5. updates an already-installed Xcode app to the latest selected channel
+5. prepares `xcodes` and `aria2`, then starts the Xcode install in the background
 6. starts `mise install` in the background
-7. installs Homebrew formulae, casks, App Store apps, and VS Code extensions
+7. installs Homebrew formulae and casks
    with `brew bundle --jobs="${DOTFILES_BREW_BUNDLE_JOBS:-auto}"`
-8. skips casks whose app bundle already exists in `/Applications`
-9. defers App Store apps until `mas` and App Store sign-in are usable
-10. defers Xcode-sensitive formulae if the Xcode update pass cannot complete
-11. defers the heavyweight mobile dev stack to `./bin/install-mobile-dev`
-12. verifies `mise` tools with `bin/check-mise-tools`
-13. installs tmux plugins through TPM
-14. installs Oh My Zsh, Powerlevel10k, and shell plugins when missing
-15. applies tracked macOS defaults once
+8. runs Android Studio, Mac App Store apps, and VS Code extensions after the
+   Homebrew bundle phase
+9. links app dotfiles after app bundles exist
+10. runs iOS platform support and Xcode-dependent formulae after full Xcode is
+   selected
+11. verifies `mise` tools with `bin/check-mise-tools`
+12. installs tmux plugins through TPM and shell framework plugins
+13. applies tracked macOS defaults once and configures Finder sidebar favorites
+14. prints a final actionable summary of completed, failed, deferred, and
+   critical items
+
+Safe parallelism is on by default. Use `./bin/setup --serial` or
+`DOTFILES_SETUP_SERIAL=1 ./bin/setup` when debugging. Recoverable failures keep
+independent work moving, then cause a nonzero exit after the final summary.
+Deferred/manual items are listed but do not fail the run by themselves.
 
 Touch ID for `sudo` can be managed directly:
 
@@ -327,24 +346,23 @@ DOTFILES_SKIP_MACOS_DEFAULTS=1 ./bin/bootstrap
 environment on exit. Keep this scoped to setup scripts only; Homebrew documents
 the variable as transitional and not recommended for persistent shell config.
 
-Run the mobile dev stack separately when you want full Xcode, Android Studio,
-`applesimutils`, `idb-companion`, and `sourcekitten`:
+Run the mobile dev stack separately when you want to repair or repeat only full
+Xcode, Android Studio, `applesimutils`, `idb-companion`, and `sourcekitten`:
 
 ```bash
 ./bin/install-mobile-dev
 ```
 
-The mobile dev installer asks `xcodes` for the latest prerelease Xcode and
-selects it. Use `DOTFILES_XCODE_CHANNEL=release ./bin/install-mobile-dev` to
-install the latest release channel instead. It enables `xcodes`
+The mobile dev installer asks `xcodes` for the latest release Xcode and selects
+it. Use `DOTFILES_XCODE_CHANNEL=prerelease ./bin/install-mobile-dev` to install
+the latest prerelease channel instead. It enables `xcodes`
 `--experimental-unxip` by default for faster unarchiving; set
 `DOTFILES_XCODE_EXPERIMENTAL_UNXIP=0` to use regular unxip. After a newer Xcode
 is selected, old Xcode apps from other major versions are removed through
 `xcodes uninstall`. Set `DOTFILES_KEEP_OLD_XCODES=1` to keep them.
 
 Formulae that build from source and trip Homebrew's Xcode minimum check, such
-as `borders`, stay in `Brewfile` but are skipped only if the Xcode update pass
-cannot complete.
+as `borders`, stay in `Brewfile` but are deferred until full Xcode is selected.
 
 ## Ownership Model
 
@@ -576,6 +594,7 @@ For targeted reruns:
 After meaningful changes, run the smallest relevant checks:
 
 ```bash
+bash -n bin/lib/setup-runtime.sh
 bash -n bin/bootstrap
 bash -n bin/install-mobile-dev
 bash -n bin/link-dotfiles
@@ -589,7 +608,10 @@ For setup or inventory changes, also run:
 ./bin/preflight
 ./bin/install-apps --dry-run
 ./bin/install-mobile-dev --dry-run
+./bin/install-mobile-dev --dry-run --xcode-only
 ./bin/setup --dry-run
+./bin/setup --dry-run --skip-mobile-dev
+./bin/setup --dry-run --serial
 ```
 
 Keep `README.md`, `QUICKSTART.md`, scripts, and tracked config aligned. If the

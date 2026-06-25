@@ -5,8 +5,19 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 manifest="${repo_root}/apps/manifest.tsv"
 dry_run=0
+setup_status=0
+skip_mobile_dev="${DOTFILES_SKIP_MOBILE_DEV:-0}"
 homebrew_no_require_tap_trust_was_set=0
 homebrew_no_require_tap_trust_original=""
+
+# shellcheck source=bin/lib/setup-runtime.sh
+. "${repo_root}/bin/lib/setup-runtime.sh"
+runtime_init "setup"
+
+cleanup() {
+  runtime_cleanup
+  restore_homebrew_tap_trust_setting
+}
 
 log() {
   printf '==> %s\n' "$1"
@@ -17,7 +28,7 @@ warn() {
 }
 
 usage() {
-  printf 'Usage: ./bin/setup [--dry-run]\n' >&2
+  printf 'Usage: ./bin/setup [--dry-run] [--skip-mobile-dev] [--serial]\n' >&2
 }
 
 enable_temporary_homebrew_tap_trust_bypass() {
@@ -170,19 +181,34 @@ EOF
 
   if [[ ! -t 0 ]]; then
     warn "Non-interactive shell; skipping auth and restore follow-up"
+    runtime_record_deferred "Interactive follow-up" "non-interactive shell" "Rerun ./bin/setup in a terminal, or run ./bin/auth-setup and ./bin/mackup-restore manually."
     return 0
   fi
 
   read -r _
 
-  "${repo_root}/bin/auth-setup"
-  "${repo_root}/bin/mackup-restore"
+  if "${repo_root}/bin/auth-setup"; then
+    runtime_record_completed "Auth setup"
+  else
+    runtime_record_failure recoverable "Auth setup" "auth setup failed" "" "Rerun ./bin/auth-setup."
+  fi
+
+  if "${repo_root}/bin/mackup-restore"; then
+    runtime_record_completed "Mackup restore"
+  else
+    runtime_record_failure recoverable "Mackup restore" "Mackup restore failed" "" "Rerun ./bin/mackup-restore after iCloud Drive is ready."
+  fi
 
   rayconfig="$(latest_rayconfig)"
   if [[ -n "$rayconfig" && -f "$rayconfig" ]]; then
-    "${repo_root}/bin/raycast-restore" "$rayconfig"
+    if "${repo_root}/bin/raycast-restore" "$rayconfig"; then
+      runtime_record_completed "Raycast restore"
+    else
+      runtime_record_failure recoverable "Raycast restore" "Raycast restore failed" "" "Rerun ./bin/raycast-restore after checking the export passphrase."
+    fi
   else
     log "Raycast restore deferred"
+    runtime_record_deferred "Raycast restore" "no .rayconfig export was found in iCloud Drive/Raycast" "Run ./bin/raycast-backup on the old Mac, wait for iCloud sync, then rerun ./bin/setup."
     cat <<'EOF'
 No Raycast .rayconfig export was found in iCloud Drive/Raycast.
 
@@ -200,6 +226,15 @@ while [[ $# -gt 0 ]]; do
       dry_run=1
       shift
       ;;
+    --skip-mobile-dev)
+      skip_mobile_dev=1
+      shift
+      ;;
+    --serial)
+      DOTFILES_SETUP_SERIAL=1
+      export DOTFILES_SETUP_SERIAL
+      shift
+      ;;
     -h | --help)
       usage
       exit 0
@@ -211,36 +246,91 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if [[ "$dry_run" -eq 1 ]]; then
+  DOTFILES_SETUP_SERIAL=1
+  export DOTFILES_SETUP_SERIAL
+fi
+
+export DOTFILES_SKIP_MOBILE_DEV="$skip_mobile_dev"
+
 enable_temporary_homebrew_tap_trust_bypass
-trap restore_homebrew_tap_trust_setting EXIT
+trap cleanup EXIT
 
 ensure_not_root
+if ! runtime_acquire_global_lock; then
+  runtime_print_summary
+  exit 1
+fi
 
 log "Running preflight"
-"${repo_root}/bin/preflight"
+if "${repo_root}/bin/preflight"; then
+  runtime_record_completed "Preflight"
+else
+  runtime_record_failure critical "Preflight" "preflight failed" "" "Fix the failed preflight checks, then rerun ./bin/setup."
+  runtime_print_summary
+  exit 1
+fi
 
 if [[ $dry_run -eq 1 ]]; then
   log "dry-run: would run ./bin/bootstrap"
-  "${repo_root}/bin/install-apps" --dry-run
+  if [[ "$skip_mobile_dev" -eq 1 ]]; then
+    runtime_record_deferred "Mobile dev stack" "dry-run skipped because --skip-mobile-dev was set" "Rerun ./bin/setup without --skip-mobile-dev to install mobile dev tools."
+  else
+    "${repo_root}/bin/install-mobile-dev" --dry-run || setup_status=1
+  fi
+  if "${repo_root}/bin/install-apps" --dry-run; then
+    runtime_record_completed "Manifest app dry-run"
+  else
+    runtime_record_failure recoverable "Manifest app dry-run" "install-apps dry-run failed" "" "Rerun ./bin/install-apps --dry-run after fixing the logged error."
+    setup_status=1
+  fi
   print_manifest_summary
-  exit 0
+  runtime_print_summary
+  if [[ "$setup_status" -ne 0 ]]; then
+    exit "$setup_status"
+  fi
+  runtime_exit_status
+  exit $?
 fi
 
 log "Running bootstrap"
-"${repo_root}/bin/bootstrap"
+if "${repo_root}/bin/bootstrap"; then
+  runtime_record_completed "Bootstrap"
+else
+  runtime_record_failure recoverable "Bootstrap" "bootstrap completed with issues" "" "Review the failures above, then rerun ./bin/setup."
+  setup_status=1
+fi
 
 if ! xcode-select -p >/dev/null 2>&1; then
   warn "Xcode Command Line Tools are not ready yet; skipping the remaining setup steps"
   warn "Finish the installer popup, then rerun: ./bin/setup"
-  exit 0
+  runtime_record_failure critical "Xcode Command Line Tools" "installer handoff is not complete" "" "Finish the installer popup, then rerun ./bin/setup."
+  runtime_print_summary
+  exit 1
 fi
 
 log "Installing extra apps from manifest"
-"${repo_root}/bin/install-apps"
+if "${repo_root}/bin/install-apps"; then
+  runtime_record_completed "Manifest app install pass"
+else
+  runtime_record_failure recoverable "Manifest app install pass" "install-apps failed" "" "Rerun ./bin/install-apps after fixing the logged error."
+  setup_status=1
+fi
 
 log "Linking app dotfiles"
-"${repo_root}/bin/link-dotfiles"
+if "${repo_root}/bin/link-dotfiles"; then
+  runtime_record_completed "Final app dotfile links"
+else
+  runtime_record_failure recoverable "Final app dotfile links" "link-dotfiles failed" "" "Rerun ./bin/link-dotfiles."
+  setup_status=1
+fi
 
 print_manifest_summary
 run_interactive_followup
 print_shell_reload_hint
+runtime_print_summary
+
+if [[ "$setup_status" -ne 0 ]]; then
+  exit "$setup_status"
+fi
+runtime_exit_status

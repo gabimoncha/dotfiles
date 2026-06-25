@@ -5,13 +5,19 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 dry_run=0
 xcode_only=0
+explicit_xcode_only=0
 temp_brewfile=""
 mobile_status=0
 mise_shim_dir="${HOME}/.local/share/mise/shims"
 brew_bundle_jobs="${DOTFILES_BREW_BUNDLE_JOBS:-auto}"
-xcode_channel="${DOTFILES_XCODE_CHANNEL:-prerelease}"
+xcode_channel="${DOTFILES_XCODE_CHANNEL:-release}"
 homebrew_no_require_tap_trust_was_set=0
 homebrew_no_require_tap_trust_original=""
+action="full"
+
+# shellcheck source=bin/lib/setup-runtime.sh
+. "${repo_root}/bin/lib/setup-runtime.sh"
+runtime_init "install-mobile-dev"
 
 enable_temporary_homebrew_tap_trust_bypass() {
   if [[ ${HOMEBREW_NO_REQUIRE_TAP_TRUST+x} ]]; then
@@ -31,6 +37,8 @@ restore_homebrew_tap_trust_setting() {
 }
 
 cleanup() {
+  runtime_cleanup
+
   if [[ -n "$temp_brewfile" ]]; then
     rm -f "$temp_brewfile"
   fi
@@ -49,7 +57,7 @@ warn() {
 }
 
 usage() {
-  printf 'Usage: ./bin/install-mobile-dev [--dry-run] [--xcode-only]\n' >&2
+  printf 'Usage: ./bin/install-mobile-dev [--dry-run] [--xcode-only] [--serial]\n' >&2
 }
 
 prepend_mise_shims() {
@@ -263,7 +271,6 @@ configure_full_xcode() {
 
   if [[ "$dry_run" -eq 1 ]]; then
     log "dry-run: would select full Xcode, accept the license, and run first-launch setup"
-    log "dry-run: would ensure Xcode iOS platform support is installed"
     return 0
   fi
 
@@ -278,25 +285,39 @@ configure_full_xcode() {
   fi
 
   run_xcode_first_launch_tasks || return 1
-  ensure_xcode_ios_platform || return 1
-
   full_xcode_selected
 }
 
-ensure_xcodes_cli() {
+prepare_xcode_download_tools() {
   if ! ensure_mise_cli; then
     warn "Skipping Xcode install; mise is not available"
     return 1
   fi
 
   if [[ "$dry_run" -eq 1 ]]; then
-    log "dry-run: would ensure xcodes is installed through mise"
+    log "dry-run: would ensure xcodes and aria2 are installed through mise"
     return 0
   fi
 
-  log "Installing xcodes"
-  (cd "$repo_root" && mise install xcodes@latest && mise reshim)
+  log "Installing xcodes and aria2"
+  (cd "$repo_root" && mise install --jobs=2 xcodes@latest conda:aria2@latest && mise reshim)
   prepend_mise_shims
+  hash -r
+}
+
+ensure_xcodes_cli() {
+  prepend_mise_shims
+
+  if [[ "$dry_run" -eq 1 ]]; then
+    return 0
+  fi
+
+  if (cd "$repo_root" && mise exec xcodes@latest -- xcodes --version >/dev/null 2>&1); then
+    return 0
+  fi
+
+  warn "xcodes is not available. Run ./bin/install-mobile-dev --prepare-tools-only and retry."
+  return 1
 }
 
 report_aria2_state() {
@@ -469,6 +490,73 @@ EOF
   brew bundle install --jobs="$brew_bundle_jobs" --no-upgrade --verbose --file "$temp_brewfile"
 }
 
+run_post_xcode_mobile_steps() {
+  local post_status=0
+
+  if [[ "$dry_run" -eq 1 ]]; then
+    log "dry-run: would ensure Xcode iOS platform support is installed"
+    if [[ "$xcode_only" -eq 0 ]]; then
+      install_xcode_dependent_formulae
+    fi
+    return 0
+  fi
+
+  if ! full_xcode_selected; then
+    warn "Skipping post-Xcode mobile steps; full Xcode is not selected yet."
+    runtime_record_failure recoverable "Mobile dev post-Xcode" "full Xcode is not selected" "" "Fix Xcode install, then rerun ./bin/install-mobile-dev."
+    return 1
+  fi
+
+  runtime_run_job "iOS platform support" recoverable \
+    "Open Xcode > Settings > Components and install iOS, then rerun ./bin/install-mobile-dev." \
+    ensure_xcode_ios_platform
+
+  if [[ "$xcode_only" -eq 0 ]]; then
+    runtime_run_job "Xcode-dependent Homebrew formulae" recoverable \
+      "Rerun ./bin/install-mobile-dev after Xcode is selected." \
+      install_xcode_dependent_formulae
+  fi
+
+  if ! runtime_wait_jobs; then
+    post_status=1
+  fi
+
+  return "$post_status"
+}
+
+run_full_mobile_dev() {
+  local status=0
+
+  if ! prepare_xcode_download_tools; then
+    runtime_record_failure recoverable "Mobile dev download tools" "could not install xcodes and aria2" "" "Rerun ./bin/install-mobile-dev after checking mise/network access."
+    status=1
+  else
+    runtime_record_completed "Mobile dev download tools" "xcodes and aria2 are ready"
+  fi
+
+  if [[ "$status" -eq 0 ]]; then
+    runtime_run_job "Xcode install" recoverable \
+      "Sign in to Apple Developer if prompted, then rerun ./bin/install-mobile-dev." \
+      install_full_xcode
+
+    if [[ "$xcode_only" -eq 0 ]]; then
+      runtime_run_job "Android Studio" recoverable \
+        "Rerun ./bin/install-mobile-dev, or install Android Studio with brew install --cask android-studio." \
+        install_android_studio
+    fi
+
+    if ! runtime_wait_jobs; then
+      status=1
+    fi
+  fi
+
+  if ! run_post_xcode_mobile_steps; then
+    status=1
+  fi
+
+  return "$status"
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --dry-run)
@@ -477,6 +565,34 @@ while [[ $# -gt 0 ]]; do
       ;;
     --xcode-only)
       xcode_only=1
+      explicit_xcode_only=1
+      shift
+      ;;
+    --serial)
+      DOTFILES_SETUP_SERIAL=1
+      export DOTFILES_SETUP_SERIAL
+      shift
+      ;;
+    --prepare-tools-only)
+      action="prepare-tools"
+      shift
+      ;;
+    --xcode-install-only)
+      action="xcode-install"
+      xcode_only=1
+      shift
+      ;;
+    --android-only)
+      action="android"
+      shift
+      ;;
+    --ios-platform-only)
+      action="ios-platform"
+      xcode_only=1
+      shift
+      ;;
+    --xcode-formulae-only)
+      action="xcode-formulae"
       shift
       ;;
     -h | --help)
@@ -490,19 +606,49 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if [[ "$dry_run" -eq 1 ]]; then
+  DOTFILES_SETUP_SERIAL=1
+  DOTFILES_SETUP_SHOW_STEP_LOGS="${DOTFILES_SETUP_SHOW_STEP_LOGS:-1}"
+  export DOTFILES_SETUP_SERIAL
+  export DOTFILES_SETUP_SHOW_STEP_LOGS
+fi
+
 enable_temporary_homebrew_tap_trust_bypass
+if ! runtime_acquire_global_lock; then
+  if [[ "${DOTFILES_RUNTIME_OWNS_SUMMARY:-0}" -eq 1 ]]; then
+    runtime_print_summary
+  fi
+  exit 1
+fi
 ensure_not_root
 ensure_xcode_command_line_tools
 ensure_homebrew
 load_homebrew_shellenv
-ensure_mise_cli
-if [[ "$xcode_only" -eq 0 ]]; then
-  install_android_studio
-fi
-install_full_xcode || mobile_status=1
-if [[ "$xcode_only" -eq 0 ]]; then
-  install_xcode_dependent_formulae || mobile_status=1
-fi
+
+case "$action" in
+  prepare-tools)
+    prepare_xcode_download_tools || mobile_status=1
+    ;;
+  xcode-install)
+    install_full_xcode || mobile_status=1
+    ;;
+  android)
+    install_android_studio || mobile_status=1
+    ;;
+  ios-platform)
+    ensure_xcode_ios_platform || mobile_status=1
+    ;;
+  xcode-formulae)
+    install_xcode_dependent_formulae || mobile_status=1
+    ;;
+  full)
+    run_full_mobile_dev || mobile_status=1
+    ;;
+  *)
+    warn "Unknown mobile-dev action: ${action}"
+    mobile_status=1
+    ;;
+esac
 
 if [[ "$mobile_status" -ne 0 ]]; then
   if [[ "$xcode_only" -eq 1 ]]; then
@@ -510,18 +656,16 @@ if [[ "$mobile_status" -ne 0 ]]; then
   else
     warn "Mobile dev setup completed with issues. Fix the warnings above, then rerun ./bin/install-mobile-dev."
   fi
-  exit "$mobile_status"
-fi
-
-if [[ "$xcode_only" -eq 1 ]]; then
-  cat <<'EOF'
+else
+  if [[ "$explicit_xcode_only" -eq 1 ]]; then
+    runtime_record_completed "Xcode setup" "Xcode setup pass complete"
+    cat <<'EOF'
 
 Xcode setup pass complete.
 EOF
-  exit 0
-fi
-
-cat <<'EOF'
+  elif [[ "$action" == "full" ]]; then
+    runtime_record_completed "Mobile dev setup" "mobile dev setup pass complete"
+    cat <<'EOF'
 
 Mobile dev setup pass complete.
 
@@ -529,3 +673,17 @@ Recommended next steps:
 - Open Android Studio and install Android 15 SDK Platform 35, Sources for Android 35, Android SDK Build-Tools, Android Emulator, and at least one virtual device.
 - Open Xcode once if macOS asks for additional first-run permissions or components.
 EOF
+  fi
+fi
+
+if [[ "${DOTFILES_RUNTIME_OWNS_SUMMARY:-0}" -eq 1 ]]; then
+  runtime_print_summary
+fi
+
+if [[ "$mobile_status" -ne 0 ]]; then
+  exit "$mobile_status"
+fi
+if [[ "${DOTFILES_RUNTIME_OWNS_SUMMARY:-0}" -eq 1 ]]; then
+  runtime_exit_status
+fi
+exit 0

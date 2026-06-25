@@ -106,6 +106,7 @@ check_script_syntax() {
   local scripts=(
     "bin/bootstrap"
     "bin/setup"
+    "bin/lib/setup-runtime.sh"
     "bin/link-dotfiles"
     "bin/preflight"
     "bin/auth-setup"

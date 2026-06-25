@@ -7,6 +7,17 @@ timestamp="$(date +%Y%m%d-%H%M%S)"
 backup_root="${HOME}/.dotfiles-backups/${timestamp}"
 created_backup_root=0
 
+# shellcheck source=bin/lib/setup-runtime.sh
+. "${repo_root}/bin/lib/setup-runtime.sh"
+runtime_init "link-dotfiles"
+
+cleanup() {
+  runtime_cleanup
+}
+
+trap cleanup EXIT
+runtime_acquire_lock "link-dotfiles" "dotfile linking" || exit 1
+
 managed_sources=(
   "${repo_root}/home/.zshenv"
   "${repo_root}/home/.zprofile"

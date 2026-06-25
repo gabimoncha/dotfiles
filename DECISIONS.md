@@ -14,7 +14,11 @@ This keeps fresh-machine bootstrap simple while preserving the separate Neovim r
 
 Prefer Homebrew casks first. Use vendor/manual fallback only when there is no stable cask or App Store route.
 
-Default bootstrap updates full Xcode when one is already installed, using the same Xcode-only path as `./bin/install-mobile-dev`. It still avoids downloading Xcode on a fresh Mac unless the user runs `./bin/install-mobile-dev`. Xcode installs use `xcodes --experimental-unxip` by default because Xcode archives dominate setup time; `DOTFILES_XCODE_EXPERIMENTAL_UNXIP=0` keeps the regular unxip path available. Xcode-sensitive Homebrew formulae stay in `Brewfile` as the source of truth and are deferred only when the update pass cannot complete.
+Default setup includes the full mobile development stack because Xcode and iOS platform support dominate fresh-machine time and are safest when started early. Setup prepares `xcodes` and `aria2`, starts the Xcode install while Homebrew and `mise` work continue, then finishes iOS platform support and Xcode-dependent formulae after Xcode is selected. `DOTFILES_SKIP_MOBILE_DEV=1` or `./bin/setup --skip-mobile-dev` keeps a lightweight run available.
+
+Xcode installs default to the latest release channel; `DOTFILES_XCODE_CHANNEL=prerelease` opts into prereleases. Xcode installs use `xcodes --experimental-unxip` by default because Xcode archives dominate setup time; `DOTFILES_XCODE_EXPERIMENTAL_UNXIP=0` keeps the regular unxip path available. Xcode-sensitive Homebrew formulae stay in `Brewfile` as the source of truth and are deferred until full Xcode is selected.
+
+Setup parallelism is on by default, but only across independent work. Homebrew writers and `mise install` writers stay serialized; recoverable failures are recorded, independent work continues, and the final summary exits nonzero when repair is needed.
 
 ## Mackup Is Copy-Mode and Allowlisted
 

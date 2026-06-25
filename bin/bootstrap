@@ -9,19 +9,25 @@ xcode_brewfile=""
 mas_brewfile=""
 vscode_brewfile=""
 sudo_keepalive_pid=""
-mise_install_pid=""
+bootstrap_status=0
 mas_checked=0
 mas_available=0
 homebrew_xcode_checked=0
 homebrew_xcode_too_old=0
 mise_shim_dir="${HOME}/.local/share/mise/shims"
 brew_bundle_jobs="${DOTFILES_BREW_BUNDLE_JOBS:-auto}"
+mobile_dev_enabled=1
+
+# shellcheck source=bin/lib/setup-runtime.sh
+. "${repo_root}/bin/lib/setup-runtime.sh"
+runtime_init "bootstrap"
+
+if [[ "${DOTFILES_SKIP_MOBILE_DEV:-0}" == "1" ]]; then
+  mobile_dev_enabled=0
+fi
 
 cleanup() {
-  if [[ -n "$mise_install_pid" ]]; then
-    kill "$mise_install_pid" 2>/dev/null || true
-    wait "$mise_install_pid" 2>/dev/null || true
-  fi
+  runtime_cleanup
 
   if [[ -n "$temp_brewfile" ]]; then
     rm -f "$temp_brewfile"
@@ -276,33 +282,6 @@ homebrew_reports_xcode_too_old() {
   return 1
 }
 
-xcode_app_installed() {
-  ls -d /Applications/Xcode*.app >/dev/null 2>&1
-}
-
-ensure_latest_existing_xcode_app() {
-  if [[ "${DOTFILES_SKIP_XCODE_UPDATE:-}" == "1" ]]; then
-    warn "Skipping Xcode update because DOTFILES_SKIP_XCODE_UPDATE=1"
-    return 0
-  fi
-
-  if ! xcode_app_installed; then
-    return 0
-  fi
-
-  log "Ensuring existing Xcode app is on the latest xcodes channel"
-  if "${repo_root}/bin/install-mobile-dev" --xcode-only; then
-    homebrew_xcode_checked=0
-    homebrew_xcode_too_old=0
-    return 0
-  fi
-
-  warn "Xcode update failed; Xcode-sensitive Homebrew formulae may be deferred"
-  homebrew_xcode_checked=0
-  homebrew_xcode_too_old=0
-  return 0
-}
-
 ensure_mise_cli() {
   if command -v mise >/dev/null 2>&1; then
     return 0
@@ -366,14 +345,14 @@ mas_app_installed() {
 }
 
 install_mas_apps() {
-  local line app_name app_id app_bundle
+  local line app_name app_id app_bundle status=0
 
   if [[ ! -s "$mas_brewfile" ]]; then
     return 0
   fi
 
   if ! mas_available_for_brewfile; then
-    warn "Skipped Mac App Store apps. Sign in to the App Store, then rerun ./bin/setup."
+    runtime_record_deferred "Mac App Store apps" "mas is unavailable or App Store is not signed in" "Sign in to the App Store, then rerun ./bin/setup."
     return 0
   fi
 
@@ -396,9 +375,13 @@ install_mas_apps() {
       log "Installing App Store app ${app_name}"
       mas install "$app_id" || {
         warn "Skipping ${app_name}; App Store did not start the download. Open it in the App Store once, then rerun ./bin/setup."
+        runtime_record_failure recoverable "App Store app ${app_name}" "mas install did not start the download" "" "Open ${app_name} in the App Store once, then rerun ./bin/setup."
+        status=1
       }
     fi
   done < "$mas_brewfile"
+
+  return "$status"
 }
 
 code_cli() {
@@ -416,7 +399,7 @@ code_cli() {
 }
 
 install_vscode_extensions() {
-  local code_cmd line extension_id
+  local code_cmd line extension_id installed_extensions status=0
 
   if [[ ! -s "$vscode_brewfile" ]]; then
     return 0
@@ -425,14 +408,17 @@ install_vscode_extensions() {
   code_cmd="$(code_cli || true)"
   if [[ -z "$code_cmd" ]]; then
     warn "Skipped VS Code extensions; code CLI is not available yet"
+    runtime_record_deferred "VS Code extensions" "code CLI is not available yet" "Open VS Code once or rerun ./bin/setup after the cask install completes."
     return 0
   fi
+
+  installed_extensions="$("$code_cmd" --list-extensions 2>/dev/null || true)"
 
   while IFS= read -r line || [[ -n "$line" ]]; do
     if [[ "$line" =~ ^vscode[[:space:]]+\"([^\"]+)\" ]]; then
       extension_id="${BASH_REMATCH[1]}"
 
-      if "$code_cmd" --list-extensions 2>/dev/null | grep -Fixq "$extension_id"; then
+      if grep -Fixq "$extension_id" <<< "$installed_extensions"; then
         log "VS Code extension ${extension_id} already installed"
         continue
       fi
@@ -440,9 +426,13 @@ install_vscode_extensions() {
       log "Installing VS Code extension ${extension_id}"
       "$code_cmd" --install-extension "$extension_id" || {
         warn "Skipping VS Code extension ${extension_id}; it is unavailable or failed to install"
+        runtime_record_failure recoverable "VS Code extension ${extension_id}" "extension install failed" "" "Rerun ./bin/setup after VS Code is ready."
+        status=1
       }
     fi
   done < "$vscode_brewfile"
+
+  return "$status"
 }
 
 untap_if_present() {
@@ -589,9 +579,17 @@ install_brewfile() {
 
   log "Installing Homebrew bundle with ${brew_bundle_jobs} parallel job(s)"
   brew bundle install --jobs="$brew_bundle_jobs" --no-upgrade --verbose --file "$temp_brewfile"
+}
 
-  install_mas_apps
-  install_vscode_extensions
+install_post_brew_apps() {
+  runtime_run_job "Mac App Store apps" recoverable \
+    "Sign in to the App Store, then rerun ./bin/setup." \
+    install_mas_apps
+  runtime_run_job "VS Code extensions" recoverable \
+    "Open VS Code once or rerun ./bin/setup after the cask install completes." \
+    install_vscode_extensions
+
+  runtime_wait_jobs
 }
 
 mobile_dev_ready() {
@@ -632,32 +630,8 @@ install_mise_tools() {
   (cd "$repo_root" && mise install && mise reshim)
 }
 
-start_mise_install() {
-  install_mise_tools &
-  mise_install_pid=$!
-  log "Started mise tool install in background (pid ${mise_install_pid})"
-}
-
-wait_for_mise_install() {
-  local status
-
-  if [[ -z "$mise_install_pid" ]]; then
-    return 0
-  fi
-
-  log "Waiting for background mise tool install"
-  set +e
-  wait "$mise_install_pid"
-  status=$?
-  set -e
-  mise_install_pid=""
-
-  if [[ $status -ne 0 ]]; then
-    warn "Background mise tool install failed"
-    return "$status"
-  fi
-
-  log "Background mise tool install completed"
+install_and_check_mise_tools() {
+  install_mise_tools || return 1
   "${repo_root}/bin/check-mise-tools"
 }
 
@@ -699,53 +673,162 @@ install_shell_framework() {
 
 apply_macos_defaults_once() {
   local defaults_script="${repo_root}/macos/defaults.sh"
+  local status=0
+
+  runtime_acquire_lock "macos-defaults" "macOS defaults" || return 1
 
   if [[ "${DOTFILES_SKIP_MACOS_DEFAULTS:-}" == "1" ]]; then
     warn "Skipping macOS defaults because DOTFILES_SKIP_MACOS_DEFAULTS=1"
+    runtime_release_lock "macos-defaults"
     return 0
   fi
 
   if [[ -f "$macos_defaults_flag" && ! "$defaults_script" -nt "$macos_defaults_flag" ]]; then
     log "macOS defaults already applied"
+    runtime_release_lock "macos-defaults"
     return 0
   fi
 
   log "Applying macOS defaults"
+  set +e
   "$defaults_script"
-  touch "$macos_defaults_flag"
+  status=$?
+  set -e
+  if [[ "$status" -eq 0 ]]; then
+    touch "$macos_defaults_flag"
+  fi
+  runtime_release_lock "macos-defaults"
+  return "$status"
 }
 
+if ! runtime_acquire_global_lock; then
+  if [[ "${DOTFILES_RUNTIME_OWNS_SUMMARY:-0}" -eq 1 ]]; then
+    runtime_print_summary
+  fi
+  exit 1
+fi
 ensure_not_root
 ensure_admin_user
 if [[ "${DOTFILES_SKIP_SUDO_TOUCH_ID:-}" == "1" ]]; then
   warn "Skipping Touch ID sudo setup because DOTFILES_SKIP_SUDO_TOUCH_ID=1"
+  runtime_record_deferred "Touch ID sudo" "skipped because DOTFILES_SKIP_SUDO_TOUCH_ID=1" "Run ./bin/configure-sudo-touch-id --enable later."
 else
   log "Configuring Touch ID for sudo"
-  "${repo_root}/bin/configure-sudo-touch-id" --enable || warn "Touch ID sudo setup was skipped; run ./bin/configure-sudo-touch-id --enable after setup."
+  if "${repo_root}/bin/configure-sudo-touch-id" --enable; then
+    runtime_record_completed "Touch ID sudo"
+  else
+    warn "Touch ID sudo setup was skipped; run ./bin/configure-sudo-touch-id --enable after setup."
+    runtime_record_failure recoverable "Touch ID sudo" "configuration failed or was skipped" "" "Run ./bin/configure-sudo-touch-id --enable after setup."
+    bootstrap_status=1
+  fi
 fi
 ensure_xcode_command_line_tools
 ensure_homebrew
 load_homebrew_shellenv
 ensure_mise_cli
-initialize_submodules
+if initialize_submodules; then
+  runtime_record_completed "Git submodules"
+else
+  runtime_record_failure recoverable "Git submodules" "submodule init failed" "" "Rerun git submodule update --init --recursive."
+  bootstrap_status=1
+fi
 
 log "Linking dotfiles"
-"${repo_root}/bin/link-dotfiles"
+if "${repo_root}/bin/link-dotfiles"; then
+  runtime_record_completed "Dotfile links"
+else
+  runtime_record_failure recoverable "Dotfile links" "link-dotfiles failed" "" "Rerun ./bin/link-dotfiles."
+  bootstrap_status=1
+fi
 
-ensure_latest_existing_xcode_app
-ensure_mas_cli || true
-start_mise_install
-install_brewfile
+if [[ "$mobile_dev_enabled" -eq 1 ]]; then
+  if "${repo_root}/bin/install-mobile-dev" --prepare-tools-only; then
+    runtime_record_completed "Mobile dev download tools" "xcodes and aria2 are ready"
+    runtime_run_job "Xcode install" recoverable \
+      "Sign in to Apple Developer if prompted, then rerun ./bin/setup." \
+      "${repo_root}/bin/install-mobile-dev" --xcode-install-only
+  else
+    runtime_record_failure recoverable "Mobile dev download tools" "could not prepare xcodes and aria2" "" "Rerun ./bin/install-mobile-dev --prepare-tools-only after checking mise/network access."
+    bootstrap_status=1
+  fi
+else
+  runtime_record_deferred "Mobile dev stack" "skipped because DOTFILES_SKIP_MOBILE_DEV=1" "Rerun ./bin/setup without DOTFILES_SKIP_MOBILE_DEV=1."
+fi
+
+ensure_mas_cli || runtime_record_deferred "mas CLI" "mas could not be installed yet" "Rerun ./bin/setup after mise or Homebrew is ready."
+runtime_run_job "mise tools" recoverable \
+  "Rerun cd ${repo_root} && mise install, then ./bin/check-mise-tools." \
+  install_and_check_mise_tools
+
+if install_brewfile; then
+  runtime_record_completed "Homebrew bundle"
+else
+  runtime_record_failure recoverable "Homebrew bundle" "brew bundle failed" "" "Rerun ./bin/bootstrap after fixing the Homebrew error."
+  bootstrap_status=1
+fi
+
+if [[ "$mobile_dev_enabled" -eq 1 ]]; then
+  runtime_run_job "Android Studio" recoverable \
+    "Rerun ./bin/install-mobile-dev, or install Android Studio with brew install --cask android-studio." \
+    "${repo_root}/bin/install-mobile-dev" --android-only
+fi
+
+if ! install_post_brew_apps; then
+  bootstrap_status=1
+fi
+
 log "Linking app dotfiles"
-"${repo_root}/bin/link-dotfiles"
-wait_for_mise_install
-report_mobile_dev_deferred
-log "Installing tmux plugins"
-"${repo_root}/bin/setup-tmux" || warn "tmux plugin setup failed; rerun ./bin/setup-tmux after network access is ready"
-install_shell_framework
-apply_macos_defaults_once
+if "${repo_root}/bin/link-dotfiles"; then
+  runtime_record_completed "App dotfile links"
+else
+  runtime_record_failure recoverable "App dotfile links" "link-dotfiles failed after app install" "" "Rerun ./bin/link-dotfiles."
+  bootstrap_status=1
+fi
+
+if [[ "$mobile_dev_enabled" -eq 1 ]]; then
+  if full_xcode_selected; then
+    runtime_run_job "iOS platform support" recoverable \
+      "Open Xcode > Settings > Components and install iOS, then rerun ./bin/install-mobile-dev." \
+      "${repo_root}/bin/install-mobile-dev" --ios-platform-only
+    runtime_run_job "Xcode-dependent Homebrew formulae" recoverable \
+      "Rerun ./bin/install-mobile-dev after Xcode is selected." \
+      "${repo_root}/bin/install-mobile-dev" --xcode-formulae-only
+    if ! runtime_wait_jobs; then
+      bootstrap_status=1
+    fi
+  else
+    runtime_record_failure recoverable "Mobile dev post-Xcode" "full Xcode is not selected" "" "Fix Xcode install, then rerun ./bin/install-mobile-dev."
+    bootstrap_status=1
+  fi
+else
+  report_mobile_dev_deferred
+fi
+
+runtime_run_job "tmux plugins" recoverable \
+  "Rerun ./bin/setup-tmux after network access is ready." \
+  "${repo_root}/bin/setup-tmux"
+runtime_run_job "shell framework" recoverable \
+  "Rerun ./bin/bootstrap after network access is ready." \
+  install_shell_framework
+if ! runtime_wait_jobs; then
+  bootstrap_status=1
+fi
+
+if apply_macos_defaults_once; then
+  runtime_record_completed "macOS defaults"
+else
+  runtime_record_failure recoverable "macOS defaults" "defaults script failed" "" "Rerun ./bin/bootstrap or DOTFILES_SKIP_MACOS_DEFAULTS=1 ./bin/bootstrap."
+  bootstrap_status=1
+fi
+
 log "Configuring Finder sidebar favorites"
-"${repo_root}/bin/finder-sidebar-favorites" || warn "Finder sidebar favorite setup failed; rerun ./bin/finder-sidebar-favorites after Finder permissions are ready"
+if "${repo_root}/bin/finder-sidebar-favorites"; then
+  runtime_record_completed "Finder sidebar favorites"
+else
+  warn "Finder sidebar favorite setup failed; rerun ./bin/finder-sidebar-favorites after Finder permissions are ready"
+  runtime_record_failure recoverable "Finder sidebar favorites" "Finder sidebar setup failed" "" "Rerun ./bin/finder-sidebar-favorites after Finder permissions are ready."
+  bootstrap_status=1
+fi
 
 cat <<'EOF'
 
@@ -755,8 +838,19 @@ Recommended next steps:
 - Open a new terminal, or reload this one with: source "$HOME/.zshrc"
 - Run ./bin/auth-setup to configure SSH and GitHub access.
 - Run ./bin/install-apps to install extra casks and report manual vendor apps.
-- Run ./bin/install-mobile-dev when you are ready for full Xcode, Android Studio, applesimutils, idb-companion, and sourcekitten.
 - Sign in to Apple ID, App Store, and iCloud.
 - Re-grant Accessibility / Automation / network permissions for Karabiner, AeroSpace, NearDrop, Synology Drive, superwhisper, and similar tools.
 - Finish first-run setup for Xcode, Android Studio, OrbStack, and DaVinci Resolve after installing the apps.
 EOF
+
+if [[ "${DOTFILES_RUNTIME_OWNS_SUMMARY:-0}" -eq 1 ]]; then
+  runtime_print_summary
+fi
+
+if [[ "$bootstrap_status" -ne 0 ]]; then
+  exit "$bootstrap_status"
+fi
+if [[ "${DOTFILES_RUNTIME_OWNS_SUMMARY:-0}" -eq 1 ]]; then
+  runtime_exit_status
+fi
+exit 0
