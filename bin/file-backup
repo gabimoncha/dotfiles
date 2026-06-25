@@ -666,6 +666,32 @@ print_synology_mackup_roots() {
   fi
 }
 
+print_mounted_mackup_roots() {
+  local mountpoint found=0
+
+  printf 'Mounted network volumes with possible MacBackups candidates:\n'
+
+  while IFS= read -r mountpoint; do
+    found=1
+    printf '  %s\n' "$mountpoint"
+    printf '    if this is the home share: %s/MacBackups/Mackup\n' "$mountpoint"
+    printf '    if this is the NAS root:   %s/home/MacBackups/Mackup\n' "$mountpoint"
+  done < <(
+    mount | awk '
+      / on \/Volumes\// && $0 ~ /(smbfs|afpfs|webdav)/ {
+        line = $0
+        sub(/^.* on /, "", line)
+        sub(/ \(.*/, "", line)
+        print line
+      }
+    ' | sort
+  )
+
+  if [[ "$found" -eq 0 ]]; then
+    printf '  none\n'
+  fi
+}
+
 mackup_restore_debug() {
   local primary_mackup_dir="${synology_drive}/MacBackups/Mackup"
   local secondary_mackup_dir="${icloud_drive}/Mackup"
@@ -695,6 +721,7 @@ EOF
   print_path_status "iCloud Mackup secondary" "$secondary_mackup_dir"
 
   print_synology_mackup_roots
+  print_mounted_mackup_roots
 
   cat <<'EOF'
 
@@ -702,6 +729,8 @@ If SynologyDrive-personal exists but MacBackups/Mackup is missing, wait for
 Synology Drive to finish syncing that folder or mark it as available offline.
 If only a differently named SynologyDrive-* folder exists, this repo is pointed
 at the wrong Synology Drive root for that Mac.
+If MacBackups only appears under /Volumes, Finder is showing a direct NAS mount,
+not the Synology Drive local sync folder used by the automated restore path.
 EOF
 }
 

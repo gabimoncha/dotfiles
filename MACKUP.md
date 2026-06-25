@@ -77,7 +77,16 @@ If restore says Synology is missing even after setting up Synology Drive, run:
 
 That prints the exact Synology and iCloud paths this repo is checking, plus any
 `SynologyDrive*` folders visible under `~/Library/CloudStorage` and whether
-they contain `MacBackups/Mackup`.
+they contain `MacBackups/Mackup`. It also lists mounted network volumes and
+the likely direct NAS paths to check, such as
+`/Volumes/home/MacBackups/Mackup`.
+
+Finder's direct NAS connection is not the same thing as Synology Drive sync.
+Seeing `MacBackups` under `ds1522plus/home` proves the NAS has the folder, but
+the automated restore path expects the same folder to be synced locally under
+`SynologyDrive-personal/MacBackups`. If it only appears under `/Volumes`, fix
+the Synology Drive Client sync task rather than treating the direct NAS mount
+as the normal restore path.
 
 The older `bin/mackup-backup`, `bin/mackup-restore`, `bin/raycast-*`, and
 `bin/codex-*` commands remain as compatibility aliases to `bin/file-backup` and

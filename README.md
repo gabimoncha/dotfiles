@@ -283,6 +283,11 @@ that Mac with:
 ./bin/file-restore --debug
 ```
 
+Direct NAS mounts in Finder, such as `ds1522plus/home/MacBackups`, are separate
+from the local Synology Drive sync folder. The automated restore path expects
+`MacBackups` under `SynologyDrive-personal`; if debug only finds it under
+`/Volumes`, fix the Synology Drive Client sync task.
+
 Restore selection rules:
 
 - Mackup restores the current backup tree at
