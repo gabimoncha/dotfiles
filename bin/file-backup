@@ -17,7 +17,7 @@ usage() {
 Usage:
   ./bin/file-backup [MACKUP_ARGS...]
   ./bin/file-backup [mackup|raycast|codex] [TARGET_ARGS...]
-  ./bin/file-restore
+  ./bin/file-restore [MACKUP_ARGS...]
   ./bin/file-restore [mackup|raycast|codex] [TARGET_ARGS...]
 
 Compatibility:
@@ -27,6 +27,8 @@ Compatibility:
 Primary file backups are stored in Synology Drive and mirrored to iCloud when
 both sync providers are ready. Codex archives are age passphrase-encrypted.
 Top-level file-backup options are passed to the Mackup backup step.
+Top-level file-restore options are passed to the Mackup restore step.
+Use ./bin/file-restore --debug to inspect backup discovery paths.
 EOF
 }
 
@@ -617,6 +619,69 @@ mackup_validate_config() {
   fi
 }
 
+print_path_status() {
+  local label="$1"
+  local path="$2"
+
+  printf '%s:\n' "$label"
+  printf '  path: %s\n' "$path"
+
+  if [[ -e "$path" || -L "$path" ]]; then
+    printf '  status: exists\n'
+    ls -ld "$path" 2>/dev/null | sed 's/^/  ls: /' || true
+    if [[ -d "$path" ]]; then
+      find "$path" -maxdepth 2 -mindepth 1 -print 2>/dev/null | sed -n '1,12p' | sed 's/^/  child: /'
+    fi
+  else
+    printf '  status: missing\n'
+  fi
+}
+
+mackup_restore_debug() {
+  local primary_mackup_dir="${synology_drive}/MacBackups/Mackup"
+  local secondary_mackup_dir="${icloud_drive}/Mackup"
+  local cloud_storage_dir="${HOME}/Library/CloudStorage"
+
+  cat <<EOF
+Mackup restore debug
+
+Expected restore preference:
+1. Synology primary
+2. iCloud secondary
+
+Mackup command:
+  $(command -v mackup 2>/dev/null || printf 'missing')
+
+Tracked Mackup config:
+  ${mackup_config}
+  engine=$(mackup_config_value storage engine 2>/dev/null || printf missing)
+  path=$(mackup_config_value storage path 2>/dev/null || printf missing)
+  directory=$(mackup_config_value storage directory 2>/dev/null || printf missing)
+
+EOF
+
+  print_path_status "Synology Drive root" "$synology_drive"
+  print_path_status "Synology MacBackups root" "${synology_drive}/MacBackups"
+  print_path_status "Synology Mackup primary" "$primary_mackup_dir"
+  print_path_status "iCloud Drive root" "$icloud_drive"
+  print_path_status "iCloud Mackup secondary" "$secondary_mackup_dir"
+
+  printf 'Synology-like folders under CloudStorage:\n'
+  if [[ -d "$cloud_storage_dir" ]]; then
+    find "$cloud_storage_dir" -maxdepth 1 -type d -name 'SynologyDrive*' -print 2>/dev/null | sed 's/^/  /'
+  else
+    printf '  missing: %s\n' "$cloud_storage_dir"
+  fi
+
+  cat <<'EOF'
+
+If SynologyDrive-personal exists but MacBackups/Mackup is missing, wait for
+Synology Drive to finish syncing that folder or mark it as available offline.
+If only a differently named SynologyDrive-* folder exists, this repo is pointed
+at the wrong Synology Drive root for that Mac.
+EOF
+}
+
 mackup_mirror_primary_to_icloud() {
   local primary_mackup_dir="${synology_drive}/MacBackups/Mackup"
   local secondary_mackup_dir="${icloud_drive}/Mackup"
@@ -680,15 +745,36 @@ mackup_backup() {
 mackup_restore() {
   local primary_mackup_dir="${synology_drive}/MacBackups/Mackup"
   local secondary_mackup_dir="${icloud_drive}/Mackup"
+  local debug=0
+  local mackup_args=()
+  local arg
+
+  for arg in "$@"; do
+    case "$arg" in
+      --debug)
+        debug=1
+        ;;
+      *)
+        mackup_args+=("$arg")
+        ;;
+    esac
+  done
+
+  if [[ "$debug" -eq 1 ]]; then
+    mackup_restore_debug
+    if [[ "${#mackup_args[@]}" -eq 0 ]]; then
+      return 0
+    fi
+  fi
 
   mackup_validate_config
 
   if [[ -d "$primary_mackup_dir" ]]; then
-    mackup --config-file "$mackup_config" "$@" restore
+    mackup --config-file "$mackup_config" "${mackup_args[@]}" restore
   elif [[ -d "$secondary_mackup_dir" ]]; then
     warn "Synology Mackup backup not found; falling back to iCloud secondary backup."
     mackup_make_icloud_config
-    mackup --config-file "$mackup_temp_config" "$@" restore
+    mackup --config-file "$mackup_temp_config" "${mackup_args[@]}" restore
   else
     warn "No Mackup backup found in Synology or iCloud."
     warn "Expected primary: ${primary_mackup_dir}"
@@ -862,13 +948,31 @@ backup_all() {
 
 restore_all() {
   local rayconfig codex_archive response
+  local mackup_args=()
+  local debug=0
+  local arg
 
-  if [[ $# -gt 0 ]]; then
-    usage
-    exit 1
+  for arg in "$@"; do
+    case "$arg" in
+      --debug)
+        debug=1
+        ;;
+      *)
+        mackup_args+=("$arg")
+        ;;
+    esac
+  done
+
+  if [[ "$debug" -eq 1 && "${#mackup_args[@]}" -eq 0 ]]; then
+    mackup_restore --debug
+    return 0
   fi
 
-  if ! mackup_restore; then
+  if [[ "$debug" -eq 1 ]]; then
+    mackup_args=(--debug "${mackup_args[@]}")
+  fi
+
+  if ! mackup_restore "${mackup_args[@]}"; then
     warn "Mackup restore failed; continuing with other file restore steps."
   fi
 

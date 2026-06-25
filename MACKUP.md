@@ -62,6 +62,22 @@ For only Mackup:
 ./bin/file-backup mackup --force
 ```
 
+Restore also passes Mackup options through:
+
+```bash
+./bin/file-restore --force
+./bin/file-restore mackup --force
+```
+
+If restore says Synology is missing even after setting up Synology Drive, run:
+
+```bash
+./bin/file-restore --debug
+```
+
+That prints the exact Synology and iCloud paths this repo is checking, plus any
+`SynologyDrive*` folders visible under `~/Library/CloudStorage`.
+
 The older `bin/mackup-backup`, `bin/mackup-restore`, `bin/raycast-*`, and
 `bin/codex-*` commands remain as compatibility aliases to `bin/file-backup` and
 `bin/file-restore`.

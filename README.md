@@ -269,6 +269,20 @@ Raycast `.rayconfig` it can find, and prompts before restoring encrypted Codex
 state. Targeted commands such as `bin/file-restore codex` still exist for
 focused reruns.
 
+Top-level restore options are passed to Mackup, so use this when Mackup asks
+before replacing existing local files:
+
+```bash
+./bin/file-restore --force
+```
+
+If restore unexpectedly falls back from Synology to iCloud, inspect the paths on
+that Mac with:
+
+```bash
+./bin/file-restore --debug
+```
+
 Restore selection rules:
 
 - Mackup restores the current backup tree at
