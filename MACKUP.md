@@ -76,7 +76,8 @@ If restore says Synology is missing even after setting up Synology Drive, run:
 ```
 
 That prints the exact Synology and iCloud paths this repo is checking, plus any
-`SynologyDrive*` folders visible under `~/Library/CloudStorage`.
+`SynologyDrive*` folders visible under `~/Library/CloudStorage` and whether
+they contain `MacBackups/Mackup`.
 
 The older `bin/mackup-backup`, `bin/mackup-restore`, `bin/raycast-*`, and
 `bin/codex-*` commands remain as compatibility aliases to `bin/file-backup` and

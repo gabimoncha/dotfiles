@@ -637,10 +637,38 @@ print_path_status() {
   fi
 }
 
+print_synology_mackup_roots() {
+  local cloud_storage_dir="${HOME}/Library/CloudStorage"
+  local root candidate found=0
+
+  printf 'Synology-like folders under CloudStorage:\n'
+  if [[ ! -d "$cloud_storage_dir" ]]; then
+    printf '  missing: %s\n' "$cloud_storage_dir"
+    return 0
+  fi
+
+  while IFS= read -r root; do
+    found=1
+    candidate="${root}/MacBackups/Mackup"
+
+    if [[ -d "$candidate" ]]; then
+      printf '  %s -> backup exists: %s\n' "$root" "$candidate"
+      find "$candidate" -maxdepth 2 -mindepth 1 -print 2>/dev/null | sed -n '1,8p' | sed 's/^/    child: /'
+    elif [[ -d "${root}/MacBackups" ]]; then
+      printf '  %s -> MacBackups exists, but Mackup is missing\n' "$root"
+    else
+      printf '  %s -> no MacBackups/Mackup\n' "$root"
+    fi
+  done < <(find "$cloud_storage_dir" -maxdepth 1 -type d -name 'SynologyDrive*' -print 2>/dev/null | sort)
+
+  if [[ "$found" -eq 0 ]]; then
+    printf '  none\n'
+  fi
+}
+
 mackup_restore_debug() {
   local primary_mackup_dir="${synology_drive}/MacBackups/Mackup"
   local secondary_mackup_dir="${icloud_drive}/Mackup"
-  local cloud_storage_dir="${HOME}/Library/CloudStorage"
 
   cat <<EOF
 Mackup restore debug
@@ -666,12 +694,7 @@ EOF
   print_path_status "iCloud Drive root" "$icloud_drive"
   print_path_status "iCloud Mackup secondary" "$secondary_mackup_dir"
 
-  printf 'Synology-like folders under CloudStorage:\n'
-  if [[ -d "$cloud_storage_dir" ]]; then
-    find "$cloud_storage_dir" -maxdepth 1 -type d -name 'SynologyDrive*' -print 2>/dev/null | sed 's/^/  /'
-  else
-    printf '  missing: %s\n' "$cloud_storage_dir"
-  fi
+  print_synology_mackup_roots
 
   cat <<'EOF'
 
