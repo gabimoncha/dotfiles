@@ -349,7 +349,7 @@ install_full_xcode() {
 
 install_xcode_dependent_formulae() {
   if [[ "$dry_run" -eq 1 ]]; then
-    log "dry-run: would install Xcode-dependent formulae facebook/fb/idb-companion and sourcekitten"
+    log "dry-run: would install Xcode-dependent formulae facebook/fb/idb-companion, sourcekitten, and wix/brew/applesimutils"
     return 0
   fi
 
@@ -361,8 +361,10 @@ install_xcode_dependent_formulae() {
   temp_brewfile="$(mktemp)"
   cat > "$temp_brewfile" <<'EOF'
 tap "facebook/fb"
+tap "wix/brew"
 brew "facebook/fb/idb-companion"
 brew "sourcekitten"
+brew "wix/brew/applesimutils"
 EOF
 
   log "Installing Xcode-dependent Homebrew formulae with ${brew_bundle_jobs} parallel job(s)"

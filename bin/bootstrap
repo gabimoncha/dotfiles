@@ -231,7 +231,7 @@ full_xcode_selected() {
 
 xcode_dependent_formula() {
   case "$1" in
-    facebook/fb/idb-companion | idb-companion | sourcekitten)
+    facebook/fb/idb-companion | idb-companion | sourcekitten | wix/brew/applesimutils | applesimutils)
       return 0
       ;;
     *)
@@ -382,6 +382,22 @@ install_vscode_extensions() {
   done < "$vscode_brewfile"
 }
 
+untap_if_present() {
+  local tap="$1"
+  local replacement="$2"
+
+  if ! brew tap | grep -Fxq "$tap"; then
+    return 0
+  fi
+
+  warn "Untapping legacy Homebrew tap ${tap}; ${replacement} is the managed source"
+  brew untap --force "$tap" || warn "Could not untap ${tap}; Homebrew may still report duplicate formulae"
+}
+
+normalize_homebrew_taps() {
+  untap_if_present "zegervdv/zathura" "homebrew-zathura/zathura"
+}
+
 filter_brewfile_for_existing_apps() {
   local source_file="$1"
   local target_file="$2"
@@ -448,6 +464,7 @@ install_brewfile() {
   mas_brewfile="$(mktemp)"
   vscode_brewfile="$(mktemp)"
 
+  normalize_homebrew_taps
   ensure_mas_cli || true
   filter_brewfile_for_existing_apps "${repo_root}/Brewfile" "$temp_brewfile" "$xcode_brewfile" "$mas_brewfile" "$vscode_brewfile"
 
@@ -475,7 +492,8 @@ mobile_dev_ready() {
   full_xcode_selected &&
     [[ -d "/Applications/Android Studio.app" ]] &&
     brew list --formula "facebook/fb/idb-companion" >/dev/null 2>&1 &&
-    brew list --formula "sourcekitten" >/dev/null 2>&1
+    brew list --formula "sourcekitten" >/dev/null 2>&1 &&
+    brew list --formula "wix/brew/applesimutils" >/dev/null 2>&1
 }
 
 report_mobile_dev_deferred() {
@@ -484,7 +502,7 @@ report_mobile_dev_deferred() {
     return 0
   fi
 
-  warn "Mobile dev stack is deferred. Run ./bin/install-mobile-dev for full Xcode, Android Studio, idb-companion, and sourcekitten."
+  warn "Mobile dev stack is deferred. Run ./bin/install-mobile-dev for full Xcode, Android Studio, applesimutils, idb-companion, and sourcekitten."
 }
 
 initialize_submodules() {
@@ -630,7 +648,7 @@ Recommended next steps:
 - Open a new terminal, or reload this one with: source "$HOME/.zshrc"
 - Run ./bin/auth-setup to configure SSH and GitHub access.
 - Run ./bin/install-apps to install extra casks and report manual vendor apps.
-- Run ./bin/install-mobile-dev when you are ready for full Xcode, Android Studio, idb-companion, and sourcekitten.
+- Run ./bin/install-mobile-dev when you are ready for full Xcode, Android Studio, applesimutils, idb-companion, and sourcekitten.
 - Sign in to Apple ID, App Store, and iCloud.
 - Re-grant Accessibility / Automation / network permissions for Karabiner, AeroSpace, NearDrop, Synology Drive, superwhisper, and similar tools.
 - Finish first-run setup for Xcode, Android Studio, OrbStack, and DaVinci Resolve after installing the apps.

@@ -144,7 +144,7 @@ flowchart LR
     MD1["Ensure Homebrew, mise, and xcodes"]
     MD2["Install Android Studio cask"]
     MD3["Install and configure full Xcode"]
-    MD4["Install idb-companion and sourcekitten"]
+    MD4["Install applesimutils, idb-companion, and sourcekitten"]
 
     MD1 --> MD2 --> MD3 --> MD4
   end
@@ -323,7 +323,7 @@ environment on exit. Keep this scoped to setup scripts only; Homebrew documents
 the variable as transitional and not recommended for persistent shell config.
 
 Run the mobile dev stack separately when you want full Xcode, Android Studio,
-`idb-companion`, and `sourcekitten`:
+`applesimutils`, `idb-companion`, and `sourcekitten`:
 
 ```bash
 ./bin/install-mobile-dev
