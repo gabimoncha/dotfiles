@@ -32,6 +32,7 @@ cd ~/development/dotfiles
 ./bin/prepare-sync
 ./bin/mackup-backup
 ./bin/raycast-backup
+./bin/codex-backup
 ```
 
 `bin/prepare-sync` is a drift report, not an auto-writer. It compares the
@@ -41,6 +42,8 @@ under `.sync-backups/` so changes can be made intentionally.
 `bin/mackup-backup` copies the small Mackup allowlist to iCloud. Raycast is not
 managed by Mackup here; `bin/raycast-backup` opens Raycast and tells you to save
 an encrypted `.rayconfig` export under `iCloud Drive/Raycast`.
+`bin/codex-backup` writes a passphrase-encrypted Codex config and memory archive
+under `iCloud Drive/Codex`.
 
 Commit and push any intentional repo changes before switching machines.
 
@@ -89,7 +92,10 @@ flowchart LR
     S16["Call bin/auth-setup after Enter"]
     S17["Call bin/mackup-restore"]
     S18["Find .rayconfig and call bin/raycast-restore when present"]
-    S19["Print shell reload hint and final actionable summary"]
+    S19{"Encrypted Codex state archive found?"}
+    S20["Prompt and call bin/codex-restore when approved"]
+    S21["Defer Codex restore"]
+    S22["Print shell reload hint and final actionable summary"]
 
     S0 --> S1
     S1 -->|"yes"| S2
@@ -100,8 +106,10 @@ flowchart LR
     S8 --> S9
     S9 -->|"no"| S10
     S9 -->|"yes"| S11 --> S12 --> S13 --> S14
-    S14 -->|"no"| S15 --> S19
+    S14 -->|"no"| S15 --> S22
     S14 -->|"yes"| S16 --> S17 --> S18 --> S19
+    S19 -->|"yes"| S20 --> S22
+    S19 -->|"no"| S21 --> S22
   end
 
   subgraph Preflight["bin/preflight"]
@@ -196,6 +204,16 @@ flowchart LR
     R1 -->|"no"| R3
   end
 
+  subgraph CodexRestore["bin/codex-restore"]
+    direction TB
+    C1["Decrypt age archive"]
+    C2["Validate allowlisted paths"]
+    C3["Back up replaced targets"]
+    C4["Restore curated Codex state"]
+
+    C1 --> C2 --> C3 --> C4
+  end
+
   S3 -.-> P1
   S5 -.-> I1
   S8 -.-> B1
@@ -205,6 +223,7 @@ flowchart LR
   S16 -.-> A1
   S17 -.-> M1
   S18 -.-> R1
+  S20 -.-> C1
 
   B4 -.-> L1
   B7 -.-> L1
@@ -229,6 +248,7 @@ also run the pieces directly later:
 ./bin/auth-setup
 ./bin/mackup-restore
 ./bin/raycast-restore
+./bin/codex-restore
 ```
 
 `bin/auth-setup` configures local Git identity, creates or reuses an Ed25519 SSH
@@ -239,6 +259,8 @@ GitHub SSH. If this repo was cloned from its public HTTPS URL, it switches
 `bin/mackup-restore` expects iCloud Drive and the tracked `home/.mackup.cfg`.
 `bin/raycast-restore` opens the newest `.rayconfig` it can find under iCloud
 Drive, or an explicit path passed as an argument.
+`bin/codex-restore` decrypts the newest `iCloud Drive/Codex` archive and
+restores only the curated Codex allowlist after backing up replaced targets.
 
 `bin/finder-sidebar-favorites` creates `~/development` and `~/Screenshots`,
 then adds both folders to Finder Favorites. It is run during setup and can be
@@ -380,6 +402,8 @@ This repo is deliberately boring about ownership:
 - `nvim/` is a separate Neovim repo mounted here as a submodule.
 - Mackup owns only the allowlisted app settings in `home/.mackup.cfg`.
 - Raycast is restored from an encrypted `.rayconfig` export outside git.
+- Codex memories and selected user config are restored from an encrypted
+  `age` archive outside git.
 
 When adding a tool, use this order:
 
@@ -408,6 +432,8 @@ bin/install-apps                 manifest installer
 bin/install-mobile-dev           heavyweight Xcode and Android Studio setup
 bin/finder-sidebar-favorites     add repo-owned Finder sidebar favorites
 bin/app-state-doctor             post-setup app-state checks
+bin/codex-backup                 encrypted Codex config and memory backup
+bin/codex-restore                encrypted Codex config and memory restore
 home/                            tracked $HOME sources
 home/.config/mise/config.toml    mise-owned tools
 home/.mackup.cfg                 Mackup allowlist using iCloud storage
@@ -434,6 +460,7 @@ Currently managed:
 - `~/.config/karabiner/karabiner.json`
 - `~/.config/zed/settings.json`
 - `~/.config/zed/keymap.json`
+- `~/.agents/skills`
 - `~/Documents/superwhisper/settings/settings.json`
 - `~/Library/Application Support/com.mitchellh.ghostty/config`
 - `~/scripts/toggle_function_keys.sh`
@@ -554,6 +581,19 @@ Raycast is separate:
 
 Keep `.rayconfig` exports and passphrases outside git.
 
+Codex state is separate from Mackup and Raycast:
+
+```bash
+./bin/codex-backup
+./bin/codex-restore
+```
+
+The archive is encrypted with `age -p` and saved to `iCloud Drive/Codex`.
+It includes curated Codex config, keybindings, rules, user-authored global
+skills, and memories. It deliberately excludes auth, sessions, histories,
+attachments, caches, sqlite state, plugin caches, worktrees, sockets, app
+bundles, and installation IDs.
+
 ## Neovim
 
 `nvim/` is a git submodule with separate history. `bin/link-dotfiles` links it
@@ -598,6 +638,8 @@ bash -n bin/lib/setup-runtime.sh
 bash -n bin/bootstrap
 bash -n bin/install-mobile-dev
 bash -n bin/link-dotfiles
+bash -n bin/codex-backup
+bash -n bin/codex-restore
 bash -n macos/defaults.sh
 git diff --check
 ```

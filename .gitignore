@@ -4,6 +4,7 @@
 .env
 .sync-backups/
 *.rayconfig
+codex-state-*.tar.gz.age
 
 # Local-only shell config and secrets. Keep examples tracked.
 home/.config/local/*

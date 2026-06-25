@@ -95,6 +95,12 @@ latest_rayconfig() {
   fi
 }
 
+latest_codex_state_archive() {
+  local archive="${HOME}/Library/Mobile Documents/com~apple~CloudDocs/Codex/codex-state-latest.tar.gz.age"
+
+  [[ -f "$archive" ]] && printf '%s\n' "$archive"
+}
+
 print_manifest_summary() {
   local key type token_or_url app_bundle notes
   local installed_count=0 skipped_count=0 deferred_count=0 manual_count=0
@@ -172,7 +178,7 @@ EOF
 }
 
 run_interactive_followup() {
-  local rayconfig
+  local rayconfig codex_archive response
 
   cat <<'EOF'
 
@@ -216,6 +222,41 @@ On the old Mac, run ./bin/raycast-backup and export Raycast settings to iCloud D
 On this Mac, rerun ./bin/setup or ./bin/raycast-restore after iCloud syncs the export.
 
 This is expected until the encrypted Raycast export exists. Do not commit .rayconfig files or their passphrases.
+EOF
+  fi
+
+  codex_archive="$(latest_codex_state_archive || true)"
+  if [[ -n "$codex_archive" ]]; then
+    cat <<EOF
+
+Encrypted Codex state backup found:
+  ${codex_archive}
+Restore Codex config, keybindings, user skills, and memories now? [y/N]
+EOF
+    read -r response
+    case "$response" in
+      y | Y | yes | YES)
+        if "${repo_root}/bin/codex-restore" "$codex_archive"; then
+          runtime_record_completed "Codex state restore"
+        else
+          runtime_record_failure recoverable "Codex state restore" "Codex restore failed" "" "Rerun ./bin/codex-restore after checking the archive passphrase."
+        fi
+        ;;
+      *)
+        log "Codex state restore skipped"
+        runtime_record_deferred "Codex state restore" "user skipped encrypted Codex restore" "Run ./bin/codex-restore later."
+        ;;
+    esac
+  else
+    log "Codex state restore deferred"
+    runtime_record_deferred "Codex state restore" "no encrypted Codex state archive was found in iCloud Drive/Codex" "Run ./bin/codex-backup on the old Mac, wait for iCloud sync, then rerun ./bin/setup."
+    cat <<'EOF'
+No encrypted Codex state archive was found in iCloud Drive/Codex.
+
+On the old Mac, run ./bin/codex-backup to save curated Codex config and memories.
+On this Mac, rerun ./bin/setup or ./bin/codex-restore after iCloud syncs the archive.
+
+This archive is passphrase-encrypted with age. Keep the passphrase outside git.
 EOF
   fi
 }

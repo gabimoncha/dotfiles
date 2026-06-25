@@ -119,6 +119,8 @@ check_script_syntax() {
     "bin/app-state-doctor"
     "bin/dotfiles-update"
     "bin/prepare-sync"
+    "bin/codex-backup"
+    "bin/codex-restore"
     "bin/mackup-backup"
     "bin/mackup-restore"
     "bin/raycast-backup"

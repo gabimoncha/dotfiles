@@ -26,6 +26,18 @@ Mackup is part of the new-Mac workflow, but only through explicit copy-mode back
 
 Raycast stays out of the Mackup allowlist unless Mackup provides a narrow supported profile. The primary Raycast source of truth is the encrypted `.rayconfig` export/import flow, which avoids syncing the full app support directory.
 
+## Codex State Uses Encrypted Archives
+
+Durable, safe AI tooling assets can live in this repo and be linked through
+`bin/link-dotfiles`. User-authored global Codex skills live under
+`home/.agents/skills`, linked to `~/.agents/skills`.
+
+Codex memories and selected user config stay out of git and Mackup. `~/.codex`
+contains auth, histories, databases, caches, worktrees, plugin assets, and
+generated memories in one tree, so the repo backs up only a curated allowlist
+through `bin/codex-backup` as an `age` passphrase-encrypted iCloud archive.
+Restore is explicit or prompted during the interactive setup follow-up.
+
 ## Explicit Updates With a Daily Notifier
 
 There is no automatic Homebrew upgrade LaunchAgent. The shell runs a non-blocking daily update check and reports when `origin/main` has new commits. Applying updates remains explicit through `dotfiles-update`.

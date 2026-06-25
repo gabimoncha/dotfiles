@@ -1,0 +1,181 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+timestamp="$(date +%Y%m%d-%H%M%S)"
+icloud_drive="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+output_dir="${icloud_drive}/Codex"
+output_dir_explicit=0
+stage_dir=""
+temp_archive=""
+
+included_paths=()
+
+usage() {
+  cat >&2 <<'EOF'
+Usage: ./bin/codex-backup [--output-dir PATH]
+
+Creates an age passphrase-encrypted archive of curated Codex config and memory
+state. The passphrase is prompted by age and is never stored by this script.
+EOF
+}
+
+log() {
+  printf '==> %s\n' "$1"
+}
+
+warn() {
+  printf '!! %s\n' "$1" >&2
+}
+
+cleanup() {
+  [[ -n "$stage_dir" && -d "$stage_dir" ]] && rm -rf "$stage_dir"
+  [[ -n "$temp_archive" && -f "$temp_archive" ]] && rm -f "$temp_archive"
+  return 0
+}
+
+need_command() {
+  local command_name="$1"
+
+  if ! command -v "$command_name" >/dev/null 2>&1; then
+    warn "Missing required command: ${command_name}"
+    if [[ "$command_name" == "age" ]]; then
+      warn "Run ./bin/setup or mise install age, then rerun ./bin/codex-backup."
+    fi
+    exit 1
+  fi
+}
+
+copy_path() {
+  local source="$1"
+  local relative="$2"
+  local destination="${stage_dir}/${relative}"
+
+  if [[ -d "$source" ]]; then
+    mkdir -p "$destination"
+    (cd "$source" && tar -cf - .) | (cd "$destination" && tar -xf -)
+  elif [[ -f "$source" || -L "$source" ]]; then
+    mkdir -p "$(dirname "$destination")"
+    cp -p "$source" "$destination"
+  else
+    return 1
+  fi
+
+  included_paths+=("$relative")
+}
+
+add_if_present() {
+  local source="$1"
+  local relative="$2"
+
+  if copy_path "$source" "$relative"; then
+    log "Included ${source}"
+  else
+    warn "Skipping missing source ${source}"
+  fi
+}
+
+write_manifest() {
+  local manifest="${stage_dir}/MANIFEST.txt"
+
+  {
+    printf 'Codex state backup\n'
+    printf 'created_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    printf 'host=%s\n' "$(hostname 2>/dev/null || printf unknown)"
+    printf '\nIncluded allowlist roots:\n'
+    printf '%s\n' "${included_paths[@]}"
+    cat <<'EOF'
+
+Excluded by policy:
+.codex/auth.json
+.codex/history.jsonl
+.codex/installation_id
+.codex/session_index.jsonl
+.codex/attachments
+.codex/browser
+.codex/cache
+.codex/logs
+.codex/node_repl
+.codex/plugins
+.codex/sessions
+.codex/shell_snapshots
+.codex/sqlite
+.codex/worktrees
+.codex/.tmp
+.codex/app-server-control
+.codex/computer-use
+*.sqlite*
+EOF
+  } > "$manifest"
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --output-dir)
+      if [[ $# -lt 2 || -z "${2:-}" ]]; then
+        usage
+        exit 1
+      fi
+      output_dir="$2"
+      output_dir_explicit=1
+      shift 2
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+trap cleanup EXIT
+
+need_command age
+need_command tar
+
+if [[ "$output_dir_explicit" -eq 0 && ! -d "$icloud_drive" ]]; then
+  warn "iCloud Drive is not ready: ${icloud_drive}"
+  warn "Sign in to iCloud Drive or pass --output-dir PATH."
+  exit 1
+fi
+
+mkdir -p "$output_dir"
+
+stage_dir="$(mktemp -d "${TMPDIR:-/tmp}/codex-state-backup.XXXXXX")"
+archive_path="${output_dir}/codex-state-${timestamp}.tar.gz.age"
+latest_path="${output_dir}/codex-state-latest.tar.gz.age"
+temp_archive="${archive_path}.tmp.$$"
+
+add_if_present "${HOME}/.codex/config.toml" ".codex/config.toml"
+add_if_present "${HOME}/.codex/keybindings.json" ".codex/keybindings.json"
+add_if_present "${HOME}/.codex/AGENTS.md" ".codex/AGENTS.md"
+add_if_present "${HOME}/.codex/.codex-global-state.json" ".codex/.codex-global-state.json"
+add_if_present "${HOME}/.codex/rules" ".codex/rules"
+add_if_present "${HOME}/.codex/memories" ".codex/memories"
+add_if_present "${HOME}/.agents/skills" ".agents/skills"
+
+if [[ "${#included_paths[@]}" -eq 0 ]]; then
+  warn "No Codex state sources were found; refusing to create an empty archive."
+  exit 1
+fi
+
+write_manifest
+
+log "Creating encrypted archive ${archive_path}"
+(cd "$stage_dir" && tar -czf - .) | age -p -o "$temp_archive"
+mv "$temp_archive" "$archive_path"
+cp -f "$archive_path" "$latest_path"
+chmod 600 "$archive_path" "$latest_path"
+
+cat <<EOF
+
+Codex state backup complete.
+Archive: ${archive_path}
+Latest:  ${latest_path}
+
+Keep the passphrase in Keychain or another private store. Do not commit
+decrypted Codex state or these encrypted archives to git.
+EOF

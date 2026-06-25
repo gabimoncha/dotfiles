@@ -8,6 +8,7 @@ Do not commit:
 - Private email addresses beyond public noreply-style Git config
 - Machine-local absolute paths outside this repo model
 - Raycast `.rayconfig` exports or their passphrases
+- Decrypted Codex state archives, raw Codex memories, or Codex memory exports
 - Mackup backup contents
 - App caches, histories, databases, or session state
 

@@ -19,6 +19,15 @@ Raycast is not managed by Mackup here. Restore it from an encrypted `.rayconfig`
 ./bin/raycast-restore
 ```
 
+Codex memories are not managed by Mackup. Codex mixes durable config with auth,
+sessions, sqlite state, plugin caches, worktrees, and private generated memory,
+so this repo uses a separate passphrase-encrypted archive workflow instead:
+
+```bash
+./bin/codex-backup
+./bin/codex-restore
+```
+
 Use copy-mode commands only:
 
 ```bash
