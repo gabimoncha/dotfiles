@@ -4,11 +4,12 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 dry_run=0
+xcode_only=0
 temp_brewfile=""
 mobile_status=0
 mise_shim_dir="${HOME}/.local/share/mise/shims"
 brew_bundle_jobs="${DOTFILES_BREW_BUNDLE_JOBS:-auto}"
-target_xcode_major=27
+xcode_channel="${DOTFILES_XCODE_CHANNEL:-prerelease}"
 homebrew_no_require_tap_trust_was_set=0
 homebrew_no_require_tap_trust_original=""
 
@@ -48,7 +49,7 @@ warn() {
 }
 
 usage() {
-  printf 'Usage: ./bin/install-mobile-dev [--dry-run]\n' >&2
+  printf 'Usage: ./bin/install-mobile-dev [--dry-run] [--xcode-only]\n' >&2
 }
 
 prepend_mise_shims() {
@@ -167,15 +168,21 @@ ensure_mise_cli() {
 }
 
 preferred_xcode_developer_dir() {
-  local app
+  local app selected_developer_dir
 
-  if [[ -d "/Applications/Xcode.app/Contents/Developer" ]] && xcode_app_matches_target "/Applications/Xcode.app"; then
+  selected_developer_dir="$(xcode-select -p 2>/dev/null || true)"
+  if [[ "$selected_developer_dir" == /Applications/Xcode*.app/Contents/Developer && -d "$selected_developer_dir" ]]; then
+    printf '%s\n' "$selected_developer_dir"
+    return 0
+  fi
+
+  if [[ -d "/Applications/Xcode.app/Contents/Developer" ]]; then
     printf '/Applications/Xcode.app/Contents/Developer\n'
     return 0
   fi
 
   while IFS= read -r app; do
-    if [[ "$app" != "/Applications/Xcode.app" && -d "${app}/Contents/Developer" ]] && xcode_app_matches_target "$app"; then
+    if [[ "$app" != "/Applications/Xcode.app" && -d "${app}/Contents/Developer" ]]; then
       printf '%s/Contents/Developer\n' "$app"
       return 0
     fi
@@ -188,18 +195,20 @@ xcode_app_version() {
   /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$1/Contents/version.plist" 2>/dev/null || true
 }
 
-xcode_app_matches_target() {
-  local version
-
-  version="$(xcode_app_version "$1")"
-  [[ "$version" == "$target_xcode_major" || "$version" == "$target_xcode_major".* ]]
-}
-
 full_xcode_selected() {
   local developer_dir
 
   developer_dir="$(preferred_xcode_developer_dir || true)"
   [[ -n "$developer_dir" && "$(xcode-select -p 2>/dev/null || true)" == "$developer_dir" ]]
+}
+
+selected_xcode_app() {
+  local developer_dir
+
+  developer_dir="$(xcode-select -p 2>/dev/null || true)"
+  if [[ "$developer_dir" == /Applications/Xcode*.app/Contents/Developer ]]; then
+    printf '%s\n' "${developer_dir%/Contents/Developer}"
+  fi
 }
 
 run_xcode_first_launch_tasks() {
@@ -253,7 +262,7 @@ configure_full_xcode() {
   fi
 
   if [[ "$dry_run" -eq 1 ]]; then
-    log "dry-run: would select Xcode ${target_xcode_major}, accept the license, and run first-launch setup"
+    log "dry-run: would select full Xcode, accept the license, and run first-launch setup"
     log "dry-run: would ensure Xcode iOS platform support is installed"
     return 0
   fi
@@ -298,6 +307,85 @@ report_aria2_state() {
   fi
 }
 
+xcode_install_flag() {
+  case "$xcode_channel" in
+    prerelease)
+      printf '%s\n' '--latest-prerelease'
+      ;;
+    release)
+      printf '%s\n' '--latest'
+      ;;
+    *)
+      warn "Unsupported DOTFILES_XCODE_CHANNEL='${xcode_channel}'. Use 'prerelease' or 'release'."
+      return 1
+      ;;
+  esac
+}
+
+xcode_channel_label() {
+  case "$xcode_channel" in
+    prerelease) printf '%s\n' 'latest prerelease' ;;
+    release) printf '%s\n' 'latest release' ;;
+    *) printf '%s\n' "$xcode_channel" ;;
+  esac
+}
+
+xcode_experimental_unxip_enabled() {
+  case "${DOTFILES_XCODE_EXPERIMENTAL_UNXIP:-1}" in
+    1 | true | yes)
+      return 0
+      ;;
+    0 | false | no)
+      return 1
+      ;;
+    *)
+      warn "Unsupported DOTFILES_XCODE_EXPERIMENTAL_UNXIP='${DOTFILES_XCODE_EXPERIMENTAL_UNXIP}'. Use '1' or '0'."
+      return 1
+      ;;
+  esac
+}
+
+remove_old_xcode_apps() {
+  local selected_app selected_version selected_major app version major
+
+  if [[ "${DOTFILES_KEEP_OLD_XCODES:-}" == "1" ]]; then
+    log "Keeping old Xcode apps because DOTFILES_KEEP_OLD_XCODES=1"
+    return 0
+  fi
+
+  selected_app="$(selected_xcode_app)"
+  if [[ -z "$selected_app" ]]; then
+    return 0
+  fi
+
+  selected_version="$(xcode_app_version "$selected_app")"
+  selected_major="${selected_version%%.*}"
+  if [[ -z "$selected_major" || "$selected_major" == "$selected_version" ]]; then
+    return 0
+  fi
+
+  while IFS= read -r app; do
+    [[ "$app" == "$selected_app" ]] && continue
+
+    version="$(xcode_app_version "$app")"
+    [[ -z "$version" ]] && continue
+
+    major="${version%%.*}"
+    if [[ "$major" == "$selected_major" ]]; then
+      continue
+    fi
+
+    if [[ "$dry_run" -eq 1 ]]; then
+      log "dry-run: would remove old Xcode ${version} at ${app}"
+      continue
+    fi
+
+    log "Removing old Xcode ${version} at ${app}"
+    (cd "$repo_root" && mise exec xcodes@latest -- xcodes uninstall "$version") ||
+      warn "Could not remove old Xcode ${version}; remove ${app} manually if it keeps confusing Homebrew."
+  done < <(ls -d /Applications/Xcode*.app 2>/dev/null || true)
+}
+
 install_android_studio() {
   if [[ -d "/Applications/Android Studio.app" ]]; then
     log "Android Studio.app already exists"
@@ -319,24 +407,32 @@ install_android_studio() {
 }
 
 install_full_xcode() {
-  if preferred_xcode_developer_dir >/dev/null 2>&1; then
-    configure_full_xcode
-    return $?
-  fi
+  local install_flag label
+  local install_args=()
+  local unxip_label="regular unxip"
 
   if ! ensure_xcodes_cli; then
     return 1
   fi
 
   report_aria2_state
+  install_flag="$(xcode_install_flag)" || return 1
+  label="$(xcode_channel_label)"
+  install_args=("$install_flag" "--select")
+
+  if xcode_experimental_unxip_enabled; then
+    install_args+=("--experimental-unxip")
+    unxip_label="experimental unxip"
+  fi
 
   if [[ "$dry_run" -eq 1 ]]; then
-    log "dry-run: would install latest Xcode ${target_xcode_major} prerelease with xcodes"
+    log "dry-run: would install and select the ${label} Xcode with xcodes using ${unxip_label}"
+    remove_old_xcode_apps
     return 0
   fi
 
-  log "Installing latest Xcode ${target_xcode_major} prerelease with xcodes"
-  if ! (cd "$repo_root" && mise exec xcodes@latest -- xcodes install --latest-prerelease); then
+  log "Installing and selecting the ${label} Xcode with xcodes using ${unxip_label}"
+  if ! (cd "$repo_root" && mise exec xcodes@latest -- xcodes install "${install_args[@]}"); then
     warn "Xcode install with xcodes failed. Sign in when prompted or set XCODES_USERNAME/XCODES_PASSWORD, then rerun ./bin/install-mobile-dev."
     return 1
   fi
@@ -345,6 +441,8 @@ install_full_xcode() {
     warn "Xcode is installed but not ready yet. Finish first launch if prompted, then rerun ./bin/install-mobile-dev."
     return 1
   }
+
+  remove_old_xcode_apps
 }
 
 install_xcode_dependent_formulae() {
@@ -377,6 +475,10 @@ while [[ $# -gt 0 ]]; do
       dry_run=1
       shift
       ;;
+    --xcode-only)
+      xcode_only=1
+      shift
+      ;;
     -h | --help)
       usage
       exit 0
@@ -394,13 +496,29 @@ ensure_xcode_command_line_tools
 ensure_homebrew
 load_homebrew_shellenv
 ensure_mise_cli
-install_android_studio
+if [[ "$xcode_only" -eq 0 ]]; then
+  install_android_studio
+fi
 install_full_xcode || mobile_status=1
-install_xcode_dependent_formulae || mobile_status=1
+if [[ "$xcode_only" -eq 0 ]]; then
+  install_xcode_dependent_formulae || mobile_status=1
+fi
 
 if [[ "$mobile_status" -ne 0 ]]; then
-  warn "Mobile dev setup completed with issues. Fix the warnings above, then rerun ./bin/install-mobile-dev."
+  if [[ "$xcode_only" -eq 1 ]]; then
+    warn "Xcode setup completed with issues. Fix the warnings above, then rerun ./bin/install-mobile-dev --xcode-only."
+  else
+    warn "Mobile dev setup completed with issues. Fix the warnings above, then rerun ./bin/install-mobile-dev."
+  fi
   exit "$mobile_status"
+fi
+
+if [[ "$xcode_only" -eq 1 ]]; then
+  cat <<'EOF'
+
+Xcode setup pass complete.
+EOF
+  exit 0
 fi
 
 cat <<'EOF'

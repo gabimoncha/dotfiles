@@ -12,6 +12,8 @@ sudo_keepalive_pid=""
 mise_install_pid=""
 mas_checked=0
 mas_available=0
+homebrew_xcode_checked=0
+homebrew_xcode_too_old=0
 mise_shim_dir="${HOME}/.local/share/mise/shims"
 brew_bundle_jobs="${DOTFILES_BREW_BUNDLE_JOBS:-auto}"
 
@@ -229,7 +231,7 @@ full_xcode_selected() {
   [[ -n "$developer_dir" && "$(xcode-select -p 2>/dev/null || true)" == "$developer_dir" ]]
 }
 
-xcode_dependent_formula() {
+full_xcode_dependent_formula() {
   case "$1" in
     facebook/fb/idb-companion | idb-companion | sourcekitten | wix/brew/applesimutils | applesimutils)
       return 0
@@ -238,6 +240,67 @@ xcode_dependent_formula() {
       return 1
       ;;
   esac
+}
+
+homebrew_xcode_sensitive_formula() {
+  case "$1" in
+    borders | facebook/fb/idb-companion | idb-companion | sourcekitten | wix/brew/applesimutils | applesimutils)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+homebrew_reports_xcode_too_old() {
+  local doctor_output
+
+  if [[ "$homebrew_xcode_checked" -eq 1 ]]; then
+    [[ "$homebrew_xcode_too_old" -eq 1 ]]
+    return $?
+  fi
+
+  homebrew_xcode_checked=1
+
+  if ! command -v brew >/dev/null 2>&1; then
+    return 1
+  fi
+
+  doctor_output="$(brew doctor 2>&1 || true)"
+  if grep -q 'Your Xcode .* is too outdated' <<< "$doctor_output"; then
+    homebrew_xcode_too_old=1
+    return 0
+  fi
+
+  return 1
+}
+
+xcode_app_installed() {
+  ls -d /Applications/Xcode*.app >/dev/null 2>&1
+}
+
+ensure_latest_existing_xcode_app() {
+  if [[ "${DOTFILES_SKIP_XCODE_UPDATE:-}" == "1" ]]; then
+    warn "Skipping Xcode update because DOTFILES_SKIP_XCODE_UPDATE=1"
+    return 0
+  fi
+
+  if ! xcode_app_installed; then
+    return 0
+  fi
+
+  log "Ensuring existing Xcode app is on the latest xcodes channel"
+  if "${repo_root}/bin/install-mobile-dev" --xcode-only; then
+    homebrew_xcode_checked=0
+    homebrew_xcode_too_old=0
+    return 0
+  fi
+
+  warn "Xcode update failed; Xcode-sensitive Homebrew formulae may be deferred"
+  homebrew_xcode_checked=0
+  homebrew_xcode_too_old=0
+  return 0
 }
 
 ensure_mise_cli() {
@@ -410,11 +473,20 @@ filter_brewfile_for_existing_apps() {
     if [[ "$line" =~ ^brew[[:space:]]+\"([^\"]+)\" ]]; then
       brew_name="${BASH_REMATCH[1]}"
 
-      if xcode_dependent_formula "$brew_name" && ! full_xcode_selected; then
+      if full_xcode_dependent_formula "$brew_name" && ! full_xcode_selected; then
         warn "Deferring ${brew_name}; full Xcode is required"
         printf '# Deferred until full Xcode is selected: %s\n' "$line" >> "$target_file"
         printf '%s\n' "$line" >> "$deferred_xcode_file"
         continue
+      fi
+
+      if homebrew_xcode_sensitive_formula "$brew_name"; then
+        if homebrew_reports_xcode_too_old; then
+          warn "Deferring ${brew_name}; Homebrew requires a newer Xcode app"
+          printf '# Deferred until Homebrew accepts the installed Xcode app: %s\n' "$line" >> "$target_file"
+          printf '%s\n' "$line" >> "$deferred_xcode_file"
+          continue
+        fi
       fi
     fi
 
@@ -626,6 +698,7 @@ initialize_submodules
 log "Linking dotfiles"
 "${repo_root}/bin/link-dotfiles"
 
+ensure_latest_existing_xcode_app
 ensure_mas_cli || true
 start_mise_install
 install_brewfile

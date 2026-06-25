@@ -257,6 +257,9 @@ downloads:
 ./bin/install-mobile-dev
 ```
 
+If a full Xcode app is already installed, default setup runs an Xcode-only
+update pass before `brew bundle`. Set `DOTFILES_SKIP_XCODE_UPDATE=1` to skip it.
+
 Manual/vendor apps currently live in `apps/manifest.tsv` as `manual` rows.
 DaVinci Resolve and Pinokio are examples.
 
@@ -282,16 +285,18 @@ It:
 2. enables Touch ID for `sudo` through `/etc/pam.d/sudo_local` when supported
 3. initializes the Neovim submodule
 4. links tracked files from `home/` into `$HOME`
-5. starts `mise install` in the background
-6. installs Homebrew formulae, casks, App Store apps, and VS Code extensions
+5. updates an already-installed Xcode app to the latest selected channel
+6. starts `mise install` in the background
+7. installs Homebrew formulae, casks, App Store apps, and VS Code extensions
    with `brew bundle --jobs="${DOTFILES_BREW_BUNDLE_JOBS:-auto}"`
-7. skips casks whose app bundle already exists in `/Applications`
-8. defers App Store apps until `mas` and App Store sign-in are usable
-9. defers the heavyweight mobile dev stack to `./bin/install-mobile-dev`
-10. verifies `mise` tools with `bin/check-mise-tools`
-11. installs tmux plugins through TPM
-12. installs Oh My Zsh, Powerlevel10k, and shell plugins when missing
-13. applies tracked macOS defaults once
+8. skips casks whose app bundle already exists in `/Applications`
+9. defers App Store apps until `mas` and App Store sign-in are usable
+10. defers Xcode-sensitive formulae if the Xcode update pass cannot complete
+11. defers the heavyweight mobile dev stack to `./bin/install-mobile-dev`
+12. verifies `mise` tools with `bin/check-mise-tools`
+13. installs tmux plugins through TPM
+14. installs Oh My Zsh, Powerlevel10k, and shell plugins when missing
+15. applies tracked macOS defaults once
 
 Touch ID for `sudo` can be managed directly:
 
@@ -329,8 +334,17 @@ Run the mobile dev stack separately when you want full Xcode, Android Studio,
 ./bin/install-mobile-dev
 ```
 
-The mobile dev installer currently targets the latest Xcode 27 prerelease when
-no Xcode 27 app is installed.
+The mobile dev installer asks `xcodes` for the latest prerelease Xcode and
+selects it. Use `DOTFILES_XCODE_CHANNEL=release ./bin/install-mobile-dev` to
+install the latest release channel instead. It enables `xcodes`
+`--experimental-unxip` by default for faster unarchiving; set
+`DOTFILES_XCODE_EXPERIMENTAL_UNXIP=0` to use regular unxip. After a newer Xcode
+is selected, old Xcode apps from other major versions are removed through
+`xcodes uninstall`. Set `DOTFILES_KEEP_OLD_XCODES=1` to keep them.
+
+Formulae that build from source and trip Homebrew's Xcode minimum check, such
+as `borders`, stay in `Brewfile` but are skipped only if the Xcode update pass
+cannot complete.
 
 ## Ownership Model
 

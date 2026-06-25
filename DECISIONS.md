@@ -14,6 +14,8 @@ This keeps fresh-machine bootstrap simple while preserving the separate Neovim r
 
 Prefer Homebrew casks first. Use vendor/manual fallback only when there is no stable cask or App Store route.
 
+Default bootstrap updates full Xcode when one is already installed, using the same Xcode-only path as `./bin/install-mobile-dev`. It still avoids downloading Xcode on a fresh Mac unless the user runs `./bin/install-mobile-dev`. Xcode installs use `xcodes --experimental-unxip` by default because Xcode archives dominate setup time; `DOTFILES_XCODE_EXPERIMENTAL_UNXIP=0` keeps the regular unxip path available. Xcode-sensitive Homebrew formulae stay in `Brewfile` as the source of truth and are deferred only when the update pass cannot complete.
+
 ## Mackup Is Copy-Mode and Allowlisted
 
 Mackup is part of the new-Mac workflow, but only through explicit copy-mode backup/restore helpers. The tracked `home/.mackup.cfg` uses iCloud and a small allowlist so Mackup does not try to own files this repo already symlinks.
