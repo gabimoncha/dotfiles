@@ -30,20 +30,29 @@ the repo still reflects the current Mac.
 ```bash
 cd ~/development/dotfiles
 ./bin/prepare-sync
-./bin/mackup-backup
-./bin/raycast-backup
-./bin/codex-backup
+./bin/file-backup
 ```
 
 `bin/prepare-sync` is a drift report, not an auto-writer. It compares the
 current Homebrew bundle, prints the current `mise` state, and saves backups
 under `.sync-backups/` so changes can be made intentionally.
 
-`bin/mackup-backup` copies the small Mackup allowlist to iCloud. Raycast is not
-managed by Mackup here; `bin/raycast-backup` opens Raycast and tells you to save
-an encrypted `.rayconfig` export under `iCloud Drive/Raycast`.
-`bin/codex-backup` writes a passphrase-encrypted Codex config and memory archive
-under `iCloud Drive/Codex`.
+`bin/file-backup` runs the file-backed state workflow. It copies the small
+Mackup allowlist to Synology Drive and mirrors it to iCloud on a best-effort
+basis when iCloud is ready, creates the passphrase-encrypted Codex archive, and
+opens Raycast with instructions to export an encrypted `.rayconfig` under
+`SynologyDrive-personal/MacBackups/Raycast`. The Raycast step prints a full
+timestamped save path such as
+`raycast-settings-YYYYMMDD-HHMMSS.rayconfig` and copies it to the clipboard when
+possible. Rerun `./bin/file-backup raycast` after the Raycast export to mirror
+the newest export to iCloud.
+
+If Mackup asks before replacing existing backup copies, pass its option through
+the top-level helper:
+
+```bash
+./bin/file-backup --force
+```
 
 Commit and push any intentional repo changes before switching machines.
 
@@ -90,10 +99,10 @@ flowchart LR
     S14{"Interactive terminal?"}
     S15["Skip auth and restore follow-up"]
     S16["Call bin/auth-setup after Enter"]
-    S17["Call bin/mackup-restore"]
-    S18["Find .rayconfig and call bin/raycast-restore when present"]
+    S17["Call bin/file-restore mackup"]
+    S18["Find .rayconfig and call bin/file-restore raycast when present"]
     S19{"Encrypted Codex state archive found?"}
-    S20["Prompt and call bin/codex-restore when approved"]
+    S20["Prompt and call bin/file-restore codex when approved"]
     S21["Defer Codex restore"]
     S22["Print shell reload hint and final actionable summary"]
 
@@ -186,17 +195,17 @@ flowchart LR
     A1 --> A2 --> A3 --> A4
   end
 
-  subgraph MackupRestore["bin/mackup-restore"]
+  subgraph MackupRestore["bin/file-restore mackup"]
     direction TB
     M1["Use tracked home/.mackup.cfg"]
-    M2["Restore allowlisted app settings from iCloud"]
+    M2["Restore allowlisted app settings from Synology or iCloud"]
 
     M1 --> M2
   end
 
-  subgraph RaycastRestore["bin/raycast-restore"]
+  subgraph RaycastRestore["bin/file-restore raycast"]
     direction TB
-    R1{"Raycast .rayconfig found in iCloud?"}
+    R1{"Raycast .rayconfig found in Synology or iCloud?"}
     R2["Open newest .rayconfig"]
     R3["Defer Raycast restore"]
 
@@ -204,7 +213,7 @@ flowchart LR
     R1 -->|"no"| R3
   end
 
-  subgraph CodexRestore["bin/codex-restore"]
+  subgraph CodexRestore["bin/file-restore codex"]
     direction TB
     C1["Decrypt age archive"]
     C2["Validate allowlisted paths"]
@@ -229,8 +238,8 @@ flowchart LR
   B7 -.-> L1
 ```
 
-It is safe to rerun as Apple ID, App Store, iCloud, Xcode, or app permissions
-become ready. The detailed bootstrap inventory is in
+It is safe to rerun as Apple ID, App Store, iCloud, Synology Drive, Xcode, or
+app permissions become ready. The detailed bootstrap inventory is in
 [`What Setup Actually Does`](#what-setup-actually-does).
 
 Dry-run the install pass without changing the machine:
@@ -246,9 +255,7 @@ also run the pieces directly later:
 
 ```bash
 ./bin/auth-setup
-./bin/mackup-restore
-./bin/raycast-restore
-./bin/codex-restore
+./bin/file-restore
 ```
 
 `bin/auth-setup` configures local Git identity, creates or reuses an Ed25519 SSH
@@ -256,11 +263,24 @@ key, authenticates GitHub CLI, uploads the SSH key when possible, and verifies
 GitHub SSH. If this repo was cloned from its public HTTPS URL, it switches
 `origin` to `git@github.com:gabimoncha/dotfiles.git` after SSH is verified.
 
-`bin/mackup-restore` expects iCloud Drive and the tracked `home/.mackup.cfg`.
-`bin/raycast-restore` opens the newest `.rayconfig` it can find under iCloud
-Drive, or an explicit path passed as an argument.
-`bin/codex-restore` decrypts the newest `iCloud Drive/Codex` archive and
-restores only the curated Codex allowlist after backing up replaced targets.
+`bin/file-restore` restores file-backed state from Synology first, then iCloud
+where supported. It restores Mackup-managed app settings, opens the newest
+Raycast `.rayconfig` it can find, and prompts before restoring encrypted Codex
+state. Targeted commands such as `bin/file-restore codex` still exist for
+focused reruns.
+
+Restore selection rules:
+
+- Mackup restores the current backup tree at
+  `SynologyDrive-personal/MacBackups/Mackup`, or falls back to `iCloud Drive/Mackup`.
+  It is not timestamped by this repo; use Synology Drive file history if you
+  need an older Mackup copy.
+- Raycast restores the newest `.rayconfig` by file modification time, checking
+  Synology first and then iCloud. Pass an explicit path to restore a different
+  export.
+- Codex restores `codex-state-latest.tar.gz.age` from Synology first, then the
+  newest timestamped Codex archive if `latest` is missing, then iCloud. Pass an
+  explicit archive path to restore an older archive.
 
 `bin/finder-sidebar-favorites` creates `~/development` and `~/Screenshots`,
 then adds both folders to Finder Favorites. It is run during setup and can be
@@ -400,10 +420,12 @@ This repo is deliberately boring about ownership:
 - `home/` owns files that get symlinked into `$HOME`.
 - `macos/defaults.sh` owns conservative macOS defaults.
 - `nvim/` is a separate Neovim repo mounted here as a submodule.
-- Mackup owns only the allowlisted app settings in `home/.mackup.cfg`.
-- Raycast is restored from an encrypted `.rayconfig` export outside git.
+- Mackup owns only the allowlisted app settings in `home/.mackup.cfg`, backed
+  up to Synology Drive with iCloud as the secondary copy.
+- Raycast is restored from an encrypted `.rayconfig` export outside git, with
+  Synology primary and iCloud secondary.
 - Codex memories and selected user config are restored from an encrypted
-  `age` archive outside git.
+  `age` archive outside git, with Synology primary and iCloud secondary.
 
 When adding a tool, use this order:
 
@@ -432,11 +454,12 @@ bin/install-apps                 manifest installer
 bin/install-mobile-dev           heavyweight Xcode and Android Studio setup
 bin/finder-sidebar-favorites     add repo-owned Finder sidebar favorites
 bin/app-state-doctor             post-setup app-state checks
-bin/codex-backup                 encrypted Codex config and memory backup
-bin/codex-restore                encrypted Codex config and memory restore
+bin/file-backup                  unified Mackup, Raycast, and Codex file backup
+bin/file-restore                 unified Mackup, Raycast, and Codex file restore
+bin/*-backup, bin/*-restore      compatibility aliases for file backup/restore
 home/                            tracked $HOME sources
 home/.config/mise/config.toml    mise-owned tools
-home/.mackup.cfg                 Mackup allowlist using iCloud storage
+home/.mackup.cfg                 Mackup allowlist using Synology file storage
 macos/defaults.sh                tracked macOS defaults
 nvim/                            Neovim submodule linked to ~/.config/nvim
 ```
@@ -558,11 +581,13 @@ mise exec -- <command>
 
 ## Mackup and Raycast
 
-Mackup uses iCloud storage and an explicit app allowlist:
+Mackup uses Synology Drive as primary storage, mirrors to iCloud after backups
+on a best-effort basis when iCloud is ready, and restores from iCloud if the
+Synology backup is not available yet:
 
 ```bash
-./bin/mackup-backup
-./bin/mackup-restore
+./bin/file-backup mackup
+./bin/file-restore mackup
 ```
 
 The allowlist currently includes Cursor, Cyberduck, Rectangle, Spotify, VS Code,
@@ -572,27 +597,37 @@ Use the helper scripts instead of raw Mackup link mode. This repo treats Mackup
 as an explicit copy-based backup/restore tool so tracked files under `home/`
 remain the source of truth.
 
-Raycast is separate:
+Top-level backup options are passed to Mackup, so use
+`./bin/file-backup --force` to replace existing Mackup backup copies during the
+combined backup flow.
+
+Raycast is separate and app-driven:
 
 ```bash
-./bin/raycast-backup
-./bin/raycast-restore
+./bin/file-backup raycast
+./bin/file-restore raycast
 ```
 
+Save `.rayconfig` exports under
+`SynologyDrive-personal/MacBackups/Raycast` using the filename printed by
+`./bin/file-backup raycast`, for example
+`raycast-settings-YYYYMMDD-HHMMSS.rayconfig`. Then rerun
+`./bin/file-backup raycast` to mirror the newest export to `iCloud Drive/Raycast`.
 Keep `.rayconfig` exports and passphrases outside git.
 
 Codex state is separate from Mackup and Raycast:
 
 ```bash
-./bin/codex-backup
-./bin/codex-restore
+./bin/file-backup codex
+./bin/file-restore codex
 ```
 
-The archive is encrypted with `age -p` and saved to `iCloud Drive/Codex`.
-It includes curated Codex config, keybindings, rules, user-authored global
-skills, and memories. It deliberately excludes auth, sessions, histories,
-attachments, caches, sqlite state, plugin caches, worktrees, sockets, app
-bundles, and installation IDs.
+The archive is encrypted with `age -p`, saved to
+`SynologyDrive-personal/MacBackups/Codex`, and mirrored to `iCloud Drive/Codex`
+when iCloud is ready. It includes curated Codex config, keybindings, rules,
+user-authored global skills, and memories. It deliberately excludes auth,
+sessions, histories, attachments, caches, sqlite state, plugin caches,
+worktrees, sockets, app bundles, and installation IDs.
 
 ## Neovim
 
@@ -638,8 +673,8 @@ bash -n bin/lib/setup-runtime.sh
 bash -n bin/bootstrap
 bash -n bin/install-mobile-dev
 bash -n bin/link-dotfiles
-bash -n bin/codex-backup
-bash -n bin/codex-restore
+bash -n bin/file-backup
+bash -n bin/file-restore
 bash -n macos/defaults.sh
 git diff --check
 ```

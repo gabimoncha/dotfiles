@@ -22,9 +22,15 @@ Setup parallelism is on by default, but only across independent work. Homebrew w
 
 ## Mackup Is Copy-Mode and Allowlisted
 
-Mackup is part of the new-Mac workflow, but only through explicit copy-mode backup/restore helpers. The tracked `home/.mackup.cfg` uses iCloud and a small allowlist so Mackup does not try to own files this repo already symlinks.
+Mackup is part of the new-Mac workflow, but only through explicit copy-mode
+backup/restore helpers under `bin/file-backup` and `bin/file-restore`. The
+tracked `home/.mackup.cfg` uses Synology Drive file-system storage and a small
+allowlist so Mackup does not try to own files this repo already symlinks. The
+backup helper mirrors successful Synology backups to iCloud as a best-effort
+secondary copy, and restore falls back to iCloud when the Synology backup is not
+available yet.
 
-Raycast stays out of the Mackup allowlist unless Mackup provides a narrow supported profile. The primary Raycast source of truth is the encrypted `.rayconfig` export/import flow, which avoids syncing the full app support directory.
+Raycast stays out of the Mackup allowlist unless Mackup provides a narrow supported profile. The primary Raycast source of truth is the encrypted `.rayconfig` export/import flow, saved under Synology Drive and mirrored to iCloud, which avoids syncing the full app support directory.
 
 ## Codex State Uses Encrypted Archives
 
@@ -35,8 +41,9 @@ Durable, safe AI tooling assets can live in this repo and be linked through
 Codex memories and selected user config stay out of git and Mackup. `~/.codex`
 contains auth, histories, databases, caches, worktrees, plugin assets, and
 generated memories in one tree, so the repo backs up only a curated allowlist
-through `bin/codex-backup` as an `age` passphrase-encrypted iCloud archive.
-Restore is explicit or prompted during the interactive setup follow-up.
+through `bin/file-backup codex` as an `age` passphrase-encrypted archive.
+Synology Drive is the primary target and iCloud is the secondary copy. Restore
+is explicit or prompted during the interactive setup follow-up.
 
 ## Explicit Updates With a Daily Notifier
 

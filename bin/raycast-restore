@@ -2,41 +2,5 @@
 
 set -euo pipefail
 
-rayconfig="${1:-}"
-icloud_dir="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
-raycast_dir="${icloud_dir}/Raycast"
-
-if [[ -z "$rayconfig" ]]; then
-  if [[ -d "$raycast_dir" ]]; then
-    rayconfig="$(find "$raycast_dir" -name '*.rayconfig' -print 2>/dev/null | sort | tail -1 || true)"
-  fi
-
-  if [[ -z "$rayconfig" && -d "$icloud_dir" ]]; then
-    rayconfig="$(find "$icloud_dir" -name '*.rayconfig' -print 2>/dev/null | sort | tail -1 || true)"
-  fi
-fi
-
-if [[ -z "$rayconfig" || ! -f "$rayconfig" ]]; then
-  cat >&2 <<'EOF'
-No Raycast .rayconfig export found.
-
-Expected locations:
-- iCloud Drive/Raycast/*.rayconfig
-- any explicit path passed as: ./bin/raycast-restore /path/to/export.rayconfig
-
-On the old Mac:
-1. Run ./bin/raycast-backup.
-2. In Raycast, run "Export Settings & Data".
-3. Save the encrypted .rayconfig export to iCloud Drive/Raycast.
-
-On this Mac, rerun ./bin/raycast-restore after iCloud syncs the export.
-Keep the export passphrase in Keychain or another private store; do not commit .rayconfig files or passphrases.
-EOF
-  exit 1
-fi
-
-open -a Raycast 2>/dev/null || true
-open "$rayconfig"
-
-printf 'Opened Raycast export: %s\n' "$rayconfig"
-printf 'Use Raycast Import Settings & Data and enter the export passphrase when prompted.\n'
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "${script_dir}/file-restore" raycast "$@"

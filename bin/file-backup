@@ -1,0 +1,1036 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+icloud_drive="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+synology_drive="${HOME}/Library/CloudStorage/SynologyDrive-personal"
+mackup_config="${repo_root}/home/.mackup.cfg"
+
+codex_stage_dir=""
+codex_temp_archive=""
+codex_restore_tmp_dir=""
+mackup_temp_config=""
+
+usage() {
+  cat >&2 <<'EOF'
+Usage:
+  ./bin/file-backup [MACKUP_ARGS...]
+  ./bin/file-backup [mackup|raycast|codex] [TARGET_ARGS...]
+  ./bin/file-restore
+  ./bin/file-restore [mackup|raycast|codex] [TARGET_ARGS...]
+
+Compatibility:
+  ./bin/file-backup backup [all|mackup|raycast|codex]
+  ./bin/file-backup restore [all|mackup|raycast|codex]
+
+Primary file backups are stored in Synology Drive and mirrored to iCloud when
+both sync providers are ready. Codex archives are age passphrase-encrypted.
+Top-level file-backup options are passed to the Mackup backup step.
+EOF
+}
+
+log() {
+  printf '==> %s\n' "$1"
+}
+
+warn() {
+  printf '!! %s\n' "$1" >&2
+}
+
+cleanup() {
+  [[ -n "$codex_stage_dir" && -d "$codex_stage_dir" ]] && rm -rf "$codex_stage_dir"
+  [[ -n "$codex_temp_archive" && -f "$codex_temp_archive" ]] && rm -f "$codex_temp_archive"
+  [[ -n "$codex_restore_tmp_dir" && -d "$codex_restore_tmp_dir" ]] && rm -rf "$codex_restore_tmp_dir"
+  [[ -n "$mackup_temp_config" && -f "$mackup_temp_config" ]] && rm -f "$mackup_temp_config"
+  return 0
+}
+
+need_command() {
+  local command_name="$1"
+  local install_hint="${2:-}"
+
+  if ! command -v "$command_name" >/dev/null 2>&1; then
+    warn "Missing required command: ${command_name}"
+    [[ -n "$install_hint" ]] && warn "$install_hint"
+    exit 1
+  fi
+}
+
+newest_file() {
+  local dir="$1"
+  local pattern="$2"
+  local exclude="${3:-}"
+
+  [[ -d "$dir" ]] || return 0
+
+  if [[ -n "$exclude" ]]; then
+    find "$dir" -type f -name "$pattern" ! -name "$exclude" -exec stat -f '%m %N' {} \; 2>/dev/null | sort -nr | sed 's/^[0-9][0-9]* //g' | head -1
+  else
+    find "$dir" -type f -name "$pattern" -exec stat -f '%m %N' {} \; 2>/dev/null | sort -nr | sed 's/^[0-9][0-9]* //g' | head -1
+  fi
+}
+
+codex_copy_path() {
+  local source="$1"
+  local relative="$2"
+  local destination="${codex_stage_dir}/${relative}"
+
+  if [[ -d "$source" ]]; then
+    mkdir -p "$destination"
+    (cd "$source" && tar -cf - .) | (cd "$destination" && tar -xf -)
+  elif [[ -f "$source" || -L "$source" ]]; then
+    mkdir -p "$(dirname "$destination")"
+    cp -p "$source" "$destination"
+  else
+    return 1
+  fi
+}
+
+codex_write_manifest() {
+  local manifest="${codex_stage_dir}/MANIFEST.txt"
+  shift
+
+  {
+    printf 'Codex state backup\n'
+    printf 'created_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    printf 'host=%s\n' "$(hostname 2>/dev/null || printf unknown)"
+    printf '\nIncluded allowlist roots:\n'
+    printf '%s\n' "$@"
+    cat <<'EOF'
+
+Excluded by policy:
+.codex/auth.json
+.codex/history.jsonl
+.codex/installation_id
+.codex/session_index.jsonl
+.codex/attachments
+.codex/browser
+.codex/cache
+.codex/logs
+.codex/node_repl
+.codex/plugins
+.codex/sessions
+.codex/shell_snapshots
+.codex/sqlite
+.codex/worktrees
+.codex/.tmp
+.codex/app-server-control
+.codex/computer-use
+*.sqlite*
+EOF
+  } > "$manifest"
+}
+
+codex_backup() {
+  local timestamp output_dir output_dir_explicit secondary_output_dir
+  local synology_output_dir icloud_output_dir archive_path latest_path
+  local included_paths=()
+
+  timestamp="$(date +%Y%m%d-%H%M%S)"
+  synology_output_dir="${synology_drive}/MacBackups/Codex"
+  icloud_output_dir="${icloud_drive}/Codex"
+  output_dir="$synology_output_dir"
+  output_dir_explicit=0
+  secondary_output_dir=""
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --output-dir)
+        if [[ $# -lt 2 || -z "${2:-}" ]]; then
+          usage
+          exit 1
+        fi
+        output_dir="$2"
+        output_dir_explicit=1
+        shift 2
+        ;;
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      *)
+        usage
+        exit 1
+        ;;
+    esac
+  done
+
+  need_command age "Run ./bin/setup or mise install age, then rerun ./bin/file-backup codex."
+  need_command tar
+
+  if [[ "$output_dir_explicit" -eq 0 ]]; then
+    if [[ -d "$synology_drive" ]]; then
+      output_dir="$synology_output_dir"
+      if [[ -d "$icloud_drive" ]]; then
+        secondary_output_dir="$icloud_output_dir"
+      else
+        warn "iCloud Drive is not ready; Synology backup will be created without a secondary iCloud copy."
+      fi
+    elif [[ -d "$icloud_drive" ]]; then
+      output_dir="$icloud_output_dir"
+      warn "Synology Drive is not ready; falling back to iCloud-only Codex backup."
+    else
+      warn "Neither Synology Drive nor iCloud Drive is ready."
+      warn "Expected Synology: ${synology_drive}"
+      warn "Expected iCloud: ${icloud_drive}"
+      warn "Sign in to a sync provider or pass --output-dir PATH."
+      exit 1
+    fi
+  fi
+
+  mkdir -p "$output_dir"
+
+  codex_stage_dir="$(mktemp -d "${TMPDIR:-/tmp}/codex-state-backup.XXXXXX")"
+  archive_path="${output_dir}/codex-state-${timestamp}.tar.gz.age"
+  latest_path="${output_dir}/codex-state-latest.tar.gz.age"
+  codex_temp_archive="${archive_path}.tmp.$$"
+
+  if codex_copy_path "${HOME}/.codex/config.toml" ".codex/config.toml"; then
+    log "Included ${HOME}/.codex/config.toml"
+    included_paths+=(".codex/config.toml")
+  else
+    warn "Skipping missing source ${HOME}/.codex/config.toml"
+  fi
+
+  if codex_copy_path "${HOME}/.codex/keybindings.json" ".codex/keybindings.json"; then
+    log "Included ${HOME}/.codex/keybindings.json"
+    included_paths+=(".codex/keybindings.json")
+  else
+    warn "Skipping missing source ${HOME}/.codex/keybindings.json"
+  fi
+
+  if codex_copy_path "${HOME}/.codex/AGENTS.md" ".codex/AGENTS.md"; then
+    log "Included ${HOME}/.codex/AGENTS.md"
+    included_paths+=(".codex/AGENTS.md")
+  else
+    warn "Skipping missing source ${HOME}/.codex/AGENTS.md"
+  fi
+
+  if codex_copy_path "${HOME}/.codex/.codex-global-state.json" ".codex/.codex-global-state.json"; then
+    log "Included ${HOME}/.codex/.codex-global-state.json"
+    included_paths+=(".codex/.codex-global-state.json")
+  else
+    warn "Skipping missing source ${HOME}/.codex/.codex-global-state.json"
+  fi
+
+  if codex_copy_path "${HOME}/.codex/rules" ".codex/rules"; then
+    log "Included ${HOME}/.codex/rules"
+    included_paths+=(".codex/rules")
+  else
+    warn "Skipping missing source ${HOME}/.codex/rules"
+  fi
+
+  if codex_copy_path "${HOME}/.codex/memories" ".codex/memories"; then
+    log "Included ${HOME}/.codex/memories"
+    included_paths+=(".codex/memories")
+  else
+    warn "Skipping missing source ${HOME}/.codex/memories"
+  fi
+
+  if codex_copy_path "${HOME}/.agents/skills" ".agents/skills"; then
+    log "Included ${HOME}/.agents/skills"
+    included_paths+=(".agents/skills")
+  else
+    warn "Skipping missing source ${HOME}/.agents/skills"
+  fi
+
+  if [[ "${#included_paths[@]}" -eq 0 ]]; then
+    warn "No Codex state sources were found; refusing to create an empty archive."
+    exit 1
+  fi
+
+  codex_write_manifest "$codex_stage_dir" "${included_paths[@]}"
+
+  log "Creating encrypted archive ${archive_path}"
+  (cd "$codex_stage_dir" && tar -czf - .) | age -p -o "$codex_temp_archive"
+  mv "$codex_temp_archive" "$archive_path"
+  codex_temp_archive=""
+  cp -f "$archive_path" "$latest_path"
+  chmod 600 "$archive_path" "$latest_path"
+
+  if [[ -n "$secondary_output_dir" ]]; then
+    if mkdir -p "$secondary_output_dir" && \
+      cp -f "$archive_path" "${secondary_output_dir}/$(basename "$archive_path")" && \
+      cp -f "$latest_path" "${secondary_output_dir}/$(basename "$latest_path")" && \
+      chmod 600 "${secondary_output_dir}/$(basename "$archive_path")" "${secondary_output_dir}/$(basename "$latest_path")"; then
+      :
+    else
+      warn "Primary Codex backup is complete, but the secondary iCloud copy failed: ${secondary_output_dir}"
+      secondary_output_dir=""
+    fi
+  fi
+
+  cat <<EOF
+
+Codex state backup complete.
+Primary archive: ${archive_path}
+Primary latest:  ${latest_path}
+EOF
+
+  if [[ -n "$secondary_output_dir" ]]; then
+    cat <<EOF
+Secondary copy:   ${secondary_output_dir}/$(basename "$archive_path")
+Secondary latest: ${secondary_output_dir}/$(basename "$latest_path")
+EOF
+  fi
+
+  cat <<'EOF'
+
+Keep the passphrase in Keychain or another private store. Do not commit
+decrypted Codex state or these encrypted archives to git.
+EOF
+}
+
+codex_normalize_entry() {
+  local entry="$1"
+
+  entry="${entry#./}"
+  entry="${entry%/}"
+  printf '%s\n' "$entry"
+}
+
+codex_entry_is_allowed() {
+  local entry="$1"
+
+  [[ -z "$entry" || "$entry" == "." ]] && return 0
+  [[ "$entry" == "MANIFEST.txt" ]] && return 0
+  [[ "$entry" == ".codex" ]] && return 0
+  [[ "$entry" == ".agents" ]] && return 0
+  [[ "$entry" == ".codex/config.toml" ]] && return 0
+  [[ "$entry" == ".codex/keybindings.json" ]] && return 0
+  [[ "$entry" == ".codex/AGENTS.md" ]] && return 0
+  [[ "$entry" == ".codex/.codex-global-state.json" ]] && return 0
+  [[ "$entry" == ".codex/rules" || "$entry" == .codex/rules/* ]] && return 0
+  [[ "$entry" == ".codex/memories" || "$entry" == .codex/memories/* ]] && return 0
+  [[ "$entry" == ".agents/skills" || "$entry" == .agents/skills/* ]] && return 0
+
+  return 1
+}
+
+codex_entry_is_excluded() {
+  local entry="$1"
+
+  case "$entry" in
+    .codex/auth.json | \
+    .codex/history.jsonl | \
+    .codex/installation_id | \
+    .codex/session_index.jsonl | \
+    .codex/attachments | .codex/attachments/* | \
+    .codex/browser | .codex/browser/* | \
+    .codex/cache | .codex/cache/* | \
+    .codex/log | .codex/log/* | \
+    .codex/logs | .codex/logs/* | \
+    .codex/node_repl | .codex/node_repl/* | \
+    .codex/plugins | .codex/plugins/* | \
+    .codex/sessions | .codex/sessions/* | \
+    .codex/shell_snapshots | .codex/shell_snapshots/* | \
+    .codex/sqlite | .codex/sqlite/* | \
+    .codex/worktrees | .codex/worktrees/* | \
+    .codex/.tmp | .codex/.tmp/* | \
+    .codex/tmp | .codex/tmp/* | \
+    .codex/app-server-control | .codex/app-server-control/* | \
+    .codex/computer-use | .codex/computer-use/* | \
+    *.sqlite | *.sqlite-shm | *.sqlite-wal)
+      return 0
+      ;;
+  esac
+
+  return 1
+}
+
+codex_validate_entries() {
+  local entries_file="$1"
+  local raw_entry entry failures=0
+
+  while IFS= read -r raw_entry || [[ -n "$raw_entry" ]]; do
+    entry="$(codex_normalize_entry "$raw_entry")"
+
+    if [[ "$entry" == /* || "$entry" == *".."* ]]; then
+      warn "Archive contains unsafe path: ${raw_entry}"
+      failures=$((failures + 1))
+      continue
+    fi
+
+    if ! codex_entry_is_allowed "$entry"; then
+      warn "Archive contains non-allowlisted path: ${raw_entry}"
+      failures=$((failures + 1))
+      continue
+    fi
+
+    if codex_entry_is_excluded "$entry"; then
+      warn "Archive contains excluded path: ${raw_entry}"
+      failures=$((failures + 1))
+    fi
+  done < "$entries_file"
+
+  [[ "$failures" -eq 0 ]]
+}
+
+codex_restore_backup_target() {
+  local target="$1"
+  local relative="$2"
+  local backup_root="$3"
+  local backup_path="${backup_root}/${relative}"
+
+  [[ -e "$target" || -L "$target" ]] || return 0
+
+  mkdir -p "$(dirname "$backup_path")"
+  mv "$target" "$backup_path"
+  printf 'Backed up %s -> %s\n' "$target" "$backup_path"
+}
+
+codex_restore_backup_linked_directory_contents() {
+  local target="$1"
+  local relative="$2"
+  local backup_root="$3"
+  local backup_path="${backup_root}/${relative}"
+
+  [[ -d "$target" ]] || return 0
+
+  mkdir -p "$backup_path"
+  (cd "$target" && tar -cf - .) | (cd "$backup_path" && tar -xf -)
+  printf 'Backed up %s contents -> %s\n' "$target" "$backup_path"
+}
+
+codex_restore_copy_directory_contents() {
+  local source="$1"
+  local target="$2"
+
+  mkdir -p "$target"
+  (cd "$source" && tar -cf - .) | (cd "$target" && tar -xf -)
+}
+
+codex_restore_path() {
+  local relative="$1"
+  local backup_root="$2"
+  local source="${codex_restore_tmp_dir}/payload/${relative}"
+  local target="${HOME}/${relative}"
+
+  [[ -e "$source" || -L "$source" ]] || return 0
+
+  if [[ -d "$source" ]]; then
+    if [[ "$relative" == ".agents/skills" && -L "$target" && -d "$target" ]]; then
+      mkdir -p "$backup_root"
+      codex_restore_backup_linked_directory_contents "$target" "$relative" "$backup_root"
+      codex_restore_copy_directory_contents "$source" "$target"
+      printf 'Merged %s -> %s\n' "$source" "$target"
+      return 0
+    fi
+
+    mkdir -p "$backup_root"
+    codex_restore_backup_target "$target" "$relative" "$backup_root"
+    mkdir -p "$(dirname "$target")"
+    codex_restore_copy_directory_contents "$source" "$target"
+    printf 'Restored %s -> %s\n' "$source" "$target"
+  else
+    mkdir -p "$backup_root"
+    codex_restore_backup_target "$target" "$relative" "$backup_root"
+    mkdir -p "$(dirname "$target")"
+    cp -p "$source" "$target"
+    printf 'Restored %s -> %s\n' "$source" "$target"
+  fi
+}
+
+latest_codex_state_archive() {
+  local synology_archive="${synology_drive}/MacBackups/Codex/codex-state-latest.tar.gz.age"
+  local icloud_archive="${icloud_drive}/Codex/codex-state-latest.tar.gz.age"
+  local archive
+
+  if [[ -f "$synology_archive" ]]; then
+    printf '%s\n' "$synology_archive"
+    return 0
+  fi
+
+  archive="$(newest_file "${synology_drive}/MacBackups/Codex" 'codex-state-*.tar.gz.age' 'codex-state-latest.tar.gz.age')"
+  if [[ -n "$archive" ]]; then
+    printf '%s\n' "$archive"
+    return 0
+  fi
+
+  if [[ -f "$icloud_archive" ]]; then
+    printf '%s\n' "$icloud_archive"
+    return 0
+  fi
+
+  newest_file "${icloud_drive}/Codex" 'codex-state-*.tar.gz.age' 'codex-state-latest.tar.gz.age'
+}
+
+codex_restore() {
+  local dry_run=0
+  local archive_path=""
+  local backup_root="${HOME}/.dotfiles-backups/$(date +%Y%m%d-%H%M%S)/codex-state"
+  local synology_archive="${synology_drive}/MacBackups/Codex/codex-state-latest.tar.gz.age"
+  local icloud_archive="${icloud_drive}/Codex/codex-state-latest.tar.gz.age"
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --dry-run)
+        dry_run=1
+        shift
+        ;;
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      -*)
+        usage
+        exit 1
+        ;;
+      *)
+        if [[ -n "$archive_path" ]]; then
+          usage
+          exit 1
+        fi
+        archive_path="$1"
+        shift
+        ;;
+    esac
+  done
+
+  archive_path="${archive_path:-$(latest_codex_state_archive || true)}"
+
+  need_command age "Run ./bin/setup or mise install age, then rerun ./bin/file-restore codex."
+  need_command tar
+
+  if [[ -z "$archive_path" || ! -f "$archive_path" ]]; then
+    warn "Codex state archive not found."
+    warn "Expected primary: ${synology_archive}"
+    warn "Expected secondary: ${icloud_archive}"
+    warn "On the old Mac, run ./bin/file-backup codex and wait for Synology or iCloud sync."
+    exit 1
+  fi
+
+  codex_restore_tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/codex-state-restore.XXXXXX")"
+
+  log "Decrypting ${archive_path}"
+  age -d -o "${codex_restore_tmp_dir}/payload.tar.gz" "$archive_path"
+
+  tar -tzf "${codex_restore_tmp_dir}/payload.tar.gz" > "${codex_restore_tmp_dir}/entries.txt"
+
+  if ! codex_validate_entries "${codex_restore_tmp_dir}/entries.txt"; then
+    warn "Archive failed allowlist validation; refusing to restore."
+    exit 1
+  fi
+
+  mkdir -p "${codex_restore_tmp_dir}/payload"
+  tar -xzf "${codex_restore_tmp_dir}/payload.tar.gz" -C "${codex_restore_tmp_dir}/payload"
+
+  log "Archive manifest"
+  if [[ -f "${codex_restore_tmp_dir}/payload/MANIFEST.txt" ]]; then
+    sed 's/^/  /' "${codex_restore_tmp_dir}/payload/MANIFEST.txt"
+  else
+    warn "Archive has no MANIFEST.txt; validated entries are still allowlisted."
+  fi
+
+  if [[ "$dry_run" -eq 1 ]]; then
+    log "Dry run complete; no files restored."
+    exit 0
+  fi
+
+  codex_restore_path ".codex/config.toml" "$backup_root"
+  codex_restore_path ".codex/keybindings.json" "$backup_root"
+  codex_restore_path ".codex/AGENTS.md" "$backup_root"
+  codex_restore_path ".codex/.codex-global-state.json" "$backup_root"
+  codex_restore_path ".codex/rules" "$backup_root"
+  codex_restore_path ".codex/memories" "$backup_root"
+  codex_restore_path ".agents/skills" "$backup_root"
+
+  cat <<EOF
+
+Codex state restore complete.
+Replaced targets were backed up under:
+  ${backup_root}
+EOF
+}
+
+mackup_config_value() {
+  local section="$1"
+  local key="$2"
+  local file="${3:-$mackup_config}"
+
+  awk -v section="$section" -v key="$key" '
+    $0 == "[" section "]" { in_section = 1; next }
+    /^\[/ { in_section = 0 }
+    in_section {
+      line = $0
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
+      split(line, parts, "=")
+      left = parts[1]
+      gsub(/[[:space:]]/, "", left)
+      if (left == key) {
+        sub(/^[^=]*=/, "", line)
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
+        print line
+        exit
+      }
+    }
+  ' "$file"
+}
+
+mackup_make_icloud_config() {
+  mackup_temp_config="$(mktemp "${HOME}/.mackup-icloud.XXXXXX")"
+  {
+    cat <<'EOF'
+[storage]
+engine = icloud
+
+EOF
+    awk '
+      /^\[storage\]/ { skip = 1; next }
+      /^\[/ { skip = 0 }
+      !skip { print }
+    ' "$mackup_config"
+  } > "$mackup_temp_config"
+}
+
+mackup_using_dry_run() {
+  local arg
+
+  for arg in "$@"; do
+    [[ "$arg" == "-n" || "$arg" == "--dry-run" ]] && return 0
+  done
+  return 1
+}
+
+mackup_validate_config() {
+  need_command mackup "Run ./bin/bootstrap first."
+
+  if [[ ! -f "$mackup_config" ]]; then
+    warn "Missing tracked Mackup config: ${mackup_config}"
+    exit 1
+  fi
+
+  if [[ "$(mackup_config_value storage engine)" != "file_system" ]]; then
+    warn "Mackup config is not set to engine = file_system; refusing to guess storage."
+    exit 1
+  fi
+
+  if [[ "$(mackup_config_value storage path)" != "Library/CloudStorage/SynologyDrive-personal/MacBackups" ]]; then
+    warn "Mackup config does not target SynologyDrive-personal/MacBackups; refusing to guess storage."
+    exit 1
+  fi
+
+  if [[ "$(mackup_config_value storage directory)" != "Mackup" ]]; then
+    warn "Mackup config does not use directory = Mackup; refusing to guess storage."
+    exit 1
+  fi
+}
+
+mackup_mirror_primary_to_icloud() {
+  local primary_mackup_dir="${synology_drive}/MacBackups/Mackup"
+  local secondary_mackup_dir="${icloud_drive}/Mackup"
+
+  if [[ ! -d "$primary_mackup_dir" ]]; then
+    warn "Primary Mackup directory is missing; skipping iCloud mirror: ${primary_mackup_dir}"
+    return 0
+  fi
+
+  if [[ ! -d "$icloud_drive" ]]; then
+    warn "iCloud Drive is not ready; Synology Mackup backup was created without a secondary iCloud copy."
+    return 0
+  fi
+
+  if ! command -v rsync >/dev/null 2>&1; then
+    warn "rsync is not available; skipping Mackup iCloud mirror."
+    return 0
+  fi
+
+  if ! mkdir -p "$secondary_mackup_dir"; then
+    warn "Primary Mackup backup is complete, but the secondary iCloud directory could not be created: ${secondary_mackup_dir}"
+    return 0
+  fi
+
+  if rsync -a --delete "${primary_mackup_dir}/" "${secondary_mackup_dir}/"; then
+    log "Mirrored Mackup backup to iCloud: ${secondary_mackup_dir}"
+  else
+    warn "Primary Mackup backup is complete, but the secondary iCloud mirror failed: ${secondary_mackup_dir}"
+    warn "If you want the iCloud copy, check iCloud Drive permissions/readiness and rerun ./bin/file-backup mackup."
+  fi
+}
+
+mackup_backup() {
+  local primary_mackup_root="${synology_drive}/MacBackups"
+  local primary_mackup_dir="${primary_mackup_root}/Mackup"
+
+  mackup_validate_config
+
+  if [[ -d "$synology_drive" && ! -d "$primary_mackup_dir" ]] && mackup_using_dry_run "$@"; then
+    warn "Synology Mackup folder does not exist yet; using iCloud-only Mackup dry-run."
+    mackup_make_icloud_config
+    mackup --config-file "$mackup_temp_config" "$@" backup
+  elif [[ -d "$synology_drive" ]]; then
+    mkdir -p "$primary_mackup_dir"
+    mackup --config-file "$mackup_config" "$@" backup
+    if ! mackup_using_dry_run "$@"; then
+      mackup_mirror_primary_to_icloud
+    fi
+  elif [[ -d "$icloud_drive" ]]; then
+    warn "Synology Drive is not ready; falling back to iCloud-only Mackup backup."
+    mackup_make_icloud_config
+    mackup --config-file "$mackup_temp_config" "$@" backup
+  else
+    warn "Neither Synology Drive nor iCloud Drive is ready."
+    warn "Expected Synology: ${synology_drive}"
+    warn "Expected iCloud: ${icloud_drive}"
+    exit 0
+  fi
+}
+
+mackup_restore() {
+  local primary_mackup_dir="${synology_drive}/MacBackups/Mackup"
+  local secondary_mackup_dir="${icloud_drive}/Mackup"
+
+  mackup_validate_config
+
+  if [[ -d "$primary_mackup_dir" ]]; then
+    mackup --config-file "$mackup_config" "$@" restore
+  elif [[ -d "$secondary_mackup_dir" ]]; then
+    warn "Synology Mackup backup not found; falling back to iCloud secondary backup."
+    mackup_make_icloud_config
+    mackup --config-file "$mackup_temp_config" "$@" restore
+  else
+    warn "No Mackup backup found in Synology or iCloud."
+    warn "Expected primary: ${primary_mackup_dir}"
+    warn "Expected secondary: ${secondary_mackup_dir}"
+    exit 0
+  fi
+}
+
+raycast_backup() {
+  local synology_dir="${synology_drive}/MacBackups/Raycast"
+  local icloud_dir="${icloud_drive}/Raycast"
+  local latest_export=""
+  local mirrored_export=""
+  local suggested_export="${synology_dir}/raycast-settings-$(date +%Y%m%d-%H%M%S).rayconfig"
+
+  mkdir -p "$synology_dir" "$icloud_dir" 2>/dev/null || true
+
+  if [[ -d "$synology_dir" && -d "$icloud_dir" ]]; then
+    latest_export="$(newest_file "$synology_dir" '*.rayconfig')"
+    if [[ -n "$latest_export" && -f "$latest_export" ]]; then
+      if cp -f "$latest_export" "${icloud_dir}/$(basename "$latest_export")"; then
+        mirrored_export="${icloud_dir}/$(basename "$latest_export")"
+        printf 'Mirrored Raycast export to iCloud: %s\n' "$mirrored_export"
+      else
+        warn "Primary Raycast export is still in Synology, but the secondary iCloud copy failed: ${icloud_dir}"
+      fi
+    fi
+  fi
+
+  open -a Raycast 2>/dev/null || true
+  open "$synology_dir" 2>/dev/null || true
+
+  if command -v pbcopy >/dev/null 2>&1; then
+    printf '%s' "$suggested_export" | pbcopy
+  fi
+
+  if [[ -n "$latest_export" && -f "$latest_export" ]]; then
+    cat <<EOF
+Raycast backup is app-driven.
+
+Newest Raycast export:
+  ${latest_export}
+EOF
+
+    if [[ -n "$mirrored_export" ]]; then
+      cat <<EOF
+Secondary iCloud copy:
+  ${mirrored_export}
+EOF
+    fi
+
+    cat <<EOF
+
+If Raycast settings changed since this export, run "Export Settings & Data" in
+Raycast and save the new export exactly here:
+  ${suggested_export}
+
+Then rerun:
+  ./bin/file-backup raycast
+EOF
+    if command -v pbcopy >/dev/null 2>&1; then
+      printf '\nSuggested save path copied to clipboard.\n'
+    fi
+    return 0
+  fi
+
+  cat <<EOF
+Raycast backup is app-driven.
+
+No .rayconfig export exists yet in:
+  ${synology_dir}
+
+I opened Raycast. In Raycast, run "Export Settings & Data", set an export
+passphrase, and save the encrypted .rayconfig exactly here:
+  ${suggested_export}
+
+Then rerun:
+  ./bin/file-backup raycast
+
+Recommended filename format:
+  raycast-settings-YYYYMMDD-HHMMSS.rayconfig
+
+If you choose a different filename, restore still picks the newest .rayconfig
+by modification time. Passing an explicit path to ./bin/file-restore raycast
+overrides that selection.
+
+On the new Mac, rerun ./bin/setup or ./bin/file-restore raycast after Synology
+or iCloud syncs the export.
+
+Raycast encrypts .rayconfig exports, but they still contain app settings and
+extension state. Keep the export and passphrase outside git; store the
+passphrase in Keychain or another private store.
+EOF
+  if command -v pbcopy >/dev/null 2>&1; then
+    printf '\nSuggested save path copied to clipboard.\n'
+  fi
+}
+
+latest_rayconfig() {
+  local synology_dir="${synology_drive}/MacBackups/Raycast"
+  local raycast_dir="${icloud_drive}/Raycast"
+  local rayconfig
+
+  if [[ -d "$synology_dir" ]]; then
+    rayconfig="$(newest_file "$synology_dir" '*.rayconfig')"
+    if [[ -n "$rayconfig" ]]; then
+      printf '%s\n' "$rayconfig"
+      return 0
+    fi
+  fi
+
+  if [[ -d "$raycast_dir" ]]; then
+    rayconfig="$(newest_file "$raycast_dir" '*.rayconfig')"
+    if [[ -n "$rayconfig" ]]; then
+      printf '%s\n' "$rayconfig"
+      return 0
+    fi
+  fi
+
+  if [[ -d "$icloud_drive" ]]; then
+    newest_file "$icloud_drive" '*.rayconfig'
+  fi
+}
+
+raycast_restore() {
+  local rayconfig="${1:-}"
+
+  if [[ $# -gt 1 ]]; then
+    usage
+    exit 1
+  fi
+
+  if [[ -z "$rayconfig" ]]; then
+    rayconfig="$(latest_rayconfig || true)"
+  fi
+
+  if [[ -z "$rayconfig" || ! -f "$rayconfig" ]]; then
+    cat >&2 <<'EOF'
+No Raycast .rayconfig export found.
+
+Expected locations:
+- SynologyDrive-personal/MacBackups/Raycast/*.rayconfig
+- iCloud Drive/Raycast/*.rayconfig
+- any explicit path passed as: ./bin/file-restore raycast /path/to/export.rayconfig
+
+On the old Mac:
+1. Run ./bin/file-backup raycast.
+2. In Raycast, run "Export Settings & Data".
+3. Save the encrypted .rayconfig export to SynologyDrive-personal/MacBackups/Raycast.
+4. Rerun ./bin/file-backup raycast to mirror it to iCloud.
+
+On this Mac, rerun ./bin/file-restore raycast after Synology or iCloud syncs the export.
+Keep the export passphrase in Keychain or another private store; do not commit .rayconfig files or passphrases.
+EOF
+    exit 1
+  fi
+
+  open -a Raycast 2>/dev/null || true
+  open "$rayconfig"
+
+  printf 'Selected Raycast export: %s\n' "$rayconfig"
+  printf 'Opened Raycast export: %s\n' "$rayconfig"
+  printf 'Use Raycast Import Settings & Data and enter the export passphrase when prompted.\n'
+}
+
+backup_all() {
+  mackup_backup "$@"
+  codex_backup
+  raycast_backup
+}
+
+restore_all() {
+  local rayconfig codex_archive response
+
+  if [[ $# -gt 0 ]]; then
+    usage
+    exit 1
+  fi
+
+  if ! mackup_restore; then
+    warn "Mackup restore failed; continuing with other file restore steps."
+  fi
+
+  rayconfig="$(latest_rayconfig || true)"
+  if [[ -n "$rayconfig" && -f "$rayconfig" ]]; then
+    if ! raycast_restore "$rayconfig"; then
+      warn "Raycast restore failed; continuing with other file restore steps."
+    fi
+  else
+    warn "Raycast restore deferred; no .rayconfig export found in Synology or iCloud."
+  fi
+
+  codex_archive="$(latest_codex_state_archive || true)"
+  if [[ -z "$codex_archive" ]]; then
+    warn "Codex state restore deferred; no encrypted Codex state archive found in Synology or iCloud."
+    return 0
+  fi
+
+  if [[ ! -t 0 ]]; then
+    warn "Codex state restore deferred; run ./bin/file-restore codex in an interactive shell."
+    return 0
+  fi
+
+  cat <<EOF
+
+Encrypted Codex state backup found:
+  ${codex_archive}
+Restore Codex config, keybindings, user skills, and memories now? [y/N]
+EOF
+  read -r response
+  case "$response" in
+    y | Y | yes | YES)
+      codex_restore "$codex_archive"
+      ;;
+    *)
+      log "Codex state restore skipped"
+      ;;
+  esac
+}
+
+dispatch_action_target() {
+  local action="$1"
+  local target="all"
+
+  shift
+  if [[ $# -gt 0 && "$1" != -* ]]; then
+    target="$1"
+    shift
+  fi
+
+  case "${action}:${target}" in
+    backup:all)
+      backup_all "$@"
+      ;;
+    backup:mackup)
+      mackup_backup "$@"
+      ;;
+    backup:raycast)
+      raycast_backup "$@"
+      ;;
+    backup:codex)
+      codex_backup "$@"
+      ;;
+    restore:all)
+      restore_all "$@"
+      ;;
+    restore:mackup)
+      mackup_restore "$@"
+      ;;
+    restore:raycast)
+      raycast_restore "$@"
+      ;;
+    restore:codex)
+      codex_restore "$@"
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
+  esac
+}
+
+dispatch_target_action() {
+  local target="$1"
+  local action="${2:-}"
+
+  if [[ -z "$action" ]]; then
+    usage
+    exit 1
+  fi
+
+  shift 2
+
+  case "${target}:${action}" in
+    mackup:backup)
+      mackup_backup "$@"
+      ;;
+    mackup:restore)
+      mackup_restore "$@"
+      ;;
+    raycast:backup)
+      raycast_backup "$@"
+      ;;
+    raycast:restore)
+      raycast_restore "$@"
+      ;;
+    codex:backup)
+      codex_backup "$@"
+      ;;
+    codex:restore)
+      codex_restore "$@"
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
+  esac
+}
+
+trap cleanup EXIT
+
+case "${1:-}" in
+  "")
+    backup_all
+    ;;
+  backup | restore)
+    dispatch_action_target "$@"
+    ;;
+  mackup)
+    shift
+    if [[ "${1:-}" == "backup" || "${1:-}" == "restore" ]]; then
+      dispatch_target_action mackup "$@"
+    else
+      mackup_backup "$@"
+    fi
+    ;;
+  raycast)
+    shift
+    if [[ "${1:-}" == "backup" || "${1:-}" == "restore" ]]; then
+      dispatch_target_action raycast "$@"
+    else
+      raycast_backup "$@"
+    fi
+    ;;
+  codex)
+    shift
+    if [[ "${1:-}" == "backup" || "${1:-}" == "restore" ]]; then
+      dispatch_target_action codex "$@"
+    else
+      codex_backup "$@"
+    fi
+    ;;
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  *)
+    if [[ "$1" == -* ]]; then
+      backup_all "$@"
+    else
+      usage
+      exit 1
+    fi
+    ;;
+esac

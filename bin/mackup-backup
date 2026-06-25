@@ -2,45 +2,5 @@
 
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-mackup_config="${repo_root}/home/.mackup.cfg"
-icloud_drive="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
-
-warn() {
-  printf '!! %s\n' "$1" >&2
-}
-
-config_engine() {
-  awk '
-    /^\[storage\]/ { in_storage = 1; next }
-    /^\[/ { in_storage = 0 }
-    in_storage && $1 == "engine" {
-      gsub(/[[:space:]]/, "", $0)
-      split($0, parts, "=")
-      print parts[2]
-      exit
-    }
-  ' "$mackup_config"
-}
-
-if ! command -v mackup >/dev/null 2>&1; then
-  warn "mackup is not installed. Run ./bin/bootstrap first."
-  exit 1
-fi
-
-if [[ ! -f "$mackup_config" ]]; then
-  warn "Missing tracked Mackup config: ${mackup_config}"
-  exit 1
-fi
-
-if [[ "$(config_engine)" != "icloud" ]]; then
-  warn "Mackup config is not set to engine = icloud; refusing to guess storage."
-  exit 1
-fi
-
-if [[ ! -d "$icloud_drive" ]]; then
-  warn "iCloud Drive is not ready. Sign in to iCloud Drive, then rerun ./bin/mackup-backup."
-  exit 0
-fi
-
-mackup --config-file "$mackup_config" "$@" backup
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "${script_dir}/file-backup" mackup "$@"

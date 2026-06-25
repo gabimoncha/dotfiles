@@ -2,22 +2,5 @@
 
 set -euo pipefail
 
-backup_dir="${HOME}/Library/Mobile Documents/com~apple~CloudDocs/Raycast"
-
-mkdir -p "$backup_dir" 2>/dev/null || true
-open -a Raycast 2>/dev/null || true
-
-cat <<EOF
-Raycast backup is app-driven.
-
-On the old Mac:
-1. In Raycast, run "Export Settings & Data".
-2. Set or confirm an export passphrase.
-3. Save the encrypted .rayconfig file in:
-   ${backup_dir}
-
-On the new Mac, rerun ./bin/setup or ./bin/raycast-restore after iCloud syncs the export.
-
-Raycast encrypts .rayconfig exports, but they still contain app settings and extension state.
-Keep the export and passphrase outside git; store the passphrase in Keychain or another private store.
-EOF
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "${script_dir}/file-backup" raycast "$@"

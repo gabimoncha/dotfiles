@@ -77,13 +77,36 @@ app_installed() {
   [[ -n "$app_bundle" && "$app_bundle" != "-" && -d "/Applications/${app_bundle}.app" ]]
 }
 
+newest_file() {
+  local dir="$1"
+  local pattern="$2"
+  local exclude="${3:-}"
+
+  [[ -d "$dir" ]] || return 0
+
+  if [[ -n "$exclude" ]]; then
+    find "$dir" -type f -name "$pattern" ! -name "$exclude" -exec stat -f '%m %N' {} \; 2>/dev/null | sort -nr | sed 's/^[0-9][0-9]* //g' | head -1
+  else
+    find "$dir" -type f -name "$pattern" -exec stat -f '%m %N' {} \; 2>/dev/null | sort -nr | sed 's/^[0-9][0-9]* //g' | head -1
+  fi
+}
+
 latest_rayconfig() {
   local icloud_dir="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+  local synology_dir="${HOME}/Library/CloudStorage/SynologyDrive-personal/MacBackups/Raycast"
   local raycast_dir="${icloud_dir}/Raycast"
   local rayconfig
 
+  if [[ -d "$synology_dir" ]]; then
+    rayconfig="$(newest_file "$synology_dir" '*.rayconfig')"
+    if [[ -n "$rayconfig" ]]; then
+      printf '%s\n' "$rayconfig"
+      return 0
+    fi
+  fi
+
   if [[ -d "$raycast_dir" ]]; then
-    rayconfig="$(find "$raycast_dir" -name '*.rayconfig' -print 2>/dev/null | sort | tail -1 || true)"
+    rayconfig="$(newest_file "$raycast_dir" '*.rayconfig')"
     if [[ -n "$rayconfig" ]]; then
       printf '%s\n' "$rayconfig"
       return 0
@@ -91,14 +114,32 @@ latest_rayconfig() {
   fi
 
   if [[ -d "$icloud_dir" ]]; then
-    find "$icloud_dir" -name '*.rayconfig' -print 2>/dev/null | sort | tail -1 || true
+    newest_file "$icloud_dir" '*.rayconfig'
   fi
 }
 
 latest_codex_state_archive() {
-  local archive="${HOME}/Library/Mobile Documents/com~apple~CloudDocs/Codex/codex-state-latest.tar.gz.age"
+  local synology_archive="${HOME}/Library/CloudStorage/SynologyDrive-personal/MacBackups/Codex/codex-state-latest.tar.gz.age"
+  local icloud_archive="${HOME}/Library/Mobile Documents/com~apple~CloudDocs/Codex/codex-state-latest.tar.gz.age"
+  local archive
 
-  [[ -f "$archive" ]] && printf '%s\n' "$archive"
+  if [[ -f "$synology_archive" ]]; then
+    printf '%s\n' "$synology_archive"
+    return 0
+  fi
+
+  archive="$(newest_file "${HOME}/Library/CloudStorage/SynologyDrive-personal/MacBackups/Codex" 'codex-state-*.tar.gz.age' 'codex-state-latest.tar.gz.age')"
+  if [[ -n "$archive" ]]; then
+    printf '%s\n' "$archive"
+    return 0
+  fi
+
+  if [[ -f "$icloud_archive" ]]; then
+    printf '%s\n' "$icloud_archive"
+    return 0
+  fi
+
+  newest_file "${HOME}/Library/Mobile Documents/com~apple~CloudDocs/Codex" 'codex-state-*.tar.gz.age' 'codex-state-latest.tar.gz.age'
 }
 
 print_manifest_summary() {
@@ -187,7 +228,7 @@ EOF
 
   if [[ ! -t 0 ]]; then
     warn "Non-interactive shell; skipping auth and restore follow-up"
-    runtime_record_deferred "Interactive follow-up" "non-interactive shell" "Rerun ./bin/setup in a terminal, or run ./bin/auth-setup and ./bin/mackup-restore manually."
+    runtime_record_deferred "Interactive follow-up" "non-interactive shell" "Rerun ./bin/setup in a terminal, or run ./bin/auth-setup and ./bin/file-restore mackup manually."
     return 0
   fi
 
@@ -199,27 +240,27 @@ EOF
     runtime_record_failure recoverable "Auth setup" "auth setup failed" "" "Rerun ./bin/auth-setup."
   fi
 
-  if "${repo_root}/bin/mackup-restore"; then
+  if "${repo_root}/bin/file-restore" mackup; then
     runtime_record_completed "Mackup restore"
   else
-    runtime_record_failure recoverable "Mackup restore" "Mackup restore failed" "" "Rerun ./bin/mackup-restore after iCloud Drive is ready."
+    runtime_record_failure recoverable "Mackup restore" "Mackup restore failed" "" "Rerun ./bin/file-restore mackup after Synology Drive or iCloud Drive is ready."
   fi
 
   rayconfig="$(latest_rayconfig)"
   if [[ -n "$rayconfig" && -f "$rayconfig" ]]; then
-    if "${repo_root}/bin/raycast-restore" "$rayconfig"; then
+    if "${repo_root}/bin/file-restore" raycast "$rayconfig"; then
       runtime_record_completed "Raycast restore"
     else
-      runtime_record_failure recoverable "Raycast restore" "Raycast restore failed" "" "Rerun ./bin/raycast-restore after checking the export passphrase."
+      runtime_record_failure recoverable "Raycast restore" "Raycast restore failed" "" "Rerun ./bin/file-restore raycast after checking the export passphrase."
     fi
   else
     log "Raycast restore deferred"
-    runtime_record_deferred "Raycast restore" "no .rayconfig export was found in iCloud Drive/Raycast" "Run ./bin/raycast-backup on the old Mac, wait for iCloud sync, then rerun ./bin/setup."
+    runtime_record_deferred "Raycast restore" "no .rayconfig export was found in Synology Drive or iCloud Drive" "Run ./bin/file-backup raycast on the old Mac, wait for Synology or iCloud sync, then rerun ./bin/setup."
     cat <<'EOF'
-No Raycast .rayconfig export was found in iCloud Drive/Raycast.
+No Raycast .rayconfig export was found in Synology Drive or iCloud Drive.
 
-On the old Mac, run ./bin/raycast-backup and export Raycast settings to iCloud Drive/Raycast.
-On this Mac, rerun ./bin/setup or ./bin/raycast-restore after iCloud syncs the export.
+On the old Mac, run ./bin/file-backup raycast and export Raycast settings to SynologyDrive-personal/MacBackups/Raycast.
+On this Mac, rerun ./bin/setup or ./bin/file-restore raycast after Synology or iCloud syncs the export.
 
 This is expected until the encrypted Raycast export exists. Do not commit .rayconfig files or their passphrases.
 EOF
@@ -236,25 +277,25 @@ EOF
     read -r response
     case "$response" in
       y | Y | yes | YES)
-        if "${repo_root}/bin/codex-restore" "$codex_archive"; then
+        if "${repo_root}/bin/file-restore" codex "$codex_archive"; then
           runtime_record_completed "Codex state restore"
         else
-          runtime_record_failure recoverable "Codex state restore" "Codex restore failed" "" "Rerun ./bin/codex-restore after checking the archive passphrase."
+          runtime_record_failure recoverable "Codex state restore" "Codex restore failed" "" "Rerun ./bin/file-restore codex after checking the archive passphrase."
         fi
         ;;
       *)
         log "Codex state restore skipped"
-        runtime_record_deferred "Codex state restore" "user skipped encrypted Codex restore" "Run ./bin/codex-restore later."
+        runtime_record_deferred "Codex state restore" "user skipped encrypted Codex restore" "Run ./bin/file-restore codex later."
         ;;
     esac
   else
     log "Codex state restore deferred"
-    runtime_record_deferred "Codex state restore" "no encrypted Codex state archive was found in iCloud Drive/Codex" "Run ./bin/codex-backup on the old Mac, wait for iCloud sync, then rerun ./bin/setup."
+    runtime_record_deferred "Codex state restore" "no encrypted Codex state archive was found in Synology Drive or iCloud Drive" "Run ./bin/file-backup codex on the old Mac, wait for Synology or iCloud sync, then rerun ./bin/setup."
     cat <<'EOF'
-No encrypted Codex state archive was found in iCloud Drive/Codex.
+No encrypted Codex state archive was found in Synology Drive or iCloud Drive.
 
-On the old Mac, run ./bin/codex-backup to save curated Codex config and memories.
-On this Mac, rerun ./bin/setup or ./bin/codex-restore after iCloud syncs the archive.
+On the old Mac, run ./bin/file-backup codex to save curated Codex config and memories.
+On this Mac, rerun ./bin/setup or ./bin/file-restore codex after Synology or iCloud syncs the archive.
 
 This archive is passphrase-encrypted with age. Keep the passphrase outside git.
 EOF

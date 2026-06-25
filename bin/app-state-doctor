@@ -4,6 +4,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 icloud_dir="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+synology_dir="${HOME}/Library/CloudStorage/SynologyDrive-personal"
 issues=0
 
 ok() {
@@ -19,14 +20,36 @@ info() {
   printf 'info %s\n' "$1"
 }
 
+newest_file() {
+  local dir="$1"
+  local pattern="$2"
+
+  [[ -d "$dir" ]] || return 0
+
+  find "$dir" -type f -name "$pattern" -exec stat -f '%m %N' {} \; 2>/dev/null | sort -nr | sed 's/^[0-9][0-9]* //g' | head -1
+}
+
 latest_rayconfig() {
+  local rayconfig
+
+  if [[ -d "${synology_dir}/MacBackups/Raycast" ]]; then
+    rayconfig="$(newest_file "${synology_dir}/MacBackups/Raycast" '*.rayconfig')"
+    if [[ -n "$rayconfig" ]]; then
+      printf '%s\n' "$rayconfig"
+      return 0
+    fi
+  fi
+
   if [[ -d "${icloud_dir}/Raycast" ]]; then
-    find "${icloud_dir}/Raycast" -name '*.rayconfig' -print 2>/dev/null | sort | tail -1
-    return 0
+    rayconfig="$(newest_file "${icloud_dir}/Raycast" '*.rayconfig')"
+    if [[ -n "$rayconfig" ]]; then
+      printf '%s\n' "$rayconfig"
+      return 0
+    fi
   fi
 
   if [[ -d "$icloud_dir" ]]; then
-    find "$icloud_dir" -name '*.rayconfig' -print 2>/dev/null | sort | tail -1
+    newest_file "$icloud_dir" '*.rayconfig'
   fi
 }
 
@@ -121,8 +144,8 @@ check_raycast() {
   if [[ -n "$rayconfig" && -f "$rayconfig" ]]; then
     ok "Raycast export found: ${rayconfig}"
   else
-    warn "No Raycast .rayconfig export found in iCloud Drive/Raycast"
-    info "On the old Mac, run ./bin/raycast-backup and use Raycast's Export Settings & Data flow."
+    warn "No Raycast .rayconfig export found in Synology Drive or iCloud Drive"
+    info "On the old Mac, run ./bin/file-backup raycast and use Raycast's Export Settings & Data flow."
   fi
 }
 
