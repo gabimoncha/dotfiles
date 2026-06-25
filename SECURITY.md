@@ -9,6 +9,8 @@ Do not commit:
 - Machine-local absolute paths outside this repo model
 - Raycast `.rayconfig` exports or their passphrases
 - Decrypted Codex state archives, raw Codex memories, or Codex memory exports
+- Raw Codex global app state, project/workspace state, connection state, or
+  scheduled-task memory
 - Mackup backup contents
 - App caches, histories, databases, or session state
 

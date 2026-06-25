@@ -89,6 +89,24 @@ codex_copy_path() {
   fi
 }
 
+codex_copy_automations() {
+  local source="${HOME}/.codex/automations"
+  local destination="${codex_stage_dir}/.codex/automations"
+  local file relative found=0
+
+  [[ -d "$source" ]] || return 1
+
+  mkdir -p "$destination"
+  while IFS= read -r file; do
+    found=1
+    relative="${file#"$source"/}"
+    mkdir -p "$(dirname "${destination}/${relative}")"
+    cp -p "$file" "${destination}/${relative}"
+  done < <(find "$source" -mindepth 2 -maxdepth 2 -type f -name automation.toml -print 2>/dev/null | sort)
+
+  [[ "$found" -eq 1 ]]
+}
+
 codex_write_manifest() {
   local manifest="${codex_stage_dir}/MANIFEST.txt"
   shift
@@ -102,16 +120,22 @@ codex_write_manifest() {
     cat <<'EOF'
 
 Excluded by policy:
+.codex/.codex-global-state.json
 .codex/auth.json
 .codex/history.jsonl
 .codex/installation_id
 .codex/session_index.jsonl
+.codex/automations/.run-jitter-salt
+.codex/automations/*/memory.md
 .codex/attachments
 .codex/browser
 .codex/cache
+.codex/connections
+.codex/connectors
 .codex/logs
 .codex/node_repl
 .codex/plugins
+.codex/projects
 .codex/sessions
 .codex/shell_snapshots
 .codex/sqlite
@@ -209,13 +233,6 @@ codex_backup() {
     warn "Skipping missing source ${HOME}/.codex/AGENTS.md"
   fi
 
-  if codex_copy_path "${HOME}/.codex/.codex-global-state.json" ".codex/.codex-global-state.json"; then
-    log "Included ${HOME}/.codex/.codex-global-state.json"
-    included_paths+=(".codex/.codex-global-state.json")
-  else
-    warn "Skipping missing source ${HOME}/.codex/.codex-global-state.json"
-  fi
-
   if codex_copy_path "${HOME}/.codex/rules" ".codex/rules"; then
     log "Included ${HOME}/.codex/rules"
     included_paths+=(".codex/rules")
@@ -228,6 +245,13 @@ codex_backup() {
     included_paths+=(".codex/memories")
   else
     warn "Skipping missing source ${HOME}/.codex/memories"
+  fi
+
+  if codex_copy_automations; then
+    log "Included ${HOME}/.codex/automations"
+    included_paths+=(".codex/automations")
+  else
+    warn "Skipping missing scheduled task definitions in ${HOME}/.codex/automations"
   fi
 
   if codex_copy_path "${HOME}/.agents/skills" ".agents/skills"; then
@@ -302,9 +326,16 @@ codex_entry_is_allowed() {
   [[ "$entry" == ".codex/config.toml" ]] && return 0
   [[ "$entry" == ".codex/keybindings.json" ]] && return 0
   [[ "$entry" == ".codex/AGENTS.md" ]] && return 0
+  # Legacy archives may contain this file; restore intentionally skips it.
   [[ "$entry" == ".codex/.codex-global-state.json" ]] && return 0
   [[ "$entry" == ".codex/rules" || "$entry" == .codex/rules/* ]] && return 0
   [[ "$entry" == ".codex/memories" || "$entry" == .codex/memories/* ]] && return 0
+  [[ "$entry" == ".codex/automations" ]] && return 0
+  if [[ "$entry" == .codex/automations/* ]]; then
+    local automation_entry="${entry#.codex/automations/}"
+    [[ "$automation_entry" != */* ]] && return 0
+    [[ "$automation_entry" == */automation.toml ]] && return 0
+  fi
   [[ "$entry" == ".agents/skills" || "$entry" == .agents/skills/* ]] && return 0
 
   return 1
@@ -318,13 +349,18 @@ codex_entry_is_excluded() {
     .codex/history.jsonl | \
     .codex/installation_id | \
     .codex/session_index.jsonl | \
+    .codex/automations/.run-jitter-salt | \
+    .codex/automations/*/memory.md | \
     .codex/attachments | .codex/attachments/* | \
     .codex/browser | .codex/browser/* | \
     .codex/cache | .codex/cache/* | \
+    .codex/connections | .codex/connections/* | \
+    .codex/connectors | .codex/connectors/* | \
     .codex/log | .codex/log/* | \
     .codex/logs | .codex/logs/* | \
     .codex/node_repl | .codex/node_repl/* | \
     .codex/plugins | .codex/plugins/* | \
+    .codex/projects | .codex/projects/* | \
     .codex/sessions | .codex/sessions/* | \
     .codex/shell_snapshots | .codex/shell_snapshots/* | \
     .codex/sqlite | .codex/sqlite/* | \
@@ -525,6 +561,10 @@ codex_restore() {
     warn "Archive has no MANIFEST.txt; validated entries are still allowlisted."
   fi
 
+  if [[ -e "${codex_restore_tmp_dir}/payload/.codex/.codex-global-state.json" ]]; then
+    warn "Archive contains legacy Codex global state; leaving it unrestored because it can contain project, workspace, and connection state."
+  fi
+
   if [[ "$dry_run" -eq 1 ]]; then
     log "Dry run complete; no files restored."
     exit 0
@@ -533,9 +573,9 @@ codex_restore() {
   codex_restore_path ".codex/config.toml" "$backup_root"
   codex_restore_path ".codex/keybindings.json" "$backup_root"
   codex_restore_path ".codex/AGENTS.md" "$backup_root"
-  codex_restore_path ".codex/.codex-global-state.json" "$backup_root"
   codex_restore_path ".codex/rules" "$backup_root"
   codex_restore_path ".codex/memories" "$backup_root"
+  codex_restore_path ".codex/automations" "$backup_root"
   codex_restore_path ".agents/skills" "$backup_root"
 
   cat <<EOF
@@ -1052,7 +1092,7 @@ restore_all() {
 
 Encrypted Codex state backup found:
   ${codex_archive}
-Restore Codex config, keybindings, user skills, and memories now? [y/N]
+Restore Codex config, keybindings, user skills, memories, and scheduled task definitions now? [y/N]
 EOF
   read -r response
   case "$response" in

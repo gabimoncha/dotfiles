@@ -644,9 +644,10 @@ Codex state is separate from Mackup and Raycast:
 The archive is encrypted with `age -p`, saved to
 `SynologyDrive-personal/MacBackups/Codex`, and mirrored to `iCloud Drive/Codex`
 when iCloud is ready. It includes curated Codex config, keybindings, rules,
-user-authored global skills, and memories. It deliberately excludes auth,
-sessions, histories, attachments, caches, sqlite state, plugin caches,
-worktrees, sockets, app bundles, and installation IDs.
+user-authored global skills, memories, and scheduled task definitions. It deliberately
+excludes auth, connections, project/workspace state, histories, attachments,
+caches, sqlite state, plugin caches, worktrees, sockets, app bundles, raw
+Codex app global state, and installation IDs.
 
 ## Neovim
 

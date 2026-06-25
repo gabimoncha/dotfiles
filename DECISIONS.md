@@ -39,9 +39,12 @@ Durable, safe AI tooling assets can live in this repo and be linked through
 `home/.agents/skills`, linked to `~/.agents/skills`.
 
 Codex memories and selected user config stay out of git and Mackup. `~/.codex`
-contains auth, histories, databases, caches, worktrees, plugin assets, and
-generated memories in one tree, so the repo backs up only a curated allowlist
-through `bin/file-backup codex` as an `age` passphrase-encrypted archive.
+contains auth, histories, databases, caches, worktrees, plugin assets, generated
+memories, project/workspace state, and connection state in one tree, so the repo
+backs up only a curated allowlist through `bin/file-backup codex` as an `age`
+passphrase-encrypted archive. Scheduled task definitions are included because
+they are useful portable automation intent; raw Codex global app state is not
+included because it carries machine/project state that should be fresh per Mac.
 Synology Drive is the primary target and iCloud is the secondary copy. Restore
 is explicit or prompted during the interactive setup follow-up.
 

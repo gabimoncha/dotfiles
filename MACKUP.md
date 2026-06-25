@@ -42,6 +42,10 @@ so this repo uses a separate passphrase-encrypted archive workflow instead:
 ./bin/file-restore codex
 ```
 
+The Codex archive includes scheduled task definitions, but excludes raw Codex
+global app state because that state contains project/workspace lists and
+connection state that should be fresh per Mac.
+
 Use copy-mode commands only:
 
 ```bash
