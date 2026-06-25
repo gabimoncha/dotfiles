@@ -461,6 +461,39 @@ normalize_homebrew_taps() {
   untap_if_present "zegervdv/zathura" "homebrew-zathura/zathura"
 }
 
+legacy_zathura_receipts_present() {
+  local formula cellar receipt
+  local formulae=(
+    zathura-cb
+    zathura-pdf-mupdf
+  )
+
+  for formula in "${formulae[@]}"; do
+    cellar="$(brew --cellar "$formula" 2>/dev/null || true)"
+    [[ -d "$cellar" ]] || continue
+
+    while IFS= read -r receipt; do
+      if grep -q 'zegervdv/zathura' "$receipt"; then
+        return 0
+      fi
+    done < <(find "$cellar" -name INSTALL_RECEIPT.json -print 2>/dev/null)
+  done
+
+  return 1
+}
+
+repair_legacy_zathura_receipts() {
+  if ! legacy_zathura_receipts_present; then
+    return 0
+  fi
+
+  warn "Reinstalling zathura plugins to update legacy Homebrew receipt metadata"
+  brew reinstall --formula \
+    homebrew-zathura/zathura/zathura-cb \
+    homebrew-zathura/zathura/zathura-pdf-mupdf || \
+    warn "Could not update zathura plugin receipts; Homebrew may keep warning about the old zegervdv/zathura tap"
+}
+
 filter_brewfile_for_existing_apps() {
   local source_file="$1"
   local target_file="$2"
@@ -537,6 +570,7 @@ install_brewfile() {
   vscode_brewfile="$(mktemp)"
 
   normalize_homebrew_taps
+  repair_legacy_zathura_receipts
   ensure_mas_cli || true
   filter_brewfile_for_existing_apps "${repo_root}/Brewfile" "$temp_brewfile" "$xcode_brewfile" "$mas_brewfile" "$vscode_brewfile"
 
