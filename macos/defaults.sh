@@ -116,6 +116,7 @@ defaults write com.apple.dock autohide -bool true
 defaults write com.apple.dock largesize -int 51
 defaults write com.apple.dock magnification -bool true
 defaults write com.apple.dock orientation -string "bottom"
+defaults write com.apple.dock expose-group-apps -bool true
 defaults write com.apple.dock tilesize -int 34
 
 log "Applying Control Center and menu bar defaults"
