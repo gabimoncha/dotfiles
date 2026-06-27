@@ -142,6 +142,16 @@ latest_codex_state_archive() {
   newest_file "${HOME}/Library/Mobile Documents/com~apple~CloudDocs/Codex" 'codex-state-*.tar.gz.age' 'codex-state-latest.tar.gz.age'
 }
 
+codex_portable_state_exists() {
+  [[ -e "${HOME}/.codex/config.toml" ]] ||
+    [[ -e "${HOME}/.codex/keybindings.json" ]] ||
+    [[ -e "${HOME}/.codex/AGENTS.md" ]] ||
+    [[ -d "${HOME}/.codex/rules" ]] ||
+    [[ -d "${HOME}/.codex/memories" ]] ||
+    [[ -d "${HOME}/.codex/automations" ]] ||
+    [[ -d "${HOME}/.agents/skills" ]]
+}
+
 print_manifest_summary() {
   local key type token_or_url app_bundle notes
   local installed_count=0 skipped_count=0 deferred_count=0 manual_count=0
@@ -268,6 +278,27 @@ EOF
 
   codex_archive="$(latest_codex_state_archive || true)"
   if [[ -n "$codex_archive" ]]; then
+    if codex_portable_state_exists; then
+      log "Codex state restore deferred"
+      runtime_record_deferred "Codex state restore" "portable Codex state already exists on this Mac" "Run ./bin/file-restore codex --dry-run to compare the archive, then ./bin/file-restore codex --replace only if you intentionally want archive state to win."
+      cat <<EOF
+
+Encrypted Codex state backup found:
+  ${codex_archive}
+Portable Codex state already exists on this Mac, so setup will not restore it automatically.
+
+Compare the archive with current state:
+  ./bin/file-restore codex --dry-run "${codex_archive}"
+
+Restore missing files without replacing current conflicts:
+  ./bin/file-restore codex "${codex_archive}"
+
+Replace current portable Codex state intentionally:
+  ./bin/file-restore codex --replace "${codex_archive}"
+EOF
+      return 0
+    fi
+
     cat <<EOF
 
 Encrypted Codex state backup found:
@@ -355,6 +386,8 @@ fi
 
 if [[ $dry_run -eq 1 ]]; then
   log "dry-run: would run ./bin/bootstrap"
+  "${repo_root}/bin/ensure-mise-standalone" --dry-run || setup_status=1
+  "${repo_root}/bin/ensure-codex-standalone" --dry-run || setup_status=1
   if [[ "$skip_mobile_dev" -eq 1 ]]; then
     runtime_record_deferred "Mobile dev stack" "dry-run skipped because --skip-mobile-dev was set" "Rerun ./bin/setup without --skip-mobile-dev to install mobile dev tools."
   else

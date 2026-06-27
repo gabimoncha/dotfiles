@@ -29,6 +29,8 @@ both sync providers are ready. Codex archives are age passphrase-encrypted.
 Top-level file-backup options are passed to the Mackup backup step.
 Top-level file-restore options are passed to the Mackup restore step.
 Use ./bin/file-restore --debug to inspect backup discovery paths.
+Codex restore preserves active state by default; pass --replace to replace
+allowlisted portable Codex state after backing up current files.
 EOF
 }
 
@@ -124,24 +126,34 @@ Excluded by policy:
 .codex/auth.json
 .codex/history.jsonl
 .codex/installation_id
+.codex/models_cache.json
+.codex/version.json
 .codex/session_index.jsonl
 .codex/automations/.run-jitter-salt
 .codex/automations/*/memory.md
+.codex/app-server-daemon
+.codex/app-server-control
 .codex/attachments
 .codex/browser
 .codex/cache
+.codex/chrome-native-hosts-v2.json
 .codex/connections
 .codex/connectors
 .codex/logs
 .codex/node_repl
+.codex/packages
+.codex/pets
 .codex/plugins
+.codex/process_manager
 .codex/projects
 .codex/sessions
+.codex/archived_sessions
 .codex/shell_snapshots
+.codex/skills
 .codex/sqlite
+.codex/vendor_imports
 .codex/worktrees
 .codex/.tmp
-.codex/app-server-control
 .codex/computer-use
 *.sqlite*
 EOF
@@ -348,26 +360,36 @@ codex_entry_is_excluded() {
     .codex/auth.json | \
     .codex/history.jsonl | \
     .codex/installation_id | \
+    .codex/models_cache.json | \
+    .codex/version.json | \
     .codex/session_index.jsonl | \
     .codex/automations/.run-jitter-salt | \
     .codex/automations/*/memory.md | \
+    .codex/app-server-daemon | .codex/app-server-daemon/* | \
+    .codex/app-server-control | .codex/app-server-control/* | \
     .codex/attachments | .codex/attachments/* | \
     .codex/browser | .codex/browser/* | \
     .codex/cache | .codex/cache/* | \
+    .codex/chrome-native-hosts-v2.json | \
     .codex/connections | .codex/connections/* | \
     .codex/connectors | .codex/connectors/* | \
     .codex/log | .codex/log/* | \
     .codex/logs | .codex/logs/* | \
     .codex/node_repl | .codex/node_repl/* | \
+    .codex/packages | .codex/packages/* | \
+    .codex/pets | .codex/pets/* | \
     .codex/plugins | .codex/plugins/* | \
+    .codex/process_manager | .codex/process_manager/* | \
     .codex/projects | .codex/projects/* | \
+    .codex/archived_sessions | .codex/archived_sessions/* | \
     .codex/sessions | .codex/sessions/* | \
     .codex/shell_snapshots | .codex/shell_snapshots/* | \
+    .codex/skills | .codex/skills/* | \
     .codex/sqlite | .codex/sqlite/* | \
+    .codex/vendor_imports | .codex/vendor_imports/* | \
     .codex/worktrees | .codex/worktrees/* | \
     .codex/.tmp | .codex/.tmp/* | \
     .codex/tmp | .codex/tmp/* | \
-    .codex/app-server-control | .codex/app-server-control/* | \
     .codex/computer-use | .codex/computer-use/* | \
     *.sqlite | *.sqlite-shm | *.sqlite-wal)
       return 0
@@ -439,33 +461,115 @@ codex_restore_copy_directory_contents() {
   (cd "$source" && tar -cf - .) | (cd "$target" && tar -xf -)
 }
 
+codex_restore_copy_file() {
+  local source="$1"
+  local target="$2"
+
+  mkdir -p "$(dirname "$target")"
+  cp -p "$source" "$target"
+}
+
+codex_restore_files_match() {
+  local source="$1"
+  local target="$2"
+
+  [[ -f "$source" && -f "$target" ]] || return 1
+  cmp -s "$source" "$target"
+}
+
+codex_restore_stage_incoming() {
+  local source="$1"
+  local relative="$2"
+  local backup_root="$3"
+  local incoming_path="${backup_root}/incoming/${relative}"
+
+  if [[ "${dry_run:-0}" -eq 1 ]]; then
+    printf 'dry-run: would preserve existing %s and stage incoming -> %s\n' "${HOME}/${relative}" "$incoming_path"
+    return 0
+  fi
+
+  codex_restore_copy_file "$source" "$incoming_path"
+  printf 'Preserved existing %s; staged incoming -> %s\n' "${HOME}/${relative}" "$incoming_path"
+}
+
+codex_restore_merge_file() {
+  local source="$1"
+  local relative="$2"
+  local backup_root="$3"
+  local target="${HOME}/${relative}"
+
+  if [[ ! -e "$target" && ! -L "$target" ]]; then
+    if [[ "${dry_run:-0}" -eq 1 ]]; then
+      printf 'dry-run: would restore missing %s -> %s\n' "$source" "$target"
+      return 0
+    fi
+
+    codex_restore_copy_file "$source" "$target"
+    printf 'Restored missing %s -> %s\n' "$source" "$target"
+    return 0
+  fi
+
+  if codex_restore_files_match "$source" "$target"; then
+    printf 'Skipped identical %s\n' "$target"
+    return 0
+  fi
+
+  codex_restore_stage_incoming "$source" "$relative" "$backup_root"
+}
+
+codex_restore_merge_directory() {
+  local source="$1"
+  local relative="$2"
+  local backup_root="$3"
+  local file nested_relative
+
+  while IFS= read -r file; do
+    nested_relative="${relative}/${file#"$source"/}"
+    codex_restore_merge_file "$file" "$nested_relative" "$backup_root"
+  done < <(find "$source" -type f -print 2>/dev/null | sort)
+}
+
 codex_restore_path() {
   local relative="$1"
   local backup_root="$2"
+  local replace="$3"
   local source="${codex_restore_tmp_dir}/payload/${relative}"
   local target="${HOME}/${relative}"
 
   [[ -e "$source" || -L "$source" ]] || return 0
 
+  if [[ "$replace" -eq 0 ]]; then
+    if [[ -d "$source" ]]; then
+      codex_restore_merge_directory "$source" "$relative" "$backup_root"
+    else
+      codex_restore_merge_file "$source" "$relative" "$backup_root"
+    fi
+    return 0
+  fi
+
+  if [[ "${dry_run:-0}" -eq 1 ]]; then
+    printf 'dry-run: would replace %s from %s after backing up current state\n' "$target" "$source"
+    return 0
+  fi
+
   if [[ -d "$source" ]]; then
     if [[ "$relative" == ".agents/skills" && -L "$target" && -d "$target" ]]; then
-      mkdir -p "$backup_root"
-      codex_restore_backup_linked_directory_contents "$target" "$relative" "$backup_root"
+      mkdir -p "${backup_root}/current"
+      codex_restore_backup_linked_directory_contents "$target" "$relative" "${backup_root}/current"
       codex_restore_copy_directory_contents "$source" "$target"
       printf 'Merged %s -> %s\n' "$source" "$target"
       return 0
     fi
 
-    mkdir -p "$backup_root"
-    codex_restore_backup_target "$target" "$relative" "$backup_root"
+    mkdir -p "${backup_root}/current"
+    codex_restore_backup_target "$target" "$relative" "${backup_root}/current"
     mkdir -p "$(dirname "$target")"
     codex_restore_copy_directory_contents "$source" "$target"
     printf 'Restored %s -> %s\n' "$source" "$target"
   else
-    mkdir -p "$backup_root"
-    codex_restore_backup_target "$target" "$relative" "$backup_root"
-    mkdir -p "$(dirname "$target")"
-    cp -p "$source" "$target"
+    mkdir -p "${backup_root}/current"
+    codex_restore_backup_target "$target" "$relative" "${backup_root}/current"
+    codex_restore_copy_file "$source" "$target"
     printf 'Restored %s -> %s\n' "$source" "$target"
   fi
 }
@@ -496,6 +600,7 @@ latest_codex_state_archive() {
 
 codex_restore() {
   local dry_run=0
+  local replace=0
   local archive_path=""
   local backup_root="${HOME}/.dotfiles-backups/$(date +%Y%m%d-%H%M%S)/codex-state"
   local synology_archive="${synology_drive}/MacBackups/Codex/codex-state-latest.tar.gz.age"
@@ -505,6 +610,10 @@ codex_restore() {
     case "$1" in
       --dry-run)
         dry_run=1
+        shift
+        ;;
+      --replace)
+        replace=1
         shift
         ;;
       -h | --help)
@@ -565,23 +674,24 @@ codex_restore() {
     warn "Archive contains legacy Codex global state; leaving it unrestored because it can contain project, workspace, and connection state."
   fi
 
+  codex_restore_path ".codex/config.toml" "$backup_root" "$replace"
+  codex_restore_path ".codex/keybindings.json" "$backup_root" "$replace"
+  codex_restore_path ".codex/AGENTS.md" "$backup_root" "$replace"
+  codex_restore_path ".codex/rules" "$backup_root" "$replace"
+  codex_restore_path ".codex/memories" "$backup_root" "$replace"
+  codex_restore_path ".codex/automations" "$backup_root" "$replace"
+  codex_restore_path ".agents/skills" "$backup_root" "$replace"
+
   if [[ "$dry_run" -eq 1 ]]; then
     log "Dry run complete; no files restored."
     exit 0
   fi
 
-  codex_restore_path ".codex/config.toml" "$backup_root"
-  codex_restore_path ".codex/keybindings.json" "$backup_root"
-  codex_restore_path ".codex/AGENTS.md" "$backup_root"
-  codex_restore_path ".codex/rules" "$backup_root"
-  codex_restore_path ".codex/memories" "$backup_root"
-  codex_restore_path ".codex/automations" "$backup_root"
-  codex_restore_path ".agents/skills" "$backup_root"
-
   cat <<EOF
 
 Codex state restore complete.
-Replaced targets were backed up under:
+Current files were preserved unless --replace was passed. Incoming conflicts or
+replaced targets were backed up under:
   ${backup_root}
 EOF
 }

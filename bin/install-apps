@@ -6,6 +6,8 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 manifest="${repo_root}/apps/manifest.tsv"
 manual_count=0
 dry_run=0
+mise_bin_dir="${HOME}/.local/bin"
+mise_shim_dir="${HOME}/.local/share/mise/shims"
 
 log() {
   printf '==> %s\n' "$1"
@@ -28,6 +30,23 @@ load_homebrew_shellenv() {
   elif command -v brew >/dev/null 2>&1; then
     eval "$(brew shellenv)"
   fi
+}
+
+prepend_mise_shims() {
+  local path_entry
+  local new_path="${mise_bin_dir}:${mise_shim_dir}"
+  local path_entries=()
+
+  IFS=':' read -r -a path_entries <<< "$PATH"
+  for path_entry in "${path_entries[@]}"; do
+    [[ -z "$path_entry" ]] && continue
+    case "$path_entry" in
+      "$mise_bin_dir" | "$mise_shim_dir") continue ;;
+    esac
+    new_path="${new_path}:${path_entry}"
+  done
+
+  export PATH="$new_path"
 }
 
 app_installed() {
@@ -150,6 +169,7 @@ if [[ ! -f "$manifest" ]]; then
 fi
 
 load_homebrew_shellenv
+prepend_mise_shims
 
 while IFS=$'\t' read -r key type token_or_url app_bundle notes || [[ -n "${key:-}" ]]; do
   [[ -z "${key:-}" || "$key" == \#* ]] && continue
@@ -181,7 +201,7 @@ if [[ $manual_count -gt 0 ]]; then
   cat <<'EOF'
 
 Manual/Codex-assisted apps remain.
-After bootstrap installs Codex, use it to drive the vendor download flow where a stable package source is unavailable.
+After bootstrap ensures Codex, use it to drive the vendor download flow where a stable package source is unavailable.
 EOF
 fi
 

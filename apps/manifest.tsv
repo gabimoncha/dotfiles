@@ -3,7 +3,6 @@ aerospace	cask	nikitabobko/tap/aerospace	AeroSpace	Homebrew cask because mise ls
 beeper	cask	beeper	Beeper	Homebrew cask.
 chatgpt	cask	chatgpt	ChatGPT	Homebrew cask.
 claude	cask	claude	Claude	Homebrew cask.
-codex-desktop	cask	codex	Codex	Homebrew cask.
 cursor	cask	cursor	Cursor	Homebrew cask.
 cyberduck	cask	cyberduck	Cyberduck	Homebrew cask.
 davinci-resolve	manual	https://www.blackmagicdesign.com/products/davinciresolve	DaVinci Resolve	Blackmagic requires a vendor download/account flow; install manually or use Codex-assisted browser automation after bootstrap.

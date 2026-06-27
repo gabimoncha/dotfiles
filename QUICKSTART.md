@@ -18,6 +18,8 @@ The lower-level commands still exist for targeted reruns:
 ```bash
 ./bin/preflight
 ./bin/bootstrap
+./bin/ensure-codex-standalone
+./bin/ensure-mise-standalone
 ./bin/install-apps
 ./bin/install-mobile-dev
 ./bin/auth-setup
@@ -31,7 +33,7 @@ GitHub SSH is configured after bootstrap with `./bin/auth-setup`.
 
 ## Re-run Safety
 
-The scripts are intended to be safe to rerun. Existing managed files are backed up by `bin/link-dotfiles`, Homebrew uses `--no-upgrade`, app installs skip existing bundles, and macOS defaults are gated by `~/.macos-defaults-applied`.
+The scripts are intended to be safe to rerun. Existing managed files are backed up by `bin/link-dotfiles`, Homebrew uses `--no-upgrade`, app installs skip existing bundles, Codex and `mise` keep their standalone installer paths, and macOS defaults are gated by `~/.macos-defaults-applied`.
 
 ## Manual Finish
 

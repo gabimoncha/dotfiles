@@ -56,6 +56,15 @@ the top-level helper:
 
 Commit and push any intentional repo changes before switching machines.
 
+Codex CLI itself is not part of the archive. Bootstrap keeps the current
+standalone install under `~/.codex/packages/standalone` healthy and removes the
+Homebrew cask if it exists. The archive only carries portable user state.
+
+`mise` data is not migrated or restored separately. Bootstrap keeps only the
+`mise` binary on the standalone installer path at `~/.local/bin/mise` so
+`mise self-update` remains available; existing tools, shims, cache, and state
+stay in the normal `mise` locations.
+
 ### Step 2: Clone on the new Mac
 
 ```bash
@@ -133,19 +142,21 @@ flowchart LR
 
   subgraph Bootstrap["bin/bootstrap"]
     direction TB
-    B1["Verify admin, Xcode CLT, Homebrew, mise"]
+    B1["Verify admin, Xcode CLT, Homebrew"]
     B2["Configure sudo Touch ID unless skipped"]
     B3["Initialize nvim submodule"]
     B4["Call bin/link-dotfiles"]
-    B5["Prepare xcodes and aria2, then start Xcode install"]
-    B6["Start mise install and run brew bundle"]
-    B7["Run Android Studio, MAS apps, and VS Code extensions"]
-    B8["Call bin/link-dotfiles again after apps exist"]
-    B9["Run iOS platform support and Xcode-dependent formulae"]
-    B10["Run setup-tmux, shell framework, macOS defaults, Finder favorites"]
-    B11["Bootstrap complete"]
+    B5["Call bin/ensure-mise-standalone"]
+    B6["Call bin/ensure-codex-standalone"]
+    B7["Prepare xcodes and aria2, then start Xcode install"]
+    B8["Start mise install and run brew bundle"]
+    B9["Run Android Studio, MAS apps, and VS Code extensions"]
+    B10["Call bin/link-dotfiles again after apps exist"]
+    B11["Run iOS platform support and Xcode-dependent formulae"]
+    B12["Run setup-tmux, shell framework, macOS defaults, Finder favorites"]
+    B13["Bootstrap complete"]
 
-    B1 --> B2 --> B3 --> B4 --> B5 --> B6 --> B7 --> B8 --> B9 --> B10 --> B11
+    B1 --> B2 --> B3 --> B4 --> B5 --> B6 --> B7 --> B8 --> B9 --> B10 --> B11 --> B12 --> B13
   end
 
   subgraph InstallApps["bin/install-apps"]
@@ -163,7 +174,7 @@ flowchart LR
 
   subgraph MobileDev["bin/install-mobile-dev"]
     direction TB
-    MD1["Ensure Homebrew, mise, xcodes, and aria2"]
+    MD1["Ensure standalone mise, xcodes, and aria2"]
     MD2["Install and select full Xcode"]
     MD3["Install Android Studio cask"]
     MD4["Install iOS platform support"]
@@ -354,23 +365,24 @@ and whether Spotlight is still holding Command-Space.
 
 It:
 
-1. verifies macOS, admin access, Xcode Command Line Tools, Homebrew, and `mise`
+1. verifies macOS, admin access, Xcode Command Line Tools, and Homebrew
 2. enables Touch ID for `sudo` through `/etc/pam.d/sudo_local` when supported
 3. initializes the Neovim submodule
 4. links tracked files from `home/` into `$HOME`
-5. prepares `xcodes` and `aria2`, then starts the Xcode install in the background
-6. starts `mise install` in the background
-7. installs Homebrew formulae and casks
+5. ensures standalone `mise` and Codex installer ownership
+6. prepares `xcodes` and `aria2`, then starts the Xcode install in the background
+7. starts `mise install` in the background
+8. installs Homebrew formulae and casks
    with `brew bundle --jobs="${DOTFILES_BREW_BUNDLE_JOBS:-auto}"`
-8. runs Android Studio, Mac App Store apps, and VS Code extensions after the
+9. runs Android Studio, Mac App Store apps, and VS Code extensions after the
    Homebrew bundle phase
-9. links app dotfiles after app bundles exist
-10. runs iOS platform support and Xcode-dependent formulae after full Xcode is
+10. links app dotfiles after app bundles exist
+11. runs iOS platform support and Xcode-dependent formulae after full Xcode is
    selected
-11. verifies `mise` tools with `bin/check-mise-tools`
-12. installs tmux plugins through TPM and shell framework plugins
-13. applies tracked macOS defaults once and configures Finder sidebar favorites
-14. prints a final actionable summary of completed, failed, deferred, and
+12. verifies `mise` tools with `bin/check-mise-tools`
+13. installs tmux plugins through TPM and shell framework plugins
+14. applies tracked macOS defaults once and configures Finder sidebar favorites
+15. prints a final actionable summary of completed, failed, deferred, and
    critical items
 
 Safe parallelism is on by default. Use `./bin/setup --serial` or
@@ -434,6 +446,12 @@ This repo is deliberately boring about ownership:
 - `home/.config/mise/config.toml` owns language runtimes and global developer
   tools that `mise` supports, including backend-prefixed tools such as
   `gem:fastlane` and `conda:aria2`.
+- Codex CLI is a standalone-installer exception because remote control and
+  app-server updates depend on the installer-managed path under
+  `~/.codex/packages/standalone`.
+- The `mise` binary is a standalone-installer exception because
+  `mise self-update` is not available through package-manager installs. Its
+  data, tools, shims, cache, and state remain in the normal `mise` locations.
 - `apps/manifest.tsv` is the typed ledger for cask, formula, and manual/vendor
   install handling.
 - `home/` owns files that get symlinked into `$HOME`.
@@ -451,8 +469,11 @@ When adding a tool, use this order:
 1. Mac App Store via `mas`, if it is a GUI app available there
 2. `mise`, if `mise ls-remote <tool>` or an appropriate backend-prefixed id
    supports it
-3. Homebrew in `Brewfile`, if it does not belong in `mas` or `mise`
-4. `apps/manifest.tsv`, if it needs cask/formula status tracking, post-install
+3. Vendor standalone installer, only for explicit exceptions such as Codex and
+   `mise`
+4. Homebrew in `Brewfile`, if it does not belong in `mas`, `mise`, or an
+   explicit standalone exception
+5. `apps/manifest.tsv`, if it needs cask/formula status tracking, post-install
    handling, or manual/vendor follow-up
 
 Do not commit secrets, tokens, private emails, `.rayconfig` files, cache
@@ -466,6 +487,8 @@ apps/manifest.tsv                extra cask/formula/manual app ledger
 bin/setup                        fresh-Mac entrypoint
 bin/bootstrap                    lower-level bootstrap
 bin/link-dotfiles                symlink managed files into $HOME
+bin/ensure-codex-standalone      keep Codex on the standalone installer path
+bin/ensure-mise-standalone       keep mise on the standalone installer path
 bin/preflight                    repo and machine checks
 bin/auth-setup                   Git/GitHub/SSH follow-up
 bin/configure-sudo-touch-id      Touch ID for sudo PAM setup
@@ -647,7 +670,15 @@ when iCloud is ready. It includes curated Codex config, keybindings, rules,
 user-authored global skills, memories, and scheduled task definitions. It deliberately
 excludes auth, connections, project/workspace state, histories, attachments,
 caches, sqlite state, plugin caches, worktrees, sockets, app bundles, raw
-Codex app global state, and installation IDs.
+Codex app global state, installation IDs, app-server state, and standalone
+installer packages.
+
+`./bin/file-restore codex` preserves active state by default: missing files are
+restored, identical files are skipped, and incoming conflicts are staged under
+`~/.dotfiles-backups/<timestamp>/codex-state/incoming`. Use `--dry-run` to
+compare an archive first. Use `--replace` only when the archive should
+intentionally replace current portable Codex state; current files are backed up
+under `~/.dotfiles-backups/<timestamp>/codex-state/current`.
 
 ## Neovim
 
@@ -691,6 +722,8 @@ After meaningful changes, run the smallest relevant checks:
 ```bash
 bash -n bin/lib/setup-runtime.sh
 bash -n bin/bootstrap
+bash -n bin/ensure-codex-standalone
+bash -n bin/ensure-mise-standalone
 bash -n bin/install-mobile-dev
 bash -n bin/link-dotfiles
 bash -n bin/file-backup
@@ -703,6 +736,8 @@ For setup or inventory changes, also run:
 
 ```bash
 ./bin/preflight
+./bin/ensure-codex-standalone --dry-run
+./bin/ensure-mise-standalone --dry-run
 ./bin/install-apps --dry-run
 ./bin/install-mobile-dev --dry-run
 ./bin/install-mobile-dev --dry-run --xcode-only

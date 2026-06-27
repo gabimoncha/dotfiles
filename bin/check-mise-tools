@@ -3,6 +3,7 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+mise_bin_dir="${HOME}/.local/bin"
 shim_dir="${HOME}/.local/share/mise/shims"
 smoke_commands=(
   tmux
@@ -50,7 +51,7 @@ load_homebrew_shellenv() {
 }
 
 load_homebrew_shellenv
-export PATH="${shim_dir}:${PATH}"
+export PATH="${shim_dir}:${mise_bin_dir}:${PATH}"
 
 if ! command -v mise >/dev/null 2>&1; then
   warn "mise is not available; run ./bin/setup or ./bin/bootstrap first."

@@ -1,7 +1,7 @@
 # Curated from the current machine state.
 # Homebrew owns GUI apps, App Store apps, system packages, and CLIs that are not
-# already managed by mise. Runtimes and overlapping developer tools stay in mise
-# instead.
+# already managed by mise or standalone installer exceptions. Runtimes and
+# overlapping developer tools stay in mise instead.
 
 tap "facebook/fb"
 tap "felixkratz/formulae"
@@ -20,12 +20,12 @@ brew "grpc"
 brew "homebrew-zathura/zathura/zathura-cb"
 brew "homebrew-zathura/zathura/zathura-pdf-mupdf"
 brew "minisign"
-brew "mise"
 brew "mole"
 brew "openssl@3"
 brew "poppler"
 brew "postgresql@18"
 brew "proctools"
+brew "ripgrep"
 brew "switchaudio-osx"
 brew "telnet"
 brew "watchman"

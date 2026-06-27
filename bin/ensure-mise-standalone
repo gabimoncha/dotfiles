@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+dry_run=0
+mise_bin="${MISE_INSTALL_PATH:-${HOME}/.local/bin/mise}"
+mise_bin_dir="$(dirname "$mise_bin")"
+
+log() {
+  printf '==> %s\n' "$1"
+}
+
+warn() {
+  printf '!! %s\n' "$1" >&2
+}
+
+usage() {
+  printf 'Usage: ./bin/ensure-mise-standalone [--dry-run]\n' >&2
+}
+
+load_homebrew_shellenv() {
+  if [[ -n "${HOMEBREW_PREFIX:-}" && -x "${HOMEBREW_PREFIX}/bin/brew" ]]; then
+    eval "$("${HOMEBREW_PREFIX}/bin/brew" shellenv)"
+    return 0
+  fi
+
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+  elif command -v brew >/dev/null 2>&1; then
+    eval "$(brew shellenv)"
+  fi
+}
+
+standalone_mise_ok() {
+  [[ -x "$mise_bin" ]] && "$mise_bin" --version >/dev/null 2>&1
+}
+
+brew_mise_installed() {
+  load_homebrew_shellenv
+
+  if ! command -v brew >/dev/null 2>&1; then
+    return 1
+  fi
+
+  brew list --formula --versions mise >/dev/null 2>&1
+}
+
+install_standalone_mise() {
+  if [[ "$dry_run" -eq 1 ]]; then
+    log "dry-run: would install mise standalone with https://mise.run"
+    return 0
+  fi
+
+  log "Installing mise standalone"
+  mkdir -p "$mise_bin_dir"
+  MISE_INSTALL_PATH="$mise_bin" MISE_INSTALL_HELP=0 sh -c 'curl -fsSL https://mise.run | sh'
+}
+
+verify_standalone_mise() {
+  local mise_path mise_version
+
+  export PATH="${mise_bin_dir}:${PATH}"
+  hash -r 2>/dev/null || true
+
+  mise_path="$(command -v mise || true)"
+  if [[ "$mise_path" != "$mise_bin" ]]; then
+    warn "mise resolves to ${mise_path:-missing}, expected ${mise_bin}"
+    return 1
+  fi
+
+  if ! mise --version >/dev/null 2>&1; then
+    warn "mise --version failed for ${mise_bin}"
+    return 1
+  fi
+
+  if ! mise self-update --help >/dev/null 2>&1; then
+    warn "mise self-update --help is unavailable; mise may still be package-manager owned"
+    return 1
+  fi
+
+  mise_version="$(mise --version)"
+  log "mise command: ${mise_path}"
+  log "mise version: ${mise_version}"
+  log "mise self-update is available"
+}
+
+uninstall_brew_mise() {
+  if ! brew_mise_installed; then
+    return 0
+  fi
+
+  if [[ "$dry_run" -eq 1 ]]; then
+    log "dry-run: would uninstall Homebrew formula mise after standalone verification succeeds"
+    return 0
+  fi
+
+  log "Uninstalling Homebrew formula mise"
+  brew uninstall mise
+  hash -r 2>/dev/null || true
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run)
+      dry_run=1
+      shift
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+export PATH="${mise_bin_dir}:${PATH}"
+
+if standalone_mise_ok; then
+  log "mise standalone install is already present"
+else
+  install_standalone_mise
+fi
+
+if [[ "$dry_run" -eq 1 ]]; then
+  log "dry-run: would verify mise command, version, and self-update availability"
+  uninstall_brew_mise
+  exit 0
+fi
+
+verify_standalone_mise
+uninstall_brew_mise
+verify_standalone_mise

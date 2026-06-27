@@ -46,7 +46,6 @@ docker-cli = "latest"
 docker-compose = "latest"
 imagemagick = "latest"
 opencode = "latest"
-codex = "latest"
 claude = "latest"
 pi = "latest"
 infisical = "latest"
@@ -63,7 +62,6 @@ worktrunk = "latest"
 "npm:@yaakapp/cli" = "latest"
 "npm:tree-sitter-cli" = "latest"
 "npm:cursor-agent" = "latest"
-"npm:@typescript/native-preview" = "latest"
 "github:ryanoasis/nerd-fonts" = { version = "latest", asset_pattern = "Hack.zip" }
 mas = "latest"
 "gem:fastlane" = "latest"
@@ -84,6 +82,7 @@ mas = "latest"
 
 [settings]
 experimental = true
+minimum_release_age = "4d"
 
 [settings.npm]
 package_manager = "bun"

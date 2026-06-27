@@ -8,6 +8,7 @@ xcode_only=0
 explicit_xcode_only=0
 temp_brewfile=""
 mobile_status=0
+mise_bin_dir="${HOME}/.local/bin"
 mise_shim_dir="${HOME}/.local/share/mise/shims"
 brew_bundle_jobs="${DOTFILES_BREW_BUNDLE_JOBS:-auto}"
 xcode_channel="${DOTFILES_XCODE_CHANNEL:-release}"
@@ -61,10 +62,20 @@ usage() {
 }
 
 prepend_mise_shims() {
-  case ":${PATH}:" in
-    *":${mise_shim_dir}:"*) ;;
-    *) export PATH="${mise_shim_dir}:${PATH}" ;;
-  esac
+  local path_entry
+  local new_path="${mise_bin_dir}:${mise_shim_dir}"
+  local path_entries=()
+
+  IFS=':' read -r -a path_entries <<< "$PATH"
+  for path_entry in "${path_entries[@]}"; do
+    [[ -z "$path_entry" ]] && continue
+    case "$path_entry" in
+      "$mise_bin_dir" | "$mise_shim_dir") continue ;;
+    esac
+    new_path="${new_path}:${path_entry}"
+  done
+
+  export PATH="$new_path"
 }
 
 ensure_not_root() {
@@ -160,17 +171,13 @@ load_homebrew_shellenv() {
 ensure_mise_cli() {
   prepend_mise_shims
 
-  if command -v mise >/dev/null 2>&1; then
-    return 0
-  fi
-
   if [[ "$dry_run" -eq 1 ]]; then
-    log "dry-run: would install mise"
-    return 0
+    "${repo_root}/bin/ensure-mise-standalone" --dry-run
+    return $?
   fi
 
-  log "Installing mise"
-  brew install mise
+  "${repo_root}/bin/ensure-mise-standalone" || return 1
+  prepend_mise_shims
   hash -r
   command -v mise >/dev/null 2>&1
 }
