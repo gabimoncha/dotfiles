@@ -609,6 +609,10 @@ Java tools such as `keytool` come from the configured JDK instead of stale
 runtime shims. Run `./bin/install-mobile-dev` to install Android Studio. Android
 Studio still owns installing the SDK packages and creating the emulator image.
 
+Interactive `mise` activation is owned by `home/.config/zsh/interactive.zsh`.
+Do not append activation lines directly to `~/.zshrc`; it is a repo-managed
+symlink. After changing shell activation, run `exec zsh` or open a new terminal.
+
 To get the Android debug signing SHA-1, use the real debug keystore path:
 
 ```bash

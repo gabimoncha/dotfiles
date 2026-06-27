@@ -23,7 +23,7 @@ fi
 [ -r "$HOME/.config/zsh/path.zsh" ] && source "$HOME/.config/zsh/path.zsh"
 
 if command -v mise >/dev/null 2>&1; then
-  if mise_activate="$(mise activate zsh --no-hook-env 2>/dev/null)"; then
+  if mise_activate="$(mise activate zsh 2>/dev/null)"; then
     eval "$mise_activate"
   fi
   unset mise_activate
