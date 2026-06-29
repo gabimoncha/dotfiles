@@ -49,8 +49,43 @@ default_git_email() {
   git config --global --includes user.email 2>/dev/null || true
 }
 
+github_noreply_email() {
+  run_gh api user --jq '(.id | tostring) + "+" + .login + "@users.noreply.github.com"' 2>/dev/null || true
+}
+
+default_commit_email() {
+  local noreply_email git_email
+
+  noreply_email="$(github_noreply_email)"
+  if [[ -n "$noreply_email" ]]; then
+    printf '%s\n' "$noreply_email"
+    return 0
+  fi
+
+  git_email="$(default_git_email)"
+  if [[ -n "$git_email" ]]; then
+    printf '%s\n' "$git_email"
+  fi
+}
+
 default_git_name() {
   git config --global --includes user.name 2>/dev/null || true
+}
+
+warn_if_non_noreply_git_email() {
+  local email noreply_email
+
+  email="$(default_git_email)"
+  [[ -n "$email" ]] || return 0
+  [[ "$email" == *@users.noreply.github.com ]] && return 0
+
+  noreply_email="$(github_noreply_email)"
+  if [[ -n "$noreply_email" ]]; then
+    warn "Git commit email is not a GitHub noreply address; GitHub may reject pushes when private-email protection is enabled."
+    warn "Run: git config --file ~/.gitconfig.local user.email \"${noreply_email}\""
+  else
+    warn "Git commit email is not a GitHub noreply address; GitHub may reject pushes when private-email protection is enabled."
+  fi
 }
 
 default_key_comment() {
@@ -66,6 +101,7 @@ ensure_git_identity() {
 
   if git -c user.useConfigOnly=true var GIT_AUTHOR_IDENT >/dev/null 2>&1; then
     log "Git identity is configured"
+    warn_if_non_noreply_git_email
     return 0
   fi
 
@@ -79,7 +115,7 @@ ensure_git_identity() {
     default_name="$(whoami)"
   fi
 
-  default_email="$(default_git_email)"
+  default_email="$(default_commit_email)"
 
   log "Configuring Git identity in ${local_config}"
 
@@ -98,6 +134,7 @@ ensure_git_identity() {
   git config --file "$local_config" user.name "$name"
   git config --file "$local_config" user.email "$email"
   chmod 600 "$local_config"
+  warn_if_non_noreply_git_email
 }
 
 ensure_ssh_key() {
@@ -117,7 +154,7 @@ ensure_ssh_key() {
     return 0
   fi
 
-  email="$(default_git_email)"
+  email="$(default_commit_email)"
   if [[ -z "$email" ]]; then
     email="$(default_key_comment)"
   fi
@@ -328,11 +365,11 @@ EOF
 }
 
 load_homebrew_shellenv
+ensure_github_auth
 ensure_git_identity
 ensure_ssh_key
 add_ssh_key_to_agent
 ensure_github_known_host
-ensure_github_auth
 upload_ssh_key_to_github
 verify_github_ssh
 configure_dotfiles_origin_remote

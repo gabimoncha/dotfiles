@@ -198,12 +198,13 @@ flowchart LR
 
   subgraph AuthSetup["bin/auth-setup"]
     direction TB
-    A1["Configure local Git identity"]
-    A2["Create or reuse SSH key"]
-    A3["Authenticate gh and upload key when possible"]
-    A4["Verify GitHub SSH"]
+    A1["Authenticate gh when possible"]
+    A2["Configure local Git identity"]
+    A3["Create or reuse SSH key"]
+    A4["Upload key when possible"]
+    A5["Verify GitHub SSH"]
 
-    A1 --> A2 --> A3 --> A4
+    A1 --> A2 --> A3 --> A4 --> A5
   end
 
   subgraph MackupRestore["bin/file-restore mackup"]
@@ -269,10 +270,13 @@ also run the pieces directly later:
 ./bin/file-restore
 ```
 
-`bin/auth-setup` configures local Git identity, creates or reuses an Ed25519 SSH
-key, authenticates GitHub CLI, uploads the SSH key when possible, and verifies
-GitHub SSH. If this repo was cloned from its public HTTPS URL, it switches
-`origin` to `git@github.com:gabimoncha/dotfiles.git` after SSH is verified.
+`bin/auth-setup` authenticates GitHub CLI, configures local Git identity, creates
+or reuses an Ed25519 SSH key, uploads the SSH key when possible, and verifies
+GitHub SSH. When GitHub CLI is authenticated, it prefers the account noreply
+address for commits and warns if the active commit email could trip GitHub's
+private-email push protection. If this repo was cloned from its public HTTPS
+URL, it switches `origin` to `git@github.com:gabimoncha/dotfiles.git` after SSH
+is verified.
 
 `bin/file-restore` restores file-backed state from Synology first, then iCloud
 where supported. It restores Mackup-managed app settings, opens the newest
