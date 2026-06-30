@@ -113,6 +113,7 @@ check_script_syntax() {
     "bin/check-mise-tools"
     "bin/configure-sudo-touch-id"
     "bin/ensure-codex-standalone"
+    "bin/ensure-cursor-agent-standalone"
     "bin/ensure-mise-standalone"
     "bin/install-apps"
     "bin/install-mobile-dev"

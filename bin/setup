@@ -388,6 +388,7 @@ if [[ $dry_run -eq 1 ]]; then
   log "dry-run: would run ./bin/bootstrap"
   "${repo_root}/bin/ensure-mise-standalone" --dry-run || setup_status=1
   "${repo_root}/bin/ensure-codex-standalone" --dry-run || setup_status=1
+  "${repo_root}/bin/ensure-cursor-agent-standalone" --dry-run || setup_status=1
   if [[ "$skip_mobile_dev" -eq 1 ]]; then
     runtime_record_deferred "Mobile dev stack" "dry-run skipped because --skip-mobile-dev was set" "Rerun ./bin/setup without --skip-mobile-dev to install mobile dev tools."
   else

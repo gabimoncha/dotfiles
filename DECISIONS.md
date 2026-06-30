@@ -14,10 +14,14 @@ This keeps fresh-machine bootstrap simple while preserving the separate Neovim r
 
 Prefer Homebrew casks first. Use vendor/manual fallback only when there is no stable cask or App Store route.
 
-Codex CLI and `mise` are explicit standalone-installer exceptions. Codex remote
-control and app-server updates depend on the standalone installer-managed path
-under `~/.codex/packages/standalone`, so `bin/ensure-codex-standalone` keeps the
-current standalone install healthy and removes the Homebrew cask if it exists.
+Codex CLI, Cursor Agent CLI, and `mise` are explicit standalone-installer
+exceptions. Codex remote control and app-server updates depend on the
+standalone installer-managed path under `~/.codex/packages/standalone`, so
+`bin/ensure-codex-standalone` keeps the current standalone install healthy and
+removes the Homebrew cask if it exists. Cursor itself remains a Homebrew cask,
+but Cursor Agent uses Cursor's official installer because it owns the
+`~/.local/share/cursor-agent` runtime and the `agent` / `cursor-agent` commands
+under `~/.local/bin`.
 `mise` uses the official `https://mise.run` installer at `~/.local/bin/mise`
 because package-manager installs do not support `mise self-update`.
 `bin/ensure-mise-standalone` keeps existing data, shims, cache, and state in the

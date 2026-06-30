@@ -756,6 +756,14 @@ else
   bootstrap_status=1
 fi
 
+log "Ensuring Cursor Agent standalone install"
+if "${repo_root}/bin/ensure-cursor-agent-standalone"; then
+  runtime_record_completed "Cursor Agent standalone install"
+else
+  runtime_record_failure recoverable "Cursor Agent standalone install" "standalone Cursor Agent setup failed" "" "Rerun ./bin/ensure-cursor-agent-standalone after checking the logged error."
+  bootstrap_status=1
+fi
+
 if [[ "$mobile_dev_enabled" -eq 1 ]]; then
   if "${repo_root}/bin/install-mobile-dev" --prepare-tools-only; then
     runtime_record_completed "Mobile dev download tools" "xcodes and aria2 are ready"

@@ -61,7 +61,6 @@ worktrunk = "latest"
 "npm:sfw" = "latest"
 "npm:@yaakapp/cli" = "latest"
 "npm:tree-sitter-cli" = "latest"
-"npm:cursor-agent" = "latest"
 "github:ryanoasis/nerd-fonts" = { version = "latest", asset_pattern = "Hack.zip" }
 mas = "latest"
 "gem:fastlane" = "latest"

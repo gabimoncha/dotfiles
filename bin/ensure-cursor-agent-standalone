@@ -1,0 +1,175 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+dry_run=0
+install_dir="${HOME}/.local/bin"
+versions_dir="${HOME}/.local/share/cursor-agent/versions"
+visible_agent="${install_dir}/agent"
+visible_cursor_agent="${install_dir}/cursor-agent"
+
+log() {
+  printf '==> %s\n' "$1"
+}
+
+warn() {
+  printf '!! %s\n' "$1" >&2
+}
+
+usage() {
+  printf 'Usage: ./bin/ensure-cursor-agent-standalone [--dry-run]\n' >&2
+}
+
+install_cursor_agent() {
+  if [[ "$dry_run" -eq 1 ]]; then
+    log "dry-run: would install Cursor Agent standalone with https://cursor.com/install"
+    return 0
+  fi
+
+  log "Installing Cursor Agent standalone"
+  mkdir -p "$install_dir"
+  PATH="${install_dir}:${PATH}" bash -c 'curl https://cursor.com/install -fsS | bash'
+}
+
+resolve_link_target() {
+  local link_path="$1"
+  local target
+
+  target="$(readlink "$link_path")"
+  case "$target" in
+    "~/"*)
+      target="${HOME}/${target#~/}"
+      ;;
+    /*)
+      ;;
+    *)
+      target="$(cd "$(dirname "$link_path")" && cd "$(dirname "$target")" && pwd -P)/$(basename "$target")"
+      ;;
+  esac
+
+  printf '%s\n' "$target"
+}
+
+cursor_agent_link_ok() {
+  local link_path="$1"
+  local target
+
+  [[ -L "$link_path" ]] || return 1
+  target="$(resolve_link_target "$link_path" 2>/dev/null)" || return 1
+  [[ "$target" == "${versions_dir}/"* ]] || return 1
+  [[ -x "$target" ]] || return 1
+}
+
+standalone_install_ok() {
+  cursor_agent_link_ok "$visible_agent" &&
+    cursor_agent_link_ok "$visible_cursor_agent"
+}
+
+smoke_cursor_agent() {
+  "$visible_agent" --version >/dev/null 2>&1 ||
+    "$visible_agent" --help >/dev/null 2>&1
+}
+
+verify_cursor_agent() {
+  local agent_path cursor_agent_path agent_target cursor_agent_target
+
+  export PATH="${install_dir}:${PATH}"
+  hash -r 2>/dev/null || true
+
+  agent_path="$(command -v agent || true)"
+  if [[ "$agent_path" != "$visible_agent" ]]; then
+    warn "agent resolves to ${agent_path:-missing}, expected ${visible_agent}"
+    return 1
+  fi
+
+  cursor_agent_path="$(command -v cursor-agent || true)"
+  if [[ "$cursor_agent_path" != "$visible_cursor_agent" ]]; then
+    warn "cursor-agent resolves to ${cursor_agent_path:-missing}, expected ${visible_cursor_agent}"
+    return 1
+  fi
+
+  if ! cursor_agent_link_ok "$visible_agent"; then
+    warn "agent does not point to an executable under ${versions_dir}: ${visible_agent}"
+    return 1
+  fi
+
+  if ! cursor_agent_link_ok "$visible_cursor_agent"; then
+    warn "cursor-agent does not point to an executable under ${versions_dir}: ${visible_cursor_agent}"
+    return 1
+  fi
+
+  if ! smoke_cursor_agent; then
+    warn "Cursor Agent smoke check failed for ${visible_agent}"
+    return 1
+  fi
+
+  agent_target="$(resolve_link_target "$visible_agent")"
+  cursor_agent_target="$(resolve_link_target "$visible_cursor_agent")"
+
+  log "Cursor Agent command: ${agent_path}"
+  log "Cursor Agent target: ${agent_target}"
+  log "cursor-agent command: ${cursor_agent_path}"
+  log "cursor-agent target: ${cursor_agent_target}"
+}
+
+repair_launchd_path() {
+  local launchd_path new_path
+
+  [[ "$(uname)" == "Darwin" ]] || return 0
+  command -v launchctl >/dev/null 2>&1 || return 0
+
+  launchd_path="$(launchctl getenv PATH 2>/dev/null || true)"
+  if [[ ":${launchd_path}:" == *":${install_dir}:"* ]]; then
+    log "User launchd PATH already includes ${install_dir}"
+    return 0
+  fi
+
+  if [[ -n "$launchd_path" ]]; then
+    new_path="${install_dir}:${launchd_path}"
+  else
+    new_path="${install_dir}:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+  fi
+
+  if [[ "$dry_run" -eq 1 ]]; then
+    log "dry-run: would set user launchd PATH to include ${install_dir}"
+    return 0
+  fi
+
+  launchctl setenv PATH "$new_path"
+  log "Updated user launchd PATH for this login session"
+  warn "Restart GUI apps that need the agent command so they inherit the updated PATH."
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run)
+      dry_run=1
+      shift
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+export PATH="${install_dir}:${PATH}"
+
+if standalone_install_ok; then
+  log "Cursor Agent standalone install is already present"
+else
+  install_cursor_agent
+fi
+
+if [[ "$dry_run" -eq 1 ]]; then
+  log "dry-run: would verify agent and cursor-agent commands"
+  repair_launchd_path
+  exit 0
+fi
+
+verify_cursor_agent
+repair_launchd_path

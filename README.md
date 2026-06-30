@@ -60,6 +60,10 @@ Codex CLI itself is not part of the archive. Bootstrap keeps the current
 standalone install under `~/.codex/packages/standalone` healthy and removes the
 Homebrew cask if it exists. The archive only carries portable user state.
 
+Cursor Agent CLI itself is not part of the archive. Bootstrap keeps its
+standalone installer runtime under `~/.local/share/cursor-agent` healthy and
+exposes `agent` through `~/.local/bin`; Cursor the app stays a Homebrew cask.
+
 `mise` data is not migrated or restored separately. Bootstrap keeps only the
 `mise` binary on the standalone installer path at `~/.local/bin/mise` so
 `mise self-update` remains available; existing tools, shims, cache, and state
@@ -148,15 +152,16 @@ flowchart LR
     B4["Call bin/link-dotfiles"]
     B5["Call bin/ensure-mise-standalone"]
     B6["Call bin/ensure-codex-standalone"]
-    B7["Prepare xcodes and aria2, then start Xcode install"]
-    B8["Start mise install and run brew bundle"]
-    B9["Run Android Studio, MAS apps, and VS Code extensions"]
-    B10["Call bin/link-dotfiles again after apps exist"]
-    B11["Run iOS platform support and Xcode-dependent formulae"]
-    B12["Run setup-tmux, shell framework, macOS defaults, Finder favorites"]
-    B13["Bootstrap complete"]
+    B7["Call bin/ensure-cursor-agent-standalone"]
+    B8["Prepare xcodes and aria2, then start Xcode install"]
+    B9["Start mise install and run brew bundle"]
+    B10["Run Android Studio, MAS apps, and VS Code extensions"]
+    B11["Call bin/link-dotfiles again after apps exist"]
+    B12["Run iOS platform support and Xcode-dependent formulae"]
+    B13["Run setup-tmux, shell framework, macOS defaults, Finder favorites"]
+    B14["Bootstrap complete"]
 
-    B1 --> B2 --> B3 --> B4 --> B5 --> B6 --> B7 --> B8 --> B9 --> B10 --> B11 --> B12 --> B13
+    B1 --> B2 --> B3 --> B4 --> B5 --> B6 --> B7 --> B8 --> B9 --> B10 --> B11 --> B12 --> B13 --> B14
   end
 
   subgraph InstallApps["bin/install-apps"]
@@ -373,7 +378,7 @@ It:
 2. enables Touch ID for `sudo` through `/etc/pam.d/sudo_local` when supported
 3. initializes the Neovim submodule
 4. links tracked files from `home/` into `$HOME`
-5. ensures standalone `mise` and Codex installer ownership
+5. ensures standalone `mise`, Codex, and Cursor Agent installer ownership
 6. prepares `xcodes` and `aria2`, then starts the Xcode install in the background
 7. starts `mise install` in the background
 8. installs Homebrew formulae and casks
@@ -453,6 +458,9 @@ This repo is deliberately boring about ownership:
 - Codex CLI is a standalone-installer exception because remote control and
   app-server updates depend on the installer-managed path under
   `~/.codex/packages/standalone`.
+- Cursor Agent CLI is a standalone-installer exception because the official
+  installer owns `~/.local/share/cursor-agent` and exposes the `agent` command
+  through `~/.local/bin`, while the Cursor GUI remains a Homebrew cask.
 - The `mise` binary is a standalone-installer exception because
   `mise self-update` is not available through package-manager installs. Its
   data, tools, shims, cache, and state remain in the normal `mise` locations.
@@ -473,8 +481,8 @@ When adding a tool, use this order:
 1. Mac App Store via `mas`, if it is a GUI app available there
 2. `mise`, if `mise ls-remote <tool>` or an appropriate backend-prefixed id
    supports it
-3. Vendor standalone installer, only for explicit exceptions such as Codex and
-   `mise`
+3. Vendor standalone installer, only for explicit exceptions such as Codex,
+   Cursor Agent, and `mise`
 4. Homebrew in `Brewfile`, if it does not belong in `mas`, `mise`, or an
    explicit standalone exception
 5. `apps/manifest.tsv`, if it needs cask/formula status tracking, post-install
@@ -492,6 +500,8 @@ bin/setup                        fresh-Mac entrypoint
 bin/bootstrap                    lower-level bootstrap
 bin/link-dotfiles                symlink managed files into $HOME
 bin/ensure-codex-standalone      keep Codex on the standalone installer path
+bin/ensure-cursor-agent-standalone
+                                 keep Cursor Agent on the standalone installer path
 bin/ensure-mise-standalone       keep mise on the standalone installer path
 bin/preflight                    repo and machine checks
 bin/auth-setup                   Git/GitHub/SSH follow-up
@@ -731,6 +741,7 @@ After meaningful changes, run the smallest relevant checks:
 bash -n bin/lib/setup-runtime.sh
 bash -n bin/bootstrap
 bash -n bin/ensure-codex-standalone
+bash -n bin/ensure-cursor-agent-standalone
 bash -n bin/ensure-mise-standalone
 bash -n bin/install-mobile-dev
 bash -n bin/link-dotfiles
@@ -745,6 +756,7 @@ For setup or inventory changes, also run:
 ```bash
 ./bin/preflight
 ./bin/ensure-codex-standalone --dry-run
+./bin/ensure-cursor-agent-standalone --dry-run
 ./bin/ensure-mise-standalone --dry-run
 ./bin/install-apps --dry-run
 ./bin/install-mobile-dev --dry-run
