@@ -59,6 +59,44 @@ ensure_keyboard_input_sources() {
     '{ InputSourceKind = "Keyboard Layout"; "KeyboardLayout ID" = -39; "KeyboardLayout Name" = "Romanian"; }'
 }
 
+dock_persistent_app_is_allowed() {
+  case "$1" in
+    com.apple.apps.launcher | \
+      com.apple.Safari | \
+      com.apple.Photos | \
+      com.apple.FaceTime | \
+      com.apple.AppStore | \
+      com.apple.campo | \
+      com.apple.systempreferences)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+prune_dock_persistent_apps() {
+  local plist="${HOME}/Library/Preferences/com.apple.dock.plist"
+  local app_count index bundle_id
+
+  if [[ ! -f "$plist" ]]; then
+    return 0
+  fi
+
+  app_count="$(plutil -extract persistent-apps raw "$plist" 2>/dev/null || printf '0')"
+  if [[ ! "$app_count" =~ ^[0-9]+$ ]]; then
+    return 0
+  fi
+
+  for ((index = app_count - 1; index >= 0; index--)); do
+    bundle_id="$(/usr/libexec/PlistBuddy -c "Print :persistent-apps:${index}:tile-data:bundle-identifier" "$plist" 2>/dev/null || true)"
+    if [[ -n "$bundle_id" ]] && ! dock_persistent_app_is_allowed "$bundle_id"; then
+      /usr/libexec/PlistBuddy -c "Delete :persistent-apps:${index}" "$plist" >/dev/null
+    fi
+  done
+}
+
 log "Applying global keyboard and locale defaults"
 defaults write NSGlobalDomain AppleLocale -string "en_US@currency=RON"
 defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
@@ -118,6 +156,7 @@ defaults write com.apple.dock magnification -bool true
 defaults write com.apple.dock orientation -string "bottom"
 defaults write com.apple.dock expose-group-apps -bool true
 defaults write com.apple.dock tilesize -int 34
+prune_dock_persistent_apps
 
 log "Applying Control Center and menu bar defaults"
 defaults -currentHost write com.apple.controlcenter Battery -int 19
