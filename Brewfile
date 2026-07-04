@@ -25,12 +25,12 @@ brew "openssl@3"
 brew "poppler"
 brew "postgresql@18"
 brew "proctools"
-brew "ripgrep"
 brew "switchaudio-osx"
 brew "telnet"
 brew "watchman"
 brew "webp"
 brew "zlib"
+brew "btop"
 
 # Mac App Store
 mas "Amphetamine", id: 937984704

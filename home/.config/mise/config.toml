@@ -82,6 +82,7 @@ mas = "latest"
 [settings]
 experimental = true
 minimum_release_age = "4d"
+minimum_release_age_excludes = ["claude"]
 
 [settings.npm]
 package_manager = "bun"
