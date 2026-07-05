@@ -63,3 +63,27 @@ For dependency changes, also sanity-check the ownership split:
 - Before changing setup ownership, bootstrap boundaries, app install ownership, or other durable architecture decisions, read `DECISIONS.md` and update it when the rationale changes.
 - When the user asks to add or update an app or tool, choose ownership in this order: `mas` for Mac App Store apps, then `mise` for supported runtimes/developer tools, then Homebrew through `Brewfile`.
 - If you notice config drift between the README, bootstrap scripts, and managed files, fix it rather than documenting a lie.
+
+## Profile And Component Work
+
+- Before adding a profile, component, app, tool, link, check, or setup flag, inspect the existing profiles/components and the approved profile intent matrix. Do not guess profile contents.
+- Prefer composition over copying. A profile should select components; it should not duplicate another profile's inventories just to make a variant.
+- Add a new component only when it represents reusable setup intent or a clearly distinct setup concern. Otherwise extend the existing component that owns that concern.
+- Keep profile/component composition in the profile preparation module. Worker scripts should consume prepared setup plan files and should not learn profile rules.
+- Avoid duplicate setup intent. New profile/component work should preserve or add validation that catches duplicate Homebrew entries, app rows, mise tools/settings, link targets, check commands, and conflicting versions or setup flags.
+- If two profiles need the same app/tool/link/check, put that intent in a shared component or document why duplication is deliberate.
+- Local validation on this Mac is dry-run/static only unless the user explicitly names this Mac as the target. Mutating setup validation belongs on the old Mac or another explicitly approved target machine.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs are tracked as local markdown under `.scratch/`; external PRs are not a triage surface for the local tracker. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The tracker uses the canonical triage labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This is a single-context repo: read root `CONTEXT.md` when present and root `docs/adr/` for architectural decisions. See `docs/agents/domain.md`.

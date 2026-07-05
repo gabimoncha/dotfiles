@@ -16,7 +16,6 @@ iina	cask	iina	IINA	Homebrew cask.
 iterm2	cask	iterm2	iTerm	Homebrew cask.
 linear	cask	linear	Linear	Homebrew cask.
 lm-studio	cask	lm-studio	LM Studio	Homebrew cask; requires Apple Silicon.
-macs-fan-control	cask	macs-fan-control	Macs Fan Control	Homebrew cask.
 mole	formula	mole	-	Homebrew formula because mise ls-remote mole errors.
 mole-app	cask	mole-app	Mole	Homebrew cask for the Mole GUI app.
 multipass	cask	multipass	Multipass	Homebrew cask.

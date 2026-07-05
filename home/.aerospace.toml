@@ -344,11 +344,6 @@ run = ['layout tiling', 'move-node-to-workspace E']
 if.app-id = 'com.apple.finder'
 run = 'layout floating'
 
-### Macs Fan Control
-[[on-window-detected]]
-if.app-id = 'com.crystalidea.macsfancontrol'
-run = 'layout floating'
-
 ### Passwords
 [[on-window-detected]]
 if.app-id = 'com.apple.LocalAuthentication.UIAgent'

@@ -1,6 +1,8 @@
 {
   "favoriteModelIDs" : [
-
+    "medium.en",
+    "nvidia_parakeet-v2_476MB",
+    "medium"
   ],
   "modeKeys" : [
     "default",
