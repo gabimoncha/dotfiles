@@ -577,6 +577,14 @@ secret exports. The real `secrets.zsh` file stays untracked.
 Use environment variables for secrets and the zsh `path` array for committable
 PATH setup.
 
+For staged Git changes, `commit-ai` (or its short alias `gcai`) asks
+`gpt-5.6-luna` at low reasoning effort for one concise Conventional Commit
+subject based only on the staged file list and patch. Codex runs ephemerally in
+a read-only sandbox, then opens a temporary commit-message buffer in Neovim
+before Git or any commit hooks run. Save and close with `:wq` to pass the edited
+message to `git commit` and run the repository's hooks; close the untouched
+generated message with `:q` to abort without running hooks or committing.
+
 Infisical wrappers are available for separate work and personal service tokens:
 
 ```zsh
@@ -599,7 +607,8 @@ can override it to `pnpm` or `aube`. Bun-selected projects delegate directly to
 in local `node_modules/.bin`, otherwise they use `pnpm dlx` for one-off package
 commands, with the pnpm path routed through Socket Firewall Free. Use `bx` or
 `bunx` when you explicitly want Bun regardless of the project setting, and use
-`command npx` for the real npm binary when an npm-only flag is required. The file
+`npx!` for the real npm runner through Socket Firewall Free when npm-specific
+behavior or flags are required. The file
 includes comments with the minimal adoption steps for sharing it outside this
 repo.
 

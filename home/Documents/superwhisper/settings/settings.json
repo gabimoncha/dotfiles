@@ -36,6 +36,26 @@
       "id" : "40412359-ABC1-4855-A76E-F0CEA382B2C8",
       "original" : "agents.md",
       "with" : "AGENTS.md"
+    },
+    {
+      "id" : "6F0CAD65-67EF-4A80-8E1B-3384119E20CB",
+      "original" : "yrex",
+      "with" : "wirex"
+    },
+    {
+      "id" : "813EF733-46D0-4CFF-A740-02FF2095AF2B",
+      "original" : "GPT 5.6 Sol",
+      "with" : "gpt-5.6-sol"
+    },
+    {
+      "id" : "56A432A3-C072-42EC-9E31-E3B269C18E86",
+      "original" : "GPT 5.6 Luna",
+      "with" : "gpt-5.6-luna"
+    },
+    {
+      "id" : "FD52B736-BCEB-476D-B619-C3164652D02E",
+      "original" : "YRX",
+      "with" : "Wirex"
     }
   ],
   "vocabulary" : [

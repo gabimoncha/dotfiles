@@ -2,6 +2,7 @@
 #
 # What this gives you:
 # - `npx <pkg>` and `px <pkg>` run through the package manager selected by mise.
+# - `npx! <pkg>` bypasses the mise wrapper and runs the real npx through SFW.
 # - `bx <pkg>` remains an explicit Bun escape hatch.
 # - Project-local `mise.toml` settings override your global mise config.
 #
@@ -156,6 +157,15 @@ npx() {
 
 px() {
   npx "$@"
+}
+
+npx!() {
+  if ! command -v sfw >/dev/null 2>&1; then
+    print -u2 "npx!: sfw is required to run the real npx safely"
+    return 1
+  fi
+
+  command sfw npx "$@"
 }
 
 alias bx='bunx'
