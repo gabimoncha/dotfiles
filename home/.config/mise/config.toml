@@ -4,7 +4,7 @@ perl = "5.42.0"
 python = "3.14.5"
 ruby = "3.4.9"
 rust = "latest"
-cargo-binstall = "latest"
+cargo-binstall = "1.20.0"
 ccache = "latest"
 age = "latest"
 cocoapods = "latest"
@@ -37,7 +37,7 @@ redis = "latest"
 ffmpeg = "latest"
 yt-dlp = "2026.06.09"
 bat = "latest"
-eza = "latest"
+eza = "0.23.4"
 zoxide = "latest"
 pandoc = "latest"
 typst = "latest"
@@ -49,7 +49,7 @@ imagemagick = "latest"
 opencode = "latest"
 claude = "latest"
 pi = "latest"
-infisical = "latest"
+infisical = "0.43.104"
 portless = "latest"
 vercel = "latest"
 turbo = "latest"
@@ -79,14 +79,19 @@ mas = "latest"
 "conda:tig" = "latest"
 "conda:tree" = "latest"
 "conda:wget" = "latest"
+ghtkn = "latest"
 
 [settings]
 experimental = true
 minimum_release_age = "4d"
-minimum_release_age_excludes = ["claude"]
+minimum_release_age_excludes = ["claude", "opencode", "pi"]
 
 [settings.npm]
 package_manager = "bun"
 
 [settings.cargo]
 binstall = true
+
+[settings.github]
+credential_command = "/Users/gabimoncha/.local/share/mise/installs/ghtkn/latest/ghtkn get -m 1h"
+use_git_credentials = true

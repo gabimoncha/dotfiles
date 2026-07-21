@@ -169,6 +169,10 @@ log "Applying software update defaults"
 defaults write com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
 defaults write com.apple.SoftwareUpdate AutomaticDownload -bool true
 
+log "Applying display sleep defaults"
+sudo pmset -b displaysleep 0
+sudo pmset -c displaysleep 0
+
 log "Disabling Spotlight shortcuts for Raycast"
 set_disabled_symbolic_hotkey 64 49 1048576
 set_disabled_symbolic_hotkey 65 49 1572864
