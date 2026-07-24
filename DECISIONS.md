@@ -49,8 +49,11 @@ Raycast stays out of the Mackup allowlist unless Mackup provides a narrow suppor
 ## Codex State Uses Encrypted Archives
 
 Durable, safe AI tooling assets can live in this repo and be linked through
-`bin/link-dotfiles`. User-authored global Codex skills live under
-`home/.agents/skills`, linked to `~/.agents/skills`.
+`bin/link-dotfiles`. User-authored global Codex skills and the shared skill
+selection lock live under `home/.agents`, with `~/.agents/skills` and
+`~/.agents/.skill-lock.json` linked individually. The parent `~/.agents`
+directory stays machine-local so future runtime-generated files do not land in
+the Git checkout implicitly.
 
 Codex memories and selected user config stay out of git and Mackup. `~/.codex`
 contains auth, histories, databases, caches, worktrees, plugin assets, generated

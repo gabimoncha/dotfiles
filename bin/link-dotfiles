@@ -27,6 +27,7 @@ managed_sources=(
   "${repo_root}/home/.gitconfig"
   "${repo_root}/home/.rgrc"
   "${repo_root}/home/.tmux.conf"
+  "${repo_root}/home/.cli-proxy-api/config.yaml"
   "${repo_root}/home/.config/mise/config.toml"
   "${repo_root}/home/.config/zsh/env.zsh"
   "${repo_root}/home/.config/zsh/profile.zsh"
@@ -40,6 +41,7 @@ managed_sources=(
   "${repo_root}/home/.config/mackup/applications/macs-fan-control.cfg"
   "${repo_root}/home/.config/zed/settings.json"
   "${repo_root}/home/.config/zed/keymap.json"
+  "${repo_root}/home/.agents/.skill-lock.json"
   "${repo_root}/home/.agents/skills"
   "${repo_root}/home/Documents/superwhisper/settings/settings.json"
   "${repo_root}/home/scripts/toggle_function_keys.sh"
@@ -65,11 +67,46 @@ backup_target() {
     created_backup_root=1
   }
 
-  relative_target="${target#${HOME}/}"
+  if [[ "${target}" == "${HOME}/"* ]]; then
+    relative_target="${target#${HOME}/}"
+  else
+    relative_target="root/${target#/}"
+  fi
   backup_path="${backup_root}/${relative_target}"
   mkdir -p "$(dirname "${backup_path}")"
   mv "${target}" "${backup_path}"
   printf 'Backed up %s -> %s\n' "${target}" "${backup_path}"
+}
+
+link_cliproxyapi_homebrew_config() {
+  local home_config="${HOME}/.cli-proxy-api/config.yaml"
+  local brew_prefix brew_config
+
+  if ! command -v brew >/dev/null 2>&1; then
+    printf 'Skipping CLIProxyAPI Homebrew config link; Homebrew is not installed\n'
+    return 0
+  fi
+
+  brew_prefix="$(brew --prefix)"
+  brew_config="${brew_prefix}/etc/cliproxyapi.conf"
+
+  if [[ ! -e "${home_config}" ]]; then
+    printf 'Skipping CLIProxyAPI Homebrew config link; %s is missing\n' "${home_config}"
+    return 0
+  fi
+
+  if [[ -L "${brew_config}" && "$(readlink "${brew_config}")" == "${home_config}" ]]; then
+    printf 'Already linked %s\n' "${brew_config}"
+    return 0
+  fi
+
+  mkdir -p "$(dirname "${brew_config}")"
+  if [[ -e "${brew_config}" || -L "${brew_config}" ]]; then
+    backup_target "${brew_config}"
+  fi
+
+  ln -s "${home_config}" "${brew_config}"
+  printf 'Linked %s -> %s\n' "${brew_config}" "${home_config}"
 }
 
 preserve_git_identity() {
@@ -145,3 +182,5 @@ for source in "${managed_sources[@]}"; do
 
   link_path "${source}"
 done
+
+link_cliproxyapi_homebrew_config

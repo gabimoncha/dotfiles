@@ -55,7 +55,6 @@ vercel = "latest"
 turbo = "latest"
 worktrunk = "latest"
 mas = "latest"
-"github:nkzw-tech/codiff" = { version = "latest", asset_pattern = "Codiff-darwin-arm64-*.zip" }
 "npm:ctx7" = "latest"
 "npm:eas-cli" = "latest"
 "npm:agent-device" = "latest"
@@ -84,7 +83,7 @@ ghtkn = "latest"
 [settings]
 experimental = true
 minimum_release_age = "4d"
-minimum_release_age_excludes = ["claude", "opencode", "pi"]
+minimum_release_age_excludes = ["claude", "opencode", "pi", "npm:agent-browser", "npm:agent-device", "npm:agent-browser", "npm:eas-cli"]
 
 [settings.npm]
 package_manager = "bun"
