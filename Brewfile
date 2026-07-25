@@ -3,17 +3,20 @@
 # already managed by mise or standalone installer exceptions. Runtimes and
 # overlapping developer tools stay in mise instead.
 
-tap "facebook/fb"
-tap "felixkratz/formulae"
-tap "grishka/grishka"
-tap "homebrew-zathura/zathura"
-tap "manaflow-ai/cmux"
-tap "nikitabobko/tap"
-tap "nkzw-tech/tap"
+# Every third-party tap here has been reviewed as part of this machine setup.
+# Persist that approval so later Homebrew commands use the same trust policy.
+tap "facebook/fb", trusted: true
+tap "felixkratz/formulae", trusted: true
+tap "grishka/grishka", trusted: true
+tap "homebrew-zathura/zathura", trusted: true
+tap "manaflow-ai/cmux", trusted: true
+tap "nikitabobko/tap", trusted: true
+tap "nkzw-tech/tap", trusted: true
 
 brew "apktool"
 brew "borders"
 brew "btop"
+brew "cliproxyapi", restart_service: true
 brew "curl"
 brew "gcc"
 brew "git"

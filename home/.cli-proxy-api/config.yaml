@@ -1,0 +1,17 @@
+# Secret-free local CLIProxyAPI configuration.
+# OAuth/provider credentials are generated separately under ~/.cli-proxy-api
+# and must never be copied into this repository.
+host: "127.0.0.1"
+port: 49156
+
+auth-dir: "~/.cli-proxy-api"
+api-keys: []
+
+remote-management:
+  allow-remote: false
+  secret-key: ""
+  disable-control-panel: true
+
+debug: false
+logging-to-file: false
+usage-statistics-enabled: false

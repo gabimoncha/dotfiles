@@ -14,6 +14,11 @@ This keeps fresh-machine bootstrap simple while preserving the separate Neovim r
 
 Prefer Homebrew casks first. Use vendor/manual fallback only when there is no stable cask or App Store route.
 
+Third-party taps used by setup are explicitly declared with `trusted: true` in
+their Brewfiles after review. This persists the repo's approval for later
+Homebrew commands while keeping trust checks enabled; setup must not use the
+transitional `HOMEBREW_NO_REQUIRE_TAP_TRUST` global bypass.
+
 Codex CLI, Cursor Agent CLI, and `mise` are explicit standalone-installer
 exceptions. Codex remote control and app-server updates depend on the
 standalone installer-managed path under `~/.codex/packages/standalone`, so
@@ -33,6 +38,13 @@ Default setup includes the full mobile development stack because Xcode and iOS p
 Xcode installs default to the latest release channel; `DOTFILES_XCODE_CHANNEL=prerelease` opts into prereleases. Xcode installs use `xcodes --experimental-unxip` by default because Xcode archives dominate setup time; `DOTFILES_XCODE_EXPERIMENTAL_UNXIP=0` keeps the regular unxip path available. Xcode-sensitive Homebrew formulae stay in `Brewfile` as the source of truth and are deferred until full Xcode is selected.
 
 Setup parallelism is on by default, but only across independent work. Homebrew writers and `mise install` writers stay serialized; recoverable failures are recorded, independent work continues, and the final summary exits nonzero when repair is needed.
+
+CLIProxyAPI is installed and started through its `Brewfile` formula. Its
+secret-free local server configuration is tracked at
+`home/.cli-proxy-api/config.yaml`; `bin/link-dotfiles` links that file into the
+home directory and points Homebrew's `etc/cliproxyapi.conf` at it before
+`brew bundle` starts the service. Provider OAuth files and credentials remain
+machine-local under `~/.cli-proxy-api` and are explicitly excluded from git.
 
 ## Mackup Is Copy-Mode and Allowlisted
 

@@ -423,10 +423,11 @@ The macOS defaults can be skipped for a run:
 DOTFILES_SKIP_MACOS_DEFAULTS=1 ./bin/bootstrap
 ```
 
-`bin/setup` and `bin/install-mobile-dev` temporarily export
-`HOMEBREW_NO_REQUIRE_TAP_TRUST=1` while they run, then restore the previous
-environment on exit. Keep this scoped to setup scripts only; Homebrew documents
-the variable as transitional and not recommended for persistent shell config.
+Third-party taps approved for this machine are declared with `trusted: true` in
+`Brewfile`. `brew bundle` records that trust persistently, so later Homebrew
+commands follow the same reviewed policy. The mobile-dev bundle does the same
+for its additional taps. Setup does not disable Homebrew's tap-trust checks
+globally.
 
 Run the mobile dev stack separately when you want to repair or repeat only full
 Xcode, Android Studio, `applesimutils`, `idb-companion`, and `sourcekitten`:
@@ -515,6 +516,7 @@ bin/file-restore                 unified Mackup, Raycast, and Codex file restore
 bin/*-backup, bin/*-restore      compatibility aliases for file backup/restore
 home/                            tracked $HOME sources
 home/.config/mise/config.toml    mise-owned tools
+home/.cli-proxy-api/config.yaml  secret-free local CLIProxyAPI server config
 home/.mackup.cfg                 Mackup allowlist using Synology file storage
 macos/defaults.sh                tracked macOS defaults
 nvim/                            Neovim submodule linked to ~/.config/nvim
@@ -534,11 +536,13 @@ Currently managed:
 - `~/.mackup.cfg`
 - `~/.rgrc`
 - `~/.tmux.conf`
+- `~/.cli-proxy-api/config.yaml`
 - `~/.config/mise/config.toml`
 - `~/.config/zsh/*.zsh`
 - `~/.config/karabiner/karabiner.json`
 - `~/.config/zed/settings.json`
 - `~/.config/zed/keymap.json`
+- `~/.agents/.skill-lock.json`
 - `~/.agents/skills`
 - `~/Documents/superwhisper/settings/settings.json`
 - `~/Library/Application Support/com.mitchellh.ghostty/config`
@@ -547,6 +551,12 @@ Currently managed:
 
 AeroSpace and Ghostty config links are only created after their app bundles
 exist in `/Applications`.
+
+CLIProxyAPI is installed and started by its `Brewfile` entry. Its tracked
+config binds the API to `127.0.0.1:49156`; `bin/link-dotfiles` links it to
+`~/.cli-proxy-api/config.yaml` and links Homebrew's
+`etc/cliproxyapi.conf` to that home path. Provider login files stay local in
+`~/.cli-proxy-api` and must not be copied into `home/.cli-proxy-api`.
 
 ## Shell Layout
 

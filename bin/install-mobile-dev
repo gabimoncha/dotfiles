@@ -12,30 +12,11 @@ mise_bin_dir="${HOME}/.local/bin"
 mise_shim_dir="${HOME}/.local/share/mise/shims"
 brew_bundle_jobs="${DOTFILES_BREW_BUNDLE_JOBS:-auto}"
 xcode_channel="${DOTFILES_XCODE_CHANNEL:-release}"
-homebrew_no_require_tap_trust_was_set=0
-homebrew_no_require_tap_trust_original=""
 action="full"
 
 # shellcheck source=bin/lib/setup-runtime.sh
 . "${repo_root}/bin/lib/setup-runtime.sh"
 runtime_init "install-mobile-dev"
-
-enable_temporary_homebrew_tap_trust_bypass() {
-  if [[ ${HOMEBREW_NO_REQUIRE_TAP_TRUST+x} ]]; then
-    homebrew_no_require_tap_trust_was_set=1
-    homebrew_no_require_tap_trust_original="$HOMEBREW_NO_REQUIRE_TAP_TRUST"
-  fi
-
-  export HOMEBREW_NO_REQUIRE_TAP_TRUST=1
-}
-
-restore_homebrew_tap_trust_setting() {
-  if [[ "$homebrew_no_require_tap_trust_was_set" -eq 1 ]]; then
-    export HOMEBREW_NO_REQUIRE_TAP_TRUST="$homebrew_no_require_tap_trust_original"
-  else
-    unset HOMEBREW_NO_REQUIRE_TAP_TRUST
-  fi
-}
 
 cleanup() {
   runtime_cleanup
@@ -43,8 +24,6 @@ cleanup() {
   if [[ -n "$temp_brewfile" ]]; then
     rm -f "$temp_brewfile"
   fi
-
-  restore_homebrew_tap_trust_setting
 }
 
 trap cleanup EXIT
@@ -486,8 +465,8 @@ install_xcode_dependent_formulae() {
 
   temp_brewfile="$(mktemp)"
   cat > "$temp_brewfile" <<'EOF'
-tap "facebook/fb"
-tap "wix/brew"
+tap "facebook/fb", trusted: true
+tap "wix/brew", trusted: true
 brew "facebook/fb/idb-companion"
 brew "sourcekitten"
 brew "wix/brew/applesimutils"
@@ -620,7 +599,6 @@ if [[ "$dry_run" -eq 1 ]]; then
   export DOTFILES_SETUP_SHOW_STEP_LOGS
 fi
 
-enable_temporary_homebrew_tap_trust_bypass
 if ! runtime_acquire_global_lock; then
   if [[ "${DOTFILES_RUNTIME_OWNS_SUMMARY:-0}" -eq 1 ]]; then
     runtime_print_summary

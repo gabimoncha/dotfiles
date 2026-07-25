@@ -11,5 +11,10 @@ home/.config/local/*
 !home/.config/local/
 !home/.config/local/*.example
 
+# CLIProxyAPI auth state stays local; only its secret-free config is tracked.
+home/.cli-proxy-api/*
+!home/.cli-proxy-api/
+!home/.cli-proxy-api/config.yaml
+
 # Local worktree noise from nested repos/submodules.
 .submodule-seed/
