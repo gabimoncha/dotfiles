@@ -9,7 +9,7 @@
       "skillFolderHash": "c44207a2ab9c8aea138423e17d13aadb31eddaef",
       "pluginName": "essentials",
       "installedAt": "2026-07-26T11:03:44.339Z",
-      "updatedAt": "2026-07-27T14:20:59.741Z"
+      "updatedAt": "2026-07-27T21:11:26.153Z"
     },
     "ast-grep": {
       "source": "gabimoncha/skills",
@@ -19,7 +19,7 @@
       "skillFolderHash": "97f5009f51d31f40dbacb78a8e4292385108fa57",
       "pluginName": "third-party-essentials",
       "installedAt": "2026-07-25T14:04:34.329Z",
-      "updatedAt": "2026-07-27T14:20:59.748Z"
+      "updatedAt": "2026-07-27T21:11:26.159Z"
     },
     "bootstrap-mise-oxc-and-ast-grep": {
       "source": "gabimoncha/skills",
@@ -29,17 +29,27 @@
       "skillFolderHash": "bc457e68e2acd23f2ec376f274d994dbfd71544b",
       "pluginName": "essentials",
       "installedAt": "2026-07-25T14:04:34.317Z",
-      "updatedAt": "2026-07-27T14:20:59.743Z"
+      "updatedAt": "2026-07-27T21:11:26.154Z"
+    },
+    "claude-model-picker": {
+      "source": "gabimoncha/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/gabimoncha/skills.git",
+      "skillPath": "skills/essentials/claude-model-picker/SKILL.md",
+      "skillFolderHash": "bf0fdb4ba93dc1c0f62ae7eba258b881d0980990",
+      "pluginName": "essentials",
+      "installedAt": "2026-07-27T21:11:26.155Z",
+      "updatedAt": "2026-07-27T21:11:26.155Z"
     },
     "codex-model-router": {
       "source": "gabimoncha/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/gabimoncha/skills.git",
       "skillPath": "skills/essentials/codex-model-router/SKILL.md",
-      "skillFolderHash": "bbe14ea7656472dee62832d2978b8494024f6e42",
+      "skillFolderHash": "e578125dbd248b5493104f43eb70372cc49371c1",
       "pluginName": "essentials",
       "installedAt": "2026-07-24T16:49:28.218Z",
-      "updatedAt": "2026-07-27T14:20:59.743Z"
+      "updatedAt": "2026-07-27T21:11:26.156Z"
     },
     "commit": {
       "source": "gabimoncha/skills",
@@ -49,7 +59,7 @@
       "skillFolderHash": "f9538dcb4106d7a4a016d73c71cd53ae2b8378bc",
       "pluginName": "third-party-essentials",
       "installedAt": "2026-07-24T18:00:45.891Z",
-      "updatedAt": "2026-07-27T14:20:59.748Z"
+      "updatedAt": "2026-07-27T21:11:26.159Z"
     },
     "compose-prose": {
       "source": "gabimoncha/skills",
@@ -59,7 +69,7 @@
       "skillFolderHash": "3d2b400df26e9d8a577a7387e57e743903def8fd",
       "pluginName": "essentials",
       "installedAt": "2026-07-27T14:20:59.744Z",
-      "updatedAt": "2026-07-27T14:20:59.744Z"
+      "updatedAt": "2026-07-27T21:11:26.156Z"
     },
     "coordinate-shared-simulator": {
       "source": "gabimoncha/skills",
@@ -69,7 +79,7 @@
       "skillFolderHash": "e13b7cfaf6d3582a9523a3e367432ade0a9ceab8",
       "pluginName": "essentials",
       "installedAt": "2026-07-24T16:49:28.220Z",
-      "updatedAt": "2026-07-27T14:20:59.745Z"
+      "updatedAt": "2026-07-27T21:11:26.156Z"
     },
     "diagnose": {
       "source": "gabimoncha/skills",
@@ -79,7 +89,7 @@
       "skillFolderHash": "8b94bbfce72c7e81162edcaf0f2a009fa452120f",
       "pluginName": "essentials",
       "installedAt": "2026-07-24T16:49:28.220Z",
-      "updatedAt": "2026-07-27T14:20:59.745Z"
+      "updatedAt": "2026-07-27T21:11:26.157Z"
     },
     "explore-subagents": {
       "source": "gabimoncha/skills",
@@ -89,7 +99,7 @@
       "skillFolderHash": "9a0ad1d1af408f2efd250ff2e12e5cfbc3d4d250",
       "pluginName": "essentials",
       "installedAt": "2026-07-24T16:49:28.221Z",
-      "updatedAt": "2026-07-27T14:20:59.746Z"
+      "updatedAt": "2026-07-27T21:11:26.157Z"
     },
     "find-docs": {
       "source": "gabimoncha/skills",
@@ -99,7 +109,7 @@
       "skillFolderHash": "0e3ee5ad0f10d7b3b73c0fff31dc2ab532fb4147",
       "pluginName": "third-party-essentials",
       "installedAt": "2026-07-24T18:00:45.892Z",
-      "updatedAt": "2026-07-27T14:20:59.748Z"
+      "updatedAt": "2026-07-27T21:11:26.159Z"
     },
     "git-integrate": {
       "source": "gabimoncha/skills",
@@ -109,7 +119,7 @@
       "skillFolderHash": "1f3082b3dfab172813e439c63175086c6a4fce28",
       "pluginName": "third-party-essentials",
       "installedAt": "2026-07-24T18:00:45.893Z",
-      "updatedAt": "2026-07-27T14:20:59.749Z"
+      "updatedAt": "2026-07-27T21:11:26.159Z"
     },
     "implement-plan": {
       "source": "gabimoncha/skills",
@@ -119,17 +129,7 @@
       "skillFolderHash": "89b8a0d5fbed383b170a9515a651362ac268ff22",
       "pluginName": "essentials",
       "installedAt": "2026-07-24T16:49:28.222Z",
-      "updatedAt": "2026-07-27T14:20:59.746Z"
-    },
-    "model-picker": {
-      "source": "gabimoncha/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/gabimoncha/skills.git",
-      "skillPath": "skills/essentials/claude-model-picker/SKILL.md",
-      "skillFolderHash": "32889745f09cd3abd2b787ae63120ebd3659dfeb",
-      "pluginName": "essentials",
-      "installedAt": "2026-07-24T16:49:28.223Z",
-      "updatedAt": "2026-07-27T14:20:59.747Z"
+      "updatedAt": "2026-07-27T21:11:26.158Z"
     },
     "optimize-skill": {
       "source": "gabimoncha/skills",
@@ -139,7 +139,7 @@
       "skillFolderHash": "3c6b81c7f5313a5ebe1e3faf2b2f06db1ae3f29c",
       "pluginName": "essentials",
       "installedAt": "2026-07-27T14:20:59.747Z",
-      "updatedAt": "2026-07-27T14:20:59.747Z"
+      "updatedAt": "2026-07-27T21:11:26.158Z"
     },
     "triage-codex-sessions": {
       "source": "gabimoncha/skills",
@@ -149,7 +149,7 @@
       "skillFolderHash": "5196c559d112ad79436bc4d73ac490b8081623c8",
       "pluginName": "essentials",
       "installedAt": "2026-07-24T16:49:28.223Z",
-      "updatedAt": "2026-07-27T14:20:59.748Z"
+      "updatedAt": "2026-07-27T21:11:26.159Z"
     },
     "writing-great-skills": {
       "source": "gabimoncha/skills",
@@ -159,7 +159,7 @@
       "skillFolderHash": "c74ca17cdd97a57095198c24757877e3a202dc9f",
       "pluginName": "third-party-essentials",
       "installedAt": "2026-07-24T18:00:45.893Z",
-      "updatedAt": "2026-07-27T14:20:59.749Z"
+      "updatedAt": "2026-07-27T21:11:26.160Z"
     }
   },
   "dismissed": {
