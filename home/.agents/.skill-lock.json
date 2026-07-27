@@ -1,135 +1,15 @@
 {
   "version": 3,
   "skills": {
-    "codex-model-router": {
+    "adversarial-council": {
       "source": "gabimoncha/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/gabimoncha/skills.git",
-      "skillPath": "skills/essentials/codex-model-router/SKILL.md",
-      "skillFolderHash": "bbe14ea7656472dee62832d2978b8494024f6e42",
+      "skillPath": "skills/essentials/adversarial-council/SKILL.md",
+      "skillFolderHash": "c44207a2ab9c8aea138423e17d13aadb31eddaef",
       "pluginName": "essentials",
-      "installedAt": "2026-07-24T16:49:28.218Z",
-      "updatedAt": "2026-07-25T14:04:34.324Z"
-    },
-    "coordinate-shared-simulator": {
-      "source": "gabimoncha/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/gabimoncha/skills.git",
-      "skillPath": "skills/essentials/coordinate-shared-simulator/SKILL.md",
-      "skillFolderHash": "e13b7cfaf6d3582a9523a3e367432ade0a9ceab8",
-      "pluginName": "essentials",
-      "installedAt": "2026-07-24T16:49:28.220Z",
-      "updatedAt": "2026-07-25T14:04:34.324Z"
-    },
-    "diagnose": {
-      "source": "gabimoncha/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/gabimoncha/skills.git",
-      "skillPath": "skills/essentials/diagnose/SKILL.md",
-      "skillFolderHash": "8b94bbfce72c7e81162edcaf0f2a009fa452120f",
-      "pluginName": "essentials",
-      "installedAt": "2026-07-24T16:49:28.220Z",
-      "updatedAt": "2026-07-25T14:04:34.324Z"
-    },
-    "explore-subagents": {
-      "source": "gabimoncha/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/gabimoncha/skills.git",
-      "skillPath": "skills/essentials/explore-subagents/SKILL.md",
-      "skillFolderHash": "9a0ad1d1af408f2efd250ff2e12e5cfbc3d4d250",
-      "pluginName": "essentials",
-      "installedAt": "2026-07-24T16:49:28.221Z",
-      "updatedAt": "2026-07-25T14:04:34.325Z"
-    },
-    "implement-plan": {
-      "source": "gabimoncha/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/gabimoncha/skills.git",
-      "skillPath": "skills/essentials/implement-plan/SKILL.md",
-      "skillFolderHash": "89b8a0d5fbed383b170a9515a651362ac268ff22",
-      "pluginName": "essentials",
-      "installedAt": "2026-07-24T16:49:28.222Z",
-      "updatedAt": "2026-07-25T14:04:34.325Z"
-    },
-    "model-picker": {
-      "source": "gabimoncha/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/gabimoncha/skills.git",
-      "skillPath": "skills/essentials/claude-model-picker/SKILL.md",
-      "skillFolderHash": "32889745f09cd3abd2b787ae63120ebd3659dfeb",
-      "pluginName": "essentials",
-      "installedAt": "2026-07-24T16:49:28.223Z",
-      "updatedAt": "2026-07-25T14:04:34.326Z"
-    },
-    "triage-codex-sessions": {
-      "source": "gabimoncha/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/gabimoncha/skills.git",
-      "skillPath": "skills/essentials/triage-codex-sessions/SKILL.md",
-      "skillFolderHash": "5196c559d112ad79436bc4d73ac490b8081623c8",
-      "pluginName": "essentials",
-      "installedAt": "2026-07-24T16:49:28.223Z",
-      "updatedAt": "2026-07-25T14:04:34.327Z"
-    },
-    "write-music": {
-      "source": "gabimoncha/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/gabimoncha/skills.git",
-      "skillPath": "skills/essentials/write-music/SKILL.md",
-      "skillFolderHash": "ab36d3a93bd5ea0e4b3857c18a78ac4b9592ceb8",
-      "pluginName": "essentials",
-      "installedAt": "2026-07-24T16:49:28.223Z",
-      "updatedAt": "2026-07-25T14:04:34.328Z"
-    },
-    "commit": {
-      "source": "gabimoncha/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/gabimoncha/skills.git",
-      "skillPath": "skills/third-party-essentials/commit/SKILL.md",
-      "skillFolderHash": "f9538dcb4106d7a4a016d73c71cd53ae2b8378bc",
-      "pluginName": "third-party-essentials",
-      "installedAt": "2026-07-24T18:00:45.891Z",
-      "updatedAt": "2026-07-25T14:04:34.329Z"
-    },
-    "find-docs": {
-      "source": "gabimoncha/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/gabimoncha/skills.git",
-      "skillPath": "skills/third-party-essentials/find-docs/SKILL.md",
-      "skillFolderHash": "0e3ee5ad0f10d7b3b73c0fff31dc2ab532fb4147",
-      "pluginName": "third-party-essentials",
-      "installedAt": "2026-07-24T18:00:45.892Z",
-      "updatedAt": "2026-07-25T14:04:34.329Z"
-    },
-    "git-integrate": {
-      "source": "gabimoncha/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/gabimoncha/skills.git",
-      "skillPath": "skills/third-party-essentials/git-integrate/SKILL.md",
-      "skillFolderHash": "1f3082b3dfab172813e439c63175086c6a4fce28",
-      "pluginName": "third-party-essentials",
-      "installedAt": "2026-07-24T18:00:45.893Z",
-      "updatedAt": "2026-07-25T14:04:34.330Z"
-    },
-    "writing-great-skills": {
-      "source": "gabimoncha/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/gabimoncha/skills.git",
-      "skillPath": "skills/third-party-essentials/writing-great-skills/SKILL.md",
-      "skillFolderHash": "c74ca17cdd97a57095198c24757877e3a202dc9f",
-      "pluginName": "third-party-essentials",
-      "installedAt": "2026-07-24T18:00:45.893Z",
-      "updatedAt": "2026-07-25T14:04:34.330Z"
-    },
-    "bootstrap-mise-oxc-and-ast-grep": {
-      "source": "gabimoncha/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/gabimoncha/skills.git",
-      "skillPath": "skills/essentials/bootstrap-mise-oxc-and-ast-grep/SKILL.md",
-      "skillFolderHash": "30cee8e43e9fe8bc8402d7a21db631c3d11cafc9",
-      "pluginName": "essentials",
-      "installedAt": "2026-07-25T14:04:34.317Z",
-      "updatedAt": "2026-07-25T14:04:34.317Z"
+      "installedAt": "2026-07-26T11:03:44.339Z",
+      "updatedAt": "2026-07-27T14:20:59.741Z"
     },
     "ast-grep": {
       "source": "gabimoncha/skills",
@@ -139,7 +19,147 @@
       "skillFolderHash": "97f5009f51d31f40dbacb78a8e4292385108fa57",
       "pluginName": "third-party-essentials",
       "installedAt": "2026-07-25T14:04:34.329Z",
-      "updatedAt": "2026-07-25T14:04:34.329Z"
+      "updatedAt": "2026-07-27T14:20:59.748Z"
+    },
+    "bootstrap-mise-oxc-and-ast-grep": {
+      "source": "gabimoncha/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/gabimoncha/skills.git",
+      "skillPath": "skills/essentials/bootstrap-mise-oxc-and-ast-grep/SKILL.md",
+      "skillFolderHash": "bc457e68e2acd23f2ec376f274d994dbfd71544b",
+      "pluginName": "essentials",
+      "installedAt": "2026-07-25T14:04:34.317Z",
+      "updatedAt": "2026-07-27T14:20:59.743Z"
+    },
+    "codex-model-router": {
+      "source": "gabimoncha/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/gabimoncha/skills.git",
+      "skillPath": "skills/essentials/codex-model-router/SKILL.md",
+      "skillFolderHash": "bbe14ea7656472dee62832d2978b8494024f6e42",
+      "pluginName": "essentials",
+      "installedAt": "2026-07-24T16:49:28.218Z",
+      "updatedAt": "2026-07-27T14:20:59.743Z"
+    },
+    "commit": {
+      "source": "gabimoncha/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/gabimoncha/skills.git",
+      "skillPath": "skills/third-party-essentials/commit/SKILL.md",
+      "skillFolderHash": "f9538dcb4106d7a4a016d73c71cd53ae2b8378bc",
+      "pluginName": "third-party-essentials",
+      "installedAt": "2026-07-24T18:00:45.891Z",
+      "updatedAt": "2026-07-27T14:20:59.748Z"
+    },
+    "compose-prose": {
+      "source": "gabimoncha/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/gabimoncha/skills.git",
+      "skillPath": "skills/essentials/compose-prose/SKILL.md",
+      "skillFolderHash": "3d2b400df26e9d8a577a7387e57e743903def8fd",
+      "pluginName": "essentials",
+      "installedAt": "2026-07-27T14:20:59.744Z",
+      "updatedAt": "2026-07-27T14:20:59.744Z"
+    },
+    "coordinate-shared-simulator": {
+      "source": "gabimoncha/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/gabimoncha/skills.git",
+      "skillPath": "skills/essentials/coordinate-shared-simulator/SKILL.md",
+      "skillFolderHash": "e13b7cfaf6d3582a9523a3e367432ade0a9ceab8",
+      "pluginName": "essentials",
+      "installedAt": "2026-07-24T16:49:28.220Z",
+      "updatedAt": "2026-07-27T14:20:59.745Z"
+    },
+    "diagnose": {
+      "source": "gabimoncha/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/gabimoncha/skills.git",
+      "skillPath": "skills/essentials/diagnose/SKILL.md",
+      "skillFolderHash": "8b94bbfce72c7e81162edcaf0f2a009fa452120f",
+      "pluginName": "essentials",
+      "installedAt": "2026-07-24T16:49:28.220Z",
+      "updatedAt": "2026-07-27T14:20:59.745Z"
+    },
+    "explore-subagents": {
+      "source": "gabimoncha/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/gabimoncha/skills.git",
+      "skillPath": "skills/essentials/explore-subagents/SKILL.md",
+      "skillFolderHash": "9a0ad1d1af408f2efd250ff2e12e5cfbc3d4d250",
+      "pluginName": "essentials",
+      "installedAt": "2026-07-24T16:49:28.221Z",
+      "updatedAt": "2026-07-27T14:20:59.746Z"
+    },
+    "find-docs": {
+      "source": "gabimoncha/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/gabimoncha/skills.git",
+      "skillPath": "skills/third-party-essentials/find-docs/SKILL.md",
+      "skillFolderHash": "0e3ee5ad0f10d7b3b73c0fff31dc2ab532fb4147",
+      "pluginName": "third-party-essentials",
+      "installedAt": "2026-07-24T18:00:45.892Z",
+      "updatedAt": "2026-07-27T14:20:59.748Z"
+    },
+    "git-integrate": {
+      "source": "gabimoncha/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/gabimoncha/skills.git",
+      "skillPath": "skills/third-party-essentials/git-integrate/SKILL.md",
+      "skillFolderHash": "1f3082b3dfab172813e439c63175086c6a4fce28",
+      "pluginName": "third-party-essentials",
+      "installedAt": "2026-07-24T18:00:45.893Z",
+      "updatedAt": "2026-07-27T14:20:59.749Z"
+    },
+    "implement-plan": {
+      "source": "gabimoncha/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/gabimoncha/skills.git",
+      "skillPath": "skills/essentials/implement-plan/SKILL.md",
+      "skillFolderHash": "89b8a0d5fbed383b170a9515a651362ac268ff22",
+      "pluginName": "essentials",
+      "installedAt": "2026-07-24T16:49:28.222Z",
+      "updatedAt": "2026-07-27T14:20:59.746Z"
+    },
+    "model-picker": {
+      "source": "gabimoncha/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/gabimoncha/skills.git",
+      "skillPath": "skills/essentials/claude-model-picker/SKILL.md",
+      "skillFolderHash": "32889745f09cd3abd2b787ae63120ebd3659dfeb",
+      "pluginName": "essentials",
+      "installedAt": "2026-07-24T16:49:28.223Z",
+      "updatedAt": "2026-07-27T14:20:59.747Z"
+    },
+    "optimize-skill": {
+      "source": "gabimoncha/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/gabimoncha/skills.git",
+      "skillPath": "skills/essentials/optimize-skill/SKILL.md",
+      "skillFolderHash": "3c6b81c7f5313a5ebe1e3faf2b2f06db1ae3f29c",
+      "pluginName": "essentials",
+      "installedAt": "2026-07-27T14:20:59.747Z",
+      "updatedAt": "2026-07-27T14:20:59.747Z"
+    },
+    "triage-codex-sessions": {
+      "source": "gabimoncha/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/gabimoncha/skills.git",
+      "skillPath": "skills/essentials/triage-codex-sessions/SKILL.md",
+      "skillFolderHash": "5196c559d112ad79436bc4d73ac490b8081623c8",
+      "pluginName": "essentials",
+      "installedAt": "2026-07-24T16:49:28.223Z",
+      "updatedAt": "2026-07-27T14:20:59.748Z"
+    },
+    "writing-great-skills": {
+      "source": "gabimoncha/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/gabimoncha/skills.git",
+      "skillPath": "skills/third-party-essentials/writing-great-skills/SKILL.md",
+      "skillFolderHash": "c74ca17cdd97a57095198c24757877e3a202dc9f",
+      "pluginName": "third-party-essentials",
+      "installedAt": "2026-07-24T18:00:45.893Z",
+      "updatedAt": "2026-07-27T14:20:59.749Z"
     }
   },
   "dismissed": {
