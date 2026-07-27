@@ -117,7 +117,8 @@ flowchart LR
     S19{"Encrypted Codex state archive found?"}
     S20["Prompt and call bin/file-restore codex when approved"]
     S21["Defer Codex restore"]
-    S22["Print shell reload hint and final actionable summary"]
+    S22["Install personal AI skills globally for Claude Code, Cursor, and Codex"]
+    S23["Print shell reload hint and final actionable summary"]
 
     S0 --> S1
     S1 -->|"yes"| S2
@@ -132,6 +133,7 @@ flowchart LR
     S14 -->|"yes"| S16 --> S17 --> S18 --> S19
     S19 -->|"yes"| S20 --> S22
     S19 -->|"no"| S21 --> S22
+    S22 --> S23
   end
 
   subgraph Preflight["bin/preflight"]
@@ -245,14 +247,16 @@ flowchart LR
   S8 -.-> B1
   S11 -.-> I1
   S12 -.-> L1
-  S13 -.->|optional later| MD1
   S16 -.-> A1
   S17 -.-> M1
   S18 -.-> R1
   S20 -.-> C1
 
   B4 -.-> L1
-  B7 -.-> L1
+  B8 -.-> MD1
+  B10 -.-> MD3
+  B11 -.-> L1
+  B12 -.-> MD4
 ```
 
 It is safe to rerun as Apple ID, App Store, iCloud, Synology Drive, Xcode, or
@@ -326,7 +330,22 @@ then adds both folders to Finder Favorites. It is run during setup and can be
 rerun later if macOS privacy prompts or Finder state get in the way. The
 sidebar label is `screenshots`; the folder path remains `~/Screenshots`.
 
-### Step 5: Handle manual account and permission work
+### Step 5: Install personal AI skills
+
+As its final machine-changing step, setup installs every skill from
+`gabimoncha/skills` globally for Claude Code, Cursor, and Codex:
+
+```bash
+npx skills@latest add gabimoncha/skills -g --skill '*' --agent claude-code cursor codex -y
+```
+
+The installed `~/.agents/skills` tree and generated
+`~/.agents/.skill-lock.json` are machine-local. They are intentionally not
+tracked by this repo, linked by `bin/link-dotfiles`, or included in the
+encrypted Codex state archive. Rerun the command directly whenever you want to
+refresh the installed skills.
+
+### Step 6: Handle manual account and permission work
 
 Some state cannot be safely automated:
 
@@ -356,7 +375,7 @@ The dedicated mobile-dev installer remains available for targeted reruns:
 Manual/vendor apps currently live in `apps/manifest.tsv` as `manual` rows.
 DaVinci Resolve and Pinokio are examples.
 
-### Step 6: Verify app state
+### Step 7: Verify app state
 
 If the machine looks mostly set up but a few pieces feel incomplete, run:
 
@@ -393,6 +412,10 @@ It:
 14. applies tracked macOS defaults once and configures Finder sidebar favorites
 15. prints a final actionable summary of completed, failed, deferred, and
    critical items
+
+After bootstrap and the interactive auth/restore follow-up, `bin/setup` runs the
+personal AI skill install command from Step 5. This is the final
+machine-changing setup step.
 
 Safe parallelism is on by default. Use `./bin/setup --serial` or
 `DOTFILES_SETUP_SERIAL=1 ./bin/setup` when debugging. Recoverable failures keep
@@ -542,8 +565,6 @@ Currently managed:
 - `~/.config/karabiner/karabiner.json`
 - `~/.config/zed/settings.json`
 - `~/.config/zed/keymap.json`
-- `~/.agents/.skill-lock.json`
-- `~/.agents/skills`
 - `~/Documents/superwhisper/settings/settings.json`
 - `~/Library/Application Support/com.mitchellh.ghostty/config`
 - `~/scripts/toggle_function_keys.sh`
@@ -704,11 +725,11 @@ Codex state is separate from Mackup and Raycast:
 The archive is encrypted with `age -p`, saved to
 `SynologyDrive-personal/MacBackups/Codex`, and mirrored to `iCloud Drive/Codex`
 when iCloud is ready. It includes curated Codex config, keybindings, rules,
-user-authored global skills, memories, and scheduled task definitions. It deliberately
-excludes auth, connections, project/workspace state, histories, attachments,
-caches, sqlite state, plugin caches, worktrees, sockets, app bundles, raw
-Codex app global state, installation IDs, app-server state, and standalone
-installer packages.
+memories, and scheduled task definitions. It deliberately excludes global
+skills (which setup installs from `gabimoncha/skills`), auth, connections,
+project/workspace state, histories, attachments, caches, sqlite state, plugin
+caches, worktrees, sockets, app bundles, raw Codex app global state,
+installation IDs, app-server state, and standalone installer packages.
 
 `./bin/file-restore codex` preserves active state by default: missing files are
 restored, identical files are skipped, and incoming conflicts are staged under

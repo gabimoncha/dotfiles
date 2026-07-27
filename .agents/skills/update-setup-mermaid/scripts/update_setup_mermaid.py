@@ -19,21 +19,25 @@ CANONICAL_MERMAID = """flowchart LR
     S2["Exit: rerun without sudo"]
     S3["Call bin/preflight"]
     S4{"--dry-run?"}
-    S5["Call bin/install-apps --dry-run"]
-    S6["Print setup summary"]
+    S5["Preview mobile-dev and app installs"]
+    S6["Print final actionable summary"]
     S7["Exit"]
     S8["Call bin/bootstrap"]
     S9{"Xcode CLT ready after bootstrap?"}
     S10["Exit: finish installer, rerun ./bin/setup"]
     S11["Call bin/install-apps"]
     S12["Call bin/link-dotfiles"]
-    S13["Print setup summary"]
+    S13["Print manifest summary"]
     S14{"Interactive terminal?"}
     S15["Skip auth and restore follow-up"]
     S16["Call bin/auth-setup after Enter"]
-    S17["Call bin/mackup-restore"]
-    S18["Find .rayconfig and call bin/raycast-restore when present"]
-    S19["Print shell reload hint"]
+    S17["Call bin/file-restore mackup"]
+    S18["Find .rayconfig and call bin/file-restore raycast when present"]
+    S19{"Encrypted Codex state archive found?"}
+    S20["Prompt and call bin/file-restore codex when approved"]
+    S21["Defer Codex restore"]
+    S22["Install personal AI skills globally for Claude Code, Cursor, and Codex"]
+    S23["Print shell reload hint and final actionable summary"]
 
     S0 --> S1
     S1 -->|"yes"| S2
@@ -44,8 +48,11 @@ CANONICAL_MERMAID = """flowchart LR
     S8 --> S9
     S9 -->|"no"| S10
     S9 -->|"yes"| S11 --> S12 --> S13 --> S14
-    S14 -->|"no"| S15 --> S19
+    S14 -->|"no"| S15 --> S22
     S14 -->|"yes"| S16 --> S17 --> S18 --> S19
+    S19 -->|"yes"| S20 --> S22
+    S19 -->|"no"| S21 --> S22
+    S22 --> S23
   end
 
   subgraph Preflight["bin/preflight"]
@@ -60,19 +67,22 @@ CANONICAL_MERMAID = """flowchart LR
 
   subgraph Bootstrap["bin/bootstrap"]
     direction TB
-    B1["Verify admin, Xcode CLT, Homebrew, mise"]
+    B1["Verify admin, Xcode CLT, Homebrew"]
     B2["Configure sudo Touch ID unless skipped"]
     B3["Initialize nvim submodule"]
     B4["Call bin/link-dotfiles"]
-    B5["Start mise install in background"]
-    B6["Install Brewfile, mas apps, VS Code extensions"]
-    B7["Call bin/link-dotfiles again after apps exist"]
-    B8["Wait for mise and run bin/check-mise-tools"]
-    B9["Report mobile-dev setup as deferred"]
-    B10["Run setup-tmux, shell framework, macOS defaults, Finder favorites"]
-    B11["Bootstrap complete"]
+    B5["Call bin/ensure-mise-standalone"]
+    B6["Call bin/ensure-codex-standalone"]
+    B7["Call bin/ensure-cursor-agent-standalone"]
+    B8["Prepare xcodes and aria2, then start Xcode install"]
+    B9["Start mise install and run brew bundle"]
+    B10["Run Android Studio, MAS apps, and VS Code extensions"]
+    B11["Call bin/link-dotfiles again after apps exist"]
+    B12["Run iOS platform support and Xcode-dependent formulae"]
+    B13["Run setup-tmux, shell framework, macOS defaults, Finder favorites"]
+    B14["Bootstrap complete"]
 
-    B1 --> B2 --> B3 --> B4 --> B5 --> B6 --> B7 --> B8 --> B9 --> B10 --> B11
+    B1 --> B2 --> B3 --> B4 --> B5 --> B6 --> B7 --> B8 --> B9 --> B10 --> B11 --> B12 --> B13 --> B14
   end
 
   subgraph InstallApps["bin/install-apps"]
@@ -80,24 +90,26 @@ CANONICAL_MERMAID = """flowchart LR
     I1["Read apps/manifest.tsv"]
     I2{"Manifest row type"}
     I3["cask or formula: brew install or dry-run"]
-    I4["mise: mise install or dry-run"]
-    I5["manual: print vendor instructions"]
-    I6["App install pass complete"]
+    I4["manual: print vendor instructions"]
+    I5["App install pass complete"]
 
     I1 --> I2
-    I2 --> I3 --> I6
-    I2 --> I4 --> I6
-    I2 --> I5 --> I6
+    I2 --> I3 --> I5
+    I2 --> I4 --> I5
   end
 
   subgraph MobileDev["bin/install-mobile-dev"]
     direction TB
-    MD1["Ensure Homebrew, mise, and xcodes"]
-    MD2["Install Android Studio cask"]
-    MD3["Install and configure full Xcode"]
-    MD4["Install idb-companion and sourcekitten"]
+    MD1["Ensure standalone mise, xcodes, and aria2"]
+    MD2["Install and select full Xcode"]
+    MD3["Install Android Studio cask"]
+    MD4["Install iOS platform support"]
+    MD5["Install applesimutils, idb-companion, and sourcekitten"]
 
-    MD1 --> MD2 --> MD3 --> MD4
+    MD1 --> MD2
+    MD1 --> MD3
+    MD2 --> MD4
+    MD2 --> MD5
   end
 
   subgraph LinkDotfiles["bin/link-dotfiles"]
@@ -112,25 +124,26 @@ CANONICAL_MERMAID = """flowchart LR
 
   subgraph AuthSetup["bin/auth-setup"]
     direction TB
-    A1["Configure local Git identity"]
-    A2["Create or reuse SSH key"]
-    A3["Authenticate gh and upload key when possible"]
-    A4["Verify GitHub SSH"]
+    A1["Authenticate gh when possible"]
+    A2["Configure local Git identity"]
+    A3["Create or reuse SSH key"]
+    A4["Upload key when possible"]
+    A5["Verify GitHub SSH"]
 
-    A1 --> A2 --> A3 --> A4
+    A1 --> A2 --> A3 --> A4 --> A5
   end
 
-  subgraph MackupRestore["bin/mackup-restore"]
+  subgraph MackupRestore["bin/file-restore mackup"]
     direction TB
     M1["Use tracked home/.mackup.cfg"]
-    M2["Restore allowlisted app settings from iCloud"]
+    M2["Restore allowlisted app settings from Synology or iCloud"]
 
     M1 --> M2
   end
 
-  subgraph RaycastRestore["bin/raycast-restore"]
+  subgraph RaycastRestore["bin/file-restore raycast"]
     direction TB
-    R1{"Raycast .rayconfig found in iCloud?"}
+    R1{"Raycast .rayconfig found in Synology or iCloud?"}
     R2["Open newest .rayconfig"]
     R3["Defer Raycast restore"]
 
@@ -138,18 +151,31 @@ CANONICAL_MERMAID = """flowchart LR
     R1 -->|"no"| R3
   end
 
+  subgraph CodexRestore["bin/file-restore codex"]
+    direction TB
+    C1["Decrypt age archive"]
+    C2["Validate allowlisted paths"]
+    C3["Back up replaced targets"]
+    C4["Restore curated Codex state"]
+
+    C1 --> C2 --> C3 --> C4
+  end
+
   S3 -.-> P1
   S5 -.-> I1
   S8 -.-> B1
   S11 -.-> I1
   S12 -.-> L1
-  S13 -.->|optional later| MD1
   S16 -.-> A1
   S17 -.-> M1
   S18 -.-> R1
+  S20 -.-> C1
 
   B4 -.-> L1
-  B7 -.-> L1"""
+  B8 -.-> MD1
+  B10 -.-> MD3
+  B11 -.-> L1
+  B12 -.-> MD4"""
 
 
 def find_mermaid_block(text: str) -> tuple[int, int, str]:

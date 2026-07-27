@@ -60,12 +60,12 @@ Raycast stays out of the Mackup allowlist unless Mackup provides a narrow suppor
 
 ## Codex State Uses Encrypted Archives
 
-Durable, safe AI tooling assets can live in this repo and be linked through
-`bin/link-dotfiles`. User-authored global Codex skills and the shared skill
-selection lock live under `home/.agents`, with `~/.agents/skills` and
-`~/.agents/.skill-lock.json` linked individually. The parent `~/.agents`
-directory stays machine-local so future runtime-generated files do not land in
-the Git checkout implicitly.
+Global AI skills are sourced from `gabimoncha/skills`, not copied into this
+repo. As the final setup step, `bin/setup` installs every skill globally for
+Claude Code, Cursor, and Codex with the `skills` CLI. The resulting
+`~/.agents/skills` tree and generated `~/.agents/.skill-lock.json` stay
+machine-local instead of being symlinked, tracked in Git, or duplicated in the
+Codex state archive.
 
 Codex memories and selected user config stay out of git and Mackup. `~/.codex`
 contains auth, histories, databases, caches, worktrees, plugin assets, generated

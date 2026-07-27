@@ -128,8 +128,21 @@ codex_portable_state_exists() {
     [[ -e "${HOME}/.codex/AGENTS.md" ]] ||
     [[ -d "${HOME}/.codex/rules" ]] ||
     [[ -d "${HOME}/.codex/memories" ]] ||
-    [[ -d "${HOME}/.codex/automations" ]] ||
-    [[ -d "${HOME}/.agents/skills" ]]
+    [[ -d "${HOME}/.codex/automations" ]]
+}
+
+install_personal_ai_skills() {
+  local mise_path="${HOME}/.local/bin/mise"
+
+  if [[ ! -x "$mise_path" ]]; then
+    warn "mise is unavailable; cannot install personal AI skills"
+    return 1
+  fi
+
+  (
+    cd "$repo_root"
+    "$mise_path" exec -- npx skills@latest add gabimoncha/skills -g --skill '*' --agent claude-code cursor codex -y
+  )
 }
 
 print_manifest_summary() {
@@ -379,6 +392,7 @@ if [[ $dry_run -eq 1 ]]; then
     runtime_record_failure recoverable "Manifest app dry-run" "install-apps dry-run failed" "" "Rerun ./bin/install-apps --dry-run after fixing the logged error."
     setup_status=1
   fi
+  log "dry-run: would install personal AI skills with: npx skills@latest add gabimoncha/skills -g --skill '*' --agent claude-code cursor codex -y"
   print_manifest_summary
   runtime_print_summary
   if [[ "$setup_status" -ne 0 ]]; then
@@ -422,6 +436,13 @@ fi
 
 print_manifest_summary
 run_interactive_followup
+log "Installing personal AI skills"
+if install_personal_ai_skills; then
+  runtime_record_completed "Personal AI skills"
+else
+  runtime_record_failure recoverable "Personal AI skills" "global skill installation failed" "" "Rerun npx skills@latest add gabimoncha/skills -g --skill '*' --agent claude-code cursor codex -y."
+  setup_status=1
+fi
 print_shell_reload_hint
 runtime_print_summary
 

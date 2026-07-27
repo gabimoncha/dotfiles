@@ -266,13 +266,6 @@ codex_backup() {
     warn "Skipping missing scheduled task definitions in ${HOME}/.codex/automations"
   fi
 
-  if codex_copy_path "${HOME}/.agents/skills" ".agents/skills"; then
-    log "Included ${HOME}/.agents/skills"
-    included_paths+=(".agents/skills")
-  else
-    warn "Skipping missing source ${HOME}/.agents/skills"
-  fi
-
   if [[ "${#included_paths[@]}" -eq 0 ]]; then
     warn "No Codex state sources were found; refusing to create an empty archive."
     exit 1
@@ -334,6 +327,8 @@ codex_entry_is_allowed() {
   [[ -z "$entry" || "$entry" == "." ]] && return 0
   [[ "$entry" == "MANIFEST.txt" ]] && return 0
   [[ "$entry" == ".codex" ]] && return 0
+  # Legacy archives may contain global skills. Accept their paths during
+  # validation, but leave them unrestored because setup installs them fresh.
   [[ "$entry" == ".agents" ]] && return 0
   [[ "$entry" == ".codex/config.toml" ]] && return 0
   [[ "$entry" == ".codex/keybindings.json" ]] && return 0
@@ -440,19 +435,6 @@ codex_restore_backup_target() {
   printf 'Backed up %s -> %s\n' "$target" "$backup_path"
 }
 
-codex_restore_backup_linked_directory_contents() {
-  local target="$1"
-  local relative="$2"
-  local backup_root="$3"
-  local backup_path="${backup_root}/${relative}"
-
-  [[ -d "$target" ]] || return 0
-
-  mkdir -p "$backup_path"
-  (cd "$target" && tar -cf - .) | (cd "$backup_path" && tar -xf -)
-  printf 'Backed up %s contents -> %s\n' "$target" "$backup_path"
-}
-
 codex_restore_copy_directory_contents() {
   local source="$1"
   local target="$2"
@@ -553,14 +535,6 @@ codex_restore_path() {
   fi
 
   if [[ -d "$source" ]]; then
-    if [[ "$relative" == ".agents/skills" && -L "$target" && -d "$target" ]]; then
-      mkdir -p "${backup_root}/current"
-      codex_restore_backup_linked_directory_contents "$target" "$relative" "${backup_root}/current"
-      codex_restore_copy_directory_contents "$source" "$target"
-      printf 'Merged %s -> %s\n' "$source" "$target"
-      return 0
-    fi
-
     mkdir -p "${backup_root}/current"
     codex_restore_backup_target "$target" "$relative" "${backup_root}/current"
     mkdir -p "$(dirname "$target")"
@@ -673,6 +647,9 @@ codex_restore() {
   if [[ -e "${codex_restore_tmp_dir}/payload/.codex/.codex-global-state.json" ]]; then
     warn "Archive contains legacy Codex global state; leaving it unrestored because it can contain project, workspace, and connection state."
   fi
+  if [[ -d "${codex_restore_tmp_dir}/payload/.agents/skills" ]]; then
+    warn "Archive contains legacy global skills; leaving them unrestored because setup installs them from gabimoncha/skills."
+  fi
 
   codex_restore_path ".codex/config.toml" "$backup_root" "$replace"
   codex_restore_path ".codex/keybindings.json" "$backup_root" "$replace"
@@ -680,7 +657,6 @@ codex_restore() {
   codex_restore_path ".codex/rules" "$backup_root" "$replace"
   codex_restore_path ".codex/memories" "$backup_root" "$replace"
   codex_restore_path ".codex/automations" "$backup_root" "$replace"
-  codex_restore_path ".agents/skills" "$backup_root" "$replace"
 
   if [[ "$dry_run" -eq 1 ]]; then
     log "Dry run complete; no files restored."

@@ -595,6 +595,7 @@ dotfiles-update                  - update dotfiles and Homebrew-owned tools
 ./bin/auth-setup                 - configure local Git identity, GitHub SSH, and gh auth
 ./bin/install-apps               - install extra apps from apps/manifest.tsv
 ./bin/install-apps --dry-run     - preview extra app installation
+npx skills@latest add gabimoncha/skills -g --skill '*' --agent claude-code cursor codex -y  - install personal skills globally for all AI agents
 ./bin/setup-tmux                 - install TPM and missing tmux plugins
 ./bin/app-state-doctor           - diagnose Ghostty, tmux, and Raycast restore state
 ./bin/mackup-backup              - back up Mackup-managed app settings to iCloud
