@@ -1,10 +1,11 @@
 {
   "favoriteModelIDs" : [
-
+    "small.en",
+    "small"
   ],
   "modeKeys" : [
-    "default",
-    "message"
+    "voice to text",
+    "default"
   ],
   "replacements" : [
     {
