@@ -31,7 +31,16 @@ under `~/.local/bin`.
 because package-manager installs do not support `mise self-update`.
 `bin/ensure-mise-standalone` keeps existing data, shims, cache, and state in the
 normal `mise` locations and removes the Homebrew formula only after the
-standalone binary verifies successfully.
+standalone binary verifies successfully. Normal ensure passes update an
+existing standalone binary before tool installation; the pre-auth setup pass
+skips that update only long enough to establish authenticated GitHub access.
+
+GitHub authentication has one owner: GitHub CLI. Before bootstrap starts the
+GitHub-heavy `mise install` pass, `bin/setup` ensures `gh` is available and
+runs `bin/auth-setup`. Mise then obtains the Keychain-backed token through its
+supported `credential_command` setting by calling `gh auth token`. Do not add a
+second token manager unless setup also owns that manager's complete
+configuration and authentication lifecycle.
 
 Default setup includes the full mobile development stack because Xcode and iOS platform support dominate fresh-machine time and are safest when started early. Setup prepares `xcodes` and `aria2`, starts the Xcode install while Homebrew and `mise` work continue, then finishes iOS platform support and Xcode-dependent formulae after Xcode is selected. `DOTFILES_SKIP_MOBILE_DEV=1` or `./bin/setup --skip-mobile-dev` keeps a lightweight run available.
 

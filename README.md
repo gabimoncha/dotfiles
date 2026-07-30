@@ -66,8 +66,8 @@ exposes `agent` through `~/.local/bin`; Cursor the app stays a Homebrew cask.
 
 `mise` data is not migrated or restored separately. Bootstrap keeps only the
 `mise` binary on the standalone installer path at `~/.local/bin/mise` so
-`mise self-update` remains available; existing tools, shims, cache, and state
-stay in the normal `mise` locations.
+`mise self-update` remains available and setup can keep the runtime current;
+existing tools, shims, cache, and state stay in the normal `mise` locations.
 
 ### Step 2: Clone on the new Mac
 
@@ -103,6 +103,8 @@ flowchart LR
     S5["Preview mobile-dev and app installs"]
     S6["Print final actionable summary"]
     S7["Exit"]
+    S24["Ensure standalone mise and GitHub CLI"]
+    S25["Call bin/auth-setup"]
     S8["Call bin/bootstrap"]
     S9{"Xcode CLT ready after bootstrap?"}
     S10["Exit: finish installer, rerun ./bin/setup"]
@@ -110,8 +112,8 @@ flowchart LR
     S12["Call bin/link-dotfiles"]
     S13["Print manifest summary"]
     S14{"Interactive terminal?"}
-    S15["Skip auth and restore follow-up"]
-    S16["Call bin/auth-setup after Enter"]
+    S15["Skip restore follow-up"]
+    S16["Continue restore follow-up after Enter"]
     S17["Call bin/file-restore mackup"]
     S18["Find .rayconfig and call bin/file-restore raycast when present"]
     S19{"Encrypted Codex state archive found?"}
@@ -125,7 +127,7 @@ flowchart LR
     S1 -->|"no"| S3
     S3 --> S4
     S4 -->|"yes"| S5 --> S6 --> S7
-    S4 -->|"no"| S8
+    S4 -->|"no"| S24 --> S25 --> S8
     S8 --> S9
     S9 -->|"no"| S10
     S9 -->|"yes"| S11 --> S12 --> S13 --> S14
@@ -247,7 +249,7 @@ flowchart LR
   S8 -.-> B1
   S11 -.-> I1
   S12 -.-> L1
-  S16 -.-> A1
+  S25 -.-> A1
   S17 -.-> M1
   S18 -.-> R1
   S20 -.-> C1
@@ -269,23 +271,25 @@ Dry-run the install pass without changing the machine:
 ./bin/setup --dry-run
 ```
 
-### Step 4: Finish auth and restore
+### Step 4: Authenticate GitHub and restore state
 
-At the end of setup, press Enter to continue the interactive follow-up. You can
-also run the pieces directly later:
+Before bootstrap starts its bulk GitHub-backed tool installation, setup ensures
+`gh` is installed, authenticates it, and verifies that mise can obtain the
+Keychain-backed token. At the end of setup, press Enter to continue the restore
+follow-up. You can also run the pieces directly later:
 
 ```bash
 ./bin/auth-setup
 ./bin/file-restore
 ```
 
-`bin/auth-setup` authenticates GitHub CLI, configures local Git identity, creates
-or reuses an Ed25519 SSH key, uploads the SSH key when possible, and verifies
-GitHub SSH. When GitHub CLI is authenticated, it prefers the account noreply
-address for commits and warns if the active commit email could trip GitHub's
-private-email push protection. If this repo was cloned from its public HTTPS
-URL, it switches `origin` to `git@github.com:gabimoncha/dotfiles.git` after SSH
-is verified.
+`bin/auth-setup` authenticates GitHub CLI, verifies that mise can use the same
+authentication, configures local Git identity, creates or reuses an Ed25519 SSH
+key, uploads the SSH key when possible, and verifies GitHub SSH. When GitHub CLI
+is authenticated, it prefers the account noreply address for commits and warns
+if the active commit email could trip GitHub's private-email push protection. If
+this repo was cloned from its public HTTPS URL, it switches `origin` to
+`git@github.com:gabimoncha/dotfiles.git` after SSH is verified.
 
 `bin/file-restore` restores file-backed state from Synology first, then iCloud
 where supported. It restores Mackup-managed app settings, opens the newest
@@ -413,9 +417,13 @@ It:
 15. prints a final actionable summary of completed, failed, deferred, and
    critical items
 
-After bootstrap and the interactive auth/restore follow-up, `bin/setup` runs the
-personal AI skill install command from Step 5. This is the final
-machine-changing setup step.
+Before bootstrap, `bin/setup` ensures standalone mise and GitHub CLI are
+available without requiring a pre-existing GitHub token, then runs
+`bin/auth-setup`. Bootstrap's normal standalone-mise ensure pass self-updates
+the authenticated runtime before subsequent GitHub-backed installs. After
+bootstrap and the interactive restore follow-up, `bin/setup` runs the personal
+AI skill install command from Step 5. This is the final machine-changing setup
+step.
 
 Safe parallelism is on by default. Use `./bin/setup --serial` or
 `DOTFILES_SETUP_SERIAL=1 ./bin/setup` when debugging. Recoverable failures keep
@@ -487,7 +495,8 @@ This repo is deliberately boring about ownership:
   through `~/.local/bin`, while the Cursor GUI remains a Homebrew cask.
 - The `mise` binary is a standalone-installer exception because
   `mise self-update` is not available through package-manager installs. Its
-  data, tools, shims, cache, and state remain in the normal `mise` locations.
+  data, tools, shims, cache, and state remain in the normal `mise` locations,
+  while setup keeps the standalone runtime current.
 - `apps/manifest.tsv` is the typed ledger for cask, formula, and manual/vendor
   install handling.
 - `home/` owns files that get symlinked into `$HOME`.
@@ -528,7 +537,7 @@ bin/ensure-cursor-agent-standalone
                                  keep Cursor Agent on the standalone installer path
 bin/ensure-mise-standalone       keep mise on the standalone installer path
 bin/preflight                    repo and machine checks
-bin/auth-setup                   Git/GitHub/SSH follow-up
+bin/auth-setup                   GitHub CLI/mise token, Git identity, and SSH setup
 bin/configure-sudo-touch-id      Touch ID for sudo PAM setup
 bin/install-apps                 manifest installer
 bin/install-mobile-dev           heavyweight Xcode and Android Studio setup

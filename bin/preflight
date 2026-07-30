@@ -66,7 +66,7 @@ check_github_ssh() {
   local output status
 
   if ! command -v ssh >/dev/null 2>&1; then
-    warn "ssh is not available; run ./bin/auth-setup after bootstrap"
+    warn "ssh is not available; install Xcode Command Line Tools, then rerun ./bin/setup"
     return 0
   fi
 
@@ -78,7 +78,7 @@ check_github_ssh() {
   if [[ "$output" == *"successfully authenticated"* ]]; then
     pass "GitHub SSH authenticated"
   elif [[ $status -eq 255 ]]; then
-    warn "GitHub SSH is not ready; run ./bin/auth-setup after bootstrap"
+    warn "GitHub SSH is not ready; ./bin/setup will run ./bin/auth-setup before bootstrap"
   else
     warn "GitHub SSH returned: ${output}"
   fi

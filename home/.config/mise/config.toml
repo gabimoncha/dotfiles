@@ -78,7 +78,6 @@ mas = "latest"
 "conda:tig" = "latest"
 "conda:tree" = "latest"
 "conda:wget" = "latest"
-ghtkn = "latest"
 "npm:@agentclientprotocol/codex-acp" = "latest"
 "npm:@agentclientprotocol/claude-agent-acp" = "latest"
 
@@ -94,5 +93,5 @@ package_manager = "bun"
 binstall = true
 
 [settings.github]
-credential_command = "/Users/gabimoncha/.local/share/mise/installs/ghtkn/latest/ghtkn get -m 1h"
+credential_command = "gh auth token --hostname \"$MISE_CREDENTIAL_HOST\""
 use_git_credentials = true

@@ -9,7 +9,11 @@ cd ~/development/dotfiles
 ./bin/setup
 ```
 
-`./bin/setup` runs preflight, bootstrap, and app installation first. After unattended work finishes, it offers to continue into interactive auth, Mackup restore, Raycast restore, and encrypted Codex state restore steps. Rerun it later when Apple ID, App Store, iCloud, Synology Drive, or MAS prerequisites become ready.
+`./bin/setup` runs preflight, ensures GitHub CLI authentication for mise, then
+runs bootstrap and app installation. After unattended work finishes, it offers
+to continue into Mackup, Raycast, and encrypted Codex state restore steps.
+Rerun it later when Apple ID, App Store, iCloud, Synology Drive, or MAS
+prerequisites become ready.
 
 If setup opens the Xcode Command Line Tools installer popup, finish that installer and rerun `./bin/setup`.
 
@@ -30,7 +34,8 @@ The lower-level commands still exist for targeted reruns:
 ./bin/app-state-doctor
 ```
 
-GitHub SSH is configured after bootstrap with `./bin/auth-setup`.
+GitHub CLI, mise token access, and GitHub SSH are configured before bootstrap's
+bulk tool installation. Rerun `./bin/auth-setup` for a targeted repair.
 
 ## Re-run Safety
 

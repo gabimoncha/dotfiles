@@ -3,6 +3,7 @@
 set -euo pipefail
 
 dry_run=0
+skip_update=0
 mise_bin="${MISE_INSTALL_PATH:-${HOME}/.local/bin/mise}"
 mise_bin_dir="$(dirname "$mise_bin")"
 
@@ -15,7 +16,7 @@ warn() {
 }
 
 usage() {
-  printf 'Usage: ./bin/ensure-mise-standalone [--dry-run]\n' >&2
+  printf 'Usage: ./bin/ensure-mise-standalone [--dry-run] [--skip-update]\n' >&2
 }
 
 load_homebrew_shellenv() {
@@ -86,6 +87,11 @@ verify_standalone_mise() {
   log "mise self-update is available"
 }
 
+update_standalone_mise() {
+  log "Updating standalone mise"
+  "$mise_bin" self-update --yes --no-plugins
+}
+
 uninstall_brew_mise() {
   if ! brew_mise_installed; then
     return 0
@@ -105,6 +111,10 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --dry-run)
       dry_run=1
+      shift
+      ;;
+    --skip-update)
+      skip_update=1
       shift
       ;;
     -h | --help)
@@ -127,11 +137,19 @@ else
 fi
 
 if [[ "$dry_run" -eq 1 ]]; then
-  log "dry-run: would verify mise command, version, and self-update availability"
+  if [[ "$skip_update" -eq 1 ]]; then
+    log "dry-run: would verify mise without updating it"
+  else
+    log "dry-run: would verify and update standalone mise"
+  fi
   uninstall_brew_mise
   exit 0
 fi
 
 verify_standalone_mise
+if [[ "$skip_update" -eq 0 ]]; then
+  update_standalone_mise
+  verify_standalone_mise
+fi
 uninstall_brew_mise
 verify_standalone_mise

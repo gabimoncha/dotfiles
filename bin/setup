@@ -7,6 +7,8 @@ manifest="${repo_root}/apps/manifest.tsv"
 dry_run=0
 setup_status=0
 skip_mobile_dev="${DOTFILES_SKIP_MOBILE_DEV:-0}"
+mise_bin_dir="${HOME}/.local/bin"
+mise_shim_dir="${HOME}/.local/share/mise/shims"
 
 # shellcheck source=bin/lib/setup-runtime.sh
 . "${repo_root}/bin/lib/setup-runtime.sh"
@@ -50,6 +52,42 @@ load_homebrew_shellenv() {
   elif command -v brew >/dev/null 2>&1; then
     eval "$(brew shellenv)"
   fi
+}
+
+prepend_mise_paths() {
+  local path_entry
+  local new_path="${mise_bin_dir}:${mise_shim_dir}"
+  local path_entries=()
+
+  IFS=':' read -r -a path_entries <<< "$PATH"
+  for path_entry in "${path_entries[@]}"; do
+    [[ -z "$path_entry" ]] && continue
+    case "$path_entry" in
+      "$mise_bin_dir" | "$mise_shim_dir") continue ;;
+    esac
+    new_path="${new_path}:${path_entry}"
+  done
+
+  export PATH="$new_path"
+}
+
+prepare_github_auth() {
+  local mise_path="${mise_bin_dir}/mise"
+
+  "${repo_root}/bin/ensure-mise-standalone" --skip-update || return 1
+  prepend_mise_paths
+  hash -r
+
+  if ! MISE_GLOBAL_CONFIG_FILE="${repo_root}/home/.config/mise/config.toml" "$mise_path" which gh >/dev/null 2>&1; then
+    log "Installing GitHub CLI before authenticated tool installs"
+    (cd "$repo_root" && "$mise_path" install gh@latest && "$mise_path" reshim) || return 1
+    prepend_mise_paths
+    hash -r
+  fi
+
+  MISE_GLOBAL_CONFIG_FILE="${repo_root}/home/.config/mise/config.toml" \
+    "$mise_path" exec -- gh --version >/dev/null 2>&1 || return 1
+  "${repo_root}/bin/auth-setup"
 }
 
 app_installed() {
@@ -226,22 +264,16 @@ run_interactive_followup() {
 
   cat <<'EOF'
 
-Press Enter to continue interactive auth/restore steps, or rerun `./bin/setup` later.
+Press Enter to continue interactive restore steps, or rerun `./bin/setup` later.
 EOF
 
   if [[ ! -t 0 ]]; then
-    warn "Non-interactive shell; skipping auth and restore follow-up"
-    runtime_record_deferred "Interactive follow-up" "non-interactive shell" "Rerun ./bin/setup in a terminal, or run ./bin/auth-setup and ./bin/file-restore mackup manually."
+    warn "Non-interactive shell; skipping restore follow-up"
+    runtime_record_deferred "Interactive follow-up" "non-interactive shell" "Rerun ./bin/setup in a terminal, or run ./bin/file-restore mackup manually."
     return 0
   fi
 
   read -r _
-
-  if "${repo_root}/bin/auth-setup"; then
-    runtime_record_completed "Auth setup"
-  else
-    runtime_record_failure recoverable "Auth setup" "auth setup failed" "" "Rerun ./bin/auth-setup."
-  fi
 
   if "${repo_root}/bin/file-restore" mackup; then
     runtime_record_completed "Mackup restore"
@@ -377,6 +409,7 @@ else
 fi
 
 if [[ $dry_run -eq 1 ]]; then
+  log "dry-run: would ensure GitHub CLI and run ./bin/auth-setup before bootstrap"
   log "dry-run: would run ./bin/bootstrap"
   "${repo_root}/bin/ensure-mise-standalone" --dry-run || setup_status=1
   "${repo_root}/bin/ensure-codex-standalone" --dry-run || setup_status=1
@@ -400,6 +433,14 @@ if [[ $dry_run -eq 1 ]]; then
   fi
   runtime_exit_status
   exit $?
+fi
+
+log "Preparing GitHub authentication for mise"
+if prepare_github_auth; then
+  runtime_record_completed "GitHub authentication" "gh and mise can access the authenticated account"
+else
+  runtime_record_failure recoverable "GitHub authentication" "GitHub CLI or mise authentication is incomplete" "" "Rerun ./bin/auth-setup before retrying GitHub-backed mise installs."
+  setup_status=1
 fi
 
 log "Running bootstrap"

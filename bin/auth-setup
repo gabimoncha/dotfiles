@@ -28,13 +28,29 @@ load_homebrew_shellenv() {
 }
 
 run_gh() {
-  if command -v gh >/dev/null 2>&1; then
+  if command -v gh >/dev/null 2>&1 && gh --version >/dev/null 2>&1; then
     gh "$@"
     return $?
   fi
 
   if command -v mise >/dev/null 2>&1; then
-    (cd "$repo_root" && mise exec -- gh "$@")
+    (cd "$repo_root" && MISE_GLOBAL_CONFIG_FILE="${repo_root}/home/.config/mise/config.toml" mise exec -- gh "$@")
+    return $?
+  fi
+
+  return 127
+}
+
+run_mise() {
+  local mise_path="${HOME}/.local/bin/mise"
+
+  if command -v mise >/dev/null 2>&1; then
+    MISE_GLOBAL_CONFIG_FILE="${repo_root}/home/.config/mise/config.toml" mise "$@"
+    return $?
+  fi
+
+  if [[ -x "$mise_path" ]]; then
+    MISE_GLOBAL_CONFIG_FILE="${repo_root}/home/.config/mise/config.toml" "$mise_path" "$@"
     return $?
   fi
 
@@ -257,7 +273,7 @@ ensure_github_public_key_scope() {
 ensure_github_auth() {
   if ! gh_available; then
     warn "gh is not available through PATH or mise. Run ./bin/setup, or run: cd ${repo_root} && mise install gh"
-    return 0
+    return 1
   fi
 
   if run_gh auth status --hostname github.com >/dev/null 2>&1; then
@@ -268,12 +284,29 @@ ensure_github_auth() {
 
   if [[ ! -t 0 ]]; then
     warn "GitHub CLI authentication requires an interactive terminal; rerun ./bin/auth-setup"
-    return 0
+    return 1
   fi
 
   log "Authenticating GitHub CLI with SSH git protocol"
   run_gh auth login --hostname github.com --git-protocol ssh --skip-ssh-key
+  if ! run_gh auth status --hostname github.com >/dev/null 2>&1; then
+    warn "GitHub CLI authentication did not persist; rerun: gh auth login -h github.com"
+    return 1
+  fi
   configure_gh_git_protocol
+}
+
+verify_mise_github_auth() {
+  local token
+
+  if ! token="$(run_mise token github --raw 2>/dev/null)" || [[ -z "$token" ]]; then
+    unset token
+    warn "mise cannot read the GitHub CLI token; rerun ./bin/auth-setup after checking gh auth status"
+    return 1
+  fi
+
+  unset token
+  log "mise can use the GitHub CLI authentication"
 }
 
 upload_ssh_key_to_github() {
@@ -366,6 +399,7 @@ EOF
 
 load_homebrew_shellenv
 ensure_github_auth
+verify_mise_github_auth
 ensure_git_identity
 ensure_ssh_key
 add_ssh_key_to_agent
