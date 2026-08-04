@@ -34,6 +34,11 @@ normal `mise` locations and removes the Homebrew formula only after the
 standalone binary verifies successfully. Normal ensure passes update an
 existing standalone binary before tool installation; the pre-auth setup pass
 skips that update only long enough to establish authenticated GitHub access.
+After interactive mise activation, a dotfiles-owned hook restores `~/bin` and
+`~/.local/bin` to the front of `PATH` after mise's prompt and directory-change
+hooks recalculate it. This keeps explicit standalone-installer exceptions such
+as Codex authoritative when a mise-managed npm tool exposes a same-named
+transitive dependency executable.
 
 GitHub authentication has one owner: GitHub CLI. Before bootstrap starts the
 GitHub-heavy `mise install` pass, `bin/setup` ensures `gh` is available and

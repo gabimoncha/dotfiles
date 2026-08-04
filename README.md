@@ -674,7 +674,10 @@ Studio still owns installing the SDK packages and creating the emulator image.
 
 Interactive `mise` activation is owned by `home/.config/zsh/interactive.zsh`.
 Do not append activation lines directly to `~/.zshrc`; it is a repo-managed
-symlink. After changing shell activation, run `exec zsh` or open a new terminal.
+symlink. A hook registered after mise restores `~/bin` and `~/.local/bin` to the
+front of `PATH` whenever mise recalculates it, so explicit standalone tools
+remain authoritative over same-named dependency executables. After changing
+shell activation, run `exec zsh` or open a new terminal.
 
 To get the Android debug signing SHA-1, use the real debug keystore path:
 

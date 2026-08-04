@@ -25,6 +25,18 @@ fi
 if command -v mise >/dev/null 2>&1; then
   if mise_activate="$(mise activate zsh 2>/dev/null)"; then
     eval "$mise_activate"
+
+    # Mise recalculates PATH from precmd and chpwd hooks. Run after those hooks
+    # so standalone and personal commands keep priority over dependency bins.
+    _dotfiles_restore_path_priority() {
+      path=("$HOME/bin" "$HOME/.local/bin" $path)
+    }
+    autoload -Uz add-zsh-hook
+    add-zsh-hook -d precmd _dotfiles_restore_path_priority 2>/dev/null
+    add-zsh-hook -d chpwd _dotfiles_restore_path_priority 2>/dev/null
+    add-zsh-hook precmd _dotfiles_restore_path_priority
+    add-zsh-hook chpwd _dotfiles_restore_path_priority
+    _dotfiles_restore_path_priority
   fi
   unset mise_activate
 fi
