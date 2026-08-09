@@ -64,6 +64,7 @@ mas = "latest"
 "npm:@yaakapp/cli" = "latest"
 "npm:tree-sitter-cli" = "latest"
 "github:ryanoasis/nerd-fonts" = { version = "latest", asset_pattern = "Hack.zip" }
+"github:coollabsio/coolify-cli" = "latest"
 "gem:fastlane" = "latest"
 "pipx:httpie" = "latest"
 "pipx:mackup" = "latest"
@@ -80,6 +81,7 @@ mas = "latest"
 "conda:wget" = "latest"
 "npm:@agentclientprotocol/codex-acp" = "latest"
 "npm:@agentclientprotocol/claude-agent-acp" = "latest"
+wrangler = { version = "latest", allow_builds = ["esbuild", "sharp", "workerd"] }
 
 [settings]
 experimental = true

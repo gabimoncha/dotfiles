@@ -25,6 +25,7 @@ managed_sources=(
   "${repo_root}/home/.p10k.zsh"
   "${repo_root}/home/.mackup.cfg"
   "${repo_root}/home/.gitconfig"
+  "${repo_root}/home/bin/gh"
   "${repo_root}/home/.rgrc"
   "${repo_root}/home/.tmux.conf"
   "${repo_root}/home/.cli-proxy-api/config.yaml"

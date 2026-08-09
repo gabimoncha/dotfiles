@@ -1,0 +1,4 @@
+# Tab-separated machine-local GitHub CLI account routing.
+# Copy this file without the .example suffix and replace the placeholders.
+default	DEFAULT_GITHUB_USER
+route	~/path/to/scoped-projects	SCOPED_GITHUB_USER

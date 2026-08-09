@@ -291,6 +291,28 @@ if the active commit email could trip GitHub's private-email push protection. If
 this repo was cloned from its public HTTPS URL, it switches `origin` to
 `git@github.com:gabimoncha/dotfiles.git` after SSH is verified.
 
+### Multiple GitHub accounts
+
+Account names, commit identities, directory rules, SSH aliases, and key paths
+are machine-local and must not be committed. Git identity conditions belong in
+`~/.gitconfig.local`, while per-account SSH hosts belong in `~/.ssh/config`.
+
+GitHub CLI has one global active account for each host. The managed `~/bin/gh`
+wrapper can select a stored account without changing that global state. Copy
+the local routing example and edit the copy with tab-separated values:
+
+```bash
+cp ~/development/dotfiles/home/.config/local/github-account-routing.example \
+  ~/development/dotfiles/home/.config/local/github-account-routing
+```
+
+The `default` row selects the normal account. Each `route` row maps an absolute
+or home-relative directory to another stored account. A linked worktree matches
+the route through its shared Git directory. The wrapper passes `gh auth ...`
+commands through unchanged and respects an explicit `GH_TOKEN` or
+`GITHUB_TOKEN`. Git push and pull use SSH configuration and do not depend on
+the GitHub CLI account.
+
 `bin/file-restore` restores file-backed state from Synology first, then iCloud
 where supported. It restores Mackup-managed app settings, opens the newest
 Raycast `.rayconfig` it can find, and prompts before restoring encrypted Codex
@@ -562,6 +584,7 @@ targets under `~/.dotfiles-backups/<timestamp>/`.
 Currently managed:
 
 - `~/.gitconfig`
+- `~/bin/gh`
 - `~/.aerospace.toml`
 - `~/.zshenv`, `~/.zprofile`, `~/.zshrc`
 - `~/.p10k.zsh`

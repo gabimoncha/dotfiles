@@ -297,28 +297,6 @@ reload-shell() {
   print "Shell reloaded"
 }
 
-_claude_available() {
-  whence -p claude >/dev/null 2>&1
-}
-
-claude() {
-  if ! _claude_available; then
-    print -u2 "claude: binary not found on PATH"
-    return 1
-  fi
-
-  command claude --dangerously-skip-permissions "$@"
-}
-
-claude-safe() {
-  if ! _claude_available; then
-    print -u2 "claude: binary not found on PATH"
-    return 1
-  fi
-
-  command claude "$@"
-}
-
 _cursor_available() {
   whence -p cursor >/dev/null 2>&1
 }
@@ -634,11 +612,9 @@ localip                          - show local en0 IP address
 cleanup                          - delete .DS_Store files below the current directory
 hosts                            - edit /etc/hosts with nvim
 brewup                           - brew update, upgrade, and cleanup
-claude                           - run Claude with skipped permission prompts
-claude-safe                      - run Claude without skipped permission prompts
+claude                           - run the Claude CLI
 c [path]                         - open Cursor in current directory or at path
 cc                               - short alias for claude
-cc-safe                          - short alias for claude-safe
 lg                               - open lazygit
 npm <args>                       - run npm through Socket Firewall Free
 pnpm <args>                      - run pnpm through Socket Firewall Free

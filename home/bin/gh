@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+self_path="$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")"
+routing_file="${GH_ACCOUNT_ROUTING_FILE:-${HOME}/.config/local/github-account-routing}"
+
+if [[ ! -r "$routing_file" && -n "${DOTFILES_ROOT:-}" ]]; then
+  routing_file="${DOTFILES_ROOT}/home/.config/local/github-account-routing"
+fi
+
+if [[ ! -r "$routing_file" ]]; then
+  default_dotfiles_root="${HOME}/development/dotfiles"
+  routing_file="${default_dotfiles_root}/home/.config/local/github-account-routing"
+fi
+
+resolve_real_gh() {
+  local candidate candidate_path path_entry
+  local original_ifs="$IFS"
+
+  if command -v mise >/dev/null 2>&1; then
+    candidate="$(mise which gh 2>/dev/null || true)"
+    if [[ -n "$candidate" && -x "$candidate" ]]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  fi
+
+  IFS=:
+  for path_entry in $PATH; do
+    [[ -n "$path_entry" ]] || path_entry="."
+    candidate="${path_entry}/gh"
+    [[ -x "$candidate" ]] || continue
+    candidate_path="$(cd "$(dirname "$candidate")" && pwd -P)/$(basename "$candidate")"
+    if [[ "$candidate_path" != "$self_path" ]]; then
+      IFS="$original_ifs"
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+  IFS="$original_ifs"
+
+  printf 'gh: could not find the managed GitHub CLI executable\n' >&2
+  return 1
+}
+
+account_for_context() {
+  local account default_account="" directive git_common_dir route_account route_root
+  local current_dir
+
+  current_dir="$(pwd -P)"
+  git_common_dir="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)"
+
+  [[ -r "$routing_file" ]] || return 1
+
+  while IFS=$'\t' read -r directive route_root route_account; do
+    [[ -n "$directive" && "$directive" != \#* ]] || continue
+
+    case "$directive" in
+      default)
+        default_account="$route_root"
+        ;;
+      route)
+        case "$route_root" in
+          "~/"*) route_root="${HOME}/${route_root#\~/}" ;;
+        esac
+
+        case "$current_dir" in
+          "$route_root" | "$route_root"/*) account="$route_account" ;;
+        esac
+
+        if [[ -n "$git_common_dir" ]]; then
+          case "$git_common_dir" in
+            "$route_root" | "$route_root"/*) account="$route_account" ;;
+          esac
+        fi
+        ;;
+    esac
+  done < "$routing_file"
+
+  printf '%s\n' "${account:-$default_account}"
+}
+
+real_gh="$(resolve_real_gh)"
+
+# Keep account-management commands exact and visible. Ordinary commands use a
+# context-specific token without changing GitHub CLI's global active account.
+if [[ "${1:-}" == "auth" || -n "${GH_TOKEN:-}" || -n "${GITHUB_TOKEN:-}" || ! -r "$routing_file" ]]; then
+  exec "$real_gh" "$@"
+fi
+
+selected_account="$(account_for_context)"
+if [[ -z "$selected_account" ]]; then
+  exec "$real_gh" "$@"
+fi
+selected_token="$("$real_gh" auth token --hostname github.com --user "$selected_account")" || {
+  printf 'gh: could not access the stored GitHub token for %s\n' "$selected_account" >&2
+  printf 'gh: a restricted sandbox can block macOS Keychain access\n' >&2
+  printf 'gh: retry the same command with approved Keychain and network access before running gh auth login\n' >&2
+  exit 1
+}
+
+GH_TOKEN="$selected_token" exec "$real_gh" "$@"

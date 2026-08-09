@@ -47,6 +47,14 @@ supported `credential_command` setting by calling `gh auth token`. Do not add a
 second token manager unless setup also owns that manager's complete
 configuration and authentication lifecycle.
 
+Git repository identity, GitHub SSH authentication, and GitHub CLI API identity
+are selected separately. Account names, emails, directory mappings, SSH aliases,
+and key paths stay in ignored machine-local configuration. GitHub CLI has one
+global active account for each host, so the managed `~/bin/gh` wrapper reads a
+local routing policy and supplies the selected stored token for one command. It
+does not export or persist the token, and explicit token environment variables
+remain authoritative.
+
 Default setup includes the full mobile development stack because Xcode and iOS platform support dominate fresh-machine time and are safest when started early. Setup prepares `xcodes` and `aria2`, starts the Xcode install while Homebrew and `mise` work continue, then finishes iOS platform support and Xcode-dependent formulae after Xcode is selected. `DOTFILES_SKIP_MOBILE_DEV=1` or `./bin/setup --skip-mobile-dev` keeps a lightweight run available.
 
 Xcode installs default to the latest release channel; `DOTFILES_XCODE_CHANNEL=prerelease` opts into prereleases. Xcode installs use `xcodes --experimental-unxip` by default because Xcode archives dominate setup time; `DOTFILES_XCODE_EXPERIMENTAL_UNXIP=0` keeps the regular unxip path available. Xcode-sensitive Homebrew formulae stay in `Brewfile` as the source of truth and are deferred until full Xcode is selected.

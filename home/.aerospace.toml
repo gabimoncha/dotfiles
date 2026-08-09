@@ -349,6 +349,26 @@ run = 'layout floating'
 if.app-id = 'com.crystalidea.macsfancontrol'
 run = 'layout floating'
 
+### Notion
+[[on-window-detected]]
+if.app-id = 'notion.id'
+run = 'layout floating'
+
+### Notion Calendar
+[[on-window-detected]]
+if.app-id = 'com.cron.electron'
+run = 'layout floating'
+
+### Tailscale
+[[on-window-detected]]
+if.app-id = 'io.tailscale.ipn.macsys'
+run = 'layout floating'
+
+### Ice
+[[on-window-detected]]
+if.app-id = 'com.jordanbaird.Ice'
+run = 'layout floating'
+
 ### Passwords
 [[on-window-detected]]
 if.app-id = 'com.apple.LocalAuthentication.UIAgent'

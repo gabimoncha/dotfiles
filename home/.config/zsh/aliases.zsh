@@ -13,7 +13,6 @@ alias hosts='sudo nvim /etc/hosts'
 alias brewup='brew update && brew upgrade && brew cleanup'
 alias help='use-my-mac'
 alias cc='claude'
-alias cc-safe='claude-safe'
 alias n='nvim'
 alias lg='lazygit'
 
