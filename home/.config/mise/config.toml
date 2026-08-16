@@ -82,6 +82,7 @@ mas = "latest"
 "npm:@agentclientprotocol/codex-acp" = "latest"
 "npm:@agentclientprotocol/claude-agent-acp" = "latest"
 wrangler = { version = "latest", allow_builds = ["esbuild", "sharp", "workerd"] }
+herdr = "latest"
 
 [settings]
 experimental = true
