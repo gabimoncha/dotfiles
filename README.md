@@ -489,13 +489,24 @@ Xcode, Android Studio, `applesimutils`, `idb-companion`, and `sourcekitten`:
 ./bin/install-mobile-dev
 ```
 
-The mobile dev installer asks `xcodes` for the latest release Xcode and selects
-it. Use `DOTFILES_XCODE_CHANNEL=prerelease ./bin/install-mobile-dev` to install
-the latest prerelease channel instead. It enables `xcodes`
-`--experimental-unxip` by default for faster unarchiving; set
+The mobile dev installer asks `xcodes` for the latest public release Xcode and
+selects it. It enables `xcodes` `--experimental-unxip` by default for faster
+unarchiving; set
 `DOTFILES_XCODE_EXPERIMENTAL_UNXIP=0` to use regular unxip. After a newer Xcode
 is selected, old Xcode apps from other major versions are removed through
 `xcodes uninstall`. Set `DOTFILES_KEEP_OLD_XCODES=1` to keep them.
+
+## Apple Release Policy
+
+The current macOS 27 and Xcode 27 beta state stays unchanged until 1 October
+2026. This repo does not change the live beta enrollment or the installed beta
+Xcode before that date.
+
+All new Xcode installs use the latest public release. From 1 October 2026, use
+only public release versions of macOS, iOS, iOS simulator runtimes, and Xcode.
+Do not enroll a Mac or an iPhone in Apple beta updates. `./bin/preflight` warns
+after that date if the Mac build or an installed Xcode app appears to be a
+prerelease.
 
 Formulae that build from source and trip Homebrew's Xcode minimum check, such
 as `borders`, stay in `Brewfile` but are deferred until full Xcode is selected.

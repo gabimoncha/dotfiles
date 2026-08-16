@@ -11,7 +11,6 @@ mobile_status=0
 mise_bin_dir="${HOME}/.local/bin"
 mise_shim_dir="${HOME}/.local/share/mise/shims"
 brew_bundle_jobs="${DOTFILES_BREW_BUNDLE_JOBS:-auto}"
-xcode_channel="${DOTFILES_XCODE_CHANNEL:-release}"
 action="full"
 
 # shellcheck source=bin/lib/setup-runtime.sh
@@ -314,29 +313,6 @@ report_aria2_state() {
   fi
 }
 
-xcode_install_flag() {
-  case "$xcode_channel" in
-    prerelease)
-      printf '%s\n' '--latest-prerelease'
-      ;;
-    release)
-      printf '%s\n' '--latest'
-      ;;
-    *)
-      warn "Unsupported DOTFILES_XCODE_CHANNEL='${xcode_channel}'. Use 'prerelease' or 'release'."
-      return 1
-      ;;
-  esac
-}
-
-xcode_channel_label() {
-  case "$xcode_channel" in
-    prerelease) printf '%s\n' 'latest prerelease' ;;
-    release) printf '%s\n' 'latest release' ;;
-    *) printf '%s\n' "$xcode_channel" ;;
-  esac
-}
-
 xcode_experimental_unxip_enabled() {
   case "${DOTFILES_XCODE_EXPERIMENTAL_UNXIP:-1}" in
     1 | true | yes)
@@ -414,8 +390,8 @@ install_android_studio() {
 }
 
 install_full_xcode() {
-  local install_flag label
-  local install_args=()
+  local label="latest public release"
+  local install_args=("--latest" "--select")
   local unxip_label="regular unxip"
 
   if ! ensure_xcodes_cli; then
@@ -423,9 +399,6 @@ install_full_xcode() {
   fi
 
   report_aria2_state
-  install_flag="$(xcode_install_flag)" || return 1
-  label="$(xcode_channel_label)"
-  install_args=("$install_flag" "--select")
 
   if xcode_experimental_unxip_enabled; then
     install_args+=("--experimental-unxip")

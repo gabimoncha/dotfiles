@@ -36,6 +36,13 @@ This repo is the source of truth for setting up a new MacBook. It owns machine b
 - macOS automation should stay conservative and reversible. Avoid aggressive `defaults write` changes unless they are clearly safe for a fresh-machine bootstrap.
 - If you add a new managed file or workflow, update `README.md` so the bootstrap story stays accurate.
 
+## Apple Release Policy
+
+- Keep the current macOS 27 and Xcode 27 beta state unchanged through 30 September 2026 unless the user asks for an earlier change.
+- Do not install a new prerelease Xcode.
+- From 1 October 2026, use only public release versions of macOS, iOS, iOS simulator runtimes, and Xcode.
+- Do not enable Apple beta update channels. Do not select or use a prerelease Xcode after the cutoff.
+
 ## Validation
 
 After meaningful changes, prefer the smallest relevant checks:

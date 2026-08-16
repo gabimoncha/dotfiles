@@ -57,7 +57,18 @@ remain authoritative.
 
 Default setup includes the full mobile development stack because Xcode and iOS platform support dominate fresh-machine time and are safest when started early. Setup prepares `xcodes` and `aria2`, starts the Xcode install while Homebrew and `mise` work continue, then finishes iOS platform support and Xcode-dependent formulae after Xcode is selected. `DOTFILES_SKIP_MOBILE_DEV=1` or `./bin/setup --skip-mobile-dev` keeps a lightweight run available.
 
-Xcode installs default to the latest release channel; `DOTFILES_XCODE_CHANNEL=prerelease` opts into prereleases. Xcode installs use `xcodes --experimental-unxip` by default because Xcode archives dominate setup time; `DOTFILES_XCODE_EXPERIMENTAL_UNXIP=0` keeps the regular unxip path available. Xcode-sensitive Homebrew formulae stay in `Brewfile` as the source of truth and are deferred until full Xcode is selected.
+Xcode installs use only the latest public release. Xcode installs use `xcodes
+--experimental-unxip` by default because Xcode archives dominate setup time;
+`DOTFILES_XCODE_EXPERIMENTAL_UNXIP=0` keeps the regular unxip path available.
+Xcode-sensitive Homebrew formulae stay in `Brewfile` as the source of truth and
+are deferred until full Xcode is selected.
+
+The current macOS 27 and Xcode 27 beta state is an explicit temporary
+exception through 30 September 2026. The setup does not change that live state.
+From 1 October 2026, this Mac uses only public release versions of macOS, iOS,
+iOS simulator runtimes, and Xcode. The repo does not enable Apple beta update
+channels. Preflight reports visible prerelease macOS and Xcode state after the
+cutoff so that it cannot remain unnoticed.
 
 Setup parallelism is on by default, but only across independent work. Homebrew writers and `mise install` writers stay serialized; recoverable failures are recorded, independent work continues, and the final summary exits nonzero when repair is needed.
 

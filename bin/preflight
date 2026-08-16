@@ -46,6 +46,37 @@ check_xcode_clt() {
   fi
 }
 
+check_apple_release_policy() {
+  local policy_date="2026-10-01"
+  local today macos_build app prerelease_xcodes=""
+
+  today="$(date +%F)"
+  if [[ "$today" < "$policy_date" ]]; then
+    pass "current Apple prerelease state is unchanged until ${policy_date}"
+    return 0
+  fi
+
+  macos_build="$(sw_vers -buildVersion 2>/dev/null || true)"
+  if [[ "$macos_build" == *[[:lower:]] ]]; then
+    warn "macOS build ${macos_build} appears to be a prerelease; turn off Beta Updates and install the public release"
+  else
+    pass "macOS appears to use a public release build"
+  fi
+
+  while IFS= read -r app; do
+    [[ -z "$app" ]] && continue
+    if [[ "$(basename "$app")" == *Beta* ]]; then
+      prerelease_xcodes="${prerelease_xcodes}${prerelease_xcodes:+, }$(basename "$app")"
+    fi
+  done < <(find /Applications -maxdepth 1 -type d -name 'Xcode*.app' -print 2>/dev/null | sort)
+
+  if [[ -n "$prerelease_xcodes" ]]; then
+    warn "prerelease Xcode apps remain installed: ${prerelease_xcodes}; do not select or use them"
+  else
+    pass "no prerelease Xcode app name was found"
+  fi
+}
+
 check_homebrew() {
   local brew_cmd
 
@@ -185,6 +216,7 @@ check_app_manifest() {
 
 check_macos
 check_xcode_clt
+check_apple_release_policy
 check_homebrew
 check_github_ssh
 check_submodule_url
