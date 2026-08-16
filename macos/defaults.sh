@@ -51,12 +51,12 @@ ensure_keyboard_input_sources() {
       '{ InputSourceKind = "Keyboard Layout"; "KeyboardLayout ID" = 0; "KeyboardLayout Name" = "U.S."; }'
   fi
 
-  if defaults read com.apple.HIToolbox AppleEnabledInputSources 2>/dev/null | grep -q '"KeyboardLayout Name" = "Romanian"'; then
+  if defaults read com.apple.HIToolbox AppleEnabledInputSources 2>/dev/null | grep -q '"KeyboardLayout Name" = "Romanian-Standard"'; then
     return 0
   fi
 
   defaults write com.apple.HIToolbox AppleEnabledInputSources -array-add \
-    '{ InputSourceKind = "Keyboard Layout"; "KeyboardLayout ID" = -39; "KeyboardLayout Name" = "Romanian"; }'
+    '{ InputSourceKind = "Keyboard Layout"; "KeyboardLayout ID" = -38; "KeyboardLayout Name" = "Romanian-Standard"; }'
 }
 
 dock_persistent_app_is_allowed() {

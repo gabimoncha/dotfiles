@@ -10,7 +10,7 @@ struct DesiredInputSource {
 
 let desiredInputSources = [
   DesiredInputSource(id: "com.apple.keylayout.US", fallbackSearch: "U.S."),
-  DesiredInputSource(id: "com.apple.keylayout.Romanian", fallbackSearch: "Romanian")
+  DesiredInputSource(id: "com.apple.keylayout.Romanian-Standard", fallbackSearch: "Romanian – Standard")
 ]
 
 func propertyString(_ source: TISInputSource, _ key: CFString) -> String {
