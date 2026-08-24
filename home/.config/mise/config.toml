@@ -59,14 +59,13 @@ mas = "latest"
 "npm:eas-cli" = "latest"
 "npm:agent-device" = "latest"
 "npm:agent-browser" = "latest"
-"npm:hunkdiff" = "latest"
 "npm:repomix" = "latest"
 "npm:sfw" = "latest"
 "npm:@yaakapp/cli" = "latest"
 "npm:tree-sitter-cli" = "latest"
 "github:ryanoasis/nerd-fonts" = { version = "latest", asset_pattern = "Hack.zip" }
 "github:coollabsio/coolify-cli" = "latest"
-"gem:fastlane" = "latest"
+"gem:fastlane" = "2.237.0"
 "pipx:httpie" = "latest"
 "pipx:mackup" = "latest"
 "npm:ios-deploy" = "latest"
@@ -84,6 +83,7 @@ mas = "latest"
 "npm:@agentclientprotocol/claude-agent-acp" = "latest"
 wrangler = { version = "latest", allow_builds = ["esbuild", "sharp", "workerd"] }
 herdr = "latest"
+hunk = "latest"
 
 [settings]
 experimental = true
