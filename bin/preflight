@@ -38,6 +38,12 @@ check_macos() {
   fi
 }
 
+check_macos_updates() {
+  if ! "${repo_root}/bin/check-macos-updates"; then
+    failures=$((failures + 1))
+  fi
+}
+
 check_xcode_clt() {
   if xcode-select -p >/dev/null 2>&1; then
     pass "Xcode Command Line Tools installed"
@@ -47,33 +53,58 @@ check_xcode_clt() {
 }
 
 check_apple_release_policy() {
-  local policy_date="2026-10-01"
-  local today macos_build app prerelease_xcodes=""
-
-  today="$(date +%F)"
-  if [[ "$today" < "$policy_date" ]]; then
-    pass "current Apple prerelease state is unchanged until ${policy_date}"
-    return 0
-  fi
+  local macos_build app app_name app_name_lower plist plistbuddy_bin bundle_id xcode_build
+  local prerelease_xcodes="" unknown_xcodes=""
 
   macos_build="$(sw_vers -buildVersion 2>/dev/null || true)"
-  if [[ "$macos_build" == *[[:lower:]] ]]; then
-    warn "macOS build ${macos_build} appears to be a prerelease; turn off Beta Updates and install the public release"
+  if [[ -z "$macos_build" ]]; then
+    fail "macOS release status is unknown because the build version is not available"
+  elif [[ "$macos_build" == *[[:lower:]] ]]; then
+    fail "macOS build ${macos_build} appears to be a prerelease; turn off Beta Updates and install a public release, then rerun ./bin/setup"
   else
     pass "macOS appears to use a public release build"
   fi
 
+  plistbuddy_bin="${DOTFILES_PLISTBUDDY_BIN:-/usr/libexec/PlistBuddy}"
   while IFS= read -r app; do
     [[ -z "$app" ]] && continue
-    if [[ "$(basename "$app")" == *Beta* ]]; then
-      prerelease_xcodes="${prerelease_xcodes}${prerelease_xcodes:+, }$(basename "$app")"
+    app_name="$(basename "$app")"
+    app_name_lower="$(printf '%s' "$app_name" | LC_ALL=C tr '[:upper:]' '[:lower:]')"
+    plist="${app}/Contents/Info.plist"
+
+    # Xcode-beta.app is a direct name signal. A renamed Xcode bundle is
+    # identified by its stable bundle identifier and build metadata below.
+    if [[ "$app_name_lower" == xcode* && "$app_name_lower" == *beta* ]]; then
+      prerelease_xcodes="${prerelease_xcodes}${prerelease_xcodes:+, }${app_name}"
+      continue
     fi
-  done < <(find /Applications -maxdepth 1 -type d -name 'Xcode*.app' -print 2>/dev/null | sort)
+
+    if [[ ! -f "$plist" || ! -x "$plistbuddy_bin" ]]; then
+      if [[ "$app_name_lower" == xcode* ]]; then
+        unknown_xcodes="${unknown_xcodes}${unknown_xcodes:+, }${app_name}"
+      fi
+      continue
+    fi
+
+    bundle_id="$("$plistbuddy_bin" -c 'Print :CFBundleIdentifier' "$plist" 2>/dev/null || true)"
+    if [[ "$bundle_id" != "com.apple.dt.Xcode" ]]; then
+      continue
+    fi
+
+    xcode_build="$("$plistbuddy_bin" -c 'Print :DTXcodeBuild' "$plist" 2>/dev/null || true)"
+    if [[ -z "$xcode_build" ]]; then
+      unknown_xcodes="${unknown_xcodes}${unknown_xcodes:+, }${app_name}"
+    elif [[ "$xcode_build" == *[[:lower:]] ]]; then
+      prerelease_xcodes="${prerelease_xcodes}${prerelease_xcodes:+, }${app_name} (${xcode_build})"
+    fi
+  done < <(find "${DOTFILES_APPLICATIONS_DIR:-/Applications}" -maxdepth 1 -type d -name '*.app' -print 2>/dev/null | sort)
 
   if [[ -n "$prerelease_xcodes" ]]; then
-    warn "prerelease Xcode apps remain installed: ${prerelease_xcodes}; do not select or use them"
+    fail "prerelease Xcode apps remain installed: ${prerelease_xcodes}; install and select the public release, then rerun ./bin/setup"
+  elif [[ -n "$unknown_xcodes" ]]; then
+    warn "Xcode prerelease status is unknown because bundle metadata could not be read for: ${unknown_xcodes}"
   else
-    pass "no prerelease Xcode app name was found"
+    pass "no prerelease Xcode app name or build metadata was found"
   fi
 }
 
@@ -136,6 +167,7 @@ check_script_syntax() {
   local script
   local scripts=(
     "bin/bootstrap"
+    "bin/check-macos-updates"
     "bin/setup"
     "bin/lib/setup-runtime.sh"
     "bin/link-dotfiles"
@@ -215,6 +247,7 @@ check_app_manifest() {
 }
 
 check_macos
+check_macos_updates
 check_xcode_clt
 check_apple_release_policy
 check_homebrew

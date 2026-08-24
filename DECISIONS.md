@@ -63,12 +63,18 @@ Xcode installs use only the latest public release. Xcode installs use `xcodes
 Xcode-sensitive Homebrew formulae stay in `Brewfile` as the source of truth and
 are deferred until full Xcode is selected.
 
-The current macOS 27 and Xcode 27 beta state is an explicit temporary
-exception through 30 September 2026. The setup does not change that live state.
-From 1 October 2026, this Mac uses only public release versions of macOS, iOS,
-iOS simulator runtimes, and Xcode. The repo does not enable Apple beta update
-channels. Preflight reports visible prerelease macOS and Xcode state after the
-cutoff so that it cannot remain unnoticed.
+Apple tooling uses public releases only. As the first environment gate after
+the Darwin check, preflight runs `softwareupdate --list --product-types macOS`
+in an English locale. Setup stops when the active Apple or MDM catalog offers
+an applicable macOS update. It also stops when the command fails, its output is
+not recognized, or macOS or Xcode appears to be a prerelease. This is a
+fail-closed check because `softwareupdate` has human-readable output and does
+not provide a documented updates-available exit status.
+
+Setup does not claim that the Mac has the newest public release outside its
+active catalog. It does not install macOS updates, restart the Mac, change the
+software update catalog, or change beta enrollment. The user updates in System
+Settings, restarts if required, and reruns `./bin/setup`.
 
 Setup parallelism is on by default, but only across independent work. Homebrew writers and `mise install` writers stay serialized; recoverable failures are recorded, independent work continues, and the final summary exits nonzero when repair is needed.
 

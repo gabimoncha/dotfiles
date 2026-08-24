@@ -15,6 +15,12 @@ to continue into Mackup, Raycast, and encrypted Codex state restore steps.
 Rerun it later when Apple ID, App Store, iCloud, Synology Drive, or MAS
 prerequisites become ready.
 
+Preflight first checks the active Apple or MDM software update catalog. If a
+macOS update is available, or if setup cannot determine the update status, open
+System Settings > General > Software Update. Install the public update, restart
+the Mac if required, then rerun `./bin/setup`. Setup does not install the update
+or change Beta Updates.
+
 If setup opens the Xcode Command Line Tools installer popup, finish that installer and rerun `./bin/setup`.
 
 The lower-level commands still exist for targeted reruns:
@@ -53,8 +59,9 @@ Some setup still needs account login or OS permissions:
   Sources for Android 35, Android SDK Build-Tools, Android Emulator, and at
   least one virtual device
 
-The full mobile dev stack is intentionally outside `./bin/setup` because Xcode
-and Android Studio are large downloads. Run `./bin/install-mobile-dev` when you
-want full Xcode, Android Studio, `idb-companion`, and `sourcekitten`.
+The full mobile dev stack is part of `./bin/setup` by default. Use
+`./bin/setup --skip-mobile-dev` for a smaller run. Use
+`./bin/install-mobile-dev` to rerun only the Xcode, Android Studio,
+`idb-companion`, and `sourcekitten` installation.
 
 If Ghostty, tmux plugins, or Raycast hotkeys do not look restored after setup, run `./bin/app-state-doctor` for the concrete missing piece.

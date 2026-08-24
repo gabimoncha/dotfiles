@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+softwareupdate_bin="${DOTFILES_SOFTWAREUPDATE_BIN:-/usr/sbin/softwareupdate}"
+timeout_seconds="${DOTFILES_SOFTWAREUPDATE_TIMEOUT_SECONDS:-120}"
+output_file="$(mktemp)"
+softwareupdate_pid=""
+
+cleanup() {
+  if [[ -n "$softwareupdate_pid" ]]; then
+    kill "$softwareupdate_pid" 2>/dev/null || true
+    wait "$softwareupdate_pid" 2>/dev/null || true
+  fi
+  rm -f "$output_file"
+}
+
+trap cleanup EXIT
+
+update_instructions() {
+  cat >&2 <<'EOF'
+Open System Settings > General > Software Update and install any offered public macOS update.
+Restart the Mac if required, then rerun: ./bin/setup
+EOF
+}
+
+if [[ ! -x "$softwareupdate_bin" ]]; then
+  printf 'fail - macOS update status is unknown because softwareupdate is not available\n' >&2
+  update_instructions
+  exit 1
+fi
+
+if [[ ! "$timeout_seconds" =~ ^[1-9][0-9]*$ ]]; then
+  printf 'fail - macOS update status is unknown because the softwareupdate timeout is not a positive integer: %s\n' "$timeout_seconds" >&2
+  update_instructions
+  exit 1
+fi
+
+LC_ALL=C LANG=C "$softwareupdate_bin" --list --product-types macOS >"$output_file" 2>&1 &
+softwareupdate_pid=$!
+started_at="$(date +%s)"
+timed_out=0
+
+while kill -0 "$softwareupdate_pid" 2>/dev/null; do
+  current_time="$(date +%s)"
+  if (( current_time - started_at >= timeout_seconds )); then
+    timed_out=1
+    break
+  fi
+  sleep 0.1
+done
+
+if [[ $timed_out -eq 1 ]]; then
+  # Terminate the direct child and reap it. SIGKILL makes the timeout bounded
+  # even when softwareupdate does not handle SIGTERM.
+  kill "$softwareupdate_pid" 2>/dev/null || true
+  kill -KILL "$softwareupdate_pid" 2>/dev/null || true
+  wait "$softwareupdate_pid" 2>/dev/null || true
+  softwareupdate_pid=""
+  printf 'fail - macOS update status is unknown because softwareupdate timed out after %s seconds\n' "$timeout_seconds" >&2
+  update_instructions
+  exit 1
+fi
+
+set +e
+wait "$softwareupdate_pid"
+status=$?
+set -e
+softwareupdate_pid=""
+
+if [[ $status -ne 0 ]]; then
+  printf 'fail - macOS update status is unknown because softwareupdate exited with status %s\n' "$status" >&2
+  update_instructions
+  exit 1
+fi
+
+no_updates='No new software available.'
+updates_found='Software Update found the following new or updated software:'
+tool_header='Software Update Tool'
+finding_updates='Finding available software'
+
+if grep -Fq "$tool_header" "$output_file" &&
+  grep -Fq "$finding_updates" "$output_file" &&
+  grep -Fq "$no_updates" "$output_file" &&
+  ! grep -Fq "$updates_found" "$output_file"; then
+  printf "ok  - no macOS updates are available in this Mac's active Apple or MDM catalog\n"
+  exit 0
+fi
+
+if grep -Fq "$tool_header" "$output_file" &&
+  grep -Fq "$finding_updates" "$output_file" &&
+  grep -Fq "$updates_found" "$output_file" &&
+  grep -Eq '^[[:space:]]*[-*] Label:' "$output_file" &&
+  ! grep -Fq "$no_updates" "$output_file"; then
+  printf "fail - a macOS update is available in this Mac's active Apple or MDM catalog\n" >&2
+  update_instructions
+  exit 1
+fi
+
+printf 'fail - macOS update status is unknown because softwareupdate returned unexpected output\n' >&2
+update_instructions
+exit 1

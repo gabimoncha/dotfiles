@@ -15,6 +15,12 @@ cd ~/development/dotfiles
 Run `./bin/setup` without `sudo`. The scripts ask for a password only when a
 specific privileged macOS or Homebrew step needs it.
 
+Setup first checks the Mac's active Apple or MDM software update catalog. If a
+macOS update is available, or if the check result is unknown, setup stops
+before authentication or installation. Open System Settings > General >
+Software Update, install the public update, restart if required, and rerun
+`./bin/setup`. Setup does not install macOS updates or change Beta Updates.
+
 By default, setup includes the full mobile development stack and overlaps safe
 download-heavy work such as Xcode, Homebrew, `mise`, Android Studio, MAS apps,
 and VS Code extensions. Use `./bin/setup --skip-mobile-dev` when you do not want
@@ -140,12 +146,18 @@ flowchart LR
 
   subgraph Preflight["bin/preflight"]
     direction TB
-    P1["Check macOS, Xcode CLT, Homebrew, GitHub SSH"]
-    P2["Check repo files and app manifest"]
-    P3["Run syntax checks for setup scripts"]
-    P4["Preflight passed"]
+    P1["Verify macOS"]
+    P2["Scan active catalog for macOS updates"]
+    P3{"No update found?"}
+    P4["Exit: update in System Settings, restart if required, rerun setup"]
+    P5["Reject visible prerelease macOS or Xcode"]
+    P6["Check Xcode CLT, Homebrew, GitHub SSH, repo files, and app manifest"]
+    P7["Run syntax checks for setup scripts"]
+    P8["Preflight passed"]
 
-    P1 --> P2 --> P3 --> P4
+    P1 --> P2 --> P3
+    P3 -->|"yes"| P5 --> P6 --> P7 --> P8
+    P3 -->|"update or unknown"| P4
   end
 
   subgraph Bootstrap["bin/bootstrap"]
@@ -498,15 +510,20 @@ is selected, old Xcode apps from other major versions are removed through
 
 ## Apple Release Policy
 
-The current macOS 27 and Xcode 27 beta state stays unchanged until 1 October
-2026. This repo does not change the live beta enrollment or the installed beta
-Xcode before that date.
+Use only public release versions of macOS, iOS, iOS simulator runtimes, and
+Xcode. Do not enroll a Mac or an iPhone in Apple beta updates. All new Xcode
+installs use the latest public release. `./bin/preflight` fails if the macOS
+build or an installed Xcode app appears to be a prerelease. Turn off Beta
+Updates, install and select public releases, then rerun `./bin/setup`.
 
-All new Xcode installs use the latest public release. From 1 October 2026, use
-only public release versions of macOS, iOS, iOS simulator runtimes, and Xcode.
-Do not enroll a Mac or an iPhone in Apple beta updates. `./bin/preflight` warns
-after that date if the Mac build or an installed Xcode app appears to be a
-prerelease.
+Before other environment checks, preflight runs
+`softwareupdate --list --product-types macOS` with an English locale. It passes
+only when the output has the known no-update result. It stops setup when the
+active Apple or MDM catalog offers an applicable update, when the command
+fails, or when its human-readable output is not recognized. It does not claim
+that the Mac has the newest public release outside that active catalog. It does
+not install an update, restart the Mac, change the update catalog, or change
+beta enrollment.
 
 Formulae that build from source and trip Homebrew's Xcode minimum check, such
 as `borders`, stay in `Brewfile` but are deferred until full Xcode is selected.
@@ -564,6 +581,7 @@ Brewfile                         Homebrew, mas, casks, VS Code extensions
 apps/manifest.tsv                extra cask/formula/manual app ledger
 bin/setup                        fresh-Mac entrypoint
 bin/bootstrap                    lower-level bootstrap
+bin/check-macos-updates          read-only active-catalog macOS update gate
 bin/link-dotfiles                symlink managed files into $HOME
 bin/ensure-codex-standalone      keep Codex on the standalone installer path
 bin/ensure-cursor-agent-standalone
@@ -826,6 +844,7 @@ After meaningful changes, run the smallest relevant checks:
 ```bash
 bash -n bin/lib/setup-runtime.sh
 bash -n bin/bootstrap
+bash -n bin/check-macos-updates
 bash -n bin/ensure-codex-standalone
 bash -n bin/ensure-cursor-agent-standalone
 bash -n bin/ensure-mise-standalone
@@ -834,6 +853,7 @@ bash -n bin/link-dotfiles
 bash -n bin/file-backup
 bash -n bin/file-restore
 bash -n macos/defaults.sh
+./tests/check-macos-updates.sh
 git diff --check
 ```
 

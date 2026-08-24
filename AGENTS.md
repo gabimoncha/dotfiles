@@ -38,10 +38,10 @@ This repo is the source of truth for setting up a new MacBook. It owns machine b
 
 ## Apple Release Policy
 
-- Keep the current macOS 27 and Xcode 27 beta state unchanged through 30 September 2026 unless the user asks for an earlier change.
-- Do not install a new prerelease Xcode.
-- From 1 October 2026, use only public release versions of macOS, iOS, iOS simulator runtimes, and Xcode.
-- Do not enable Apple beta update channels. Do not select or use a prerelease Xcode after the cutoff.
+- Use only public release versions of macOS, iOS, iOS simulator runtimes, and Xcode.
+- Do not install a prerelease Xcode or enable Apple beta update channels.
+- Setup must stop when a macOS update is available, when update status is unknown, or when macOS or Xcode appears to be a prerelease.
+- Setup must not install macOS updates or change beta enrollment. Tell the user to update in System Settings, restart if required, and rerun `./bin/setup`.
 
 ## Validation
 
@@ -49,10 +49,12 @@ After meaningful changes, prefer the smallest relevant checks:
 
 ```bash
 bash -n bin/bootstrap
+bash -n bin/check-macos-updates
 bash -n bin/setup
 bash -n bin/link-dotfiles
 bash -n bin/install-apps
 bash -n macos/defaults.sh
+./tests/check-macos-updates.sh
 git diff --check
 ```
 
