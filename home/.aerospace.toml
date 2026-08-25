@@ -277,10 +277,6 @@ if.app-id = 'com.proxyman.NSProxy'
 run = ['layout floating', 'move-node-to-workspace 3']
 
 [[on-window-detected]]
-if.app-id = 'com.google.Chrome'
-run = ['layout floating', 'move-node-to-workspace 3']
-
-[[on-window-detected]]
 if.app-id = 'com.t3tools.t3code'
 run = ['layout floating', 'move-node-to-workspace 3']
 
@@ -310,6 +306,10 @@ run = ['layout floating', 'move-node-to-workspace W']
 if.app-id = 'com.automattic.beeper.desktop'
 run = ['layout floating', 'move-node-to-workspace W']
 
+### Google Chrome browser
+[[on-window-detected]]
+if.app-id = 'com.google.Chrome'
+run = ['layout floating', 'move-node-to-workspace Q']
 
 ### Arc browser
 [[on-window-detected]]
@@ -394,5 +394,4 @@ run = ['layout tiling', 'move-node-to-workspace A']
 [[on-window-detected]]
 check-further-callbacks = true
 run = ['layout floating', 'move-node-to-workspace D']
-
 
