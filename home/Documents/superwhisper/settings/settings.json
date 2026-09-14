@@ -1,11 +1,19 @@
 {
   "favoriteModelIDs" : [
-    "small.en",
-    "small"
+    "vad-v2",
+    "emb-v1",
+    "seg-v1",
+    "speakerkit-coreml",
+    "s1-vocab-v2-160MB",
+    "s1-mini",
+    "cohere-transcribe-q4",
+    "canary-1b-v2_474MB",
+    "nvidia_parakeet-v3_494MB"
   ],
   "modeKeys" : [
-    "voice to text",
-    "default"
+    "pro",
+    "default",
+    "voice to text"
   ],
   "replacements" : [
     {

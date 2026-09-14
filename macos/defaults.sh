@@ -144,9 +144,7 @@ defaults write com.apple.finder ShowPathbar -bool true
 defaults write com.apple.finder ShowStatusBar -bool true
 
 log "Applying screenshot defaults"
-mkdir -p "${HOME}/Screenshots"
-defaults write com.apple.screencapture location -string "${HOME}/Screenshots"
-defaults write com.apple.screencapture type -string "png"
+"${script_dir}/../bin/configure-screenshots"
 defaults write com.apple.screencapture disable-shadow -bool true
 
 log "Applying Dock defaults"

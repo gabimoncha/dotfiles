@@ -58,7 +58,7 @@ automatically-unhide-macos-hidden-apps = false
 # even when they are invisible.
 # This config version is only available since 'config-version = 2'
 # Fallback value (if you omit the key): persistent-workspaces = []
-persistent-workspaces = ["1", "2", "3", "4", "Q", "W", "E", "A", "S", "D"]
+persistent-workspaces = ["1", "2", "3", "4", "5", "Q", "W", "E", "A", "S", "D"]
 
 # A callback that runs every time binding mode changes
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
@@ -145,6 +145,7 @@ alt-1 = 'workspace 1'
 alt-2 = 'workspace 2'
 alt-3 = 'workspace 3'
 alt-4 = 'workspace 4'
+alt-5 = 'workspace 5'
 alt-q = 'workspace Q'
 alt-w = 'workspace W'
 alt-e = 'workspace E'
@@ -157,6 +158,7 @@ alt-shift-1 = ['move-node-to-workspace 1', 'workspace 1']
 alt-shift-2 = ['move-node-to-workspace 2', 'workspace 2']
 alt-shift-3 = ['move-node-to-workspace 3', 'workspace 3']
 alt-shift-4 = ['move-node-to-workspace 4', 'workspace 4']
+alt-shift-5 = ['move-node-to-workspace 5', 'workspace 5']
 alt-shift-q = ['move-node-to-workspace Q', 'workspace Q']
 alt-shift-w = ['move-node-to-workspace W', 'workspace W']
 alt-shift-e = ['move-node-to-workspace E', 'workspace E']
@@ -194,15 +196,16 @@ alt-shift-l = ['join-with right', 'mode main']
 [workspace-to-monitor-force-assignment]
 # Left hand side of the assignment is the workspace name
 # Right hand side of the assignment is the monitor pattern
-1 = 'LG' # Code
-2 = 'LS24AG30x' #'LG' # Simulators & Proxyman
-3 = 'LG' # Ghostty
-4 = 'LG' # ?
+1 = 'LG' # T3 Code
+2 = 'LS24AG30x' # Codex
+3 = 'LG' # Development tools
+4 = 'LG' # iTerm2 and Ghostty
+5 = 'LG' # Cursor
 Q = 'built-in' # obsidian
 W = 'built-in' # chats
 E = 'built-in' # business chats
 A = 'built-in' # browser
-S = 'built-in' # ?
+S = 'built-in' # iOS Simulator and QEMU
 D = 'built-in' # defaults
 
 
@@ -218,27 +221,17 @@ D = 'built-in' # defaults
 ### Cursor
 [[on-window-detected]]
 if.app-id = 'com.todesktop.230313mzl4w4u92'
-run = ['layout floating', 'move-node-to-workspace 1']
+run = ['layout floating', 'move-node-to-workspace 5']
 
 ### Cursor Agents
 [[on-window-detected]]
 if.window-title-regex-substring = 'Cursor Agents'
 run = ['layout floating', 'move-node-to-workspace 4']
 
-### Zed
-[[on-window-detected]]
-if.app-id = 'dev.zed.Zed'
-run = ['layout floating', 'move-node-to-workspace 1']
-
 ### iTerm2
 [[on-window-detected]]
 if.app-id = 'com.googlecode.iterm2'
-run = ['layout tiling', 'move-node-to-workspace 2']
-
-### cmux
-[[on-window-detected]]
-if.app-id = 'com.cmuxterm.app'
-run = ['layout tiling', 'move-node-to-workspace 2']
+run = ['layout tiling', 'move-node-to-workspace 4']
 
 ### Ghostty
 [[on-window-detected]]
@@ -249,41 +242,32 @@ run = [
   # - https://github.com/ghostty-org/ghostty/issues/1840
   # - https://github.com/ghostty-org/ghostty/issues/2006
   'layout floating',
-  'move-node-to-workspace 2',
+  'move-node-to-workspace 4',
 ]
 
 ### Development simulators
 [[on-window-detected]]
 if.app-id = 'com.apple.iphonesimulator'
-run = ['layout floating', 'move-node-to-workspace 3']
-
-### Maestro Studio
-[[on-window-detected]]
-if.app-id = 'com.mobiledev.maestro-studio'
-run = ['layout floating', 'move-node-to-workspace 3']
+run = ['layout floating', 'move-node-to-workspace S']
 
 ### Cursor
 [[on-window-detected]]
 if.app-id = 'com.openai.codex'
-run = ['layout floating', 'move-node-to-workspace 4']
+run = ['layout floating', 'move-node-to-workspace 2']
 
 ### Development emulator
 [[on-window-detected]]
 if.app-name-regex-substring = 'qemu-system-aarch64'
-run = ['layout floating', 'move-node-to-workspace 3']
+run = ['layout floating', 'move-node-to-workspace S']
 
+### Orca
 [[on-window-detected]]
-if.app-id = 'com.proxyman.NSProxy'
+if.app-id = 'com.stablyai.orca'
 run = ['layout floating', 'move-node-to-workspace 3']
 
 [[on-window-detected]]
 if.app-id = 'com.t3tools.t3code'
-run = ['layout floating', 'move-node-to-workspace 3']
-
-### Flow Whisper
-[[on-window-detected]]
-if.app-id = 'com.electron.wispr-flow'
-run = ['layout floating', 'move-node-to-workspace Q']
+run = ['layout floating', 'move-node-to-workspace 1']
 
 [[on-window-detected]]
 if.app-id = 'md.obsidian'
@@ -302,23 +286,9 @@ run = ['layout floating', 'move-node-to-workspace W']
 if.app-id = 'org.whispersystems.signal-desktop'
 run = ['layout floating', 'move-node-to-workspace W']
 
-[[on-window-detected]]
-if.app-id = 'com.automattic.beeper.desktop'
-run = ['layout floating', 'move-node-to-workspace W']
-
 ### Google Chrome browser
 [[on-window-detected]]
 if.app-id = 'com.google.Chrome'
-run = ['layout floating', 'move-node-to-workspace Q']
-
-### Arc browser
-[[on-window-detected]]
-if.app-id = 'company.thebrowser.Browser'
-run = ['layout floating', 'move-node-to-workspace Q']
-
-### Zen browser
-[[on-window-detected]]
-if.app-id = 'app.zen-browser.zen'
 run = ['layout floating', 'move-node-to-workspace Q']
 
 ### Helium browser
@@ -333,10 +303,6 @@ run = ['layout floating', 'move-node-to-workspace E']
 
 [[on-window-detected]]
 if.app-id = 'com.hnc.Discord'
-run = ['layout tiling', 'move-node-to-workspace E']
-
-[[on-window-detected]]
-if.app-id = 'app.legcord.Legcord'
 run = ['layout tiling', 'move-node-to-workspace E']
 
 ### Finder
@@ -394,4 +360,3 @@ run = ['layout tiling', 'move-node-to-workspace A']
 [[on-window-detected]]
 check-further-callbacks = true
 run = ['layout floating', 'move-node-to-workspace D']
-

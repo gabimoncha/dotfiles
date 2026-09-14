@@ -15,33 +15,11 @@ if [[ ! -r "$routing_file" ]]; then
 fi
 
 resolve_real_gh() {
-  local candidate candidate_path path_entry
-  local original_ifs="$IFS"
-
-  if command -v mise >/dev/null 2>&1; then
-    candidate="$(mise which gh 2>/dev/null || true)"
-    if [[ -n "$candidate" && -x "$candidate" ]]; then
-      printf '%s\n' "$candidate"
-      return 0
-    fi
+  local helper="$(dirname "$0")/dotfiles-gh-real"
+  if [[ ! -x "$helper" && -n "${DOTFILES_ROOT:-}" ]]; then
+    helper="$DOTFILES_ROOT/home/bin/dotfiles-gh-real"
   fi
-
-  IFS=:
-  for path_entry in $PATH; do
-    [[ -n "$path_entry" ]] || path_entry="."
-    candidate="${path_entry}/gh"
-    [[ -x "$candidate" ]] || continue
-    candidate_path="$(cd "$(dirname "$candidate")" && pwd -P)/$(basename "$candidate")"
-    if [[ "$candidate_path" != "$self_path" ]]; then
-      IFS="$original_ifs"
-      printf '%s\n' "$candidate"
-      return 0
-    fi
-  done
-  IFS="$original_ifs"
-
-  printf 'gh: could not find the managed GitHub CLI executable\n' >&2
-  return 1
+  "$helper" --resolve
 }
 
 account_for_context() {

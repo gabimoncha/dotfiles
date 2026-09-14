@@ -16,7 +16,7 @@ alias cc='claude'
 alias n='nvim'
 alias lg='lazygit'
 
-if command -v sfw >/dev/null 2>&1; then
+if _dotfiles_real_tool sfw >/dev/null 2>&1; then
   alias npm='sfw npm'
   alias pnpm='sfw pnpm'
   alias yarn='sfw yarn'
@@ -25,6 +25,7 @@ if command -v sfw >/dev/null 2>&1; then
   alias cargo='sfw cargo'
 fi
 
-if command -v zoxide >/dev/null 2>&1; then
-  eval "$(zoxide init zsh)"
+if zoxide_bin="$(_dotfiles_real_tool zoxide)"; then
+  eval "$("$zoxide_bin" init zsh 2>/dev/null)"
 fi
+unset zoxide_bin

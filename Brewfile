@@ -9,9 +9,9 @@ tap "facebook/fb", trusted: true
 tap "felixkratz/formulae", trusted: true
 tap "grishka/grishka", trusted: true
 tap "homebrew-zathura/zathura", trusted: true
-tap "manaflow-ai/cmux", trusted: true
 tap "nikitabobko/tap", trusted: true
 tap "nkzw-tech/tap", trusted: true
+tap "stablyai/orca", trusted: true
 
 brew "apktool"
 brew "borders"
@@ -40,7 +40,7 @@ brew "zlib"
 
 # Mac App Store
 mas "Amphetamine", id: 937984704
-mas "Draw Things", id: 6444050820
+mas "DevCleaner for Xcode", id: 1388020431
 mas "Endel", id: 1346247457
 mas "TestFlight", id: 899247664
 mas "The Unarchiver", id: 425424353
@@ -48,13 +48,10 @@ mas "WhatsApp", id: 310633997
 mas "Telegram", id: 747648890
 mas "Transporter", id: 1450874784
 mas "Portal", id: 1436994560
-mas "Harvest", id: 506189836
 
 cask "nikitabobko/tap/aerospace"
-cask "beeper"
 cask "blackhole-2ch"
 cask "chatgpt"
-cask "cmux"
 cask "nkzw-tech/tap/codiff"
 cask "cursor"
 cask "cyberduck"
@@ -71,7 +68,6 @@ cask "karabiner-elements"
 cask "linear"
 cask "lm-studio"
 cask "mole-app"
-cask "multipass"
 cask "neardrop"
 cask "ngrok"
 cask "notion-calendar"
@@ -83,16 +79,17 @@ cask "rectangle"
 cask "signal"
 cask "slack"
 cask "spotify"
+cask "stablyai/orca/orca"
 cask "stats"
 cask "steam"
 cask "superwhisper"
 cask "synology-drive"
+cask "synology-image-assistant"
 cask "t3-code"
 cask "tailscale-app"
 cask "visual-studio-code"
 cask "warp"
 cask "yaak"
-cask "zen"
 cask "zoom"
 cask "zulu@17"
 
