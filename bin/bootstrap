@@ -167,7 +167,6 @@ cask_app_bundle_name() {
     chatgpt) printf 'ChatGPT' ;;
     claude) printf 'Claude' ;;
     cursor) printf 'Cursor' ;;
-    cyberduck) printf 'Cyberduck' ;;
     discord) printf 'Discord' ;;
     expo-orbit) printf 'Orbit' ;;
     figma) printf 'Figma' ;;
@@ -184,6 +183,7 @@ cask_app_bundle_name() {
     ngrok) printf 'ngrok' ;;
     nikitabobko/tap/aerospace | aerospace) printf 'AeroSpace' ;;
     notion-calendar) printf 'Notion Calendar' ;;
+    obs) printf 'OBS' ;;
     obsidian) printf 'Obsidian' ;;
     orbstack) printf 'OrbStack' ;;
     pgadmin4) printf 'pgAdmin 4' ;;

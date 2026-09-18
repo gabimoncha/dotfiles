@@ -22,8 +22,7 @@ Software Update, install the public update, restart if required, and rerun
 `./bin/setup`. Setup does not install macOS updates or change Beta Updates.
 
 By default, setup includes the full mobile development stack and overlaps safe
-download-heavy work such as Xcode, Homebrew, `mise`, Android Studio, MAS apps,
-and VS Code extensions. Use `./bin/setup --skip-mobile-dev` when you do not want
+download-heavy work such as Xcode, Homebrew, `mise`, Android Studio, and MAS apps. Use `./bin/setup --skip-mobile-dev` when you do not want
 the Xcode/Android downloads on a run, or `./bin/setup --serial` when debugging.
 
 ## Setup Steps
@@ -171,7 +170,7 @@ flowchart LR
     B7["Call bin/ensure-cursor-agent-standalone"]
     B8["Prepare xcodes and aria2, then start Xcode install"]
     B9["Start mise install and run brew bundle"]
-    B10["Run Android Studio, MAS apps, and VS Code extensions"]
+    B10["Run Android Studio and MAS apps"]
     B11["Call bin/link-dotfiles again after apps exist"]
     B12["Run iOS platform support and Xcode-dependent formulae"]
     B13["Run setup-tmux, shell framework, macOS defaults, Finder favorites"]
@@ -388,7 +387,7 @@ refresh the installed skills.
 Some state cannot be safely automated:
 
 - Apple ID, App Store, and iCloud sign-in
-- Cursor, VS Code Settings Sync, Notion, Synology Drive, superwhisper, and
+- Cursor, Notion, Synology Drive, superwhisper, and
   DaVinci Resolve sign-in
 - Accessibility, Automation, Microphone, and network permissions
 - first-run setup for Xcode, Android Studio, OrbStack, and vendor-only apps
@@ -440,7 +439,7 @@ It:
 7. starts `mise install` in the background
 8. installs Homebrew formulae and casks
    with `brew bundle --jobs="${DOTFILES_BREW_BUNDLE_JOBS:-auto}"`
-9. runs Android Studio, Mac App Store apps, and VS Code extensions after the
+9. runs Android Studio and Mac App Store apps after the
    Homebrew bundle phase
 10. links app dotfiles after app bundles exist
 11. runs iOS platform support and Xcode-dependent formulae after full Xcode is
@@ -532,8 +531,7 @@ as `borders`, stay in `Brewfile` but are deferred until full Xcode is selected.
 
 This repo is deliberately boring about ownership:
 
-- `Brewfile` owns Homebrew formulae, casks, taps, App Store app entries,
-  and VS Code extensions.
+- `Brewfile` owns Homebrew formulae, casks, taps, and App Store app entries.
 - `home/.config/mise/config.toml` owns language runtimes and global developer
   tools that `mise` supports, including backend-prefixed tools such as
   `gem:fastlane` and `conda:aria2`.
@@ -577,7 +575,7 @@ databases, session state, or machine-local exports.
 ## Important Paths
 
 ```text
-Brewfile                         Homebrew, mas, casks, VS Code extensions
+Brewfile                         Homebrew, mas, and casks
 apps/manifest.tsv                extra cask/formula/manual app ledger
 bin/setup                        fresh-Mac entrypoint
 bin/bootstrap                    lower-level bootstrap
@@ -745,6 +743,18 @@ mise exec -- <command>
 
 ## Mackup and Raycast
 
+After OBS installation, setup prints Screen & System Audio Recording, Camera,
+Microphone, and Input Monitoring instructions from `bin/obs-permissions` and
+`apps/obs-permissions.tsv`. Approve access in OBS and macOS; older installations
+may use Accessibility for background hotkeys instead.
+
+Every setup run, including the first run and dry-run, prints a cloud backup
+checklist before installation. It lists Mackup, Raycast, and Codex locations in
+Synology Drive and iCloud Drive, counts files that need download, and distinguishes
+missing locations from unreadable files. Download one provider's copy in Finder
+before continuing. This metadata check does not download files or claim that a
+backup is valid; Raycast import and Codex decryption still require their passwords.
+
 Mackup uses Synology Drive as primary storage, mirrors to iCloud after backups
 on a best-effort basis when iCloud is ready, and restores from iCloud if the
 Synology backup is not available yet:
@@ -754,8 +764,10 @@ Synology backup is not available yet:
 ./bin/file-restore mackup
 ```
 
-The allowlist currently includes Cursor, Cyberduck, Rectangle, Spotify, VS Code,
-GitHub CLI, Lazygit, OBS, and Stats.
+The allowlist currently includes Cursor, Rectangle, Spotify,
+OBS, and Stats.
+Setup installs OBS through Homebrew; Mackup restores its settings, profiles,
+and scenes separately.
 
 Use the helper scripts instead of raw Mackup link mode. This repo treats Mackup
 as an explicit copy-based backup/restore tool so tracked files under `home/`

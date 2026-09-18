@@ -4,7 +4,6 @@ beeper	cask	beeper	Beeper	Homebrew cask.
 chatgpt	cask	chatgpt	ChatGPT	Homebrew cask.
 claude	cask	claude	Claude	Homebrew cask.
 cursor	cask	cursor	Cursor	Homebrew cask.
-cyberduck	cask	cyberduck	Cyberduck	Homebrew cask.
 davinci-resolve	manual	https://www.blackmagicdesign.com/products/davinciresolve	DaVinci Resolve	Blackmagic requires a vendor download/account flow; install manually or use Codex-assisted browser automation after bootstrap.
 discord	cask	discord	Discord	Homebrew cask.
 figma	cask	figma	Figma	Homebrew cask.
@@ -21,6 +20,7 @@ mole-app	cask	mole-app	Mole	Homebrew cask for the Mole GUI app.
 multipass	cask	multipass	Multipass	Homebrew cask.
 neardrop	cask	neardrop	NearDrop	Homebrew cask from grishka/grishka; quarantine attribute is removed after install.
 notion-calendar	cask	notion-calendar	Notion Calendar	Homebrew cask.
+obs	cask	obs	OBS	Homebrew cask supported by OBS; settings restored by Mackup.
 obsidian	cask	obsidian	Obsidian	Homebrew cask.
 pgadmin4	cask	pgadmin4	pgAdmin 4	Homebrew cask.
 pinokio	manual	https://pinokio.computer/	Pinokio	No Homebrew cask currently exists; install from vendor.
@@ -34,7 +34,6 @@ superwhisper	cask	superwhisper	superwhisper	Homebrew cask.
 synology-drive	cask	synology-drive	Synology Drive Client	Homebrew cask.
 t3-code	cask	t3-code	T3 Code (Alpha)	Homebrew cask; stable package route found.
 tailscale	cask	tailscale-app	Tailscale	Homebrew cask for the menu-bar app and full Mac UX.
-visual-studio-code	cask	visual-studio-code	Visual Studio Code	Homebrew cask; settings restored by Mackup.
 warp	cask	warp	Warp	Homebrew cask.
 yaak	cask	yaak	Yaak	Homebrew cask; GUI companion to @yaakapp/cli in mise.
 zen-browser	cask	zen	Zen	Homebrew cask token is zen.

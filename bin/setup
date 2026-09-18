@@ -391,6 +391,9 @@ fi
 
 export DOTFILES_SKIP_MOBILE_DEV="$skip_mobile_dev"
 
+. "${repo_root}/bin/lib/setup-backup-checklist.sh"
+setup_backup_checklist
+
 trap cleanup EXIT
 
 ensure_not_root
@@ -475,6 +478,7 @@ else
   setup_status=1
 fi
 
+bash "${repo_root}/bin/obs-permissions"
 print_manifest_summary
 run_interactive_followup
 log "Installing personal AI skills"

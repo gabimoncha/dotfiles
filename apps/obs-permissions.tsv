@@ -1,0 +1,5 @@
+# Setting	Application	Desired state
+Screen & System Audio Recording	OBS	on
+Camera	OBS	on
+Microphone	OBS	on
+Input Monitoring	OBS	on

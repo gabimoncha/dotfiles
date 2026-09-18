@@ -10,9 +10,10 @@ private app state.
 
 Custom Mackup application definitions live under `home/.config/mackup/applications/` and are linked into `~/.config/mackup/applications/` by `bin/link-dotfiles`.
 
-Do not add apps whose settings are already tracked under `home/`. AeroSpace and Ghostty are intentionally direct repo-owned symlinks. VS Code and Cursor are intentionally owned by Mackup instead of direct repo symlinks, because Mackup supports their user settings, keybindings, prompts, and snippets.
+Do not add apps whose settings are already tracked under `home/`. AeroSpace and Ghostty are intentionally direct repo-owned symlinks. Cursor settings are owned by Mackup instead of direct repo symlinks. VS Code is no longer in the install or backup inventory.
 
-OBS is managed with Mackup's built-in `obs` definition. It backs up the core OBS
+Setup installs OBS through the Homebrew `obs` cask. Its settings are managed
+with Mackup's built-in `obs` definition. It backs up the core OBS
 preferences, `global.ini`, and `basic` profiles/scenes; it does not manage
 plugins, logs, profiler data, or update caches.
 

@@ -391,7 +391,7 @@ print_manual_followup() {
 
 Manual account and permission steps:
 - Sign in to Apple ID, App Store, and iCloud.
-- Sign in to Cursor, VS Code Settings Sync if desired, Notion, Synology Drive, superwhisper, and DaVinci Resolve.
+- Sign in to Cursor, Notion, Synology Drive, superwhisper, and DaVinci Resolve.
 - Grant Accessibility / Automation / Microphone / network permissions when macOS prompts.
 - Run `gh auth status` and `ssh -T git@github.com` if GitHub access still looks wrong.
 EOF

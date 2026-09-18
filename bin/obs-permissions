@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+repo_root="$(cd "$(dirname "$0")/.." && pwd)"
+while IFS=$'\t' read -r setting app state; do
+  [[ -n "$setting" && "$setting" != \#* ]] || continue
+  printf "  %s: %s = %s\n" "$setting" "$app" "$state"
+done < "$repo_root/apps/obs-permissions.tsv"
+cat <<'EOF'
+
+After OBS is installed, open OBS and use its permissions dialog:
+  Screen Recording: open preferences and enable OBS.
+  Camera and Microphone: click Request Access for each, then allow access.
+  Input Monitoring: open preferences and enable OBS for background hotkeys.
+If OBS is missing from a settings list, request access from OBS first.
+On older installations, OBS may use Accessibility instead of Input Monitoring;
+use that entry only if OBS directs you there. Reopen the permissions dialog
+from the OBS Studio menu if needed. Restart OBS when macOS requests it.
+EOF

@@ -7,6 +7,7 @@ mkdir -p ~/development
 git clone https://github.com/gabimoncha/dotfiles.git ~/development/dotfiles
 cd ~/development/dotfiles
 ./bin/setup
+# Download the cloud backups listed by setup (iCloud Drive or Synology Drive).
 ```
 
 `./bin/setup` runs preflight, ensures GitHub CLI authentication for mise, then
@@ -52,7 +53,7 @@ The scripts are intended to be safe to rerun. Existing managed files are backed 
 Some setup still needs account login or OS permissions:
 
 - Apple ID, App Store, and iCloud
-- GitHub, Cursor, VS Code, Notion, Synology Drive, superwhisper
+- GitHub, Cursor, Notion, Synology Drive, superwhisper
 - Accessibility / Automation / Microphone permissions
 - First-run setup for Xcode, Android Studio, OrbStack, and DaVinci Resolve
 - Android Studio SDK setup for React Native: Android 15 SDK Platform 35,
