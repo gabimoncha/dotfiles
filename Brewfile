@@ -12,6 +12,7 @@ tap "homebrew-zathura/zathura", trusted: true
 tap "nikitabobko/tap", trusted: true
 tap "nkzw-tech/tap", trusted: true
 tap "stablyai/orca", trusted: true
+tap "xykong/tap", trusted: true
 
 brew "apktool"
 brew "borders"
@@ -89,6 +90,7 @@ cask "t3-code"
 cask "tailscale-app"
 cask "visual-studio-code"
 cask "warp"
+cask "xykong/tap/flux-markdown"
 cask "yaak"
 cask "zoom"
 cask "zulu@17"
