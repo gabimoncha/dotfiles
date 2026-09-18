@@ -629,6 +629,12 @@ Currently managed:
 - `~/scripts/toggle_function_keys.sh`
 - `nvim/` as `~/.config/nvim`
 
+The final link pass runs after the tool installation. It links the tracked
+global agent instructions from `home/.codex/AGENTS.md` to
+`~/.codex/AGENTS.md`, then links the same source to
+`~/.claude/CLAUDE.md`. The shared source keeps both agents aligned.
+Existing targets use the standard timestamped backup behavior.
+
 AeroSpace and Ghostty config links are only created after their app bundles
 exist in `/Applications`.
 

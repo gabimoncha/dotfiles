@@ -133,7 +133,13 @@ preserve_git_identity() {
 
 link_path() {
   local source="$1"
-  local target="${HOME}/${source#${repo_root}/home/}"
+  local target
+
+  if [[ "$#" -ge 2 ]]; then
+    target="$2"
+  else
+    target="${HOME}/${source#${repo_root}/home/}"
+  fi
 
   if [[ "${source}" == "${repo_root}/nvim" ]]; then
     target="${HOME}/.config/nvim"
@@ -180,5 +186,11 @@ for source in "${managed_sources[@]}"; do
 
   link_path "${source}"
 done
+
+if [[ "${DOTFILES_LINK_AGENT_CONFIG:-1}" == 1 ]]; then
+  agent_instructions="${repo_root}/home/.codex/AGENTS.md"
+  link_path "$agent_instructions" "${HOME}/.codex/AGENTS.md"
+  link_path "$agent_instructions" "${HOME}/.claude/CLAUDE.md"
+fi
 
 link_cliproxyapi_homebrew_config

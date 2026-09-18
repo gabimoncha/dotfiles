@@ -740,7 +740,7 @@ else
 fi
 
 log "Linking dotfiles"
-if "${repo_root}/bin/link-dotfiles"; then
+if DOTFILES_LINK_AGENT_CONFIG=0 "${repo_root}/bin/link-dotfiles"; then
   runtime_record_completed "Dotfile links"
 else
   runtime_record_failure recoverable "Dotfile links" "link-dotfiles failed" "" "Rerun ./bin/link-dotfiles."
