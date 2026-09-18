@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+repo_root="$(cd "$(dirname "$0")/.." && pwd)"
+/usr/bin/ruby - "$repo_root/home/.claude/settings.json" "$HOME/.claude/settings.json" <<'RUBY'
+require 'json'
+require 'fileutils'
+require 'tempfile'
+
+source, target = ARGV
+# Resolve existing links so the merge preserves their destination.
+target = File.realpath(target) if File.symlink?(target)
+existing = File.exist?(target) ? File.binread(target) : nil
+settings = existing ? JSON.parse(existing) : {}
+defaults = JSON.parse(File.read(source))
+raise 'Claude settings must be a JSON object' unless settings.is_a?(Hash)
+merge = lambda do |current, desired|
+  desired.each do |key, value|
+    if value.is_a?(Hash)
+      current[key] = {} unless current[key].is_a?(Hash)
+      merge.call(current[key], value)
+    else
+      current[key] = value
+    end
+  end
+end
+before = JSON.generate(settings)
+merge.call(settings, defaults)
+if existing && JSON.generate(settings) == before
+  puts 'Claude settings already configured'
+  exit
+end
+FileUtils.mkdir_p(File.dirname(target))
+if existing
+  backup = File.join(ENV.fetch('HOME'), '.dotfiles-backups',
+                     Time.now.strftime('%Y%m%d-%H%M%S-%N'), '.claude/settings.json')
+  FileUtils.mkdir_p(File.dirname(backup))
+  File.write(backup, existing, mode: 'wb', perm: 0600)
+end
+Tempfile.create(['.settings-', '.json'], File.dirname(target)) do |file|
+  file.chmod(existing ? File.stat(target).mode & 0777 : 0600)
+  file.write(JSON.pretty_generate(settings) + "\n")
+  file.close
+  File.rename(file.path, target)
+end
+puts 'Configured Claude settings'
+RUBY

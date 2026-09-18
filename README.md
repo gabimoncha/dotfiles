@@ -773,6 +773,12 @@ The final link step runs after the `mise` tool inventory and standalone agent
 installation. It links the tracked global Codex instructions from
 `home/.codex/AGENTS.md` to `~/.codex/AGENTS.md`, then links the same source to
 `~/.claude/CLAUDE.md`. The shared source keeps both agents aligned.
+This step also creates `~/.claude/settings.json` if needed and merges the
+tracked settings from `home/.claude/settings.json`. Claude reads both
+`CLAUDE.md` and `AGENTS.md` through the built-in `agents-md` plugin. Other
+settings are preserved, and changed files are backed up under
+`~/.dotfiles-backups`. To apply only these settings, run
+`bash ./bin/configure-claude-settings`.
 
 For manual inspection on the target Mac, these read-only/dry-run commands are
 also available (preflight probes the Apple update catalog):

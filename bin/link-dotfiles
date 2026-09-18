@@ -190,6 +190,7 @@ if [[ "${DOTFILES_LINK_AGENT_CONFIG:-1}" == 1 ]]; then
   agent_instructions="${repo_root}/home/.codex/AGENTS.md"
   link_path "$agent_instructions" "${HOME}/.codex/AGENTS.md"
   link_path "$agent_instructions" "${HOME}/.claude/CLAUDE.md"
+  bash "${repo_root}/bin/configure-claude-settings"
 fi
 
 runtime_with_lock homebrew link_cliproxyapi_homebrew_config
