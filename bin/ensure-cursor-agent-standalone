@@ -2,6 +2,13 @@
 
 set -euo pipefail
 
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+. "${repo_root}/bin/lib/setup-runtime.sh"
+for runtime_argument in "$@"; do
+  [[ "$runtime_argument" != --dry-run ]] || DOTFILES_RUN_MODE=dry-run
+done
+unset runtime_argument
+runtime_init "ensure-cursor-agent-standalone"
 dry_run=0
 install_dir="${HOME}/.local/bin"
 versions_dir="${HOME}/.local/share/cursor-agent/versions"
@@ -28,7 +35,11 @@ install_cursor_agent() {
 
   log "Installing Cursor Agent standalone"
   mkdir -p "$install_dir"
-  PATH="${install_dir}:${PATH}" bash -c 'curl https://cursor.com/install -fsS | bash'
+  local installer
+  installer="$(mktemp)" || return 1
+  curl -fsSL --connect-timeout 15 --max-time 120 --retry 2 --retry-max-time 180 https://cursor.com/install -o "$installer" || { rm -f "$installer"; return 1; }
+  PATH="${install_dir}:${PATH}" bash "$installer" || { rm -f "$installer"; return 1; }
+  rm -f "$installer"
 }
 
 resolve_link_target() {

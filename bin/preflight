@@ -102,7 +102,7 @@ check_apple_release_policy() {
   if [[ -n "$prerelease_xcodes" ]]; then
     fail "prerelease Xcode apps remain installed: ${prerelease_xcodes}; install and select the public release, then rerun ./bin/setup"
   elif [[ -n "$unknown_xcodes" ]]; then
-    warn "Xcode prerelease status is unknown because bundle metadata could not be read for: ${unknown_xcodes}"
+    fail "Xcode prerelease status is unknown because bundle metadata could not be read for: ${unknown_xcodes}"
   else
     pass "no prerelease Xcode app name or build metadata was found"
   fi
@@ -117,7 +117,7 @@ check_homebrew() {
     if "$brew_cmd" --prefix >/dev/null 2>&1; then
       pass "Homebrew prefix is usable"
     else
-      fail "brew exists but brew --prefix failed"
+      warn "brew exists but brew --prefix failed; the Homebrew foundation will report readiness independently"
     fi
   else
     warn "Homebrew not found; ./bin/bootstrap will install it"
@@ -251,7 +251,7 @@ check_macos_updates
 check_xcode_clt
 check_apple_release_policy
 check_homebrew
-check_github_ssh
+# API and SSH checks belong to the explicit authentication stages.
 check_submodule_url
 check_repo_state
 check_app_manifest

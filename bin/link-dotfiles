@@ -12,7 +12,7 @@ created_backup_root=0
 runtime_init "link-dotfiles"
 
 cleanup() {
-  runtime_cleanup
+  runtime_on_exit "$?"
 }
 
 trap cleanup EXIT
@@ -26,6 +26,7 @@ managed_sources=(
   "${repo_root}/home/.mackup.cfg"
   "${repo_root}/home/.gitconfig"
   "${repo_root}/home/bin/gh"
+  "${repo_root}/home/bin/dotfiles-gh-real"
   "${repo_root}/home/.rgrc"
   "${repo_root}/home/.tmux.conf"
   "${repo_root}/home/.cli-proxy-api/config.yaml"
@@ -39,8 +40,6 @@ managed_sources=(
   "${repo_root}/home/.config/zsh/functions.zsh"
   "${repo_root}/home/.config/zsh/check-updates.zsh"
   "${repo_root}/home/.config/karabiner/karabiner.json"
-  "${repo_root}/home/.config/zed/settings.json"
-  "${repo_root}/home/.config/zed/keymap.json"
   "${repo_root}/home/Documents/superwhisper/settings/settings.json"
   "${repo_root}/home/scripts/toggle_function_keys.sh"
 )
@@ -193,4 +192,4 @@ if [[ "${DOTFILES_LINK_AGENT_CONFIG:-1}" == 1 ]]; then
   link_path "$agent_instructions" "${HOME}/.claude/CLAUDE.md"
 fi
 
-link_cliproxyapi_homebrew_config
+runtime_with_lock homebrew link_cliproxyapi_homebrew_config

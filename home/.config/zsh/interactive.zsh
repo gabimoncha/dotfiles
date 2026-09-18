@@ -14,36 +14,48 @@ for local_config in "$HOME"/.config/local/*.zsh(N) "${DOTFILES_ROOT}"/home/.conf
 done
 unset local_config local_config_real dotfiles_sourced_local_configs
 
-if [ -x /opt/homebrew/bin/brew ]; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
-elif [ -x /usr/local/bin/brew ]; then
-  eval "$(/usr/local/bin/brew shellenv)"
-fi
+for brew_bin in "${commands[brew]-}" /opt/homebrew/bin/brew /usr/local/bin/brew; do
+  [[ -n "$brew_bin" && -x "$brew_bin" ]] || continue
+  eval "$("$brew_bin" shellenv 2>/dev/null)"
+  break
+done
+unset brew_bin
 
 [ -r "$HOME/.config/zsh/path.zsh" ] && source "$HOME/.config/zsh/path.zsh"
 
-if command -v mise >/dev/null 2>&1; then
-  if mise_activate="$(mise activate zsh 2>/dev/null)"; then
-    eval "$mise_activate"
-
-    # Mise recalculates PATH from precmd and chpwd hooks. Run after those hooks
-    # so standalone and personal commands keep priority over dependency bins.
-    _dotfiles_restore_path_priority() {
-      path=("$HOME/bin" "$HOME/.local/bin" $path)
-    }
-    autoload -Uz add-zsh-hook
-    add-zsh-hook -d precmd _dotfiles_restore_path_priority 2>/dev/null
-    add-zsh-hook -d chpwd _dotfiles_restore_path_priority 2>/dev/null
-    add-zsh-hook precmd _dotfiles_restore_path_priority
-    add-zsh-hook chpwd _dotfiles_restore_path_priority
-    _dotfiles_restore_path_priority
-  fi
-  unset mise_activate
-fi
+# Static shims avoid invoking mise or credentials during prompt initialization.
+# Missing tools are installed only by an explicit setup/update command.
+_dotfiles_real_tool() {
+  local candidate="${commands[$1]-}"
+  local mise_root="${MISE_DATA_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/mise}"
+  [[ -n "$candidate" && -x "$candidate" ]] || return 1
+  case "$candidate" in
+    */mise/shims/*|"$mise_root"/shims/*)
+      local installed=("$mise_root"/installs/*/*/bin/"$1"(N-om))
+      candidate=""
+      local executable
+      for executable in "$installed[@]"; do
+        [[ -x "$executable" ]] || continue
+        candidate="$executable"
+        break
+      done
+      [[ -n "$candidate" ]] || return 1
+      ;;
+  esac
+  print -r -- "$candidate"
+}
+path=("$HOME/bin" "$HOME/.local/bin" $path)
 
 export ZSH="${ZSH:-$HOME/.oh-my-zsh}"
 ZSH_THEME=""
-plugins=(git zsh-autosuggestions zsh-fzf-history-search)
+plugins=(git)
+[[ -r "${ZSH_CUSTOM:-$ZSH/custom}/plugins/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh" ]] && plugins+=(zsh-autosuggestions)
+if fzf_bin="$(_dotfiles_real_tool fzf)" && [[ -r "${ZSH_CUSTOM:-$ZSH/custom}/plugins/zsh-fzf-history-search/zsh-fzf-history-search.plugin.zsh" ]]; then
+  # The plugin may invoke fzf while loading; give it the installed executable.
+  path=("$HOME/bin" "$HOME/.local/bin" "${fzf_bin:h}" $path)
+  plugins+=(zsh-fzf-history-search)
+fi
+unset fzf_bin
 
 if [ -r "$ZSH/oh-my-zsh.sh" ]; then
   source "$ZSH/oh-my-zsh.sh"
@@ -59,4 +71,6 @@ fi
 [ -r "$HOME/.config/zsh/check-updates.zsh" ] && source "$HOME/.config/zsh/check-updates.zsh"
 [ -r "$HOME/.p10k.zsh" ] && source "$HOME/.p10k.zsh"
 
+# Optional plugins must not displace standalone-managed commands.
+path=("$HOME/bin" "$HOME/.local/bin" $path)
 true

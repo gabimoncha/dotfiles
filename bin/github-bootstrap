@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Only gh is visible to mise during acquisition. Authentication runs afterwards
+# with the caller's HOME and the real binary, never inside this isolated HOME.
+set -euo pipefail
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+case "${1:-install-gh}" in install-gh) ;; *) printf 'Usage: github-bootstrap install-gh\n' >&2; exit 2;; esac
+# Resource ownership is shared with setup and standalone helper callers.
+. "$repo_root/bin/lib/setup-runtime.sh"
+runtime_init github-bootstrap
+bootstrap_dir=""
+github_bootstrap_cleanup() {
+  local status=$?
+  [[ -z "$bootstrap_dir" ]] || rm -rf "$bootstrap_dir"
+  runtime_on_exit "$status"
+}
+trap github_bootstrap_cleanup EXIT
+install_gh() {
+mise_path="${HOME}/.local/bin/mise"
+[[ -x "$mise_path" ]] || { printf 'Standalone mise is unavailable\n' >&2; exit 1; }
+if "$repo_root/home/bin/dotfiles-gh-real" --version >/dev/null 2>&1; then
+  printf 'GitHub CLI is already available (no upgrade)\n'
+  return 0
+fi
+umask 077
+bootstrap_dir="$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-gh.XXXXXX")"
+mkdir -p "$bootstrap_dir/home" "$bootstrap_dir/config" "$bootstrap_dir/system" || return 1
+cat > "$bootstrap_dir/config/config.toml" <<'CONFIG'
+[tools]
+gh = "2.100.0"
+[settings]
+minimum_release_age = "4d"
+[settings.github]
+gh_cli_tokens = false
+use_git_credentials = false
+CONFIG
+# A clean environment also removes inherited MISE_* version/env overrides.
+# Keep installed tools in their usual location; config and discovery are isolated.
+cd "$bootstrap_dir/home" || return 1
+if ! env -i HOME="$bootstrap_dir/home" PATH="/usr/bin:/bin:/usr/sbin:/sbin" \
+  MISE_DATA_DIR="${MISE_DATA_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/mise}" \
+  MISE_CACHE_DIR="${MISE_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/mise}" \
+  MISE_STATE_DIR="${MISE_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/mise}" \
+  MISE_CONFIG_DIR="$bootstrap_dir/config" MISE_SYSTEM_CONFIG_DIR="$bootstrap_dir/system" \
+  MISE_GLOBAL_CONFIG_FILE="$bootstrap_dir/config/config.toml" \
+  MISE_OVERRIDE_CONFIG_FILENAMES=dotfiles-bootstrap-only.toml \
+  MISE_OVERRIDE_TOOL_VERSIONS_FILENAMES=none MISE_HTTP_TIMEOUT=30 MISE_HTTP_RETRIES=0 \
+  MISE_YES=1 "$mise_path" install gh@2.100.0; then
+  printf 'Isolated gh acquisition failed; no other tools were requested. Check network/API quota before retrying.\n' >&2
+  return 1
+fi
+"$repo_root/home/bin/dotfiles-gh-real" --version
+}
+runtime_with_lock mise install_gh

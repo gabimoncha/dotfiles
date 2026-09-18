@@ -1,0 +1,15 @@
+# Setting	Application	Desired state
+Full Disk Access	ChatGPT	on
+Full Disk Access	Cursor	on
+Full Disk Access	Ghostty	on
+Full Disk Access	Mole	on
+Full Disk Access	Orca	on
+Device Control and Data Access	AeroSpace	on
+Device Control and Data Access	Codex Computer Use	on
+Device Control and Data Access	Mole	off
+Device Control and Data Access	Raycast	on
+Device Control and Data Access	Rectangle	on
+Device Control and Data Access	Stats	off
+Device Control and Data Access	Superwhisper	on
+Device Control and Data Access	T3 Code (Nightly)	on
+Screen & System Audio Recording	T3 Code (Nightly)	on

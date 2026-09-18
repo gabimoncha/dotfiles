@@ -8,6 +8,8 @@ shim_dir="${HOME}/.local/share/mise/shims"
 smoke_commands=(
   tmux
   gh
+  age
+  mackup
   bun
   node
   python
@@ -52,45 +54,80 @@ load_homebrew_shellenv() {
 
 load_homebrew_shellenv
 export PATH="${shim_dir}:${mise_bin_dir}:${PATH}"
+# Capability checks must never provision tools or prompt for downloads.
+export MISE_OFFLINE=1 MISE_AUTO_INSTALL=0
+export COREPACK_ENABLE_NETWORK=0 COREPACK_ENABLE_DOWNLOAD_PROMPT=0 CI=1
+check_timeout="${DOTFILES_TOOL_CHECK_TIMEOUT_SECONDS:-10}"
+if [[ ! "$check_timeout" =~ ^[1-9][0-9]*$ ]]; then
+  warn "DOTFILES_TOOL_CHECK_TIMEOUT_SECONDS must be a positive integer"
+  exit 1
+fi
+
+bounded_check() {
+  # A separate process group lets the watchdog stop a check and its children.
+  # System Ruby remains usable when the managed runtimes are missing.
+  /usr/bin/ruby -e '
+    seconds = Integer(ARGV.shift)
+    pid = Process.spawn(*ARGV, pgroup: true)
+    stop = lambda do |code|
+      begin; Process.kill("TERM", -pid); rescue Errno::ESRCH; end
+      sleep 0.2
+      begin; Process.kill("KILL", -pid); rescue Errno::ESRCH; end
+      begin; Process.wait(pid); rescue Errno::ECHILD; end
+      exit code
+    end
+    Signal.trap("ALRM") { stop.call(124) }
+    Signal.trap("INT") { stop.call(130) }
+    Signal.trap("TERM") { stop.call(143) }
+    watchdog = Thread.new { sleep seconds; Process.kill("ALRM", Process.pid) }
+    _, status = Process.wait2(pid)
+    watchdog.kill
+    exit(status.signaled? ? 128 + status.termsig : status.exitstatus)
+  ' "$check_timeout" "$@" </dev/null
+}
 
 if ! command -v mise >/dev/null 2>&1; then
   warn "mise is not available; run ./bin/setup or ./bin/bootstrap first."
   exit 1
 fi
 
-missing="$(cd "$repo_root" && mise ls --current --missing --no-header 2>/dev/null || true)"
+status=0
+log "Checking configured tools (each probe limited to ${check_timeout}s)"
+missing="$(cd "$repo_root" && bounded_check mise ls --current --missing --no-header 2>/dev/null)" || {
+  warn "Unable to list missing tools within ${check_timeout}s"
+  status=1
+}
 if [[ -n "$missing" ]]; then
   warn "Some configured mise tools are still missing:"
   printf '%s\n' "$missing" >&2
-  warn "Rerun: cd ${repo_root} && mise install"
-  exit 1
+  status=1
 fi
 
-log "Refreshing mise shims"
-(cd "$repo_root" && mise reshim)
-
-missing_commands=()
-non_shim_commands=()
+# mise which resolves the installed executable without running a shim or provisioning.
 for command_name in "${smoke_commands[@]}"; do
-  resolved="$(command -v "$command_name" 2>/dev/null || true)"
-  if [[ -z "$resolved" ]]; then
-    missing_commands+=("$command_name")
-  elif [[ "$resolved" != "${shim_dir}/"* ]]; then
-    non_shim_commands+=("${command_name}:${resolved}")
+  log "Checking ${command_name}"
+  resolved="$(cd "$repo_root" && bounded_check mise which "$command_name" 2>/dev/null)" || resolved=""
+  if [[ -z "$resolved" || ! -x "$resolved" || "$resolved" == "$shim_dir/"* ]]; then
+    warn "Installed executable unavailable: ${command_name}"
+    status=1
+    continue
+  fi
+  real_path="$(/usr/bin/ruby -e 'print File.realpath(ARGV.fetch(0))' "$resolved")"
+  if [[ "$real_path" == */corepack/dist/* ]]; then
+    warn "Installed executable unavailable: ${command_name} resolves to Corepack; install the managed tool"
+    status=1
+    continue
+  fi
+  check_status=0
+  bounded_check "$resolved" "$( [[ "$command_name" == tmux ]] && printf -- -V || printf -- --version )" >/dev/null 2>&1 || check_status=$?
+  if [[ "$check_status" != 0 ]]; then
+    if [[ "$check_status" == 124 ]]; then
+      warn "Version check timed out after ${check_timeout}s: ${command_name}"
+    else
+      warn "Installed executable failed its version check: ${command_name} (status ${check_status})"
+    fi
+    status=1
   fi
 done
-
-if [[ ${#missing_commands[@]} -gt 0 ]]; then
-  warn "Mise tools are installed, but these commands are not on PATH: ${missing_commands[*]}"
-  warn "Expected mise shims on PATH: ${shim_dir}"
-  exit 1
-fi
-
-if [[ ${#non_shim_commands[@]} -gt 0 ]]; then
-  warn "These mise-owned commands resolved outside the shim directory:"
-  printf '%s\n' "${non_shim_commands[@]}" >&2
-  warn "Expected mise shims on PATH before Homebrew: ${shim_dir}"
-  exit 1
-fi
-
-log "Mise tools are installed and smoke commands are on PATH"
+[[ "$status" -ne 0 ]] || log "Configured tools and real executables verified"
+exit "$status"

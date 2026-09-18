@@ -12,49 +12,14 @@ warn() {
   printf '!! %s\n' "$1" >&2
 }
 
-load_homebrew_shellenv() {
-  if [[ -n "${HOMEBREW_PREFIX:-}" && -x "${HOMEBREW_PREFIX}/bin/brew" ]]; then
-    eval "$("${HOMEBREW_PREFIX}/bin/brew" shellenv)"
-    return 0
-  fi
-
-  if [[ -x /opt/homebrew/bin/brew ]]; then
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-  elif [[ -x /usr/local/bin/brew ]]; then
-    eval "$(/usr/local/bin/brew shellenv)"
-  elif command -v brew >/dev/null 2>&1; then
-    eval "$(brew shellenv)"
-  fi
-}
-
 run_gh() {
-  if command -v gh >/dev/null 2>&1 && gh --version >/dev/null 2>&1; then
-    gh "$@"
-    return $?
-  fi
-
-  if command -v mise >/dev/null 2>&1; then
-    (cd "$repo_root" && MISE_GLOBAL_CONFIG_FILE="${repo_root}/home/.config/mise/config.toml" mise exec -- gh "$@")
-    return $?
-  fi
-
-  return 127
+  "$repo_root/home/bin/dotfiles-gh-real" "$@"
 }
 
 run_mise() {
   local mise_path="${HOME}/.local/bin/mise"
-
-  if command -v mise >/dev/null 2>&1; then
-    MISE_GLOBAL_CONFIG_FILE="${repo_root}/home/.config/mise/config.toml" mise "$@"
-    return $?
-  fi
-
-  if [[ -x "$mise_path" ]]; then
-    MISE_GLOBAL_CONFIG_FILE="${repo_root}/home/.config/mise/config.toml" "$mise_path" "$@"
-    return $?
-  fi
-
-  return 127
+  [[ -x "$mise_path" ]] || return 127
+  MISE_GLOBAL_CONFIG_FILE="${repo_root}/home/.config/mise/config.toml" "$mise_path" "$@"
 }
 
 gh_available() {
@@ -175,8 +140,17 @@ ensure_ssh_key() {
     email="$(default_key_comment)"
   fi
 
-  log "Generating SSH key: ${key_path}"
-  ssh-keygen -t ed25519 -C "$email" -f "$key_path" -N ""
+  if [[ ! -t 0 ]]; then
+    warn "A protected SSH key or approved SSH agent is required; rerun auth-setup interactively."
+    return 1
+  fi
+  log "Generating a protected SSH key; enter a non-empty passphrase when prompted"
+  ssh-keygen -t ed25519 -C "$email" -f "$key_path" || return 1
+  # Reject accidentally empty passphrases without deleting or changing the key.
+  if ssh-keygen -y -P "" -f "$key_path" >/dev/null 2>&1; then
+    warn "The new key is unprotected. Set a passphrase with ssh-keygen -p before continuing."
+    return 1
+  fi
 }
 
 add_ssh_key_to_agent() {
@@ -188,25 +162,33 @@ add_ssh_key_to_agent() {
   fi
 
   log "Adding SSH key to macOS keychain-backed agent"
-  ssh-add --apple-use-keychain "$key_path" 2>/dev/null || ssh-add "$key_path" || true
+  ssh-add --apple-use-keychain "$key_path" 2>/dev/null || ssh-add "$key_path"
 }
 
 ensure_github_known_host() {
-  local known_hosts="${HOME}/.ssh/known_hosts"
-
+  local known_hosts="${HOME}/.ssh/known_hosts" entries fingerprint line
+  # Published by GitHub, checked 2026-09-13:
+  # https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints
+  local pinned='github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl'
+  local expected='SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU'
   mkdir -p "${HOME}/.ssh"
   chmod 700 "${HOME}/.ssh"
-  touch "$known_hosts"
-  chmod 600 "$known_hosts"
-
-  if ssh-keygen -F github.com -f "$known_hosts" >/dev/null 2>&1; then
+  entries="$(ssh-keygen -F github.com -f "$known_hosts" 2>/dev/null || true)"
+  if [[ -n "$entries" ]]; then
+    while IFS= read -r line; do
+      [[ -n "$line" && "$line" != \#* ]] || continue
+      fingerprint="$(printf '%s\n' "$line" | ssh-keygen -lf - -E sha256 2>/dev/null | awk '{print $2}')" || return 1
+      case "$fingerprint" in
+        SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s|SHA256:p2QAMXNIC1TJYWeIOttrVc98/R1BUFWu3/LiyKgUfQM|"$expected") ;;
+        *) warn "Existing GitHub host key differs from published fingerprints; review known_hosts manually."; return 1 ;;
+      esac
+    done <<< "$entries"
     return 0
   fi
-
-  log "Adding github.com to SSH known_hosts"
-  ssh-keyscan github.com >> "$known_hosts" 2>/dev/null || {
-    warn "Could not add github.com to SSH known_hosts"
-  }
+  fingerprint="$(printf '%s\n' "$pinned" | ssh-keygen -lf - -E sha256 | awk '{print $2}')" || return 1
+  [[ "$fingerprint" == "$expected" ]] || return 1
+  (umask 077; printf '%s\n' "$pinned" >> "$known_hosts")
+  chmod 600 "$known_hosts"
 }
 
 configure_gh_git_protocol() {
@@ -219,7 +201,7 @@ github_ssh_authenticated() {
   local output
 
   set +e
-  output="$(ssh -o BatchMode=yes -o ConnectTimeout=5 -T git@github.com 2>&1)"
+  output="$(ssh -o StrictHostKeyChecking=yes -o BatchMode=yes -o ConnectTimeout=5 -T git@github.com 2>&1)"
   set -e
 
   [[ "$output" == *"successfully authenticated"* ]]
@@ -272,14 +254,14 @@ ensure_github_public_key_scope() {
 
 ensure_github_auth() {
   if ! gh_available; then
-    warn "gh is not available through PATH or mise. Run ./bin/setup, or run: cd ${repo_root} && mise install gh"
+    warn "A real managed gh executable is unavailable. Run ./bin/setup to acquire it with isolated configuration."
     return 1
   fi
 
   if run_gh auth status --hostname github.com >/dev/null 2>&1; then
     log "GitHub CLI is authenticated"
-    configure_gh_git_protocol
-    return 0
+    verify_github_api
+    return $?
   fi
 
   if [[ ! -t 0 ]]; then
@@ -288,12 +270,40 @@ ensure_github_auth() {
   fi
 
   log "Authenticating GitHub CLI with SSH git protocol"
-  run_gh auth login --hostname github.com --git-protocol ssh --skip-ssh-key
+  run_gh auth login --hostname github.com --git-protocol ssh --skip-ssh-key || return 1
   if ! run_gh auth status --hostname github.com >/dev/null 2>&1; then
     warn "GitHub CLI authentication did not persist; rerun: gh auth login -h github.com"
     return 1
   fi
-  configure_gh_git_protocol
+  verify_github_api
+}
+
+verify_github_api() {
+  local quota remaining reset
+  # Omit auth/API response bodies: status success alone does not prove API access.
+  if ! run_gh api --hostname github.com user --silent >/dev/null 2>&1; then
+    warn "GitHub API verification failed (credentials, permissions, network or quota); no automatic retry."
+    report_github_quota
+    return 1
+  fi
+  quota="$(run_gh api --hostname github.com rate_limit --jq '[.resources.core.remaining,.resources.core.reset] | @tsv' 2>/dev/null)" || {
+    warn "Cannot verify GitHub API quota; fix connectivity/access before downloads."
+    return 1
+  }
+  IFS=$'\t' read -r remaining reset <<< "$quota"
+  [[ "$remaining" =~ ^[0-9]+$ && "$reset" =~ ^[0-9]+$ ]] || return 1
+  if [[ "$remaining" -eq 0 ]]; then
+    warn "GitHub API quota exhausted; reset Unix timestamp: $reset. No retry scheduled."
+    return 1
+  fi
+  log "GitHub API access verified"
+}
+
+report_github_quota() {
+  local reset
+  reset="$(run_gh api --hostname github.com rate_limit --jq '.resources.core.reset' 2>/dev/null || true)"
+  [[ "$reset" =~ ^[0-9]+$ ]] && warn "GitHub API rate-limit reset Unix timestamp: $reset"
+  return 0
 }
 
 verify_mise_github_auth() {
@@ -305,6 +315,11 @@ verify_mise_github_auth() {
     return 1
   fi
 
+  if ! GH_TOKEN="$token" run_gh api --hostname github.com user --silent >/dev/null 2>&1; then
+    unset token
+    warn "The credential resolved by mise did not authenticate to GitHub; tool downloads are blocked."
+    return 1
+  fi
   unset token
   log "mise can use the GitHub CLI authentication"
 }
@@ -339,7 +354,7 @@ upload_ssh_key_to_github() {
     fi
 
     if [[ $status -ne 0 ]]; then
-      warn "Could not list GitHub SSH keys: ${keys}"
+      warn "Could not list GitHub SSH keys"
       return 0
     fi
   fi
@@ -354,11 +369,11 @@ upload_ssh_key_to_github() {
     if github_public_key_scope_error "$output"; then
       ensure_github_public_key_scope || return 0
       output="$(run_gh ssh-key add "$key_path" --title "$title" 2>&1)" || {
-        warn "Could not upload SSH key to GitHub: ${output}"
+        warn "Could not upload SSH key to GitHub"
         return 0
       }
     else
-      warn "Could not upload SSH key to GitHub: ${output}"
+      warn "Could not upload SSH key to GitHub"
       return 0
     fi
   }
@@ -368,7 +383,7 @@ upload_ssh_key_to_github() {
     return 0
   fi
 
-  [[ -z "$output" ]] || printf '%s\n' "$output"
+  # Authentication command output is intentionally omitted.
   log "Uploaded SSH key to GitHub"
 }
 
@@ -376,13 +391,14 @@ verify_github_ssh() {
   local output
 
   set +e
-  output="$(ssh -o BatchMode=yes -o ConnectTimeout=5 -T git@github.com 2>&1)"
+  output="$(ssh -o StrictHostKeyChecking=yes -o BatchMode=yes -o ConnectTimeout=5 -T git@github.com 2>&1)"
   set -e
 
   if [[ "$output" == *"successfully authenticated"* ]]; then
     log "GitHub SSH works"
   else
-    warn "GitHub SSH is not verified yet: ${output}"
+    warn "GitHub SSH is not verified yet; check the selected key/agent and account. API readiness is unchanged."
+    return 1
   fi
 }
 
@@ -397,14 +413,30 @@ Manual account and permission steps:
 EOF
 }
 
-load_homebrew_shellenv
-ensure_github_auth
-verify_mise_github_auth
-ensure_git_identity
-ensure_ssh_key
-add_ssh_key_to_agent
-ensure_github_known_host
-upload_ssh_key_to_github
-verify_github_ssh
-configure_dotfiles_origin_remote
-print_manual_followup
+configure_github_ssh() {
+  ensure_git_identity || return 1
+  ensure_github_known_host || return 1
+  # An approved agent may supply an identity without a private key on disk.
+  if ! github_ssh_authenticated; then
+    ensure_ssh_key || return 1
+    add_ssh_key_to_agent || return 1
+    upload_ssh_key_to_github || return 1
+  fi
+  verify_github_ssh || return 1
+  configure_gh_git_protocol
+  configure_dotfiles_origin_remote
+}
+
+case "${1:-}" in
+  --api-only) ensure_github_auth ;;
+  --ssh-only) configure_github_ssh ;;
+  --verify-mise) verify_mise_github_auth ;;
+  --verify-host) ensure_github_known_host ;;
+  "")
+    ensure_github_auth
+    verify_mise_github_auth
+    configure_github_ssh
+    print_manual_followup
+    ;;
+  *) printf 'Usage: auth-setup [--api-only|--ssh-only|--verify-mise]\n' >&2; exit 2 ;;
+esac

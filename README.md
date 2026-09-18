@@ -12,6 +12,19 @@ cd ~/development/dotfiles
 ./bin/setup
 ```
 
+`./bin/setup` prepares foundation tools only: Homebrew, standalone mise, isolated
+gh, Codex CLI, and Cursor Agent. It exits before bulk installation so you can
+review **System Settings > Privacy & Security > App Management** for your terminal
+application and fully quit/reopen it when macOS requests a restart. Then run:
+
+```bash
+cd ~/development/dotfiles
+./bin/setup --continue
+```
+
+Permission approval is manual; setup does not grant or claim to detect it.
+Some app-specific prompts may still occur during continuation.
+
 Run `./bin/setup` without `sudo`. The scripts ask for a password only when a
 specific privileged macOS or Homebrew step needs it.
 
@@ -21,8 +34,8 @@ before authentication or installation. Open System Settings > General >
 Software Update, install the public update, restart if required, and rerun
 `./bin/setup`. Setup does not install macOS updates or change Beta Updates.
 
-By default, setup includes the full mobile development stack and overlaps safe
-download-heavy work such as Xcode, Homebrew, `mise`, Android Studio, and MAS apps. Use `./bin/setup --skip-mobile-dev` when you do not want
+By default, the continuation phase includes the full mobile development stack and overlaps safe
+download-heavy work such as Xcode, Homebrew, `mise`, Android Studio, and MAS apps. Use `./bin/setup --continue --skip-mobile-dev` when you do not want
 the Xcode/Android downloads on a run, or `./bin/setup --serial` when debugging.
 
 ## Setup Steps
@@ -71,7 +84,7 @@ exposes `agent` through `~/.local/bin`; Cursor the app stays a Homebrew cask.
 
 `mise` data is not migrated or restored separately. Bootstrap keeps only the
 `mise` binary on the standalone installer path at `~/.local/bin/mise` so
-`mise self-update` remains available and setup can keep the runtime current;
+`mise self-update` remains available as an explicit upgrade; setup reuses it;
 existing tools, shims, cache, and state stay in the normal `mise` locations.
 
 ### Step 2: Clone on the new Mac
@@ -90,217 +103,86 @@ and exits. Finish the installer, then rerun:
 ./bin/setup
 ```
 
-### Step 3: Let setup do the unattended work
+### Step 3: Review permissions, restart the terminal, and continue
 
-`bin/setup` is the fresh-machine entrypoint. Each container below is a script
-flow, and arrows between containers show where setup hands control to another
-script.
+After the foundation phase exits, review App Management permission for the
+terminal application you will use. Fully quit/reopen that application when
+requested, return to this repository, and run `./bin/setup --continue`.
+This phase rechecks foundation readiness before proceeding.
+
+`bin/setup` is the fresh-machine entrypoint; `bin/bootstrap` uses the same
+planner. Stages have explicit prerequisites and independent failures continue.
 
 ```mermaid
-flowchart LR
-  subgraph Setup["bin/setup"]
-    direction TB
-    S0["Start"]
-    S1{"Running as root?"}
-    S2["Exit: rerun without sudo"]
-    S3["Call bin/preflight"]
-    S4{"--dry-run?"}
-    S5["Preview mobile-dev and app installs"]
-    S6["Print final actionable summary"]
-    S7["Exit"]
-    S24["Ensure standalone mise and GitHub CLI"]
-    S25["Call bin/auth-setup"]
-    S8["Call bin/bootstrap"]
-    S9{"Xcode CLT ready after bootstrap?"}
-    S10["Exit: finish installer, rerun ./bin/setup"]
-    S11["Call bin/install-apps"]
-    S12["Call bin/link-dotfiles"]
-    S13["Print manifest summary"]
-    S14{"Interactive terminal?"}
-    S15["Skip restore follow-up"]
-    S16["Continue restore follow-up after Enter"]
-    S17["Call bin/file-restore mackup"]
-    S18["Find .rayconfig and call bin/file-restore raycast when present"]
-    S19{"Encrypted Codex state archive found?"}
-    S20["Prompt and call bin/file-restore codex when approved"]
-    S21["Defer Codex restore"]
-    S22["Install personal AI skills globally for Claude Code, Cursor, and Codex"]
-    S23["Print shell reload hint and final actionable summary"]
-
-    S0 --> S1
-    S1 -->|"yes"| S2
-    S1 -->|"no"| S3
-    S3 --> S4
-    S4 -->|"yes"| S5 --> S6 --> S7
-    S4 -->|"no"| S24 --> S25 --> S8
-    S8 --> S9
-    S9 -->|"no"| S10
-    S9 -->|"yes"| S11 --> S12 --> S13 --> S14
-    S14 -->|"no"| S15 --> S22
-    S14 -->|"yes"| S16 --> S17 --> S18 --> S19
-    S19 -->|"yes"| S20 --> S22
-    S19 -->|"no"| S21 --> S22
-    S22 --> S23
-  end
-
-  subgraph Preflight["bin/preflight"]
-    direction TB
-    P1["Verify macOS"]
-    P2["Scan active catalog for macOS updates"]
-    P3{"No update found?"}
-    P4["Exit: update in System Settings, restart if required, rerun setup"]
-    P5["Reject visible prerelease macOS or Xcode"]
-    P6["Check Xcode CLT, Homebrew, GitHub SSH, repo files, and app manifest"]
-    P7["Run syntax checks for setup scripts"]
-    P8["Preflight passed"]
-
-    P1 --> P2 --> P3
-    P3 -->|"yes"| P5 --> P6 --> P7 --> P8
-    P3 -->|"update or unknown"| P4
-  end
-
-  subgraph Bootstrap["bin/bootstrap"]
-    direction TB
-    B1["Verify admin, Xcode CLT, Homebrew"]
-    B2["Configure sudo Touch ID unless skipped"]
-    B3["Initialize nvim submodule"]
-    B4["Call bin/link-dotfiles"]
-    B5["Call bin/ensure-mise-standalone"]
-    B6["Call bin/ensure-codex-standalone"]
-    B7["Call bin/ensure-cursor-agent-standalone"]
-    B8["Prepare xcodes and aria2, then start Xcode install"]
-    B9["Start mise install and run brew bundle"]
-    B10["Run Android Studio and MAS apps"]
-    B11["Call bin/link-dotfiles again after apps exist"]
-    B12["Run iOS platform support and Xcode-dependent formulae"]
-    B13["Run setup-tmux, shell framework, macOS defaults, Finder favorites"]
-    B14["Bootstrap complete"]
-
-    B1 --> B2 --> B3 --> B4 --> B5 --> B6 --> B7 --> B8 --> B9 --> B10 --> B11 --> B12 --> B13 --> B14
-  end
-
-  subgraph InstallApps["bin/install-apps"]
-    direction TB
-    I1["Read apps/manifest.tsv"]
-    I2{"Manifest row type"}
-    I3["cask or formula: brew install or dry-run"]
-    I4["manual: print vendor instructions"]
-    I5["App install pass complete"]
-
-    I1 --> I2
-    I2 --> I3 --> I5
-    I2 --> I4 --> I5
-  end
-
-  subgraph MobileDev["bin/install-mobile-dev"]
-    direction TB
-    MD1["Ensure standalone mise, xcodes, and aria2"]
-    MD2["Install and select full Xcode"]
-    MD3["Install Android Studio cask"]
-    MD4["Install iOS platform support"]
-    MD5["Install applesimutils, idb-companion, and sourcekitten"]
-
-    MD1 --> MD2
-    MD1 --> MD3
-    MD2 --> MD4
-    MD2 --> MD5
-  end
-
-  subgraph LinkDotfiles["bin/link-dotfiles"]
-    direction TB
-    L1["Build managed source list"]
-    L2["Add app configs only when app bundles exist"]
-    L3["Back up replaced targets"]
-    L4["Create symlinks into HOME"]
-
-    L1 --> L2 --> L3 --> L4
-  end
-
-  subgraph AuthSetup["bin/auth-setup"]
-    direction TB
-    A1["Authenticate gh when possible"]
-    A2["Configure local Git identity"]
-    A3["Create or reuse SSH key"]
-    A4["Upload key when possible"]
-    A5["Verify GitHub SSH"]
-
-    A1 --> A2 --> A3 --> A4 --> A5
-  end
-
-  subgraph MackupRestore["bin/file-restore mackup"]
-    direction TB
-    M1["Use tracked home/.mackup.cfg"]
-    M2["Restore allowlisted app settings from Synology or iCloud"]
-
-    M1 --> M2
-  end
-
-  subgraph RaycastRestore["bin/file-restore raycast"]
-    direction TB
-    R1{"Raycast .rayconfig found in Synology or iCloud?"}
-    R2["Open newest .rayconfig"]
-    R3["Defer Raycast restore"]
-
-    R1 -->|"yes"| R2
-    R1 -->|"no"| R3
-  end
-
-  subgraph CodexRestore["bin/file-restore codex"]
-    direction TB
-    C1["Decrypt age archive"]
-    C2["Validate allowlisted paths"]
-    C3["Back up replaced targets"]
-    C4["Restore curated Codex state"]
-
-    C1 --> C2 --> C3 --> C4
-  end
-
-  S3 -.-> P1
-  S5 -.-> I1
-  S8 -.-> B1
-  S11 -.-> I1
-  S12 -.-> L1
-  S25 -.-> A1
-  S17 -.-> M1
-  S18 -.-> R1
-  S20 -.-> C1
-
-  B4 -.-> L1
-  B8 -.-> MD1
-  B10 -.-> MD3
-  B11 -.-> L1
-  B12 -.-> MD4
+flowchart TD
+  P[Public macOS and repository preflight] --> C[Command Line Tools]
+  C --> B[Homebrew foundation]
+  C --> M[Standalone mise foundation]
+  M --> G[Isolated gh acquisition]
+  B --> ST[Standalone Codex CLI and Cursor Agent]
+  G --> Q[Exit: manual permissions and terminal restart]
+  ST --> Q
+  Q --> A[Continue: foreground API authentication]
+  A --> S[Separate SSH verification]
+  A --> V[Direct credential helper verification]
+  B --> H[Homebrew inventory]
+  B --> T[Mise inventory]
+  V --> T
+  B --> X[Xcode preparation and install]
+  V --> X
+  T --> R[Refresh shims and verify capabilities]
+  H --> F[Final links and defaults]
+  R --> F
+  X --> F
+  R --> E[Eligible restores and reviewed skills]
 ```
 
-It is safe to rerun as Apple ID, App Store, iCloud, Synology Drive, Xcode, or
+Rerun `./bin/setup --continue` as Apple ID, App Store, iCloud, Synology Drive, Xcode, or
 app permissions become ready. The detailed bootstrap inventory is in
 [`What Setup Actually Does`](#what-setup-actually-does).
 
-Dry-run the install pass without changing the machine:
+Dry-run the same plan with provisioning disabled. Read-only preflight probes
+run and private diagnostic logs are intentionally written:
 
 ```bash
 ./bin/setup --dry-run
+./bin/setup --continue --dry-run
 ```
 
 ### Step 4: Authenticate GitHub and restore state
 
-Before bootstrap starts its bulk GitHub-backed tool installation, setup ensures
-`gh` is installed, authenticates it, and verifies that mise can obtain the
-Keychain-backed token. At the end of setup, press Enter to continue the restore
-follow-up. You can also run the pieces directly later:
+Setup acquires only pinned gh in an isolated configuration, then keeps API
+login and SSH setup in the foreground. API failure blocks GitHub-dependent mise
+and mobile installs; Homebrew continues. SSH failure is reported separately and
+does not invalidate working API credentials. Run individual repairs with:
 
 ```bash
-./bin/auth-setup
+./bin/github-bootstrap install-gh
+./bin/auth-setup --api-only
+./bin/auth-setup --ssh-only
+./bin/auth-setup --verify-mise
 ./bin/file-restore
 ```
 
-`bin/auth-setup` authenticates GitHub CLI, verifies that mise can use the same
-authentication, configures local Git identity, creates or reuses an Ed25519 SSH
-key, uploads the SSH key when possible, and verifies GitHub SSH. When GitHub CLI
-is authenticated, it prefers the account noreply address for commits and warns
-if the active commit email could trip GitHub's private-email push protection. If
-this repo was cloned from its public HTTPS URL, it switches `origin` to
-`git@github.com:gabimoncha/dotfiles.git` after SSH is verified.
+The direct `~/bin/dotfiles-gh-real` credential helper resolves a complete
+installed gh version without calling mise or the routing wrapper, including
+after upgrades. New SSH keys require a nonempty passphrase; existing identities
+and an approved agent remain usable. GitHub host keys are pinned to published
+material. Authentication output is not written to diagnostic logs.
+
+Every setup run, including the first run and dry-run, prints a cloud backup
+checklist before installation. It lists Mackup, Raycast, and Codex locations in
+Synology Drive and iCloud Drive, counts files that need download, and distinguishes
+missing locations from unreadable files. Download one provider's copy in Finder
+before continuing. This metadata check does not download files or claim that a
+backup is valid; Raycast import and Codex decryption still require their passwords.
+
+At the restore stage, setup independently checks real executables, applications
+and readable hydrated backups. Missing prerequisites are deferred before any
+prompt. Mackup requires a hydrated backup tree; Raycast import remains pending
+manual GUI completion. Codex decrypts and validates archive paths before copying
+and preserves existing portable state; comparison and conflict staging remain
+available through `file-restore codex --dry-run`.
 
 ### Multiple GitHub accounts
 
@@ -369,18 +251,12 @@ sidebar label is `screenshots`; the folder path remains `~/Screenshots`.
 
 ### Step 5: Install personal AI skills
 
-As its final machine-changing step, setup installs every skill from
-`gabimoncha/skills` globally for Claude Code, Cursor, and Codex:
-
-```bash
-npx skills@latest add gabimoncha/skills -g --skill '*' --agent claude-code cursor codex -y
-```
-
-The installed `~/.agents/skills` tree and generated
-`~/.agents/.skill-lock.json` are machine-local. They are intentionally not
-tracked by this repo, linked by `bin/link-dotfiles`, or included in the
-encrypted Codex state archive. Rerun the command directly whenever you want to
-refresh the installed skills.
+Review `gabimoncha/skills` and install a reviewed version of the `skills` CLI
+explicitly before importing skills. Set `DOTFILES_REVIEWED_SKILLS_REF` to the
+reviewed 40-character source commit when running setup. Without both, setup
+reports skills as deferred rather than executing mutable `skills@latest` code.
+The installed `~/.agents/skills` tree and lock file remain machine-local, outside
+Git and the encrypted Codex archive. See [execution policy](SETUP-SECURITY.md).
 
 ### Step 6: Handle manual account and permission work
 
@@ -400,7 +276,7 @@ and iOS platform support dominate a fresh-machine run. Skip it when you want a
 lighter pass:
 
 ```bash
-./bin/setup --skip-mobile-dev
+./bin/setup --continue --skip-mobile-dev
 ```
 
 The dedicated mobile-dev installer remains available for targeted reruns:
@@ -426,42 +302,66 @@ and whether Spotlight is still holding Command-Space.
 
 ## What Setup Actually Does
 
-`bin/bootstrap` is the lower-level installer used by `bin/setup`.
+`bin/setup` and `bin/bootstrap` share the dependency planner in
+`bin/lib/setup-plan.sh`. After public-release preflight and Command Line Tools,
+Homebrew and standalone mise start concurrently. gh acquisition starts as soon
+as mise is ready. Full mise installation waits for Homebrew availability and
+verified API access; it can overlap the Homebrew inventory pass. Writes to each
+package manager are serialized across nested helpers. Xcode prepares early;
+iOS and Xcode-dependent formulae wait for its successful selection.
 
-It:
+Configuration links are created before their consumers and reconciled after
+installs. Manifest app failures are aggregated, so one failure does not skip
+unrelated apps. A partial mise install still reshims and verifies installed real
+executables. Available shell integrations and per-restore readiness are checked
+independently. Existing tool installations and link backups are preserved.
 
-1. verifies macOS, admin access, Xcode Command Line Tools, and Homebrew
-2. enables Touch ID for `sudo` through `/etc/pam.d/sudo_local` when supported
-3. initializes the Neovim submodule
-4. links tracked files from `home/` into `$HOME`
-5. ensures standalone `mise`, Codex, and Cursor Agent installer ownership
-6. prepares `xcodes` and `aria2`, then starts the Xcode install in the background
-7. starts `mise install` in the background
-8. installs Homebrew formulae and casks
-   with `brew bundle --jobs="${DOTFILES_BREW_BUNDLE_JOBS:-auto}"`
-9. runs Android Studio and Mac App Store apps after the
-   Homebrew bundle phase
-10. links app dotfiles after app bundles exist
-11. runs iOS platform support and Xcode-dependent formulae after full Xcode is
-   selected
-12. verifies `mise` tools with `bin/check-mise-tools`
-13. installs tmux plugins through TPM and shell framework plugins
-14. applies tracked macOS defaults once and configures Finder sidebar favorites
-15. prints a final actionable summary of completed, failed, deferred, and
-   critical items
+Capability probes run offline with provisioning and Corepack downloads disabled.
+Each tool lookup and version check has a 10-second deadline (override with
+`DOTFILES_TOOL_CHECK_TIMEOUT_SECONDS`); a timeout fails that check and continues
+with the next tool. Corepack launchers are reported as unavailable managed tools.
+GitHub CLI discovery supports both flattened and retained macOS release archives.
 
-Before bootstrap, `bin/setup` ensures standalone mise and GitHub CLI are
-available without requiring a pre-existing GitHub token, then runs
-`bin/auth-setup`. Bootstrap's normal standalone-mise ensure pass self-updates
-the authenticated runtime before subsequent GitHub-backed installs. After
-bootstrap and the interactive restore follow-up, `bin/setup` runs the personal
-AI skill install command from Step 5. This is the final machine-changing setup
-step.
+Normal setup streams sanitized command output to the terminal with stage labels
+while saving the same output in stage logs. Completion and failure are printed
+explicitly; periodic status messages cover quiet operations. Commands run through
+pipes may use line-based progress instead of animated terminal progress bars.
+Authentication remains interactive and is not written to logs.
 
-Safe parallelism is on by default. Use `./bin/setup --serial` or
-`DOTFILES_SETUP_SERIAL=1 ./bin/setup` when debugging. Recoverable failures keep
-independent work moving, then cause a nonzero exit after the final summary.
-Deferred/manual items are listed but do not fail the run by themselves.
+Safe parallelism is on by default. `./bin/setup --serial` retains the same
+planner and diagnostics. Outcomes are completed, failed, blocked, deferred,
+cancelled, or planned. Required failed, blocked or deferred work returns nonzero. Explicit mobile
+opt-out and optional restore decisions are reported without failing the run. INT exits 130 and TERM exits 143 after cancelling owned
+descendants and releasing locks. Setup preserves display sleep and screen lock.
+
+### Diagnostics and recovery
+
+Setup uses Bash and macOS's `/usr/bin/ruby` for diagnostics and bounded tool
+checks. It needs no Perl or Ruby gems, and does not depend on mise runtimes
+being installed successfully.
+
+Every normal run and dry-run prints its private `.local/setup-runs/<run-id>/`
+directory immediately and in the summary. Inspect `summary.txt`, `events.jsonl`
+and individual `*.log` files. JSONL includes mode, timestamps, stage and parent
+IDs, prerequisites, duration, status and Bash failure locations. `streams/`
+contains the original per-process event streams; IDs carry causality across
+parallel output. Dry-run events distinguish executed preflight checks from
+planned provisioning. Authentication streams are intentionally omitted, and
+captured output is sanitized; review logs before sharing them anyway.
+
+A future agent can locate recent runs with `ls -td .local/setup-runs/*/` and read
+the selected run's summary and events. Keep the latest successful run and all
+unresolved failure/cancellation runs. After resolving an issue, manually remove
+reviewed run directories older than 30 days; setup never silently purges them.
+The runtime directory is ignored by Git, and permissions restrict access to the
+owner. Gitignore alone does not protect confidentiality.
+
+Repair a failed prerequisite, then rerun setup: no broad mise install starts
+until authentication is verified. Explicit upgrades use `mise self-update` or
+`./bin/ensure-mise-standalone --update`; normal recovery does not self-update.
+[Security and remaining real-machine validation](SETUP-SECURITY.md) covers
+optional security products, package execution, disposable environments and
+post-compromise backup review.
 
 Touch ID for `sudo` can be managed directly:
 
@@ -484,7 +384,7 @@ pairing or unlock settings.
 The macOS defaults can be skipped for a run:
 
 ```bash
-DOTFILES_SKIP_MACOS_DEFAULTS=1 ./bin/bootstrap
+DOTFILES_SKIP_MACOS_DEFAULTS=1 ./bin/bootstrap --continue
 ```
 
 Third-party taps approved for this machine are declared with `trusted: true` in
@@ -535,6 +435,9 @@ This repo is deliberately boring about ownership:
 - `home/.config/mise/config.toml` owns language runtimes and global developer
   tools that `mise` supports, including backend-prefixed tools such as
   `gem:fastlane` and `conda:aria2`.
+- The Xcodes GUI is managed by mise through `github:XcodesOrg/Xcodes`, selecting
+  the latest release's `Xcodes.zip` and preserving its app bundle in mise's
+  install directory. The separate `xcodes` CLI remains the mobile setup tool.
 - Codex CLI is a standalone-installer exception because remote control and
   app-server updates depend on the installer-managed path under
   `~/.codex/packages/standalone`.
@@ -578,7 +481,7 @@ databases, session state, or machine-local exports.
 Brewfile                         Homebrew, mas, and casks
 apps/manifest.tsv                extra cask/formula/manual app ledger
 bin/setup                        fresh-Mac entrypoint
-bin/bootstrap                    lower-level bootstrap
+bin/bootstrap                    compatibility entrypoint for setup
 bin/check-macos-updates          read-only active-catalog macOS update gate
 bin/link-dotfiles                symlink managed files into $HOME
 bin/ensure-codex-standalone      keep Codex on the standalone installer path
@@ -622,18 +525,10 @@ Currently managed:
 - `~/.config/mise/config.toml`
 - `~/.config/zsh/*.zsh`
 - `~/.config/karabiner/karabiner.json`
-- `~/.config/zed/settings.json`
-- `~/.config/zed/keymap.json`
 - `~/Documents/superwhisper/settings/settings.json`
 - `~/Library/Application Support/com.mitchellh.ghostty/config`
 - `~/scripts/toggle_function_keys.sh`
 - `nvim/` as `~/.config/nvim`
-
-The final link pass runs after the tool installation. It links the tracked
-global agent instructions from `home/.codex/AGENTS.md` to
-`~/.codex/AGENTS.md`, then links the same source to
-`~/.claude/CLAUDE.md`. The shared source keeps both agents aligned.
-Existing targets use the standard timestamped backup behavior.
 
 AeroSpace and Ghostty config links are only created after their app bundles
 exist in `/Applications`.
@@ -728,12 +623,11 @@ Java tools such as `keytool` come from the configured JDK instead of stale
 runtime shims. Run `./bin/install-mobile-dev` to install Android Studio. Android
 Studio still owns installing the SDK packages and creating the emulator image.
 
-Interactive `mise` activation is owned by `home/.config/zsh/interactive.zsh`.
-Do not append activation lines directly to `~/.zshrc`; it is a repo-managed
-symlink. A hook registered after mise restores `~/bin` and `~/.local/bin` to the
-front of `PATH` whenever mise recalculates it, so explicit standalone tools
-remain authoritative over same-named dependency executables. After changing
-shell activation, run `exec zsh` or open a new terminal.
+Interactive shell setup uses static mise shims and initializes optional tools
+only through real installed executables. It does not call mise activation,
+provision missing tools or fetch credentials at prompt initialization. `~/bin`
+and `~/.local/bin` keep standalone commands authoritative. Open a new terminal
+after changing the managed shell configuration.
 
 To get the Android debug signing SHA-1, use the real debug keystore path:
 
@@ -748,18 +642,6 @@ mise exec -- <command>
 ```
 
 ## Mackup and Raycast
-
-After OBS installation, setup prints Screen & System Audio Recording, Camera,
-Microphone, and Input Monitoring instructions from `bin/obs-permissions` and
-`apps/obs-permissions.tsv`. Approve access in OBS and macOS; older installations
-may use Accessibility for background hotkeys instead.
-
-Every setup run, including the first run and dry-run, prints a cloud backup
-checklist before installation. It lists Mackup, Raycast, and Codex locations in
-Synology Drive and iCloud Drive, counts files that need download, and distinguishes
-missing locations from unreadable files. Download one provider's copy in Finder
-before continuing. This metadata check does not download files or claim that a
-backup is valid; Raycast import and Codex decryption still require their passwords.
 
 Mackup uses Synology Drive as primary storage, mirrors to iCloud after backups
 on a best-effort basis when iCloud is ready, and restores from iCloud if the
@@ -840,7 +722,7 @@ Pull repo updates and reapply bootstrap-managed changes:
 dotfiles-update
 ```
 
-That command runs `git pull --ff-only` and then `bin/bootstrap` with macOS
+That command runs `git pull --ff-only` and then `bin/bootstrap --continue` with macOS
 defaults skipped for the update run.
 
 For targeted reruns:
@@ -872,10 +754,28 @@ bash -n bin/file-backup
 bash -n bin/file-restore
 bash -n macos/defaults.sh
 ./tests/check-macos-updates.sh
+./tests/setup-runtime.sh
+./tests/github-bootstrap.sh
+./tests/setup-plan.sh
+./tests/setup-restores.sh
+./tests/setup-shell.sh
+./tests/setup-links.sh
+./tests/setup-packages.sh
 git diff --check
 ```
 
-For setup or inventory changes, also run:
+The fixture suites use disposable HOME/config/state directories and fake
+external actions; runtime cancellation checks need permission to inspect their
+own process trees. They never run real installers or use personal backups.
+The planner suite retains its normal/dry-run diagnostics under setup-runs.
+
+The final link step runs after the `mise` tool inventory and standalone agent
+installation. It links the tracked global Codex instructions from
+`home/.codex/AGENTS.md` to `~/.codex/AGENTS.md`, then links the same source to
+`~/.claude/CLAUDE.md`. The shared source keeps both agents aligned.
+
+For manual inspection on the target Mac, these read-only/dry-run commands are
+also available (preflight probes the Apple update catalog):
 
 ```bash
 ./bin/preflight
@@ -886,9 +786,72 @@ For setup or inventory changes, also run:
 ./bin/install-mobile-dev --dry-run
 ./bin/install-mobile-dev --dry-run --xcode-only
 ./bin/setup --dry-run
+./bin/setup --continue --dry-run
 ./bin/setup --dry-run --skip-mobile-dev
 ./bin/setup --dry-run --serial
 ```
 
 Keep `README.md`, `QUICKSTART.md`, scripts, and tracked config aligned. If the
 implementation changes, update the docs in the same patch.
+
+### App permissions, login items, and screenshots
+
+The preparation handoff displays the desired privacy settings from
+`apps/permissions.tsv`. Apply these manually in System Settings, then quit and
+reopen affected applications when requested. Missing apps can be configured
+following installation in `./bin/setup --continue`; the checklist is shown again.
+Permissions are never automatically granted or reported as verified.
+OBS instructions are stored in `bin/obs-permissions` and `apps/obs-permissions.tsv`.
+After OBS installation, the checklist covers Screen & System Audio Recording,
+Camera, Microphone, and Input Monitoring. Open OBS's permissions dialog to
+request access and approve each request in macOS. Older OBS installations may
+use Accessibility for background hotkeys instead of Input Monitoring.
+
+After installation, enable Full Disk Access for ChatGPT, Cursor, Ghostty, Mole,
+and Orca in **System Settings > Privacy & Security > Full Disk Access**. macOS
+requires this to be an interactive, per-app approval; setup records and displays
+the requested state but cannot grant it programmatically.
+
+Continuation adds the apps in `apps/login-items.txt` to Open at Login, preserving
+existing entries. System Events may require Automation consent. Missing apps or
+failed additions are reported and can be retried with `./bin/configure-app-settings`.
+Use `--dry-run` to preview or `--permissions-only` to print the privacy checklist.
+Synology Image Assistant is managed as a Homebrew cask; Codex Computer Use is an
+application component, not a separately installed package.
+
+`./bin/configure-screenshots` configures the PNG destination preference at `~/Screenshots`
+without reapplying other macOS defaults. Continuation runs this every time,
+independently of the general defaults stamp. Shift–Command–3/4 saves a file;
+Control with those shortcuts copies to the clipboard. Shift–Command–5 > Options
+also controls the destination, and dragging a floating thumbnail into an app
+can divert the capture from its normal saved-file workflow.
+
+The managed pnpm precedes Node on mise's tool path; Corepack activation is not
+part of Node setup. This prevents a bundled download wrapper from shadowing the
+already installed pnpm executable.
+
+A successful screenshot configuration stage confirms preference writes, not an
+actual capture. If macOS ignores the preference, select `~/Screenshots` through
+Shift–Command–5 → Options → Save to → Other Location and verify a saved capture.
+
+Screenshot configuration writes both `location` and `location-screenshot`. The
+latter was observed in the working Screenshot toolbar preferences on this Mac;
+writing only the generic location left captures going to Desktop. The manual
+verification fallback remains because these preferences are OS implementation details.
+
+On macOS 27, the helper also reconciles the toolbar's last destination and file
+target settings, accepts equivalent tilde paths without rewriting them, and
+verifies each preference after writing it. Both general defaults and setup use
+this helper. Regression coverage: `./tests/screenshots.sh`.
+
+Setup finishes background inventory checks before interactive Xcode sign-in.
+Xcode installation requires terminal input and prints a sign-in notice; Apple
+credentials are excluded from diagnostic logs.
+
+If Xcodes fails during Apple authentication, download the public release `.xip`
+from [Apple Developer Downloads](https://developer.apple.com/download/all/),
+then run `xcodes install <public-version> --path "/path/to/Xcode.xip" --select
+--experimental-unxip`. Use the version matching the downloaded archive; do not
+choose beta or RC builds. After installation, resume `./bin/setup --continue`.
+Standalone mobile actions record their outcome in the diagnostic summary even
+when credential-bearing terminal output is omitted.

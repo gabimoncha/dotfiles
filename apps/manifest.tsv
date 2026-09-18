@@ -1,6 +1,5 @@
 # key	type	token_or_url	app_bundle	notes
 aerospace	cask	nikitabobko/tap/aerospace	AeroSpace	Homebrew cask because mise ls-remote aerospace errors.
-beeper	cask	beeper	Beeper	Homebrew cask.
 chatgpt	cask	chatgpt	ChatGPT	Homebrew cask.
 claude	cask	claude	Claude	Homebrew cask.
 cursor	cask	cursor	Cursor	Homebrew cask.
@@ -17,8 +16,7 @@ linear	cask	linear	Linear	Homebrew cask.
 lm-studio	cask	lm-studio	LM Studio	Homebrew cask; requires Apple Silicon.
 mole	formula	mole	-	Homebrew formula because mise ls-remote mole errors.
 mole-app	cask	mole-app	Mole	Homebrew cask for the Mole GUI app.
-multipass	cask	multipass	Multipass	Homebrew cask.
-neardrop	cask	neardrop	NearDrop	Homebrew cask from grishka/grishka; quarantine attribute is removed after install.
+neardrop	cask	neardrop	NearDrop	Homebrew cask from grishka/grishka; macOS quarantine and consent are preserved.
 notion-calendar	cask	notion-calendar	Notion Calendar	Homebrew cask.
 obs	cask	obs	OBS	Homebrew cask supported by OBS; settings restored by Mackup.
 obsidian	cask	obsidian	Obsidian	Homebrew cask.
@@ -32,9 +30,9 @@ slack	cask	slack	Slack	Homebrew cask.
 spotify	cask	spotify	Spotify	Homebrew cask.
 superwhisper	cask	superwhisper	superwhisper	Homebrew cask.
 synology-drive	cask	synology-drive	Synology Drive Client	Homebrew cask.
+synology-image-assistant	cask	synology-image-assistant	Synology Image Assistant	Homebrew cask.
 t3-code	cask	t3-code	T3 Code (Alpha)	Homebrew cask; stable package route found.
 tailscale	cask	tailscale-app	Tailscale	Homebrew cask for the menu-bar app and full Mac UX.
 warp	cask	warp	Warp	Homebrew cask.
 yaak	cask	yaak	Yaak	Homebrew cask; GUI companion to @yaakapp/cli in mise.
-zen-browser	cask	zen	Zen	Homebrew cask token is zen.
 zoom	cask	zoom	zoom.us	Homebrew cask.

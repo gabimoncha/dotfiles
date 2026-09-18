@@ -2,8 +2,15 @@
 
 set -euo pipefail
 
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+. "${repo_root}/bin/lib/setup-runtime.sh"
+for runtime_argument in "$@"; do
+  [[ "$runtime_argument" != --dry-run ]] || DOTFILES_RUN_MODE=dry-run
+done
+unset runtime_argument
+runtime_init "ensure-mise-standalone"
 dry_run=0
-skip_update=0
+skip_update=1
 mise_bin="${MISE_INSTALL_PATH:-${HOME}/.local/bin/mise}"
 mise_bin_dir="$(dirname "$mise_bin")"
 
@@ -16,7 +23,7 @@ warn() {
 }
 
 usage() {
-  printf 'Usage: ./bin/ensure-mise-standalone [--dry-run] [--skip-update]\n' >&2
+  printf 'Usage: ./bin/ensure-mise-standalone [--dry-run] [--skip-update] [--update]\n' >&2
 }
 
 load_homebrew_shellenv() {
@@ -50,13 +57,43 @@ brew_mise_installed() {
 
 install_standalone_mise() {
   if [[ "$dry_run" -eq 1 ]]; then
-    log "dry-run: would install mise standalone with https://mise.run"
+    log "dry-run: would install verified pinned mise v2026.9.6 release"
     return 0
   fi
 
   log "Installing mise standalone"
   mkdir -p "$mise_bin_dir"
-  MISE_INSTALL_PATH="$mise_bin" MISE_INSTALL_HELP=0 sh -c 'curl -fsSL https://mise.run | sh'
+  local installer_dir installer real_curl digest status=0
+  real_curl="$(command -v curl)" || return 1
+  [[ "$real_curl" == /* && -x "$real_curl" ]] || return 1
+  installer_dir="$(mktemp -d)" || return 1
+  installer="${installer_dir}/install.sh"
+  # Release asset digest is published in GitHub's official release metadata.
+  "$real_curl" -fsSL --connect-timeout 15 --max-time 120 --retry 2 --retry-max-time 180 \
+    https://github.com/jdx/mise/releases/download/v2026.9.6/install.sh -o "$installer" || status=$?
+  if [[ "$status" -eq 0 ]]; then
+    digest="$(shasum -a 256 "$installer")" || status=$?
+    digest="${digest%% *}"
+    if [[ "$digest" != e7b3042ccfafae822a1ec3ea013c70cf08f0cf2f8e63e4e4a87cc32959e9e8f5 ]]; then
+      warn "Pinned mise installer checksum mismatch; refusing to execute it"
+      status=1
+    fi
+  fi
+  if [[ "$status" -eq 0 ]]; then
+    # The pinned installer invokes PATH curl for its asset download. Bound those
+    # requests too, using the absolute pre-wrapper executable to avoid recursion.
+    cat > "${installer_dir}/curl" <<'CURL'
+#!/bin/sh
+exec "$DOTFILES_INSTALLER_CURL" --connect-timeout 15 --max-time 300 --retry 2 --retry-max-time 600 "$@"
+CURL
+    chmod 700 "${installer_dir}/curl" || status=$?
+  fi
+  if [[ "$status" -eq 0 ]]; then
+    PATH="${installer_dir}:${PATH}" DOTFILES_INSTALLER_CURL="$real_curl" \
+      MISE_VERSION=v2026.9.6 MISE_INSTALL_PATH="$mise_bin" MISE_INSTALL_HELP=0 sh "$installer" || status=$?
+  fi
+  rm -rf "$installer_dir"
+  return "$status"
 }
 
 verify_standalone_mise() {
@@ -103,7 +140,7 @@ uninstall_brew_mise() {
   fi
 
   log "Uninstalling Homebrew formula mise"
-  brew uninstall mise
+  runtime_with_lock homebrew brew uninstall mise
   hash -r 2>/dev/null || true
 }
 
@@ -111,6 +148,10 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --dry-run)
       dry_run=1
+      shift
+      ;;
+    --update)
+      skip_update=0
       shift
       ;;
     --skip-update)
@@ -133,7 +174,7 @@ export PATH="${mise_bin_dir}:${PATH}"
 if standalone_mise_ok; then
   log "mise standalone install is already present"
 else
-  install_standalone_mise
+  runtime_with_lock mise install_standalone_mise
 fi
 
 if [[ "$dry_run" -eq 1 ]]; then
@@ -148,7 +189,7 @@ fi
 
 verify_standalone_mise
 if [[ "$skip_update" -eq 0 ]]; then
-  update_standalone_mise
+  runtime_with_lock mise update_standalone_mise
   verify_standalone_mise
 fi
 uninstall_brew_mise

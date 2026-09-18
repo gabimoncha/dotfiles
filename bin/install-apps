@@ -4,6 +4,13 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 manifest="${repo_root}/apps/manifest.tsv"
+. "${repo_root}/bin/lib/setup-runtime.sh"
+for runtime_argument in "$@"; do
+  [[ "$runtime_argument" != --dry-run ]] || DOTFILES_RUN_MODE=dry-run
+done
+unset runtime_argument
+runtime_init "install-apps"
+install_status=0
 manual_count=0
 dry_run=0
 mise_bin_dir="${HOME}/.local/bin"
@@ -54,47 +61,27 @@ app_installed() {
   [[ -n "$app_bundle" && "$app_bundle" != "-" && -d "/Applications/${app_bundle}.app" ]]
 }
 
-run_cask_postinstall() {
-  local token="$1"
-  local app_bundle="$2"
-
-  case "$token" in
-    neardrop | grishka/grishka/neardrop)
-      if [[ "$dry_run" -eq 1 ]]; then
-        log "dry-run: would remove quarantine attribute from /Applications/NearDrop.app"
-      elif app_installed "$app_bundle"; then
-        log "Removing NearDrop quarantine attribute"
-        sudo xattr -r -d com.apple.quarantine "/Applications/${app_bundle}.app" 2>/dev/null || true
-      fi
-      ;;
-  esac
-}
-
 install_cask() {
   local token="$1"
   local app_bundle="$2"
 
   if app_installed "$app_bundle"; then
     log "${app_bundle}.app already exists"
-    run_cask_postinstall "$token" "$app_bundle"
     return 0
   fi
 
   if brew list --cask "$token" >/dev/null 2>&1; then
     log "cask ${token} already installed"
-    run_cask_postinstall "$token" "$app_bundle"
     return 0
   fi
 
   if [[ $dry_run -eq 1 ]]; then
     log "dry-run: would install cask ${token}"
-    run_cask_postinstall "$token" "$app_bundle"
     return 0
   fi
 
   log "Installing cask ${token}"
-  brew install --cask "$token"
-  run_cask_postinstall "$token" "$app_bundle"
+  runtime_with_lock homebrew brew install --cask "$token"
 }
 
 install_formula() {
@@ -102,7 +89,7 @@ install_formula() {
 
   if ! command -v brew >/dev/null 2>&1; then
     warn "Homebrew is required to install formula ${token}"
-    return 0
+    return 1
   fi
 
   if brew list --formula "$token" >/dev/null 2>&1; then
@@ -116,7 +103,7 @@ install_formula() {
   fi
 
   log "Installing formula ${token}"
-  brew install "$token"
+  runtime_with_lock homebrew brew install "$token"
 }
 
 install_mise_tool() {
@@ -124,7 +111,7 @@ install_mise_tool() {
 
   if ! command -v mise >/dev/null 2>&1; then
     warn "mise is required to install ${token}"
-    return 0
+    return 1
   fi
 
   if [[ $dry_run -eq 1 ]]; then
@@ -132,8 +119,21 @@ install_mise_tool() {
     return 0
   fi
 
+  if [[ "${DOTFILES_SETUP_API_READY:-0}" != 1 ]]; then
+    warn "Verified setup GitHub API access is required before installing mise manifest tools; run ./bin/setup."
+    return 1
+  fi
+
   log "Ensuring mise tool ${token}"
-  (cd "$repo_root" && mise install "$token" && mise reshim)
+  runtime_with_lock mise install_mise_tool_unlocked "$token"
+}
+
+install_mise_tool_unlocked() {
+  local status=0 refresh_status=0
+  (cd "$repo_root" && mise install "$1") || status=$?
+  (cd "$repo_root" && mise reshim) || refresh_status=$?
+  [[ "$status" -ne 0 ]] || status="$refresh_status"
+  return "$status"
 }
 
 report_manual() {
@@ -178,15 +178,16 @@ while IFS=$'\t' read -r key type token_or_url app_bundle notes || [[ -n "${key:-
     cask)
       if ! command -v brew >/dev/null 2>&1; then
         warn "Homebrew is required to install ${key}"
+        install_status=1
         continue
       fi
-      install_cask "$token_or_url" "$app_bundle"
+      install_cask "$token_or_url" "$app_bundle" || install_status=1
       ;;
     formula)
-      install_formula "$token_or_url"
+      install_formula "$token_or_url" || install_status=1
       ;;
     mise)
-      install_mise_tool "$token_or_url"
+      install_mise_tool "$token_or_url" || install_status=1
       ;;
     manual)
       report_manual "$key" "$token_or_url" "$app_bundle" "$notes"
@@ -205,4 +206,5 @@ After bootstrap ensures Codex, use it to drive the vendor download flow where a 
 EOF
 fi
 
-log "App install pass complete"
+log "App install pass finished (status ${install_status})"
+exit "$install_status"

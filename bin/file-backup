@@ -3,6 +3,7 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+. "${repo_root}/bin/lib/restore-readiness.sh"
 icloud_drive="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
 synology_drive="${HOME}/Library/CloudStorage/SynologyDrive-personal"
 mackup_config="${repo_root}/home/.mackup.cfg"
@@ -65,13 +66,14 @@ newest_file() {
   local dir="$1"
   local pattern="$2"
   local exclude="${3:-}"
+  local selected=0 candidate
 
   [[ -d "$dir" ]] || return 0
 
   if [[ -n "$exclude" ]]; then
-    find "$dir" -type f -name "$pattern" ! -name "$exclude" -exec stat -f '%m %N' {} \; 2>/dev/null | sort -nr | sed 's/^[0-9][0-9]* //g' | head -1
+    find "$dir" -type f -name "$pattern" ! -name "$exclude" -exec stat -f '%m %N' {} \; 2>/dev/null | sort -nr | sed 's/^[0-9][0-9]* //g' | while IFS= read -r candidate; do if [[ "${selected:-0}" == 0 ]] && restore_hydrated_file "$candidate"; then printf '%s\n' "$candidate"; selected=1; fi; done
   else
-    find "$dir" -type f -name "$pattern" -exec stat -f '%m %N' {} \; 2>/dev/null | sort -nr | sed 's/^[0-9][0-9]* //g' | head -1
+    find "$dir" -type f -name "$pattern" -exec stat -f '%m %N' {} \; 2>/dev/null | sort -nr | sed 's/^[0-9][0-9]* //g' | while IFS= read -r candidate; do if [[ "${selected:-0}" == 0 ]] && restore_hydrated_file "$candidate"; then printf '%s\n' "$candidate"; selected=1; fi; done
   fi
 }
 
@@ -553,7 +555,7 @@ latest_codex_state_archive() {
   local icloud_archive="${icloud_drive}/Codex/codex-state-latest.tar.gz.age"
   local archive
 
-  if [[ -f "$synology_archive" ]]; then
+  if restore_hydrated_file "$synology_archive"; then
     printf '%s\n' "$synology_archive"
     return 0
   fi
@@ -564,7 +566,7 @@ latest_codex_state_archive() {
     return 0
   fi
 
-  if [[ -f "$icloud_archive" ]]; then
+  if restore_hydrated_file "$icloud_archive"; then
     printf '%s\n' "$icloud_archive"
     return 0
   fi
@@ -614,7 +616,7 @@ codex_restore() {
   need_command age "Run ./bin/setup or mise install age, then rerun ./bin/file-restore codex."
   need_command tar
 
-  if [[ -z "$archive_path" || ! -f "$archive_path" ]]; then
+  if ! restore_hydrated_file "$archive_path"; then
     warn "Codex state archive not found."
     warn "Expected primary: ${synology_archive}"
     warn "Expected secondary: ${icloud_archive}"
@@ -947,9 +949,9 @@ mackup_restore() {
 
   mackup_validate_config
 
-  if [[ -d "$primary_mackup_dir" ]]; then
+  if restore_hydrated_tree "$primary_mackup_dir"; then
     mackup --config-file "$mackup_config" "${mackup_args[@]}" restore
-  elif [[ -d "$secondary_mackup_dir" ]]; then
+  elif restore_hydrated_tree "$secondary_mackup_dir"; then
     warn "Synology Mackup backup not found; falling back to iCloud secondary backup."
     mackup_make_icloud_config
     mackup --config-file "$mackup_temp_config" "${mackup_args[@]}" restore
@@ -957,7 +959,7 @@ mackup_restore() {
     warn "No Mackup backup found in Synology or iCloud."
     warn "Expected primary: ${primary_mackup_dir}"
     warn "Expected secondary: ${secondary_mackup_dir}"
-    exit 0
+    return 20
   fi
 }
 
@@ -982,7 +984,8 @@ raycast_backup() {
     fi
   fi
 
-  open -a Raycast 2>/dev/null || true
+  [[ -d "${DOTFILES_APPLICATIONS_DIR:-/Applications}/Raycast.app" ]] || { warn "Raycast is not installed"; return 20; }
+  open -a Raycast
   open "$synology_dir" 2>/dev/null || true
 
   if command -v pbcopy >/dev/null 2>&1; then
@@ -1089,7 +1092,7 @@ raycast_restore() {
     rayconfig="$(latest_rayconfig || true)"
   fi
 
-  if [[ -z "$rayconfig" || ! -f "$rayconfig" ]]; then
+  if ! restore_hydrated_file "$rayconfig"; then
     cat >&2 <<'EOF'
 No Raycast .rayconfig export found.
 
@@ -1110,7 +1113,8 @@ EOF
     exit 1
   fi
 
-  open -a Raycast 2>/dev/null || true
+  [[ -d "${DOTFILES_APPLICATIONS_DIR:-/Applications}/Raycast.app" ]] || { warn "Raycast is not installed"; return 20; }
+  open -a Raycast
   open "$rayconfig"
 
   printf 'Selected Raycast export: %s\n' "$rayconfig"

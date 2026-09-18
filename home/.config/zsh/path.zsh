@@ -22,4 +22,7 @@ path=(
 )
 
 unset java_home android_sdk_home
+
+export PATH="$HOME/.bun/bin:$PATH"
+
 export PATH

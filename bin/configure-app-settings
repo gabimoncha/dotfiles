@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+repo_root="$(cd "$(dirname "$0")/.." && pwd)"
+mode="${1:---apply}"
+case "$mode" in --apply|--dry-run|--permissions-only) ;; *) echo 'Usage: configure-app-settings [--dry-run|--permissions-only]' >&2; exit 2 ;; esac
+printf '\nManual privacy settings (System Settings > Privacy & Security):\n'
+while IFS=$'\t' read -r setting app state; do
+  [[ -n "$setting" && "$setting" != \#* ]] || continue
+  printf '  %s: %s = %s\n' "$setting" "$app" "$state"
+done < "$repo_root/apps/permissions.tsv"
+printf '%s\n' 'These are requested settings, not detected permissions. Add installed apps manually; revisit missing apps after installation.' 'Codex Computer Use is an app component, not a separate package.' 'Fully quit and reopen affected apps when macOS requests it.'
+bash "${repo_root}/bin/obs-permissions"
+[[ "$mode" != --permissions-only ]] || exit 0
+status=0
+while IFS= read -r app; do
+  [[ -n "$app" && "$app" != \#* ]] || continue
+  app_path="${DOTFILES_APPLICATIONS_DIR:-/Applications}/$app.app"
+  if [[ "$mode" == --dry-run ]]; then printf 'Would ensure login item: %s\n' "$app_path"; continue; fi
+  if [[ ! -d "$app_path" ]]; then printf 'Deferred login item (app missing): %s\n' "$app"; status=1; continue; fi
+  printf 'Ensuring login item: %s\n' "$app"
+  osascript - "$app_path" <<'APPLESCRIPT' || { status=1; break; }
+on run argv
+  set appPath to item 1 of argv
+  with timeout of 15 seconds
+  tell application "System Events"
+    set existingPaths to path of every login item
+    if existingPaths does not contain appPath then
+      make login item at end with properties {path:appPath, hidden:false}
+    end if
+  end tell
+  end timeout
+end run
+APPLESCRIPT
+done < "$repo_root/apps/login-items.txt"
+if [[ "$status" != 0 ]]; then
+  echo 'Some login items remain incomplete. Install missing apps or allow Automation for System Events, then rerun ./bin/configure-app-settings.' >&2
+fi
+exit "$status"

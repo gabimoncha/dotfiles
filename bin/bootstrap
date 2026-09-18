@@ -21,38 +21,12 @@ mobile_dev_enabled=1
 
 # shellcheck source=bin/lib/setup-runtime.sh
 . "${repo_root}/bin/lib/setup-runtime.sh"
-runtime_init "bootstrap"
+
 
 if [[ "${DOTFILES_SKIP_MOBILE_DEV:-0}" == "1" ]]; then
   mobile_dev_enabled=0
 fi
 
-cleanup() {
-  runtime_cleanup
-
-  if [[ -n "$temp_brewfile" ]]; then
-    rm -f "$temp_brewfile"
-  fi
-
-  if [[ -n "$xcode_brewfile" ]]; then
-    rm -f "$xcode_brewfile"
-  fi
-
-  if [[ -n "$mas_brewfile" ]]; then
-    rm -f "$mas_brewfile"
-  fi
-
-  if [[ -n "$vscode_brewfile" ]]; then
-    rm -f "$vscode_brewfile"
-  fi
-
-  if [[ -n "$sudo_keepalive_pid" ]]; then
-    kill "$sudo_keepalive_pid" 2>/dev/null || true
-    wait "$sudo_keepalive_pid" 2>/dev/null || true
-  fi
-}
-
-trap cleanup EXIT
 
 log() {
   printf '==> %s\n' "$1"
@@ -132,7 +106,15 @@ ensure_homebrew() {
 
   log "Installing Homebrew"
   warn "Homebrew may ask for your macOS password to create its install directories."
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  local installer status=0
+  installer="$(mktemp)" || return 1
+  curl -fsSL --connect-timeout 15 --max-time 120 --retry 2 --retry-max-time 180 \
+    https://raw.githubusercontent.com/Homebrew/install/8949852f785a3bacaba2a979d0790337950b0a4a/install.sh -o "$installer" || status=$?
+  if [[ "$status" -eq 0 ]]; then
+    NONINTERACTIVE=1 runtime_with_lock homebrew /bin/bash "$installer" || status=$?
+  fi
+  rm -f "$installer"
+  return "$status"
 }
 
 load_homebrew_shellenv() {
@@ -157,12 +139,12 @@ load_homebrew_shellenv() {
   fi
 
   warn "Homebrew installed, but brew was not found on PATH."
-  exit 1
+  return 1
 }
 
 cask_app_bundle_name() {
   case "$1" in
-    beeper) printf 'Beeper' ;;
+    beeper) printf 'Beeper Desktop' ;;
     blackhole-2ch) printf 'BlackHole 2ch' ;;
     chatgpt) printf 'ChatGPT' ;;
     claude) printf 'Claude' ;;
@@ -178,7 +160,6 @@ cask_app_bundle_name() {
     iterm2) printf 'iTerm' ;;
     karabiner-elements) printf 'Karabiner-Elements' ;;
     mole-app) printf 'Mole' ;;
-    multipass) printf 'Multipass' ;;
     neardrop | grishka/grishka/neardrop) printf 'NearDrop' ;;
     ngrok) printf 'ngrok' ;;
     nikitabobko/tap/aerospace | aerospace) printf 'AeroSpace' ;;
@@ -195,6 +176,7 @@ cask_app_bundle_name() {
     stats) printf 'Stats' ;;
     superwhisper) printf 'superwhisper' ;;
     synology-drive) printf 'Synology Drive Client' ;;
+    synology-image-assistant) printf 'Synology Image Assistant' ;;
     t3-code) printf 'T3 Code (Alpha)' ;;
     tailscale-app) printf 'Tailscale' ;;
     the-unarchiver) printf 'The Unarchiver' ;;
@@ -212,7 +194,6 @@ cask_app_bundle_name() {
 mas_app_bundle_name() {
   case "$1" in
     Amphetamine) printf 'Amphetamine' ;;
-    "Draw Things") printf 'Draw Things' ;;
     SiteSucker) printf 'SiteSucker' ;;
     TestFlight) printf 'TestFlight' ;;
     "The Unarchiver") printf 'The Unarchiver' ;;
@@ -299,27 +280,24 @@ ensure_mise_cli() {
   command -v mise >/dev/null 2>&1
 }
 
+resolve_mas_cli() {
+  local candidate
+  candidate="$(command -v mas 2>/dev/null || true)"
+  case "$candidate" in
+    *'/shims/'*) candidate="$(cd "$repo_root" && mise which mas 2>/dev/null)" || return 1 ;;
+  esac
+  [[ -n "$candidate" && -x "$candidate" ]] || return 1
+  "$candidate" version >/dev/null 2>&1 || "$candidate" --version >/dev/null 2>&1 || return 1
+  printf '%s\n' "$candidate"
+}
+
 ensure_mas_cli() {
   prepend_mise_shims
-
-  if command -v mas >/dev/null 2>&1; then
-    return 0
-  fi
-
-  if command -v mise >/dev/null 2>&1; then
-    log "Installing mas with mise"
-    (cd "$repo_root" && mise install mas@latest && mise reshim)
-    prepend_mise_shims
-    hash -r
-    if command -v mas >/dev/null 2>&1; then
-      return 0
-    fi
-  fi
-
+  resolve_mas_cli >/dev/null && return 0
   log "Installing mas"
-  brew install mas
+  runtime_with_lock homebrew brew install mas || return $?
   hash -r
-  command -v mas >/dev/null 2>&1
+  resolve_mas_cli >/dev/null
 }
 
 mas_available_for_brewfile() {
@@ -330,12 +308,12 @@ mas_available_for_brewfile() {
 
   mas_checked=1
 
-  if ! command -v mas >/dev/null 2>&1; then
+  if ! mas_cmd="$(resolve_mas_cli)"; then
     warn "Skipping Mac App Store apps; mas will be installed by Homebrew. Rerun ./bin/setup after signing in to the App Store."
     return 1
   fi
 
-  if mas config >/dev/null 2>&1; then
+  if "$mas_cmd" config >/dev/null 2>&1; then
     mas_available=1
     return 0
   fi
@@ -347,7 +325,7 @@ mas_available_for_brewfile() {
 mas_app_installed() {
   local app_id="$1"
 
-  mas list | awk '{print $1}' | grep -Fxq "$app_id"
+  "${mas_cmd:-mas}" list | awk '{print $1}' | grep -Fxq "$app_id"
 }
 
 install_mas_apps() {
@@ -359,7 +337,7 @@ install_mas_apps() {
 
   if ! mas_available_for_brewfile; then
     runtime_record_deferred "Mac App Store apps" "mas is unavailable or App Store is not signed in" "Sign in to the App Store, then rerun ./bin/setup."
-    return 0
+    return 20
   fi
 
   while IFS= read -r line || [[ -n "$line" ]]; do
@@ -379,7 +357,7 @@ install_mas_apps() {
       fi
 
       log "Installing App Store app ${app_name}"
-      mas install "$app_id" || {
+      "$mas_cmd" install "$app_id" || {
         warn "Skipping ${app_name}; App Store did not start the download. Open it in the App Store once, then rerun ./bin/setup."
         runtime_record_failure recoverable "App Store app ${app_name}" "mas install did not start the download" "" "Open ${app_name} in the App Store once, then rerun ./bin/setup."
         status=1
@@ -415,7 +393,7 @@ install_vscode_extensions() {
   if [[ -z "$code_cmd" ]]; then
     warn "Skipped VS Code extensions; code CLI is not available yet"
     runtime_record_deferred "VS Code extensions" "code CLI is not available yet" "Open VS Code once or rerun ./bin/setup after the cask install completes."
-    return 0
+    return 20
   fi
 
   installed_extensions="$("$code_cmd" --list-extensions 2>/dev/null || true)"
@@ -450,7 +428,7 @@ untap_if_present() {
   fi
 
   warn "Untapping legacy Homebrew tap ${tap}; ${replacement} is the managed source"
-  brew untap --force "$tap" || warn "Could not untap ${tap}; Homebrew may still report duplicate formulae"
+  runtime_with_lock homebrew brew untap --force "$tap" || warn "Could not untap ${tap}; Homebrew may still report duplicate formulae"
 }
 
 normalize_homebrew_taps() {
@@ -484,7 +462,7 @@ repair_legacy_zathura_receipts() {
   fi
 
   warn "Reinstalling zathura plugins to update legacy Homebrew receipt metadata"
-  brew reinstall --formula \
+  runtime_with_lock homebrew brew reinstall --formula \
     homebrew-zathura/zathura/zathura-cb \
     homebrew-zathura/zathura/zathura-pdf-mupdf || \
     warn "Could not update zathura plugin receipts; Homebrew may keep warning about the old zegervdv/zathura tap"
@@ -559,32 +537,26 @@ filter_brewfile_for_existing_apps() {
   done < "$source_file"
 }
 
-install_brewfile() {
-  temp_brewfile="$(mktemp)"
-  xcode_brewfile="$(mktemp)"
-  mas_brewfile="$(mktemp)"
-  vscode_brewfile="$(mktemp)"
+prepare_brewfiles() {
+  # Predictable per-run paths also work when the inventory runs in a child.
+  temp_brewfile="${DOTFILES_SETUP_LOG_DIR}/homebrew.Brewfile"
+  xcode_brewfile="${DOTFILES_SETUP_LOG_DIR}/xcode.Brewfile"
+  mas_brewfile="${DOTFILES_SETUP_LOG_DIR}/mas.Brewfile"
+  vscode_brewfile="${DOTFILES_SETUP_LOG_DIR}/vscode.Brewfile"
+  : > "$temp_brewfile"
+  : > "$xcode_brewfile"
+  : > "$mas_brewfile"
+  : > "$vscode_brewfile"
+  filter_brewfile_for_existing_apps "${repo_root}/Brewfile" "$temp_brewfile" "$xcode_brewfile" "$mas_brewfile" "$vscode_brewfile"
+}
 
+install_brewfile() {
+  command -v brew >/dev/null 2>&1 || return 1
   normalize_homebrew_taps
   repair_legacy_zathura_receipts
-  ensure_mas_cli || true
-  filter_brewfile_for_existing_apps "${repo_root}/Brewfile" "$temp_brewfile" "$xcode_brewfile" "$mas_brewfile" "$vscode_brewfile"
-
-  if "${repo_root}/bin/configure-sudo-touch-id" --check >/dev/null 2>&1; then
-    log "Touch ID for sudo is enabled"
-  else
-    warn "Touch ID for sudo is not enabled yet; the next sudo prompt will require your password."
-  fi
-
-  log "Refreshing sudo timestamp for Homebrew cask installs"
-  sudo -v
-
-  log "Starting background sudo keepalive"
-  (while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null) &
-  sudo_keepalive_pid=$!
-
+  [[ -n "$temp_brewfile" && -f "$temp_brewfile" ]] || prepare_brewfiles
   log "Installing Homebrew bundle with ${brew_bundle_jobs} parallel job(s)"
-  brew bundle install --jobs="$brew_bundle_jobs" --no-upgrade --verbose --file "$temp_brewfile"
+  runtime_with_lock homebrew brew bundle install --jobs="$brew_bundle_jobs" --no-upgrade --verbose --file "$temp_brewfile"
 }
 
 install_post_brew_apps() {
@@ -617,28 +589,34 @@ report_mobile_dev_deferred() {
 
 initialize_submodules() {
   log "Initializing git submodules"
-  git -C "$repo_root" submodule sync --recursive
+  git -C "$repo_root" submodule sync --recursive || return $?
   git -C "$repo_root" submodule update --init --recursive || {
     warn "Submodule init failed. Check network access and rerun: git submodule update --init --recursive"
     return 1
   }
 }
 
+install_mise_tools_unlocked() {
+  local status=0 refresh_status=0
+  (cd "$repo_root" && mise install) || status=$?
+  # Successful downloads must remain usable even if another backend failed.
+  (cd "$repo_root" && mise reshim) || refresh_status=$?
+  [[ "$status" -ne 0 ]] || status="$refresh_status"
+  return "$status"
+}
+
 install_mise_tools() {
   prepend_mise_shims
-
-  if ! command -v mise >/dev/null 2>&1; then
-    warn "mise is not available; cannot install mise tools"
-    return 1
-  fi
-
-  log "Installing mise tools"
-  (cd "$repo_root" && mise install && mise reshim)
+  command -v mise >/dev/null 2>&1 || return 1
+  runtime_with_lock mise install_mise_tools_unlocked
 }
 
 install_and_check_mise_tools() {
-  install_mise_tools || return 1
-  "${repo_root}/bin/check-mise-tools"
+  local install_status=0 check_status=0
+  install_mise_tools || install_status=$?
+  "${repo_root}/bin/check-mise-tools" || check_status=$?
+  [[ "$install_status" -eq 0 ]] || return "$install_status"
+  return "$check_status"
 }
 
 install_shell_framework() {
@@ -650,28 +628,28 @@ install_shell_framework() {
 
   if [[ ! -d "$omz_dir" ]]; then
     log "Installing Oh My Zsh"
-    git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$omz_dir"
+    git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$omz_dir" || return $?
   else
     log "Oh My Zsh is already installed"
   fi
 
   if [[ ! -d "$p10k_dir" ]]; then
     log "Installing Powerlevel10k"
-    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$p10k_dir"
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$p10k_dir" || return $?
   else
     log "Powerlevel10k is already installed"
   fi
 
   if [[ ! -d "$autosuggestions_dir" ]]; then
     log "Installing zsh-autosuggestions"
-    git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions.git "$autosuggestions_dir"
+    git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions.git "$autosuggestions_dir" || return $?
   else
     log "zsh-autosuggestions is already installed"
   fi
 
   if [[ ! -d "$fzf_history_dir" ]]; then
     log "Installing zsh-fzf-history-search"
-    git clone --depth=1 https://github.com/joshskidmore/zsh-fzf-history-search.git "$fzf_history_dir"
+    git clone --depth=1 https://github.com/joshskidmore/zsh-fzf-history-search.git "$fzf_history_dir" || return $?
   else
     log "zsh-fzf-history-search is already installed"
   fi
@@ -707,172 +685,7 @@ apply_macos_defaults_once() {
   return "$status"
 }
 
-if ! runtime_acquire_global_lock; then
-  if [[ "${DOTFILES_RUNTIME_OWNS_SUMMARY:-0}" -eq 1 ]]; then
-    runtime_print_summary
-  fi
-  exit 1
+# One dependency planner owns both public entry points.
+if [[ "${DOTFILES_BOOTSTRAP_LIBRARY:-0}" != "1" ]]; then
+  exec "${repo_root}/bin/setup" "$@"
 fi
-ensure_not_root
-ensure_admin_user
-if [[ "${DOTFILES_SKIP_SUDO_TOUCH_ID:-}" == "1" ]]; then
-  warn "Skipping Touch ID sudo setup because DOTFILES_SKIP_SUDO_TOUCH_ID=1"
-  runtime_record_deferred "Touch ID sudo" "skipped because DOTFILES_SKIP_SUDO_TOUCH_ID=1" "Run ./bin/configure-sudo-touch-id --enable later."
-else
-  log "Configuring Touch ID for sudo"
-  if "${repo_root}/bin/configure-sudo-touch-id" --enable; then
-    runtime_record_completed "Touch ID sudo"
-  else
-    warn "Touch ID sudo setup was skipped; run ./bin/configure-sudo-touch-id --enable after setup."
-    runtime_record_failure recoverable "Touch ID sudo" "configuration failed or was skipped" "" "Run ./bin/configure-sudo-touch-id --enable after setup."
-    bootstrap_status=1
-  fi
-fi
-ensure_xcode_command_line_tools
-ensure_homebrew
-load_homebrew_shellenv
-ensure_mise_cli
-if initialize_submodules; then
-  runtime_record_completed "Git submodules"
-else
-  runtime_record_failure recoverable "Git submodules" "submodule init failed" "" "Rerun git submodule update --init --recursive."
-  bootstrap_status=1
-fi
-
-log "Linking dotfiles"
-if DOTFILES_LINK_AGENT_CONFIG=0 "${repo_root}/bin/link-dotfiles"; then
-  runtime_record_completed "Dotfile links"
-else
-  runtime_record_failure recoverable "Dotfile links" "link-dotfiles failed" "" "Rerun ./bin/link-dotfiles."
-  bootstrap_status=1
-fi
-
-log "Ensuring Codex standalone install"
-if "${repo_root}/bin/ensure-codex-standalone"; then
-  runtime_record_completed "Codex standalone install"
-else
-  runtime_record_failure recoverable "Codex standalone install" "standalone Codex setup failed" "" "Rerun ./bin/ensure-codex-standalone after checking the logged error."
-  bootstrap_status=1
-fi
-
-log "Ensuring Cursor Agent standalone install"
-if "${repo_root}/bin/ensure-cursor-agent-standalone"; then
-  runtime_record_completed "Cursor Agent standalone install"
-else
-  runtime_record_failure recoverable "Cursor Agent standalone install" "standalone Cursor Agent setup failed" "" "Rerun ./bin/ensure-cursor-agent-standalone after checking the logged error."
-  bootstrap_status=1
-fi
-
-if [[ "$mobile_dev_enabled" -eq 1 ]]; then
-  if "${repo_root}/bin/install-mobile-dev" --prepare-tools-only; then
-    runtime_record_completed "Mobile dev download tools" "xcodes and aria2 are ready"
-    runtime_run_job "Xcode install" recoverable \
-      "Sign in to Apple Developer if prompted, then rerun ./bin/setup." \
-      "${repo_root}/bin/install-mobile-dev" --xcode-install-only
-  else
-    runtime_record_failure recoverable "Mobile dev download tools" "could not prepare xcodes and aria2" "" "Rerun ./bin/install-mobile-dev --prepare-tools-only after checking mise/network access."
-    bootstrap_status=1
-  fi
-else
-  runtime_record_deferred "Mobile dev stack" "skipped because DOTFILES_SKIP_MOBILE_DEV=1" "Rerun ./bin/setup without DOTFILES_SKIP_MOBILE_DEV=1."
-fi
-
-ensure_mas_cli || runtime_record_deferred "mas CLI" "mas could not be installed yet" "Rerun ./bin/setup after mise or Homebrew is ready."
-runtime_run_job "mise tools" recoverable \
-  "Rerun cd ${repo_root} && mise install, then ./bin/check-mise-tools." \
-  install_and_check_mise_tools
-
-if install_brewfile; then
-  runtime_record_completed "Homebrew bundle"
-else
-  runtime_record_failure recoverable "Homebrew bundle" "brew bundle failed" "" "Rerun ./bin/bootstrap after fixing the Homebrew error."
-  bootstrap_status=1
-fi
-
-if [[ "$mobile_dev_enabled" -eq 1 ]]; then
-  runtime_run_job "Android Studio" recoverable \
-    "Rerun ./bin/install-mobile-dev, or install Android Studio with brew install --cask android-studio." \
-    "${repo_root}/bin/install-mobile-dev" --android-only
-fi
-
-if ! install_post_brew_apps; then
-  bootstrap_status=1
-fi
-
-log "Linking app dotfiles"
-if "${repo_root}/bin/link-dotfiles"; then
-  runtime_record_completed "App dotfile links"
-else
-  runtime_record_failure recoverable "App dotfile links" "link-dotfiles failed after app install" "" "Rerun ./bin/link-dotfiles."
-  bootstrap_status=1
-fi
-
-if [[ "$mobile_dev_enabled" -eq 1 ]]; then
-  if full_xcode_selected; then
-    runtime_run_job "iOS platform support" recoverable \
-      "Open Xcode > Settings > Components and install iOS, then rerun ./bin/install-mobile-dev." \
-      "${repo_root}/bin/install-mobile-dev" --ios-platform-only
-    runtime_run_job "Xcode-dependent Homebrew formulae" recoverable \
-      "Rerun ./bin/install-mobile-dev after Xcode is selected." \
-      "${repo_root}/bin/install-mobile-dev" --xcode-formulae-only
-    if ! runtime_wait_jobs; then
-      bootstrap_status=1
-    fi
-  else
-    runtime_record_failure recoverable "Mobile dev post-Xcode" "full Xcode is not selected" "" "Fix Xcode install, then rerun ./bin/install-mobile-dev."
-    bootstrap_status=1
-  fi
-else
-  report_mobile_dev_deferred
-fi
-
-runtime_run_job "tmux plugins" recoverable \
-  "Rerun ./bin/setup-tmux after network access is ready." \
-  "${repo_root}/bin/setup-tmux"
-runtime_run_job "shell framework" recoverable \
-  "Rerun ./bin/bootstrap after network access is ready." \
-  install_shell_framework
-if ! runtime_wait_jobs; then
-  bootstrap_status=1
-fi
-
-if apply_macos_defaults_once; then
-  runtime_record_completed "macOS defaults"
-else
-  runtime_record_failure recoverable "macOS defaults" "defaults script failed" "" "Rerun ./bin/bootstrap or DOTFILES_SKIP_MACOS_DEFAULTS=1 ./bin/bootstrap."
-  bootstrap_status=1
-fi
-
-log "Configuring Finder sidebar favorites"
-if "${repo_root}/bin/finder-sidebar-favorites"; then
-  runtime_record_completed "Finder sidebar favorites"
-else
-  warn "Finder sidebar favorite setup failed; rerun ./bin/finder-sidebar-favorites after Finder permissions are ready"
-  runtime_record_failure recoverable "Finder sidebar favorites" "Finder sidebar setup failed" "" "Rerun ./bin/finder-sidebar-favorites after Finder permissions are ready."
-  bootstrap_status=1
-fi
-
-cat <<'EOF'
-
-Bootstrap complete.
-
-Recommended next steps:
-- Open a new terminal, or reload this one with: source "$HOME/.zshrc"
-- Run ./bin/auth-setup to configure SSH and GitHub access.
-- Run ./bin/install-apps to install extra casks and report manual vendor apps.
-- Sign in to Apple ID, App Store, and iCloud.
-- Re-grant Accessibility / Automation / network permissions for Karabiner, AeroSpace, NearDrop, Synology Drive, superwhisper, and similar tools.
-- Finish first-run setup for Xcode, Android Studio, OrbStack, and DaVinci Resolve after installing the apps.
-EOF
-
-if [[ "${DOTFILES_RUNTIME_OWNS_SUMMARY:-0}" -eq 1 ]]; then
-  runtime_print_summary
-fi
-
-if [[ "$bootstrap_status" -ne 0 ]]; then
-  exit "$bootstrap_status"
-fi
-if [[ "${DOTFILES_RUNTIME_OWNS_SUMMARY:-0}" -eq 1 ]]; then
-  runtime_exit_status
-fi
-exit 0

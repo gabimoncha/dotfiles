@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+case "${1:-}" in
+  --dry-run) printf 'Would ensure ~/Screenshots exists and reconcile screenshot destination, file target, and PNG preferences.\n'; exit 0 ;;
+  '') ;;
+  *) echo 'Usage: configure-screenshots [--dry-run]' >&2; exit 2 ;;
+esac
+mkdir -p "$HOME/Screenshots"
+changed=0
+normalize_location() {
+  case "$1" in '~/'*) printf '%s/%s' "$HOME" "${1#\~/}" ;; *) printf '%s' "$1" ;; esac
+}
+ensure_preference() {
+  local key="$1" expected="$2" current
+  current="$(defaults read com.apple.screencapture "$key" 2>/dev/null)" || current=''
+  case "$key" in location*) current="$(normalize_location "$current")" ;; esac
+  if [[ "$current" != "$expected" ]]; then
+    defaults write com.apple.screencapture "$key" -string "$expected"
+    changed=1
+  fi
+  current="$(defaults read com.apple.screencapture "$key")"
+  case "$key" in location*) current="$(normalize_location "$current")" ;; esac
+  if [[ "$current" != "$expected" ]]; then
+    printf 'Screenshot preference verification failed: %s\n' "$key" >&2
+    return 1
+  fi
+}
+# macOS 27's working Screenshot toolbar persists these additional keys.
+# Keep the legacy key for older macOS; preserve separate video preferences.
+ensure_preference location "$HOME/Screenshots"
+ensure_preference location-screenshot "$HOME/Screenshots"
+ensure_preference location-last "$HOME/Screenshots"
+ensure_preference target file
+ensure_preference target-screenshot file
+ensure_preference type png
+if [[ "$changed" == 1 ]]; then
+  killall SystemUIServer >/dev/null 2>&1 || true
+fi
+printf 'Screenshot preferences verified: %s (PNG files). No capture was taken.\n' "$HOME/Screenshots"
+printf 'If captures still go elsewhere: Shift–Command–5 > Options > Save to > Other Location > ~/Screenshots.\n'

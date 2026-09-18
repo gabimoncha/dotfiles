@@ -8,12 +8,20 @@ git clone https://github.com/gabimoncha/dotfiles.git ~/development/dotfiles
 cd ~/development/dotfiles
 ./bin/setup
 # Download the cloud backups listed by setup (iCloud Drive or Synology Drive).
+# Review App Management permissions, then fully quit and reopen your terminal.
+# Return to this directory:
+./bin/setup --continue
 ```
 
-`./bin/setup` runs preflight, ensures GitHub CLI authentication for mise, then
-runs bootstrap and app installation. After unattended work finishes, it offers
-to continue into Mackup, Raycast, and encrypted Codex state restore steps.
-Rerun it later when Apple ID, App Store, iCloud, Synology Drive, or MAS
+`./bin/setup` runs preflight, starts Homebrew and mise foundations concurrently,
+acquires gh in isolation, and installs standalone Codex CLI and Cursor Agent.
+It then exits at a manual App Management permission/restart checkpoint.
+`./bin/setup --continue` rechecks foundations and starts API authentication and
+the remaining installation. Its dependency planner
+blocks consumers of failed prerequisites while continuing independent work.
+Eligible Mackup, Raycast and encrypted Codex restores require working tools,
+hydrated backups and confirmation.
+Rerun `./bin/setup --continue` later when Apple ID, App Store, iCloud, Synology Drive, or MAS
 prerequisites become ready.
 
 Preflight first checks the active Apple or MDM software update catalog. If a
@@ -41,8 +49,13 @@ The lower-level commands still exist for targeted reruns:
 ./bin/app-state-doctor
 ```
 
-GitHub CLI, mise token access, and GitHub SSH are configured before bootstrap's
-bulk tool installation. Rerun `./bin/auth-setup` for a targeted repair.
+Verified GitHub API access gates bulk mise installation; SSH readiness is
+reported separately. `./bin/auth-setup --api-only`, `--ssh-only` and
+`--verify-mise` allow targeted repairs. `bin/bootstrap` shares the setup planner.
+
+Every run, including `--dry-run`, prints persistent private logs under
+`.local/setup-runs/<run-id>/`. Dry-run executes only preflight probes and records
+provisioning as planned. See `summary.txt` and `events.jsonl` for recovery.
 
 ## Re-run Safety
 
@@ -60,9 +73,12 @@ Some setup still needs account login or OS permissions:
   Sources for Android 35, Android SDK Build-Tools, Android Emulator, and at
   least one virtual device
 
-The full mobile dev stack is part of `./bin/setup` by default. Use
-`./bin/setup --skip-mobile-dev` for a smaller run. Use
+The full mobile dev stack is part of the continuation phase by default. Use
+`./bin/setup --continue --skip-mobile-dev` for a smaller run. Use
 `./bin/install-mobile-dev` to rerun only the Xcode, Android Studio,
 `idb-companion`, and `sourcekitten` installation.
 
 If Ghostty, tmux plugins, or Raycast hotkeys do not look restored after setup, run `./bin/app-state-doctor` for the concrete missing piece.
+
+Personal skills require a reviewed source commit and installed reviewed skills
+CLI; otherwise they are deferred. See [security and manual validation](SETUP-SECURITY.md).

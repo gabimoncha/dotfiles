@@ -15,6 +15,10 @@ action="full"
 
 # shellcheck source=bin/lib/setup-runtime.sh
 . "${repo_root}/bin/lib/setup-runtime.sh"
+for runtime_argument in "$@"; do
+  [[ "$runtime_argument" != --dry-run ]] || DOTFILES_RUN_MODE=dry-run
+done
+unset runtime_argument
 runtime_init "install-mobile-dev"
 
 cleanup() {
@@ -25,7 +29,7 @@ cleanup() {
   fi
 }
 
-trap cleanup EXIT
+# Runtime owns signal and EXIT cleanup; temp files live only for this helper.
 
 log() {
   printf '==> %s\n' "$1"
@@ -114,7 +118,9 @@ ensure_homebrew() {
 
   log "Installing Homebrew"
   warn "Homebrew may ask for your macOS password to create its install directories."
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  # Use the same pinned foundation implementation as setup.
+  (DOTFILES_BOOTSTRAP_LIBRARY=1 . "${repo_root}/bin/bootstrap"; ensure_homebrew)
+
 }
 
 load_homebrew_shellenv() {
@@ -261,12 +267,12 @@ configure_full_xcode() {
 
   if ! full_xcode_selected; then
     log "Selecting full Xcode"
-    sudo xcode-select -s "$developer_dir"
+    sudo xcode-select -s "$developer_dir" || return $?
   fi
 
   if ! sudo xcodebuild -license check >/dev/null 2>&1; then
     log "Accepting Xcode license"
-    sudo xcodebuild -license accept
+    sudo xcodebuild -license accept || return $?
   fi
 
   run_xcode_first_launch_tasks || return 1
@@ -285,9 +291,24 @@ prepare_xcode_download_tools() {
   fi
 
   log "Installing xcodes and aria2"
-  (cd "$repo_root" && mise install --jobs=2 xcodes@latest conda:aria2@latest && mise reshim)
+  runtime_with_lock mise prepare_xcode_tools_unlocked || return $?
   prepend_mise_shims
   hash -r
+}
+
+prepare_xcode_tools_unlocked() {
+  local status=0 refresh_status=0
+  (cd "$repo_root" && mise install --jobs=2 xcodes@latest conda:aria2@latest) || status=$?
+  (cd "$repo_root" && mise reshim) || refresh_status=$?
+  [[ "$status" -ne 0 ]] || status="$refresh_status"
+  return "$status"
+}
+
+xcodes_command() {
+  local executable
+  executable="$(cd "$repo_root" && mise which xcodes)" || return 1
+  [[ -x "$executable" && "$executable" != "$mise_shim_dir/"* ]] || return 1
+  "$executable" "$@"
 }
 
 ensure_xcodes_cli() {
@@ -297,7 +318,7 @@ ensure_xcodes_cli() {
     return 0
   fi
 
-  if (cd "$repo_root" && mise exec xcodes@latest -- xcodes --version >/dev/null 2>&1); then
+  if (cd "$repo_root" && xcodes_command version >/dev/null 2>&1); then
     return 0
   fi
 
@@ -364,7 +385,7 @@ remove_old_xcode_apps() {
     fi
 
     log "Removing old Xcode ${version} at ${app}"
-    (cd "$repo_root" && mise exec xcodes@latest -- xcodes uninstall "$version") ||
+    (cd "$repo_root" && xcodes_command uninstall "$version") ||
       warn "Could not remove old Xcode ${version}; remove ${app} manually if it keeps confusing Homebrew."
   done < <(ls -d /Applications/Xcode*.app 2>/dev/null || true)
 }
@@ -386,7 +407,7 @@ install_android_studio() {
   fi
 
   log "Installing cask android-studio"
-  brew install --cask android-studio
+  runtime_with_lock homebrew brew install --cask android-studio
 }
 
 install_full_xcode() {
@@ -411,9 +432,18 @@ install_full_xcode() {
     return 0
   fi
 
+  if [[ ! -t 0 ]]; then
+    warn "Xcode sign-in requires an interactive terminal. Run ./bin/install-mobile-dev --xcode-install-only directly in your terminal."
+    return 1
+  fi
+  log "Apple sign-in follows in this terminal; Xcodes may ask for your Apple ID, password, and verification code."
+  log "Password input is hidden. Credentials are not written to setup diagnostic logs."
   log "Installing and selecting the ${label} Xcode with xcodes using ${unxip_label}"
-  if ! (cd "$repo_root" && mise exec xcodes@latest -- xcodes install "${install_args[@]}"); then
-    warn "Xcode install with xcodes failed. Sign in when prompted or set XCODES_USERNAME/XCODES_PASSWORD, then rerun ./bin/install-mobile-dev."
+  if ! (cd "$repo_root" && xcodes_command install "${install_args[@]}"); then
+    warn "Xcodes could not finish downloading or installing Xcode. See the terminal error above; authentication output is not logged."
+    warn "For an Apple sign-in/network failure, download the public release .xip from https://developer.apple.com/download/all/ in your browser."
+    warn 'Install that archive with: xcodes install <public-version> --path "/path/to/Xcode.xip" --select --experimental-unxip'
+    warn "Then rerun ./bin/setup --continue. Do not select a beta or release candidate."
     return 1
   fi
 
@@ -446,7 +476,7 @@ brew "wix/brew/applesimutils"
 EOF
 
   log "Installing Xcode-dependent Homebrew formulae with ${brew_bundle_jobs} parallel job(s)"
-  brew bundle install --jobs="$brew_bundle_jobs" --no-upgrade --verbose --file "$temp_brewfile"
+  runtime_with_lock homebrew brew bundle install --jobs="$brew_bundle_jobs" --no-upgrade --verbose --file "$temp_brewfile"
 }
 
 run_post_xcode_mobile_steps() {
@@ -579,6 +609,7 @@ if ! runtime_acquire_global_lock; then
   exit 1
 fi
 ensure_not_root
+log "Verifying mobile development prerequisites (Command Line Tools and Homebrew)"
 ensure_xcode_command_line_tools
 ensure_homebrew
 load_homebrew_shellenv
@@ -609,6 +640,7 @@ case "$action" in
 esac
 
 if [[ "$mobile_status" -ne 0 ]]; then
+  runtime_record_failure recoverable "Mobile dev: $action" "requested action failed; inspect the terminal error above" "Retry the same action after resolving its error."
   if [[ "$xcode_only" -eq 1 ]]; then
     warn "Xcode setup completed with issues. Fix the warnings above, then rerun ./bin/install-mobile-dev --xcode-only."
   else
@@ -631,6 +663,8 @@ Recommended next steps:
 - Open Android Studio and install Android 15 SDK Platform 35, Sources for Android 35, Android SDK Build-Tools, Android Emulator, and at least one virtual device.
 - Open Xcode once if macOS asks for additional first-run permissions or components.
 EOF
+  else
+    runtime_record_completed "Mobile dev: $action" "requested action completed"
   fi
 fi
 

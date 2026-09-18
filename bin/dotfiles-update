@@ -12,6 +12,6 @@ log "Updating dotfiles repo"
 git -C "$repo_root" pull --ff-only
 
 log "Applying bootstrap-managed updates"
-DOTFILES_SKIP_MACOS_DEFAULTS=1 "${repo_root}/bin/bootstrap"
+DOTFILES_SKIP_MACOS_DEFAULTS=1 "${repo_root}/bin/bootstrap" --continue
 
 log "Dotfiles update complete"
