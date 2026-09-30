@@ -35,7 +35,6 @@ brew "proctools"
 brew "smartmontools"
 brew "switchaudio-osx"
 brew "telnet"
-brew "watchman"
 brew "webp"
 brew "zlib"
 
