@@ -77,6 +77,36 @@ chmod +x "$fixture/bin/open"
 "$repo_root/bin/file-restore" raycast "$fixture/export.rayconfig" > "$fixture/gui-output"
 grep -q 'Import Settings' "$fixture/gui-output"
 [[ "$(wc -l < "$HOME/open-calls" | tr -d ' ')" == 2 ]]
+
+# Both setup and the standalone command must keep the same discovery priority.
+raycast_primary="$HOME/Library/CloudStorage/SynologyDrive-personal/MacBackups/Raycast"
+raycast_secondary="$HOME/Library/Mobile Documents/com~apple~CloudDocs/Raycast"
+mkdir -p "$raycast_primary" "$raycast_secondary"
+printf export > "$raycast_primary/old.rayconfig"
+printf export > "$raycast_primary/new export.rayconfig"
+printf export > "$raycast_secondary/newest.rayconfig"
+touch -t 202401010000 "$raycast_primary/old.rayconfig"
+touch -t 202402010000 "$raycast_primary/new export.rayconfig"
+touch -t 202403010000 "$raycast_secondary/newest.rayconfig"
+[[ "$(latest_rayconfig)" == "$raycast_primary/new export.rayconfig" ]]
+"$repo_root/bin/file-restore" raycast > "$fixture/discovery-output"
+grep -Fq "Selected Raycast export: $raycast_primary/new export.rayconfig" "$fixture/discovery-output"
+rm "$raycast_primary/"*.rayconfig
+[[ "$(latest_rayconfig)" == "$raycast_secondary/newest.rayconfig" ]]
+mv "$raycast_secondary/newest.rayconfig" "$HOME/Library/Mobile Documents/com~apple~CloudDocs/elsewhere.rayconfig"
+[[ "$(latest_rayconfig)" == "$HOME/Library/Mobile Documents/com~apple~CloudDocs/elsewhere.rayconfig" ]]
+
+# A dated primary archive takes priority over a secondary latest archive.
+rm "$primary"
+dated_archive="$(dirname "$primary")/codex-state-20240101.tar.gz.age"
+cp "$fixture/fixture.age" "$dated_archive"
+[[ "$(latest_codex_state_archive)" == "$dated_archive" ]]
+"$repo_root/bin/file-restore" codex --dry-run > "$fixture/discovery-output"
+grep -Fq "Decrypting $dated_archive" "$fixture/discovery-output"
+cp "$fixture/fixture.age" "$primary"
+touch -t 202301010000 "$primary"
+[[ "$(latest_codex_state_archive)" == "$primary" ]]
+
 # Availability must check the application bundle, not only a Homebrew receipt.
 . "$repo_root/bin/lib/setup-actions.sh"
 (
