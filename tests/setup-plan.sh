@@ -48,6 +48,7 @@ fixture_action() {
     assert events.index('homebrew end') < events.index('standalone_agents start')
     assert events.index('standalone_agents end') < events.index('permission_handoff start')
     assert not any(name+' start' in events for name in ('links','api','ssh','brew_inventory','mise_inventory','xcode','restores','defaults'))
+    assert 'touch_id end' in events
     assert 'permission_handoff end' in events
     result,records,events=run('prepare-failed',fail='mise',prepare=True)
     assert result.returncode!=0
@@ -62,6 +63,7 @@ fixture_action() {
     assert result.returncode==0,(result.stdout,result.stderr)
     assert events.index('homebrew start') < events.index('mise end')
     assert events.index('mise start') < events.index('homebrew end')
+    assert 'touch_id end' in events
     assert events.index('api end') < events.index('mise_inventory start')
     assert events.index('homebrew end') < events.index('mise_inventory start')
     assert events.index('xcode end') < events.index('mobile_finish start')

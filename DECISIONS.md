@@ -84,9 +84,10 @@ unknown update status, or apparent prereleases. Its human-readable catalog
 probe fails closed; it cannot prove availability outside the active catalog.
 Setup never installs OS updates or changes beta enrollment.
 
-Privacy settings are manual instructions for all applications. No helper grants
-TCC consent or edits its database. Touch ID for sudo remains automatic as an
-authentication setting. Login items are matched by app path;
+App privacy permissions are manual. Setup does not maintain or print app
+permission lists, grant TCC consent, or edit its database. App settings and
+portable backups remain managed separately from permission grants. Touch ID for
+sudo remains automatic as an authentication setting. Login items are matched by app path;
 missing apps and failed additions remain retryable. NearDrop quarantine stays
 intact. General defaults are stamped; screenshot repair is independent so a
 stamp cannot suppress destination repair. Screenshot toolbar keys are observed

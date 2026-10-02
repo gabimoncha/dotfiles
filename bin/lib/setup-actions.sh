@@ -52,7 +52,6 @@ setup_standalone_agents() {
 setup_app_settings() { "${repo_root}/bin/configure-app-settings"; }
 setup_screenshots() { "${repo_root}/bin/configure-screenshots"; }
 setup_permission_handoff() {
-  "${repo_root}/bin/configure-app-settings" --permissions-only
   cat <<'INSTRUCTIONS'
 Foundation installation finished. This phase does not install the bulk app inventory.
 

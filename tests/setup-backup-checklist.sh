@@ -26,8 +26,4 @@ PATH="$fixture/bin:$PATH" setup_backup_checklist > "$fixture/cloud"
 grep -q '2 files visible; 2 need download' "$fixture/cloud"
 grep -q 'does not download or restore' "$fixture/cloud"
 grep -q 'Only one copy is needed' "$fixture/cloud"
-bash "$repo_root/bin/obs-permissions" > "$fixture/obs"
-for setting in 'Screen & System Audio Recording' Camera Microphone 'Input Monitoring'; do
-  grep -Fq "$setting: OBS = on" "$fixture/obs"
-done
 printf 'PASS: backup checklist missing, local, empty, and cloud placeholder files\n'

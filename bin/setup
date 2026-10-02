@@ -38,7 +38,6 @@ status=0
 . "${repo_root}/bin/lib/setup-backup-checklist.sh"
 setup_backup_checklist
 setup_plan || status=$?
-bash "${repo_root}/bin/obs-permissions"
 runtime_print_summary
 runtime_exit_status || status=1
 if [[ "$DOTFILES_SETUP_PHASE" == continue ]]; then

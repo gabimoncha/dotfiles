@@ -60,10 +60,9 @@ The exact order and dependencies are in [setup-plan.sh](bin/lib/setup-plan.sh).
 - Sign in to Apple/App Store/iCloud and the applications you use.
 - Download one provider's backup copies in Finder. The initial checklist reads
   metadata; it neither downloads nor proves backup validity.
-- Review [general permissions](apps/permissions.tsv) and
-  [OBS permissions](apps/obs-permissions.tsv). Setup prints instructions; it
-  does not grant or verify TCC consent. Grant broad access only for the app
-  use you intend, not merely to install packages.
+- Grant app privacy access manually when a feature needs it. Setup does not
+  maintain app permission lists or grant or verify consent. App settings and
+  backups do not transfer macOS permission grants.
 - Complete eligible restore prompts. Raycast import needs its GUI and password.
   Existing Codex state is preserved for comparison. See [MACKUP.md](MACKUP.md).
 - Complete first launch for Xcode, Android Studio, OrbStack, and vendor apps
@@ -112,7 +111,7 @@ managed runtime does not prevent recovery.
 | `./bin/install-apps [--dry-run]` | Retry or preview the app manifest. |
 | `./bin/link-dotfiles` | Reconcile managed links and back up replaced targets. |
 | `./bin/setup-tmux` | Install missing TPM plugins and reload a running server. |
-| `./bin/configure-app-settings` | Retry login items and print permission instructions. |
+| `./bin/configure-app-settings` | Retry automatic login-item creation. |
 | `./bin/configure-screenshots` | Repair PNG destination preferences at `~/Screenshots`. |
 | `./bin/finder-sidebar-favorites` | Retry `development` and `screenshots` favorites. |
 | `./bin/configure-sudo-touch-id --check` | Inspect Touch ID for sudo; `--enable`/`--disable` change it. |
@@ -248,9 +247,11 @@ by mise; a direct no-op `mise up` does not fire the install hook. Open a new
 terminal after linking the helper.
 
 Privacy permissions remain manual for every app. No setup helper writes the
-macOS consent database, grants TCC access, or clears quarantine. Touch ID for
-sudo remains automatic, as an authentication setting. See the permission lists
-under `apps/` for manual completion.
+macOS consent database, grants TCC access, or clears quarantine. Setup does not
+print app permission lists. App settings and backups remain managed; permission
+grants are separate. Touch ID for sudo and login-item creation remain automatic.
+Login-item creation can request Automation access to System Events; approve
+that manually if you want setup to add the login items.
 
 `dotfiles-update` runs `git pull --ff-only`, then the continuation plan with
 general defaults skipped. The mise hook updates installed coding agents; other

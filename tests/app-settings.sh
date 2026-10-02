@@ -16,20 +16,15 @@ with tempfile.TemporaryDirectory() as d:
         return subprocess.run([str(repo/'bin'/name),*args],env=env,input='',text=True,capture_output=True)
     assert run('configure-app-settings','--dry-run').returncode==0
     assert not log.exists()
-    permissions=run('configure-app-settings','--permissions-only')
-    assert permissions.returncode==0
-    for setting in ('Screen & System Audio Recording', 'Camera', 'Microphone', 'Input Monitoring'):
-        assert f'{setting}: OBS = on' in permissions.stdout
-    assert 'After OBS is installed' in permissions.stdout
-    for app in ('ChatGPT', 'Cursor', 'Ghostty', 'Mole', 'Orca'):
-        assert f'Full Disk Access: {app} = on' in permissions.stdout
+    preview=run('configure-app-settings','--dry-run')
+    assert 'Full Disk Access' not in preview.stdout and 'Microphone' not in preview.stdout
+    assert 'Would ensure login item:' in preview.stdout
     result=run('configure-app-settings')
     assert result.returncode==1 and 'app missing' in result.stdout and not log.exists()
     for app in (repo/'apps/login-items.txt').read_text().splitlines(): (apps/(app+'.app')).mkdir()
     assert run('configure-app-settings').returncode==0
     assert len(log.read_text().splitlines())==14
     log.unlink()
-    assert run('configure-app-settings','--permissions-only').returncode==0 and not log.exists()
     assert run('configure-screenshots','--dry-run').returncode==0 and not log.exists()
 print('App settings fixtures passed')
 PY

@@ -2,15 +2,7 @@
 set -euo pipefail
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 mode="${1:---apply}"
-case "$mode" in --apply|--dry-run|--permissions-only) ;; *) echo 'Usage: configure-app-settings [--dry-run|--permissions-only]' >&2; exit 2 ;; esac
-printf '\nManual privacy settings (System Settings > Privacy & Security):\n'
-while IFS=$'\t' read -r setting app state; do
-  [[ -n "$setting" && "$setting" != \#* ]] || continue
-  printf '  %s: %s = %s\n' "$setting" "$app" "$state"
-done < "$repo_root/apps/permissions.tsv"
-printf '%s\n' 'These are requested settings, not detected permissions. Add installed apps manually; revisit missing apps after installation.' 'Codex Computer Use is an app component, not a separate package.' 'Fully quit and reopen affected apps when macOS requests it.'
-bash "${repo_root}/bin/obs-permissions"
-[[ "$mode" != --permissions-only ]] || exit 0
+case "$mode" in --apply|--dry-run) ;; *) echo 'Usage: configure-app-settings [--apply|--dry-run]' >&2; exit 2 ;; esac
 status=0
 while IFS= read -r app; do
   [[ -n "$app" && "$app" != \#* ]] || continue
