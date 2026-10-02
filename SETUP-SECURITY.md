@@ -1,22 +1,15 @@
 # Setup security and manual validation
 
-`./bin/setup` installs foundation tools and exits before bulk provisioning.
-Review System Settings > Privacy & Security > App Management for the terminal
-application that will run setup, approve it when offered, and fully quit/reopen
-that application when macOS requests it. Then run `./bin/setup --continue`.
-Setup cannot grant or reliably query this permission; continuation acknowledges
-the manual checkpoint, not a verified TCC state. App-specific prompts may still
-occur later. No Full Disk Access or Accessibility grant is requested merely for
-package installation, and no destructive permission probe is used.
+Follow the [setup procedure](README.md#fresh-mac) for the permission/restart
+checkpoint. Setup cannot grant or reliably query App Management consent.
+No broad permission grant or destructive probe is required merely to install
+packages. Current implementation defects are listed under
+[known limits](README.md#known-limits).
 
-Setup preserves existing identities, key files, backup conflicts, macOS consent,
-display sleep, and screen locking. Recovery provisioning does not upgrade a
-healthy mise binary. The bootstrap mise release, gh release, and Homebrew
-installer revision are pinned in their helpers; updating those pins is an
-explicit reviewed code change. General inventory entries still using `latest`
-are not a lockfile. Mise's four-day minimum release age remains in force, with
-its existing explicit exceptions; it reduces exposure to new releases, not to
-malicious older releases.
+Bootstrap mise, gh, and Homebrew installer inputs are pinned. Healthy mise
+installations are reused. General inventory entries using `latest` are not a
+lockfile; mise's four-day release-age setting and explicit exceptions reduce
+exposure to new releases, not to malicious older releases.
 
 ## Execution policy
 
@@ -24,20 +17,16 @@ The interactive SFW aliases intercept only the commands they wrap. The Bun/Bunx
 branch of `npx`/`bx`, direct Bun calls, noninteractive Bash installers, mise
 backends, Homebrew casks, shell plugins, editor extensions, and personal skills
 are separate execution paths. None gains SFW coverage merely because SFW is
-installed. Inspect package source, publisher, install scripts and permissions
+installed. SFW wrapper limitations include private/custom registries, offline
+use, and telemetry controls; do not treat it as a private registry policy engine.
+Inspect package source, publisher, install scripts and permissions
 before explicitly running unfamiliar code. Bootstrap-critical acquisition is
 narrow and bounded; the complete developer inventory remains a deliberate
 large trust surface.
 
-The tool and extension inventory was reviewed for ownership during this repair.
-No unrelated tools were removed and no security product was silently installed.
-`hub`, `act`, multiple AI CLIs, editor extensions, and mutable plugin sources are
-optional surface to reassess for a minimal workstation; removing them requires
-a deliberate inventory choice. Existing shell/plugin installations are reused.
-Personal skill installation now requires an installed reviewed `skills` CLI and
-`DOTFILES_REVIEWED_SKILLS_REF` containing the reviewed source commit, rather than
-running `skills@latest` against a mutable branch during recovery. Review the
-entire selected skill tree before approving that commit.
+Tool inventory changes are separate from setup cleanup. Review optional tools
+before adding or removing them. Personal skills require a reviewed installed
+CLI and a reviewed source commit; see [manual completion](README.md#manual-completion).
 
 NearDrop quarantine is left intact, including on an existing application.
 Homebrew tap trust remains explicit in the Brewfiles; no global bypass is used.

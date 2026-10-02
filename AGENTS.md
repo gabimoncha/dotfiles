@@ -1,75 +1,41 @@
-# Dotfiles Repo Guide
+# Repository rules
 
-## Purpose
+This repository owns Mac setup, tool inventories, and selected app settings.
+Read [README.md](README.md) for the workflow and [DECISIONS.md](DECISIONS.md)
+before changing ownership, bootstrap boundaries, or other design decisions.
 
-This repo is the source of truth for setting up a new MacBook. It owns machine bootstrap, selected app settings, and a curated set of developer tools without committing secrets or machine-local noise.
+## Editing
 
-## What This Repo Owns
+- Edit tracked sources here, not live files under HOME.
+- Keep setup rerunnable. Preserve link backups and existing user state.
+- `bin/setup` owns the two-phase planner; `bin/bootstrap` delegates to it.
+- Add GUI apps through mas when available, then use mise for supported tools,
+  then Homebrew. Coding agent CLIs and mise are explicit standalone exceptions.
+  Orca and the T3 nightly desktop app stay in Homebrew.
+- Keep Brewfile entries alphabetized within sections unless deliberately grouped.
+- Put managed files under `home/`, wire them through `bin/link-dotfiles`, and
+  update the relevant documentation. Keep local companions under ignored
+  `home/.config/local/`; only examples belong in Git.
+- Never commit credentials, private identities, backup payloads, or machine-local
+  state. See [SECURITY.md](SECURITY.md).
+- `nvim/` is a separate repository. Do not edit it unless explicitly requested.
+- Keep macOS changes conservative and reversible. Correct documentation drift
+  when found; distinguish current behavior from proposed fixes.
 
-- `Brewfile` for Homebrew formulae, casks, taps, and VS Code extensions
-- `mise` for runtimes and cli tools
-- `home/` for files that will be symlinked into `$HOME`
-- `bin/setup` for one-command first-run machine setup
-- `bin/bootstrap` for lower-level bootstrap work
-- `bin/link-dotfiles` for idempotent linking plus backups of replaced targets
-- `macos/defaults.sh` for safe automatable macOS defaults
-- `nvim/` as a git submodule, linked to `~/.config/nvim`
+## Apple releases
 
-## Operating Rules
-
-- Edit the tracked source in this repo, not the live file under `$HOME`.
-- Keep package ownership clean:
-  - Prefer `mas` for GUI apps that exist in the Mac App Store.
-  - Prefer `home/.config/mise/config.toml` for language runtimes and globally installed developer tools when `mise` supports them.
-  - Coding agent CLIs and mise are explicit standalone exceptions. Orca and the T3 nightly desktop app stay in Homebrew.
-  - Use `Brewfile` for Homebrew formulae, casks, taps, VS Code extensions, and anything that does not belong in `mas` or `mise`.
-- Do not add secrets, tokens, private emails, machine-local paths, or auth exports to tracked files.
-- Preserve the repo's bootstrap model: clone repo, run `./bin/setup`, and end in a usable state on a fresh Mac.
-- Preserve idempotency. Re-running bootstrap or link steps should not corrupt an existing machine.
-- If changing `bin/link-dotfiles`, keep its backup behavior intact unless there is a strong reason to change it.
-- Treat `nvim/` as its own repo. Do not edit submodule contents from here unless the task is explicitly about the Neovim config repo.
-
-## Repo-Specific Conventions
-
-- Keep `Brewfile` entries alphabetized inside their sections unless there is a deliberate grouping reason.
-- Prefer adding new managed dotfiles under `home/` and then wiring them through `bin/link-dotfiles`.
-- If a new tracked config needs a local-only companion, keep the tracked piece generic and put local-only data under ignored paths such as `home/.config/local/`.
-- macOS automation should stay conservative and reversible. Avoid aggressive `defaults write` changes unless they are clearly safe for a fresh-machine bootstrap.
-- If you add a new managed file or workflow, update `README.md` so the bootstrap story stays accurate.
-
-## Apple Release Policy
-
-- Use only public release versions of macOS, iOS, iOS simulator runtimes, and Xcode.
-- Do not install a prerelease Xcode or enable Apple beta update channels.
-- Setup must stop when a macOS update is available, when update status is unknown, or when macOS or Xcode appears to be a prerelease.
-- Setup must not install macOS updates or change beta enrollment. Tell the user to update in System Settings, restart if required, and rerun `./bin/setup`.
+Use only public macOS, Xcode, iOS and simulator releases. Setup must stop when
+macOS updates are available, update status is unknown, or macOS/Xcode appears
+to be a prerelease. Do not install OS updates or change beta enrollment.
+Direct the user to System Settings, restart if needed, and rerun setup.
 
 ## Validation
 
-After meaningful changes, prefer the smallest relevant checks:
+Run syntax checks for changed Bash/zsh files, the relevant `tests/*.sh` suites
+with Bash, and `git diff --check`. For setup or app-install changes, also check
+the applicable dry-run path. Preserve tests for failures and interrupted runs.
 
-```bash
-bash -n bin/bootstrap
-bash -n bin/check-macos-updates
-bash -n bin/setup
-bash -n bin/link-dotfiles
-bash -n bin/install-apps
-bash -n macos/defaults.sh
-./tests/check-macos-updates.sh
-git diff --check
-```
-
-For setup or app-install changes, also use the relevant dry-run path such as `./bin/setup --dry-run` or `./bin/install-apps --dry-run`.
-
-For dependency changes, also sanity-check the ownership split:
-
-- Mac App Store apps belong in the `mas` inventory.
-- Runtime/tool versions belong in `home/.config/mise/config.toml` when supported by `mise`.
-- Homebrew packages belong in `Brewfile` only after `mas` and `mise` have been ruled out.
-
-## Notes For Agents
-
-- Be practical and keep this repo boring. Reliability matters more than cleverness.
-- Before changing setup ownership, bootstrap boundaries, app install ownership, or other durable architecture decisions, read `DECISIONS.md` and update it when the rationale changes.
-- When the user asks to add or update an app or tool, choose ownership in this order: `mas` for Mac App Store apps, then `mise` for supported runtimes/developer tools, then Homebrew through `Brewfile`.
-- If you notice config drift between the README, bootstrap scripts, and managed files, fix it rather than documenting a lie.
+Tests must use isolated state and fake external commands, not live installs,
+account changes, personal restores, or macOS defaults. Process cancellation
+tests need process inspection. A passing fixture suite does not establish a
+successful fresh-Mac setup; report what remains untested.

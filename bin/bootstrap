@@ -309,7 +309,7 @@ mas_available_for_brewfile() {
   mas_checked=1
 
   if ! mas_cmd="$(resolve_mas_cli)"; then
-    warn "Skipping Mac App Store apps; mas will be installed by Homebrew. Rerun ./bin/setup after signing in to the App Store."
+    warn "Skipping Mac App Store apps; mas is managed by mise. Check its installation and App Store sign-in, then rerun ./bin/setup --continue."
     return 1
   fi
 

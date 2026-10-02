@@ -564,23 +564,22 @@ use-my-mac() {
   selected="$(
     command cat <<'EOF' | fzf --height=80% --border --prompt="Search commands: " --header="enter: copy command, ctrl-e: copy command, esc: quit" --preview='echo {}' --preview-window=up:3:wrap --bind='ctrl-e:execute-silent(echo {} | sed "s/[[:space:]][[:space:]]*- .*//" | pbcopy)+abort'
 dotfiles                         - cd to the dotfiles repo
-dotfiles-update                  - update dotfiles and Homebrew-owned tools
-./bin/setup                      - run the full fresh-Mac setup flow
-./bin/setup --dry-run            - preview setup and app installation without changing the machine
-./bin/bootstrap                  - run lower-level bootstrap work
-./bin/preflight                  - check setup prerequisites, script syntax, manifest shape, and repo state
-./bin/link-dotfiles              - symlink managed files from home/ into $HOME
-./bin/auth-setup                 - configure local Git identity, GitHub SSH, and gh auth
-./bin/install-apps               - install extra apps from apps/manifest.tsv
-./bin/install-apps --dry-run     - preview extra app installation
-npx skills@latest add gabimoncha/skills -g --skill '*' --agent claude-code cursor codex -y  - install personal skills globally for all AI agents
+dotfiles-update                  - pull dotfiles and reapply setup; not a full package upgrade
+./bin/setup                      - prepare foundation tools, then stop for terminal restart
+./bin/setup --continue           - continue with authentication, packages and restore offers
+./bin/setup --continue --dry-run - run preflight and log the remaining plan without provisioning
+./bin/bootstrap                  - compatibility entrypoint for setup
+./bin/preflight                  - check macOS updates, prerequisites and repository files
+./bin/link-dotfiles              - link managed files, backing up replaced targets
+./bin/auth-setup                 - configure Git identity, GitHub SSH and API access
+./bin/install-apps               - install apps from apps/manifest.tsv
+./bin/install-apps --dry-run     - preview manifest app installation
 ./bin/setup-tmux                 - install TPM and missing tmux plugins
-./bin/app-state-doctor           - diagnose Ghostty, tmux, and Raycast restore state
-./bin/mackup-backup              - back up Mackup-managed app settings to iCloud
-./bin/mackup-restore             - restore Mackup-managed app settings from iCloud
-./bin/raycast-backup             - export Raycast settings to iCloud
-./bin/raycast-restore <file>     - restore Raycast settings from a .rayconfig export
-./bin/prepare-sync               - prepare repo state before syncing dotfiles changes
+./bin/app-state-doctor           - check managed app settings and restore readiness
+./bin/file-backup                - back up to Synology with iCloud fallback; Raycast export is manual
+./bin/file-restore               - restore Mackup, open Raycast import and offer Codex restore
+./bin/file-restore codex --dry-run - compare an encrypted Codex archive without applying it
+./bin/prepare-sync               - report inventory drift and save a Brewfile copy
 mkcd <dir>                       - create a directory and cd into it
 extract <file>                   - extract common archive formats
 psgrep <name>                    - search running processes by name
