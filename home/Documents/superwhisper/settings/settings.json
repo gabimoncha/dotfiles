@@ -8,11 +8,12 @@
     "s1-mini",
     "cohere-transcribe-q4",
     "canary-1b-v2_474MB",
-    "nvidia_parakeet-v3_494MB"
+    "nvidia_parakeet-v3_494MB",
+    "medium",
+    "medium.en"
   ],
   "modeKeys" : [
-    "pro",
-    "default",
+    "stt ro",
     "voice to text"
   ],
   "replacements" : [
