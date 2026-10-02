@@ -8,8 +8,6 @@ temp_brewfile=""
 xcode_brewfile=""
 mas_brewfile=""
 vscode_brewfile=""
-sudo_keepalive_pid=""
-bootstrap_status=0
 mas_checked=0
 mas_available=0
 homebrew_xcode_checked=0
@@ -17,16 +15,9 @@ homebrew_xcode_too_old=0
 mise_bin_dir="${HOME}/.local/bin"
 mise_shim_dir="${HOME}/.local/share/mise/shims"
 brew_bundle_jobs="${DOTFILES_BREW_BUNDLE_JOBS:-auto}"
-mobile_dev_enabled=1
 
 # shellcheck source=bin/lib/setup-runtime.sh
 . "${repo_root}/bin/lib/setup-runtime.sh"
-
-
-if [[ "${DOTFILES_SKIP_MOBILE_DEV:-0}" == "1" ]]; then
-  mobile_dev_enabled=0
-fi
-
 
 log() {
   printf '==> %s\n' "$1"
@@ -70,27 +61,6 @@ ensure_admin_user() {
   warn "Homebrew needs sudo access on macOS."
   warn "Add this user to the admin group or run setup from an administrator account."
   exit 1
-}
-
-ensure_xcode_command_line_tools() {
-  if xcode-select -p >/dev/null 2>&1; then
-    log "Xcode Command Line Tools are installed"
-    return 0
-  fi
-
-  warn "Xcode Command Line Tools are required before bootstrap can continue."
-  log "Opening the Xcode Command Line Tools installer"
-  xcode-select --install >/dev/null 2>&1 || {
-    warn "The installer may already be open. If not, run: xcode-select --install"
-  }
-
-  cat <<'EOF'
-
-Finish the Xcode Command Line Tools installer popup, then rerun:
-
-  ./bin/setup
-EOF
-  exit 0
 }
 
 ensure_homebrew() {
@@ -191,17 +161,6 @@ cask_app_bundle_name() {
   esac
 }
 
-mas_app_bundle_name() {
-  case "$1" in
-    Amphetamine) printf 'Amphetamine' ;;
-    SiteSucker) printf 'SiteSucker' ;;
-    TestFlight) printf 'TestFlight' ;;
-    "The Unarchiver") printf 'The Unarchiver' ;;
-    WhatsApp) printf 'WhatsApp' ;;
-    *) printf '%s' "$1" ;;
-  esac
-}
-
 preferred_xcode_developer_dir() {
   local app
 
@@ -272,14 +231,6 @@ homebrew_reports_xcode_too_old() {
   return 1
 }
 
-ensure_mise_cli() {
-  prepend_mise_shims
-  "${repo_root}/bin/ensure-mise-standalone" || return 1
-  prepend_mise_shims
-  hash -r
-  command -v mise >/dev/null 2>&1
-}
-
 resolve_mas_cli() {
   local candidate
   candidate="$(command -v mas 2>/dev/null || true)"
@@ -289,15 +240,6 @@ resolve_mas_cli() {
   [[ -n "$candidate" && -x "$candidate" ]] || return 1
   "$candidate" version >/dev/null 2>&1 || "$candidate" --version >/dev/null 2>&1 || return 1
   printf '%s\n' "$candidate"
-}
-
-ensure_mas_cli() {
-  prepend_mise_shims
-  resolve_mas_cli >/dev/null && return 0
-  log "Installing mas"
-  runtime_with_lock homebrew brew install mas || return $?
-  hash -r
-  resolve_mas_cli >/dev/null
 }
 
 mas_available_for_brewfile() {
@@ -344,7 +286,7 @@ install_mas_apps() {
     if [[ "$line" =~ ^mas[[:space:]]+\"([^\"]+)\"\,\ id:\ ([0-9]+) ]]; then
       app_name="${BASH_REMATCH[1]}"
       app_id="${BASH_REMATCH[2]}"
-      app_bundle="$(mas_app_bundle_name "$app_name")"
+      app_bundle="$app_name"
 
       if [[ -d "/Applications/${app_bundle}.app" ]]; then
         log "${app_bundle}.app already exists"
@@ -500,7 +442,7 @@ filter_brewfile_for_existing_apps() {
     if [[ "$line" =~ ^mas[[:space:]]+\"([^\"]+)\"\,\ id:\ ([0-9]+) ]]; then
       mas_name="${BASH_REMATCH[1]}"
       mas_id="${BASH_REMATCH[2]}"
-      mas_bundle="$(mas_app_bundle_name "$mas_name")"
+      mas_bundle="$mas_name"
 
       printf '# Installed separately by bootstrap: %s\n' "$line" >> "$target_file"
 
@@ -557,34 +499,6 @@ install_brewfile() {
   [[ -n "$temp_brewfile" && -f "$temp_brewfile" ]] || prepare_brewfiles
   log "Installing Homebrew bundle with ${brew_bundle_jobs} parallel job(s)"
   runtime_with_lock homebrew brew bundle install --jobs="$brew_bundle_jobs" --no-upgrade --verbose --file "$temp_brewfile"
-}
-
-install_post_brew_apps() {
-  runtime_run_job "Mac App Store apps" recoverable \
-    "Sign in to the App Store, then rerun ./bin/setup." \
-    install_mas_apps
-  runtime_run_job "VS Code extensions" recoverable \
-    "Open VS Code once or rerun ./bin/setup after the cask install completes." \
-    install_vscode_extensions
-
-  runtime_wait_jobs
-}
-
-mobile_dev_ready() {
-  full_xcode_selected &&
-    [[ -d "/Applications/Android Studio.app" ]] &&
-    brew list --formula "facebook/fb/idb-companion" >/dev/null 2>&1 &&
-    brew list --formula "sourcekitten" >/dev/null 2>&1 &&
-    brew list --formula "wix/brew/applesimutils" >/dev/null 2>&1
-}
-
-report_mobile_dev_deferred() {
-  if mobile_dev_ready; then
-    log "Mobile dev stack is already installed"
-    return 0
-  fi
-
-  warn "Mobile dev stack is deferred. Run ./bin/install-mobile-dev for full Xcode, Android Studio, applesimutils, idb-companion, and sourcekitten."
 }
 
 initialize_submodules() {

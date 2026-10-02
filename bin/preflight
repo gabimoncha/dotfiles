@@ -124,28 +124,6 @@ check_homebrew() {
   fi
 }
 
-check_github_ssh() {
-  local output status
-
-  if ! command -v ssh >/dev/null 2>&1; then
-    warn "ssh is not available; install Xcode Command Line Tools, then rerun ./bin/setup"
-    return 0
-  fi
-
-  set +e
-  output="$(ssh -o BatchMode=yes -o ConnectTimeout=5 -T git@github.com 2>&1)"
-  status=$?
-  set -e
-
-  if [[ "$output" == *"successfully authenticated"* ]]; then
-    pass "GitHub SSH authenticated"
-  elif [[ $status -eq 255 ]]; then
-    warn "GitHub SSH is not ready; ./bin/setup will run ./bin/auth-setup before bootstrap"
-  else
-    warn "GitHub SSH returned: ${output}"
-  fi
-}
-
 check_submodule_url() {
   local url
 
