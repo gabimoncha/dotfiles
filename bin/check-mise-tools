@@ -24,7 +24,6 @@ smoke_commands=(
   yq
   lazygit
   nvim
-  claude
   turbo
   vercel
 )

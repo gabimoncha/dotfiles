@@ -66,6 +66,7 @@ if [ -r "${ZSH_CUSTOM:-$ZSH/custom}/themes/powerlevel10k/powerlevel10k.zsh-theme
 fi
 
 [ -r "$HOME/.config/zsh/aliases.zsh" ] && source "$HOME/.config/zsh/aliases.zsh"
+[ -r "$HOME/.config/zsh/harness.zsh" ] && source "$HOME/.config/zsh/harness.zsh"
 [ -r "$HOME/.config/zsh/mise-npx.zsh" ] && source "$HOME/.config/zsh/mise-npx.zsh"
 [ -r "$HOME/.config/zsh/functions.zsh" ] && source "$HOME/.config/zsh/functions.zsh"
 [ -r "$HOME/.config/zsh/check-updates.zsh" ] && source "$HOME/.config/zsh/check-updates.zsh"

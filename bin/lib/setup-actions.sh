@@ -43,10 +43,11 @@ setup_shell() {
   return "$status"
 }
 setup_standalone_agents() {
-  local status=0
-  "${repo_root}/bin/ensure-codex-standalone" || status=1
-  "${repo_root}/bin/ensure-cursor-agent-standalone" || status=1
-  return "$status"
+  if [[ "${DOTFILES_SETUP_PHASE:-continue}" == prepare ]]; then
+    "${repo_root}/bin/ensure-harnesses-standalone" --foundation-only
+  else
+    "${repo_root}/bin/ensure-harnesses-standalone"
+  fi
 }
 setup_app_settings() { "${repo_root}/bin/configure-app-settings"; }
 setup_screenshots() { "${repo_root}/bin/configure-screenshots"; }

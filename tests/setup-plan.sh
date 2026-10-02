@@ -67,6 +67,7 @@ fixture_action() {
     assert events.index('xcode end') < events.index('mobile_finish start')
     assert events.index('brew_inventory end') < events.index('xcode start')
     assert events.index('mise_inventory end') < events.index('xcode start')
+    assert events.index('mise_inventory end') < events.index('standalone_agents start')
     final_links_start=events.index('final_links start')
     assert events.index('mise_inventory end') < final_links_start
     assert events.index('standalone_agents end') < final_links_start

@@ -14,6 +14,9 @@ printf 'existing Claude instructions fixture\n' > "$HOME/.claude/CLAUDE.md"
 printf 'existing service fixture\n' > "$fixture/brew/etc/cliproxyapi.conf"
 "$repo_root/bin/link-dotfiles" >/dev/null
 [[ -L "$HOME/.zshrc" && -L "$HOME/bin/dotfiles-gh-real" ]]
+[[ -L "$HOME/bin/harness" ]]
+[[ -L "$HOME/.config/zsh/harness.zsh" ]]
+"$HOME/bin/harness" --help | grep -q 'harness update'
 [[ -L "$HOME/.codex/AGENTS.md" ]]
 [[ -L "$HOME/.claude/CLAUDE.md" ]]
 [[ "$(readlink "$HOME/.codex/AGENTS.md")" == "$repo_root/home/.codex/AGENTS.md" ]]

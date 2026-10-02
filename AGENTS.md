@@ -21,6 +21,7 @@ This repo is the source of truth for setting up a new MacBook. It owns machine b
 - Keep package ownership clean:
   - Prefer `mas` for GUI apps that exist in the Mac App Store.
   - Prefer `home/.config/mise/config.toml` for language runtimes and globally installed developer tools when `mise` supports them.
+  - Coding agent CLIs and mise are explicit standalone exceptions. Orca and the T3 nightly desktop app stay in Homebrew.
   - Use `Brewfile` for Homebrew formulae, casks, taps, VS Code extensions, and anything that does not belong in `mas` or `mise`.
 - Do not add secrets, tokens, private emails, machine-local paths, or auth exports to tracked files.
 - Preserve the repo's bootstrap model: clone repo, run `./bin/setup`, and end in a usable state on a fresh Mac.

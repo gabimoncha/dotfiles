@@ -48,9 +48,6 @@ neovim = "latest"
 docker-cli = "latest"
 docker-compose = "latest"
 imagemagick = "latest"
-opencode = "latest"
-claude = "latest"
-pi = "latest"
 infisical = "0.43.104"
 portless = "latest"
 vercel = "latest"
@@ -91,8 +88,11 @@ hunk = "latest"
 
 [settings]
 experimental = true
+# Codex CLI is vendor-owned. Ignore old project or shell version requests too.
+# This does not disable codex-acp or its private npm dependency.
+disable_tools = ["codex", "aqua:openai/codex", "npm:@openai/codex"]
 minimum_release_age = "4d"
-minimum_release_age_excludes = ["claude", "opencode", "pi", "npm:agent-browser", "npm:agent-device", "npm:agent-browser", "npm:eas-cli", "@agentclientprotocol/codex-acp", "@agentclientprotocol/claude-agent-acp"]
+minimum_release_age_excludes = ["npm:agent-browser", "npm:agent-device", "npm:agent-browser", "npm:eas-cli", "@agentclientprotocol/codex-acp", "@agentclientprotocol/claude-agent-acp"]
 
 [settings.npm]
 package_manager = "bun"
@@ -103,3 +103,8 @@ binstall = true
 [settings.github]
 credential_command = '"$HOME/bin/dotfiles-gh-real" auth token --hostname "$MISE_CREDENTIAL_HOST"'
 use_git_credentials = true
+
+# Update vendor-owned agents after direct mise installation/upgrade commands.
+# The interactive shell helper covers no-op upgrades and prevents duplicate runs.
+[hooks]
+postinstall = 'if [ "${DOTFILES_HARNESS_SKIP_HOOK:-0}" != 1 ] && [ -x "$HOME/bin/harness" ]; then "$HOME/bin/harness" update --installed-only; fi'

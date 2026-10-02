@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+set -euo pipefail
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+foundation_only=0
+for argument in "$@"; do
+  case "$argument" in
+    --dry-run) export DOTFILES_RUN_MODE=dry-run ;;
+    --foundation-only) foundation_only=1 ;;
+    -h|--help) printf 'Usage: ensure-harnesses-standalone [--dry-run] [--foundation-only]\n'; exit 0 ;;
+    *) printf 'Unknown argument: %s\n' "$argument" >&2; exit 2 ;;
+  esac
+done
+. "$repo_root/bin/lib/setup-runtime.sh"
+. "$repo_root/bin/lib/harnesses.sh"
+runtime_init ensure-harnesses-standalone
+harness_prepare_path
+runtime_acquire_lock harness 'harness installation' || exit 1
+installer=""
+pending_command=""
+pending_backup=""
+rollback_command() {
+  if [[ -n "$pending_backup" && ( -e "$pending_backup" || -L "$pending_backup" ) ]]; then
+    rm -f "$pending_command"
+    mv "$pending_backup" "$pending_command"
+  fi
+  pending_command=""; pending_backup=""
+}
+cleanup() {
+  local status=$?
+  [[ -z "$installer" ]] || rm -f "$installer"
+  rollback_command
+  runtime_on_exit "$status"
+  return "$status"
+}
+trap cleanup EXIT
+
+install_vendor() {
+  local name="$1" url shell executable old_command="" status=0
+  case "$name" in
+    claude) url=https://claude.ai/install.sh; shell=bash ;;
+    pi) url=https://pi.dev/install.sh; shell=sh ;;
+    t3) url=https://t3.codes/install.sh; shell=sh ;;
+    opencode) url=https://opencode.ai/v2/install; shell=bash ;;
+  esac
+  executable="$(harness_binary "$name")"
+  if harness_installed "$name" && harness_probe "$executable" --version >/dev/null 2>&1 &&
+    { [[ "$name" != t3 ]] || harness_probe "$executable" --version | grep -q nightly; }; then
+    return 0
+  fi
+  if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
+    printf 'Would install %s with %s (%s)\n' "$name" "$url" "$shell"
+    [[ "$name" != t3 ]] || printf 'T3CODE_CHANNEL=nightly\n'
+    return 0
+  fi
+  if [[ "$name" == pi ]]; then
+    command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1 || {
+      printf 'Pi requires installed Node and npm. Run mise install first.\n' >&2; return 1;
+    }
+    harness_probe node -e 'const [a,b] = process.versions.node.split(".").map(Number); process.exit(a > 22 || (a === 22 && b >= 19) ? 0 : 1)' || return 1
+  fi
+  installer="$(mktemp "${TMPDIR:-/tmp}/harness-installer.XXXXXX")" || return 1
+  curl -fsSL --connect-timeout 15 --max-time 120 --retry 2 --retry-max-time 180 "$url" -o "$installer" || {
+    rm -f "$installer"; installer=""; return 1;
+  }
+  if [[ -e "$executable" || -L "$executable" ]]; then
+    old_command="${HOME}/.dotfiles-backups/$(date +%Y%m%d-%H%M%S)-$$/harnesses/$name"
+    mkdir -p "$(dirname "$old_command")"
+    mv "$executable" "$old_command" || return 1
+    pending_command="$executable"; pending_backup="$old_command"
+    printf 'Backed up %s to %s\n' "$executable" "$old_command"
+  fi
+  printf 'Installing %s with %s\n' "$name" "$url"
+  (
+    case "$name" in
+      pi)
+        # Pi reads /dev/tty even with redirected stdin. A new session prevents
+        # interactive prompts and prevents it from changing shell profiles.
+        PI_LEGACY_INSTALL=0 \
+          /usr/bin/ruby -e 'Process.setsid; exec("sh", ARGV.fetch(0))' "$installer" </dev/null || status=$?
+        ;;
+      opencode) bash "$installer" --no-modify-path </dev/null || status=$? ;;
+      t3) T3CODE_CHANNEL=nightly T3CODE_VERSION= sh "$installer" </dev/null || status=$? ;;
+      claude) bash "$installer" </dev/null || status=$? ;;
+    esac
+    exit "$status"
+  ) &
+  local installer_pid=$!
+  # Waiting on an owned child lets Bash handle signals while the installer runs.
+  wait "$installer_pid" || status=$?
+  rm -f "$installer"; installer=""
+  if [[ "$status" == 0 ]]; then
+    harness_installed "$name" && harness_probe "$executable" --version >/dev/null 2>&1 || status=1
+    if [[ "$name" == t3 ]]; then harness_probe "$executable" --version | grep -q nightly || status=1; fi
+  fi
+  if [[ "$status" != 0 ]]; then
+    printf '%s installation failed. Existing agent settings were preserved.\n' "$name" >&2
+    rollback_command
+    return "$status"
+  fi
+  pending_command=""; pending_backup=""
+  printf 'Installed %s\n' "$name"
+}
+
+status=0
+for helper in codex cursor-agent; do
+  if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
+    "$repo_root/bin/ensure-$helper-standalone" --dry-run || status=1
+  else
+    "$repo_root/bin/ensure-$helper-standalone" || status=1
+  fi
+done
+for name in claude t3 opencode; do install_vendor "$name" || status=1; done
+if [[ "$foundation_only" == 0 ]]; then install_vendor pi || status=1; fi
+exit "$status"

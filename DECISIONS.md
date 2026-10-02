@@ -10,7 +10,8 @@ This keeps fresh-machine bootstrap simple while preserving the separate Neovim r
 
 Setup has an explicit permission/restart boundary. `./bin/setup` provisions
 Command Line Tools, Homebrew and standalone mise (in parallel), isolated gh,
-Codex CLI and Cursor Agent, then exits. It does not link the full personal
+Codex CLI, Claude Code, Cursor Agent, OpenCode v2, and the T3 nightly CLI, then
+exits. Pi waits for Node and npm in the continuation phase. Setup does not link the full personal
 configuration or start bulk packages, authentication, Xcode, or restores.
 The user reviews App Management for their actual terminal application in System
 Settings, quits/reopens that application when requested, and runs
@@ -32,14 +33,32 @@ their Brewfiles after review. This persists the repo's approval for later
 Homebrew commands while keeping trust checks enabled; setup must not use the
 transitional `HOMEBREW_NO_REQUIRE_TAP_TRUST` global bypass.
 
-Codex CLI, Cursor Agent CLI, and `mise` are explicit standalone-installer
-exceptions. Codex remote control and app-server updates depend on the
-standalone installer-managed path under `~/.codex/packages/standalone`, so
-`bin/ensure-codex-standalone` keeps the current standalone install healthy and
-removes the Homebrew cask if it exists. Cursor itself remains a Homebrew cask,
-but Cursor Agent uses Cursor's official installer because it owns the
-`~/.local/share/cursor-agent` runtime and the `agent` / `cursor-agent` commands
-under `~/.local/bin`.
+Vendor coding-agent installers and mise are exceptions:
+
+- Codex owns `~/.codex/packages/standalone` for installer/app-server integration.
+- Claude Code owns `~/.local/share/claude` and `~/.local/bin/claude`.
+- Pi owns its managed install under `~/.pi/agent`; mise still owns Node and npm.
+- T3 CLI owns `~/.t3/runtime/versions` and `~/.local/bin/t3`, always on nightly.
+  Its desktop app uses `t3-code@nightly` in Homebrew.
+- OpenCode v2 owns `~/.opencode/bin` through its v2 installer.
+- Cursor Agent owns `~/.local/share/cursor-agent` and local command links;
+  Cursor's GUI stays a Homebrew cask.
+
+Reuse healthy standalone binaries and preserve settings during repair. The
+package-manager migration is complete; agent setup no longer scans for old copies,
+uninstalls packages, or writes migration receipts. Agent CLIs need their vendor
+install metadata for self-update, so mise no longer owns them. The global mise
+config ignores old Codex CLI requests to prevent reinstallation. Orca has no
+standalone installer and stays in its vendor Homebrew tap.
+
+`harness update` runs vendor updates in parallel and aggregates failures. The
+Homebrew cask updates share the package-writer lock. The global mise postinstall
+hook updates installed agents, including on no-op installs. A zsh helper covers
+no-op `mise up` and `mise up --local`, where mise may not run an install hook,
+and suppresses the native hook to avoid duplicate updates. Setup installs Pi
+after the Node inventory. T3 follows nightly explicitly; noninteractive updates
+leave its running background service for manual restart.
+
 `mise` uses the official pinned release installer, verified by SHA-256, at `~/.local/bin/mise`
 because package-manager installs do not support `mise self-update`.
 `bin/ensure-mise-standalone` keeps existing data, shims, cache, and state in the

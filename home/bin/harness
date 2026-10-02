@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+source_path="${BASH_SOURCE[0]}"
+while [[ -L "$source_path" ]]; do
+  target="$(readlink "$source_path")"
+  case "$target" in
+    /*) source_path="$target" ;;
+    *) source_path="$(dirname "$source_path")/$target" ;;
+  esac
+done
+repo_root="$(cd "$(dirname "$source_path")/../.." && pwd)"
+exec "$repo_root/bin/harness" "$@"

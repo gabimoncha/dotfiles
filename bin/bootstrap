@@ -177,7 +177,7 @@ cask_app_bundle_name() {
     superwhisper) printf 'superwhisper' ;;
     synology-drive) printf 'Synology Drive Client' ;;
     synology-image-assistant) printf 'Synology Image Assistant' ;;
-    t3-code) printf 'T3 Code (Alpha)' ;;
+    t3-code@nightly) printf 'T3 Code (Nightly)' ;;
     tailscale-app) printf 'Tailscale' ;;
     the-unarchiver) printf 'The Unarchiver' ;;
     visual-studio-code) printf 'Visual Studio Code' ;;

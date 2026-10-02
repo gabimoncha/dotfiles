@@ -5,6 +5,8 @@ android_sdk_home="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
 path=(
   "$HOME/bin"
   "$HOME/.local/bin"
+  "$HOME/.opencode/bin"
+  "$HOME/.pi/agent/bin"
   "/opt/homebrew/bin"
   "/opt/homebrew/sbin"
   "/usr/local/bin"

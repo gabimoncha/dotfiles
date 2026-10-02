@@ -27,21 +27,6 @@ usage() {
   printf 'Usage: ./bin/ensure-codex-standalone [--dry-run]\n' >&2
 }
 
-load_homebrew_shellenv() {
-  if [[ -n "${HOMEBREW_PREFIX:-}" && -x "${HOMEBREW_PREFIX}/bin/brew" ]]; then
-    eval "$("${HOMEBREW_PREFIX}/bin/brew" shellenv)"
-    return 0
-  fi
-
-  if [[ -x /opt/homebrew/bin/brew ]]; then
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-  elif [[ -x /usr/local/bin/brew ]]; then
-    eval "$(/usr/local/bin/brew shellenv)"
-  elif command -v brew >/dev/null 2>&1; then
-    eval "$(brew shellenv)"
-  fi
-}
-
 standalone_install_ok() {
   [[ -x "$standalone_bin" ]] && "$standalone_bin" --version >/dev/null 2>&1
 }
@@ -71,86 +56,9 @@ install_standalone() {
   rm -f "$installer"
 }
 
-uninstall_brew_codex() {
-  load_homebrew_shellenv
-
-  if ! command -v brew >/dev/null 2>&1; then
-    return 0
-  fi
-
-  if ! brew list --cask codex >/dev/null 2>&1; then
-    return 0
-  fi
-
-  if [[ "$dry_run" -eq 1 ]]; then
-    log "dry-run: would uninstall Homebrew cask codex"
-    return 0
-  fi
-
-  log "Uninstalling Homebrew cask codex"
-  runtime_with_lock homebrew brew uninstall --cask codex
-}
-
 verify_codex() {
-  local codex_path doctor_report doctor_status bad_doctor_checks
-
-  export PATH="${install_dir}:${PATH}"
-  codex_path="$(command -v codex || true)"
-
-  if [[ "$codex_path" != "$visible_bin" ]]; then
-    warn "codex resolves to ${codex_path:-missing}, expected ${visible_bin}"
-    return 1
-  fi
-
-  if ! standalone_install_ok; then
-    warn "Codex standalone binary is missing or unhealthy at ${standalone_bin}"
-    return 1
-  fi
-
-  if ! visible_command_ok; then
-    warn "Visible Codex command does not point to standalone binary: ${visible_bin}"
-    return 1
-  fi
-
-  log "Codex command: ${codex_path}"
-  log "Codex version: $(codex --version)"
-
-  if ! command -v codex >/dev/null 2>&1; then
-    return 1
-  fi
-
-  doctor_report="$(mktemp "${TMPDIR:-/tmp}/codex-doctor.XXXXXX")"
-  doctor_status=0
-  codex doctor --json >"$doctor_report" 2>/dev/null || doctor_status=$?
-
-  if [[ -s "$doctor_report" ]]; then
-    bad_doctor_checks="$(
-      awk '
-        /"id": "installation"/ { in_install = 1 }
-        /"id": "app_server.status"/ { in_app_server = 1 }
-        in_install && /^[[:space:]]*"status":/ {
-          if ($0 !~ /"ok"/) { print "installation" }
-          in_install = 0
-        }
-        in_app_server && /^[[:space:]]*"status":/ {
-          if ($0 !~ /"ok"/) { print "app_server.status" }
-          in_app_server = 0
-        }
-      ' "$doctor_report"
-    )"
-    rm -f "$doctor_report"
-
-    if [[ -n "$bad_doctor_checks" ]]; then
-      warn "codex doctor reported install/app-server issues: ${bad_doctor_checks//$'\n'/, }"
-      return 1
-    fi
-
-    if [[ "$doctor_status" -ne 0 ]]; then
-      warn "codex doctor reported non-install issues; standalone install and app-server checks are healthy"
-    fi
-  else
-    rm -f "$doctor_report"
-    warn "codex doctor --json failed; Codex itself is installed, but health could not be fully verified"
+  if ! standalone_install_ok || ! visible_command_ok; then
+    warn "Codex standalone command is missing or unhealthy at ${visible_bin}"
     return 1
   fi
 }
@@ -174,17 +82,13 @@ done
 
 export PATH="${install_dir}:${PATH}"
 
-
-if standalone_install_ok && visible_command_ok; then
-  log "Codex standalone install is already present"
-else
+if ! standalone_install_ok || ! visible_command_ok; then
   install_standalone
 fi
 
 if [[ "$dry_run" -eq 1 ]]; then
-  log "dry-run: would verify Codex standalone command and doctor status"
+  log "dry-run: would verify Codex standalone command"
   exit 0
 fi
 
 verify_codex
-uninstall_brew_codex

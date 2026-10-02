@@ -82,7 +82,7 @@ smoke_cursor_agent() {
 }
 
 verify_cursor_agent() {
-  local agent_path cursor_agent_path agent_target cursor_agent_target
+  local agent_path cursor_agent_path
 
   export PATH="${install_dir}:${PATH}"
   hash -r 2>/dev/null || true
@@ -113,14 +113,6 @@ verify_cursor_agent() {
     warn "Cursor Agent smoke check failed for ${visible_agent}"
     return 1
   fi
-
-  agent_target="$(resolve_link_target "$visible_agent")"
-  cursor_agent_target="$(resolve_link_target "$visible_cursor_agent")"
-
-  log "Cursor Agent command: ${agent_path}"
-  log "Cursor Agent target: ${agent_target}"
-  log "cursor-agent command: ${cursor_agent_path}"
-  log "cursor-agent target: ${cursor_agent_target}"
 }
 
 repair_launchd_path() {
@@ -170,9 +162,7 @@ done
 
 export PATH="${install_dir}:${PATH}"
 
-if standalone_install_ok; then
-  log "Cursor Agent standalone install is already present"
-else
+if ! standalone_install_ok; then
   install_cursor_agent
 fi
 

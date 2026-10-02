@@ -31,7 +31,7 @@ spotify	cask	spotify	Spotify	Homebrew cask.
 superwhisper	cask	superwhisper	superwhisper	Homebrew cask.
 synology-drive	cask	synology-drive	Synology Drive Client	Homebrew cask.
 synology-image-assistant	cask	synology-image-assistant	Synology Image Assistant	Homebrew cask.
-t3-code	cask	t3-code	T3 Code (Alpha)	Homebrew cask; stable package route found.
+t3-code	cask	t3-code@nightly	T3 Code (Nightly)	Nightly desktop app only; the t3 CLI uses the vendor nightly installer.
 tailscale	cask	tailscale-app	Tailscale	Homebrew cask for the menu-bar app and full Mac UX.
 warp	cask	warp	Warp	Homebrew cask.
 yaak	cask	yaak	Yaak	Homebrew cask; GUI companion to @yaakapp/cli in mise.

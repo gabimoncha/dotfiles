@@ -13,7 +13,9 @@ cd ~/development/dotfiles
 ```
 
 `./bin/setup` prepares foundation tools only: Homebrew, standalone mise, isolated
-gh, Codex CLI, and Cursor Agent. It exits before bulk installation so you can
+gh, Codex CLI, Claude Code, Cursor Agent, OpenCode v2, and the T3 nightly CLI.
+Pi is installed after mise provides Node and npm in the continuation phase.
+Setup exits before bulk installation so you can
 review **System Settings > Privacy & Security > App Management** for your terminal
 application and fully quit/reopen it when macOS requests a restart. Then run:
 
@@ -75,8 +77,9 @@ the top-level helper:
 Commit and push any intentional repo changes before switching machines.
 
 Codex CLI itself is not part of the archive. Bootstrap keeps the current
-standalone install under `~/.codex/packages/standalone` healthy and removes the
-Homebrew cask if it exists. The archive only carries portable user state.
+standalone install under `~/.codex/packages/standalone` healthy. Agent setup no
+longer checks for or removes old package-manager copies. The archive only carries
+portable user state.
 
 Cursor Agent CLI itself is not part of the archive. Bootstrap keeps its
 standalone installer runtime under `~/.local/share/cursor-agent` healthy and
@@ -119,7 +122,7 @@ flowchart TD
   C --> B[Homebrew foundation]
   C --> M[Standalone mise foundation]
   M --> G[Isolated gh acquisition]
-  B --> ST[Standalone Codex CLI and Cursor Agent]
+  B --> ST[Standalone coding agent CLIs, except Pi]
   G --> Q[Exit: manual permissions and terminal restart]
   ST --> Q
   Q --> A[Continue: foreground API authentication]
@@ -715,6 +718,64 @@ Do not edit the submodule from this repo unless the task is explicitly about
 the Neovim config repo.
 
 ## Updating an Existing Mac
+
+Run `./bin/setup --continue` to install the agent CLIs. Healthy vendor installs
+are reused. Commands replaced during repair are backed up and restored if the
+installer fails. Setup no longer checks for or removes old package-manager
+copies; the migration is complete.
+
+`harness update` updates installed agents in parallel and reports every failure:
+
+| Agent | Install source | Update command |
+| --- | --- | --- |
+| Codex | `https://chatgpt.com/codex/install.sh` with sh | `codex update` |
+| Claude Code | `https://claude.ai/install.sh` with Bash | `claude upgrade` |
+| Pi | `https://pi.dev/install.sh` with sh; requires Node >=22.19 and npm | `pi update --all` |
+| T3 CLI | `https://t3.codes/install.sh` with `T3CODE_CHANNEL=nightly sh` | `t3 update --channel nightly` |
+| OpenCode v2 | `https://opencode.ai/v2/install` with Bash | `opencode upgrade` |
+| Cursor Agent | `https://cursor.com/install` with Bash | `agent update` |
+| T3 desktop | `brew install --cask t3-code@nightly` | `brew upgrade --cask t3-code@nightly` |
+| Orca | `brew install --cask stablyai/orca/orca` | `brew upgrade --cask stablyai/orca/orca` |
+
+Use `./bin/harness update` before the managed command is linked, or add
+`--dry-run` to preview it. Direct runs return nonzero for missing installations
+or failed updates. `--installed-only` skips absent agents during initial setup.
+Both Homebrew updates share the package-writer lock. T3's background service is
+not restarted by a noninteractive update; run `t3 service restart` when ready.
+Desktop apps and running agents may need to be reopened after an update.
+
+The Orca cask name must include its vendor tap. The short name `orca` resolves
+to Plotly's unrelated chart app in Homebrew's default tap. The updater checks
+cask metadata and reports disabled casks as failures, even when Homebrew would
+skip their upgrades with exit status zero.
+
+For an existing Mac, run `./bin/link-dotfiles` and
+`./bin/ensure-harnesses-standalone` to install or repair only the agent CLIs.
+This does not install the T3 desktop cask. Install it with
+`brew install --cask --adopt t3-code@nightly`. `--adopt` keeps an existing
+nightly app bundle and creates the Homebrew installation record. Homebrew permits
+a different bundle version for this cask because it declares `auto_updates true`. Avoid
+`--force` when the installed app is newer than the cask's version.
+
+The global mise config disables the old Codex CLI tool names, including
+`aqua:openai/codex`, so obsolete project or shell requests cannot reinstall
+them. The `npm:@agentclientprotocol/codex-acp` adapter stays enabled. Its npm
+package requires a private `@openai/codex` dependency; this is separate from
+the old Aqua installation. The adapter supports `CODEX_PATH` to select the
+standalone executable, but that does not remove its npm dependency.
+
+The global mise `postinstall` hook invokes `harness update --installed-only`.
+The managed zsh helper also covers `mise install`, `mise up`, and
+`mise up --local` when no tools change, and prevents a duplicate hook run.
+Preview/help commands and failed mise commands do not run the shell updater.
+Outside that shell helper, mise runs the native hook only on the paths supported
+by mise; a direct no-op `mise up` does not fire the install hook. Open a new
+terminal after linking the helper.
+
+Privacy permissions remain manual for every app. No setup helper writes the
+macOS consent database, grants TCC access, or clears quarantine. Touch ID for
+sudo remains automatic, as an authentication setting. See the permission lists
+under `apps/` for manual completion.
 
 Pull repo updates and reapply bootstrap-managed changes:
 
