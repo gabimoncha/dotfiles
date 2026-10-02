@@ -86,7 +86,7 @@ handoff, rerun `./bin/setup`. After completing that handoff, use
 `./bin/setup --continue`.
 Existing links and installations are reused where possible; changed link targets
 are backed up under `~/.dotfiles-backups/<timestamp>/`. Homebrew inventory uses
-`--no-upgrade`; the mise hook can update the two agent casks. Normal setup does not self-update a healthy mise binary.
+`--no-upgrade`; the mise hook can update the T3 desktop cask. Normal setup does not self-update a healthy mise binary.
 
 Each run prints its private `.local/setup-runs/<run-id>/` directory:
 
@@ -174,8 +174,7 @@ Fixture tests do not prove a clean-Mac installation. See the
 
 Add packages in this order: Mac App Store, then mise, then Homebrew. Coding agent
 CLIs and mise itself are explicit standalone-installer exceptions. T3 desktop
-uses the nightly Homebrew cask; Orca stays in Homebrew until it has a standalone
-installer.
+uses the nightly Homebrew cask.
 See [DECISIONS.md](DECISIONS.md) for the reasons and constraints.
 
 AeroSpace and Ghostty links wait for their application bundles. Final links
@@ -209,19 +208,16 @@ copies; the migration is complete.
 | OpenCode v2 | `https://opencode.ai/v2/install` with Bash | `opencode upgrade` |
 | Cursor Agent | `https://cursor.com/install` with Bash | `agent update` |
 | T3 desktop | `brew install --cask t3-code@nightly` | `brew upgrade --cask t3-code@nightly` |
-| Orca | `brew install --cask stablyai/orca/orca` | `brew upgrade --cask stablyai/orca/orca` |
 
 Use `./bin/harness update` before the managed command is linked, or add
 `--dry-run` to preview it. Direct runs return nonzero for missing installations
 or failed updates. `--installed-only` skips absent agents during initial setup.
-Both Homebrew updates share the package-writer lock. T3's background service is
+The Homebrew update uses the package-writer lock. T3's background service is
 not restarted by a noninteractive update; run `t3 service restart` when ready.
 Desktop apps and running agents may need to be reopened after an update.
 
-The Orca cask name must include its vendor tap. The short name `orca` resolves
-to Plotly's unrelated chart app in Homebrew's default tap. The updater checks
-cask metadata and reports disabled casks as failures, even when Homebrew would
-skip their upgrades with exit status zero.
+The updater checks cask metadata and reports disabled casks as failures, even
+when Homebrew would skip their upgrades with exit status zero.
 
 For an existing Mac, run `./bin/link-dotfiles` and
 `./bin/ensure-harnesses-standalone` to install or repair only the agent CLIs.

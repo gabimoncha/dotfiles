@@ -47,11 +47,10 @@ Reuse healthy standalone binaries and preserve settings during repair. The
 package-manager migration is complete; agent setup no longer scans for old copies,
 uninstalls packages, or writes migration receipts. Agent CLIs need their vendor
 install metadata for self-update, so mise no longer owns them. The global mise
-config ignores old Codex CLI requests to prevent reinstallation. Orca has no
-standalone installer and stays in its vendor Homebrew tap.
+config ignores old Codex CLI requests to prevent reinstallation.
 
 `harness update` runs vendor updates in parallel and aggregates failures. The
-Homebrew cask updates share the package-writer lock. The global mise postinstall
+Homebrew cask update uses the package-writer lock. The global mise postinstall
 hook updates installed agents, including on no-op installs. A zsh helper covers
 no-op `mise up` and `mise up --local`, where mise may not run an install hook,
 and suppresses the native hook to avoid duplicate updates. Setup installs Pi

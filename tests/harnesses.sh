@@ -38,7 +38,7 @@ printf '%s end\\n' "$name" >> "$CALLS"
     (home/'.pi/agent/install').mkdir(); (home/'.pi/agent/install/managed-install.json').write_text('{}')
     script(tools/'brew','''
 if [[ "$1" == list ]]; then
-  case "$3" in stablyai/orca/orca|t3-code@nightly) exit 0;; *) exit 99;; esac
+  case "$3" in t3-code@nightly) exit 0;; *) exit 99;; esac
 fi
 if [[ "$1" == info ]]; then
   [[ "$*" == "info --json=v2 --cask "* ]] || exit 99
@@ -46,7 +46,7 @@ if [[ "$1" == info ]]; then
   [[ "$token" != "${FAIL_CASK_INFO:-}" ]] || exit 7
   disabled=false
   [[ "$token" != "${DISABLED_CASK:-}" ]] || disabled=true
-  [[ "$token" != "${BAD_CASK_METADATA:-}" ]] || token=orca
+  [[ "$token" != "${BAD_CASK_METADATA:-}" ]] || token=unexpected-cask
   printf '{"casks":[{"full_token":"%s","disabled":%s,"disable_reason":"fails_gatekeeper_check"}]}\\n' "$token" "$disabled"
   exit 0
 fi
@@ -60,12 +60,12 @@ printf 'brew end %s\\n' "$*" >> "$CALLS"
     lines=calls.read_text().splitlines()
     expected=['codex start update','claude start upgrade','pi start update --all',
               't3 start update --channel nightly','opencode start upgrade','agent start update',
-              'brew start upgrade --cask stablyai/orca/orca','brew start upgrade --cask t3-code@nightly']
+              'brew start upgrade --cask t3-code@nightly']
     assert all(x in lines for x in expected),lines
     # Prove overlap from events, not timing thresholds.
     assert max(lines.index(x) for x in expected[:6]) < min(i for i,x in enumerate(lines) if x.endswith(' end'))
     brew=[x for x in lines if x.startswith('brew ')]
-    assert [x.split()[1] for x in brew]==['start','end','start','end'],brew
+    assert [x.split()[1] for x in brew]==['start','end'],brew
     assert not list(locks.glob('*.lock'))
     calls.unlink()
     result=run('update',extra={'FAIL':'claude'}); assert result.returncode!=0
@@ -75,10 +75,10 @@ printf 'brew end %s\\n' "$*" >> "$CALLS"
     # Failed metadata or a name collision must also stop that cask update.
     for flag in ('DISABLED_CASK','FAIL_CASK_INFO','BAD_CASK_METADATA'):
         calls.unlink()
-        result=run('update',extra={flag:'stablyai/orca/orca'})
+        result=run('update',extra={flag:'t3-code@nightly'})
         assert result.returncode!=0,(flag,result.stdout,result.stderr)
-        assert 'orca: failed' in result.stdout and 'opencode: completed' in result.stdout
-        assert expected[6] not in calls.read_text() and expected[7] in calls.read_text()
+        assert 't3-desktop: failed' in result.stdout and 'opencode: completed' in result.stdout
+        assert expected[6] not in calls.read_text()
     calls.unlink()
     assert run('update','--dry-run').returncode==0 and not calls.exists()
     paths['pi'].unlink()
@@ -134,5 +134,5 @@ printf 'brew end %s\\n' "$*" >> "$CALLS"
     for failure,code in [('MISE_FAIL','7'),('HARNESS_FAIL','9')]:
         result=subprocess.run(['/bin/zsh','-dfc',shell,'--','up'],env=dict(hook_env,**{failure:code},HARNESS_SOURCE=str(repo/'home/.config/zsh/harness.zsh')),capture_output=True,text=True)
         assert result.returncode==int(code)
-print('PASS: parallel harness updates, qualified and serialized casks, disabled cask and metadata failures, failure aggregation, missing installs, dry run, cancellation, mise hook and no-op shell commands')
+print('PASS: parallel harness updates, Homebrew cask update, disabled cask and metadata failures, failure aggregation, missing installs, dry run, cancellation, mise hook and no-op shell commands')
 PY

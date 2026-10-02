@@ -11,7 +11,6 @@ tap "grishka/grishka", trusted: true
 tap "homebrew-zathura/zathura", trusted: true
 tap "nikitabobko/tap", trusted: true
 tap "nkzw-tech/tap", trusted: true
-tap "stablyai/orca", trusted: true
 tap "xykong/tap", trusted: true
 
 brew "apktool"
@@ -79,8 +78,6 @@ cask "rectangle"
 cask "signal"
 cask "slack"
 cask "spotify"
-# Orca has no standalone installer. Keep its cask until the vendor adds one.
-cask "stablyai/orca/orca"
 cask "stats"
 cask "steam"
 cask "superwhisper"

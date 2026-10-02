@@ -260,11 +260,6 @@ run = ['layout floating', 'move-node-to-workspace 2']
 if.app-name-regex-substring = 'qemu-system-aarch64'
 run = ['layout floating', 'move-node-to-workspace S']
 
-### Orca
-[[on-window-detected]]
-if.app-id = 'com.stablyai.orca'
-run = ['layout floating', 'move-node-to-workspace 3']
-
 [[on-window-detected]]
 if.app-id = 'com.t3tools.t3code'
 run = ['layout floating', 'move-node-to-workspace 1']

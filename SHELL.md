@@ -76,7 +76,7 @@ keytool -list -v -keystore "$HOME/.android/debug.keystore" -alias androiddebugke
 ## Coding agent updates
 
 `harness update` updates Codex, Claude Code, Pi and its packages, T3 nightly CLI,
-OpenCode v2, Cursor Agent, Orca, and the T3 nightly desktop cask. Vendor updates
+OpenCode v2, Cursor Agent, and the T3 nightly desktop cask. Vendor updates
 run in parallel; Homebrew writes share a lock. A failure does not stop other
 updates, and the command returns nonzero when any update fails.
 

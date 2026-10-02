@@ -11,7 +11,7 @@ before changing ownership, bootstrap boundaries, or other design decisions.
 - `bin/setup` owns the two-phase planner; `bin/bootstrap` delegates to it.
 - Add GUI apps through mas when available, then use mise for supported tools,
   then Homebrew. Coding agent CLIs and mise are explicit standalone exceptions.
-  Orca and the T3 nightly desktop app stay in Homebrew.
+  The T3 nightly desktop app stays in Homebrew.
 - Keep Brewfile entries alphabetized within sections unless deliberately grouped.
 - Put managed files under `home/`, wire them through `bin/link-dotfiles`, and
   update the relevant documentation. Keep local companions under ignored

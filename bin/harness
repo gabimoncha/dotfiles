@@ -42,7 +42,6 @@ harness_update_one() {
     claude|opencode) args=(upgrade) ;;
     pi) args=(update --all) ;;
     t3) args=(update --channel nightly) ;;
-    orca) args=(upgrade --cask stablyai/orca/orca) ;;
     t3-desktop) args=(upgrade --cask t3-code@nightly) ;;
   esac
   if [[ "${2:-}" == --dry-run ]]; then
@@ -53,7 +52,7 @@ harness_update_one() {
   fi
   case "$name" in
     codex) CODEX_NON_INTERACTIVE=1 "$executable" "${args[@]}" ;;
-    orca|t3-desktop) runtime_with_lock homebrew harness_update_cask "$executable" "${args[2]}" ;;
+    t3-desktop) runtime_with_lock homebrew harness_update_cask "$executable" "${args[2]}" ;;
     *) "$executable" "${args[@]}" ;;
   esac
 }
@@ -69,7 +68,6 @@ for name in "${harness_names[@]}"; do
       printf 'Skipping %s: managed installation is not present\n' "$name"
     else
       case "$name" in
-        orca) repair='Run brew install --cask stablyai/orca/orca.' ;;
         t3-desktop) repair='Run brew install --cask --adopt t3-code@nightly.' ;;
         *) repair='Run ./bin/ensure-harnesses-standalone.' ;;
       esac
