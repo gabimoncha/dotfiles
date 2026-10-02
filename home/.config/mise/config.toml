@@ -16,6 +16,7 @@ git-lfs = "latest"
 uv = "latest"
 fastfetch = "latest"
 xcodes = "latest"
+"github:entireio/cli" = "latest"
 "github:XcodesOrg/Xcodes" = { version = "latest", asset_pattern = "xcodes.zip", strip_components = 0 }
 fzf = "latest"
 ast-grep = "latest"
@@ -85,6 +86,7 @@ mas = "latest"
 wrangler = { version = "latest", allow_builds = ["esbuild", "sharp", "workerd"] }
 herdr = "latest"
 hunk = "latest"
+"github:flowcopilot/aether" = "0.2.2"
 
 [settings]
 experimental = true
