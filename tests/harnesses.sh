@@ -14,6 +14,14 @@ with tempfile.TemporaryDirectory(prefix='dotfiles-harness-test-') as d:
     vendor='''name="${0##*/}"
 if [[ "$*" == --version ]]; then echo 1.0.0-nightly.20261002.1; exit 0; fi
 printf '%s start %s\\n' "$name" "$*" >> "$CALLS"
+if [[ "$name" == "${IDLE_VENDOR:-}" ]]; then
+  sleep 60 &
+  echo "$!" > "$HOME/$name.pid"
+  wait
+fi
+if [[ "$name" == "${PROGRESS_VENDOR:-}" ]]; then
+  for step in 1 2 3 4 5 6 7 8; do echo "download $step"; sleep 0.5; done
+fi
 if [[ "${CANCEL:-0}" == 1 ]]; then
   sleep 60 &
   echo "$!" > "$HOME/$name.pid"
@@ -36,51 +44,46 @@ printf '%s end\\n' "$name" >> "$CALLS"
         if name not in ('pi','opencode'):
             link=home/'.local/bin'/name; link.parent.mkdir(parents=True,exist_ok=True); link.symlink_to(path)
     (home/'.pi/agent/install').mkdir(); (home/'.pi/agent/install/managed-install.json').write_text('{}')
-    script(tools/'brew','''
-if [[ "$1" == list ]]; then
-  case "$3" in t3-code@nightly) exit 0;; *) exit 99;; esac
-fi
-if [[ "$1" == info ]]; then
-  [[ "$*" == "info --json=v2 --cask "* ]] || exit 99
-  token="$4"
-  [[ "$token" != "${FAIL_CASK_INFO:-}" ]] || exit 7
-  disabled=false
-  [[ "$token" != "${DISABLED_CASK:-}" ]] || disabled=true
-  [[ "$token" != "${BAD_CASK_METADATA:-}" ]] || token=unexpected-cask
-  printf '{"casks":[{"full_token":"%s","disabled":%s,"disable_reason":"fails_gatekeeper_check"}]}\\n' "$token" "$disabled"
-  exit 0
-fi
-printf 'brew start %s\\n' "$*" >> "$CALLS"
-sleep 0.3
-printf 'brew end %s\\n' "$*" >> "$CALLS"
-''')
+    # Harness updates must not probe or update the GUI-managed desktop app.
+    script(tools/'brew','printf "FORBIDDEN brew\\n" >> "$CALLS"\nexit 99\n')
     def run(*args, extra=None):
         return subprocess.run([str(repo/'bin/harness'),*args],env=dict(env,**(extra or {})),text=True,capture_output=True,timeout=45)
     result=run('update',extra={'BARRIER':'1'}); assert result.returncode==0,(result.stdout,result.stderr)
     lines=calls.read_text().splitlines()
     expected=['codex start update','claude start upgrade','pi start update --all',
-              't3 start update --channel nightly','opencode start upgrade','agent start update',
-              'brew start upgrade --cask t3-code@nightly']
+              't3 start update --channel nightly','opencode start upgrade','agent start update']
     assert all(x in lines for x in expected),lines
     # Prove overlap from events, not timing thresholds.
     assert max(lines.index(x) for x in expected[:6]) < min(i for i,x in enumerate(lines) if x.endswith(' end'))
-    brew=[x for x in lines if x.startswith('brew ')]
-    assert [x.split()[1] for x in brew]==['start','end'],brew
+    assert 'FORBIDDEN brew' not in calls.read_text()
     assert not list(locks.glob('*.lock'))
     calls.unlink()
     result=run('update',extra={'FAIL':'claude'}); assert result.returncode!=0
     assert 'claude: failed' in result.stdout and 'opencode: completed' in result.stdout
     assert all(x in calls.read_text() for x in expected)
-    # A disabled cask must fail even though Homebrew upgrade would exit zero.
-    # Failed metadata or a name collision must also stop that cask update.
-    for flag in ('DISABLED_CASK','FAIL_CASK_INFO','BAD_CASK_METADATA'):
-        calls.unlink()
-        result=run('update',extra={flag:'t3-code@nightly'})
-        assert result.returncode!=0,(flag,result.stdout,result.stderr)
-        assert 't3-desktop: failed' in result.stdout and 'opencode: completed' in result.stdout
-        assert expected[6] not in calls.read_text()
     calls.unlink()
     assert run('update','--dry-run').returncode==0 and not calls.exists()
+    # Every silent job has its own deadline. Timeout stops descendants and
+    # releases locks while unrelated updates still complete.
+    result=run('update',extra={'DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS':'2',
+                             'IDLE_VENDOR':'codex'})
+    assert result.returncode!=0,(result.stdout,result.stderr)
+    assert 'codex: failed' in result.stdout
+    assert 'opencode: completed' in result.stdout
+    assert result.stdout.count('timed out after 2s without output; update stopped')==1
+    for path in home.glob('*.pid'):
+        pid=int(path.read_text())
+        state=subprocess.run(['/bin/ps','-p',str(pid),'-o','stat='],capture_output=True,text=True).stdout.strip()
+        assert not state or state.startswith('Z'),(pid,state)
+        path.unlink()
+    assert not list(locks.glob('*.lock'))
+    calls.unlink()
+    result=run('update',extra={'DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS':'2','PROGRESS_VENDOR':'t3'})
+    assert result.returncode==0,(result.stdout,result.stderr)
+    assert 'download 8' in result.stdout and 't3: completed' in result.stdout
+    for value in ('0','-1','abc'):
+        result=run('update','--dry-run',extra={'DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS':value})
+        assert result.returncode==2 and 'positive integer' in result.stderr
     paths['pi'].unlink()
     result=run('update','--installed-only'); assert result.returncode==0 and 'Skipping pi' in result.stdout
     result=run('update'); assert result.returncode!=0 and 'managed installation is not present' in result.stdout
@@ -134,5 +137,5 @@ printf 'brew end %s\\n' "$*" >> "$CALLS"
     for failure,code in [('MISE_FAIL','7'),('HARNESS_FAIL','9')]:
         result=subprocess.run(['/bin/zsh','-dfc',shell,'--','up'],env=dict(hook_env,**{failure:code},HARNESS_SOURCE=str(repo/'home/.config/zsh/harness.zsh')),capture_output=True,text=True)
         assert result.returncode==int(code)
-print('PASS: parallel harness updates, Homebrew cask update, disabled cask and metadata failures, failure aggregation, missing installs, dry run, cancellation, mise hook and no-op shell commands')
+print('PASS: parallel harness updates, GUI-managed desktop exclusion, idle timeouts, failure aggregation, missing installs, dry run, cancellation, mise hook and no-op shell commands')
 PY

@@ -86,7 +86,8 @@ handoff, rerun `./bin/setup`. After completing that handoff, use
 `./bin/setup --continue`.
 Existing links and installations are reused where possible; changed link targets
 are backed up under `~/.dotfiles-backups/<timestamp>/`. Homebrew inventory uses
-`--no-upgrade`; the mise hook can update the T3 desktop cask. Normal setup does not self-update a healthy mise binary.
+`--no-upgrade`. Update T3 desktop through its GUI. Normal setup does not
+self-update a healthy mise binary.
 
 Each run prints its private `.local/setup-runs/<run-id>/` directory:
 
@@ -207,17 +208,20 @@ copies; the migration is complete.
 | T3 CLI | `https://t3.codes/install.sh` with `T3CODE_CHANNEL=nightly sh` | `t3 update --channel nightly` |
 | OpenCode v2 | `https://opencode.ai/v2/install` with Bash | `opencode upgrade` |
 | Cursor Agent | `https://cursor.com/install` with Bash | `agent update` |
-| T3 desktop | `brew install --cask t3-code@nightly` | `brew upgrade --cask t3-code@nightly` |
 
 Use `./bin/harness update` before the managed command is linked, or add
 `--dry-run` to preview it. Direct runs return nonzero for missing installations
 or failed updates. `--installed-only` skips absent agents during initial setup.
-The Homebrew update uses the package-writer lock. T3's background service is
-not restarted by a noninteractive update; run `t3 service restart` when ready.
+T3 desktop updates through its GUI and is excluded from harness updates.
+T3's background service is not restarted by a noninteractive update; run
+`t3 service restart` when ready.
 Desktop apps and running agents may need to be reopened after an update.
 
-The updater checks cask metadata and reports disabled casks as failures, even
-when Homebrew would skip their upgrades with exit status zero.
+Each harness update stops after 30 seconds without new log output. Output resets
+the timer. A timeout stops that update and its child processes; other updates
+continue. The summary reports the timeout as a failure and the command returns
+nonzero. Set `DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS` to a positive number of
+seconds to allow a longer idle period. This limit applies only to harness updates.
 
 For an existing Mac, run `./bin/link-dotfiles` and
 `./bin/ensure-harnesses-standalone` to install or repair only the agent CLIs.

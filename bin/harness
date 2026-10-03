@@ -15,34 +15,23 @@ for argument in "$@"; do
 done
 . "$repo_root/bin/lib/setup-runtime.sh"
 . "$repo_root/bin/lib/harnesses.sh"
+DOTFILES_JOB_IDLE_TIMEOUT_SECONDS="${DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS:-30}"
+if [[ ! "$DOTFILES_JOB_IDLE_TIMEOUT_SECONDS" =~ ^[1-9][0-9]*$ ]]; then
+  printf 'DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS must be a positive integer.\n' >&2
+  exit 2
+fi
 runtime_init harness
 harness_prepare_path
 # Serialize updates against setup's vendor installers and other update runs.
 runtime_acquire_lock harness 'harness update' || exit 1
-harness_update_cask() {
-  local brew_path="$1" token="$2" metadata
-  metadata="$("$brew_path" info --json=v2 --cask "$token")" || return $?
-  # Homebrew exits zero when it skips a disabled cask. Check its status first
-  # so the update summary cannot report that skip as a completed update.
-  printf '%s\n' "$metadata" | /usr/bin/ruby -rjson -e '
-    token = ARGV.fetch(0)
-    casks = JSON.parse(STDIN.read).fetch("casks")
-    abort "Unexpected cask metadata for #{token}" unless
-      casks.length == 1 && casks.first.fetch("full_token") == token
-    cask = casks.first
-    abort "#{token} is disabled: #{cask["disable_reason"]}. Update was not run." if cask["disabled"]
-  ' "$token" || return $?
-  "$brew_path" upgrade --cask "$token"
-}
 harness_update_one() {
   local name="$1" executable args=()
-  executable="$(harness_binary "$name")" || executable=brew
+  executable="$(harness_binary "$name")"
   case "$name" in
     codex|cursor) args=(update) ;;
     claude|opencode) args=(upgrade) ;;
     pi) args=(update --all) ;;
     t3) args=(update --channel nightly) ;;
-    t3-desktop) args=(upgrade --cask t3-code@nightly) ;;
   esac
   if [[ "${2:-}" == --dry-run ]]; then
     printf 'Would run: %q' "$executable"
@@ -52,7 +41,6 @@ harness_update_one() {
   fi
   case "$name" in
     codex) CODEX_NON_INTERACTIVE=1 "$executable" "${args[@]}" ;;
-    t3-desktop) runtime_with_lock homebrew harness_update_cask "$executable" "${args[2]}" ;;
     *) "$executable" "${args[@]}" ;;
   esac
 }
@@ -67,10 +55,7 @@ for name in "${harness_names[@]}"; do
     if [[ "$installed_only" == 1 ]]; then
       printf 'Skipping %s: managed installation is not present\n' "$name"
     else
-      case "$name" in
-        t3-desktop) repair='Run brew install --cask --adopt t3-code@nightly.' ;;
-        *) repair='Run ./bin/ensure-harnesses-standalone.' ;;
-      esac
+      repair='Run ./bin/ensure-harnesses-standalone.'
       runtime_record_failure recoverable "$name" 'managed installation is not present' '' "$repair"
       status=1
     fi

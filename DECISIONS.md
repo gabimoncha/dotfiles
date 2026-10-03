@@ -49,9 +49,10 @@ uninstalls packages, or writes migration receipts. Agent CLIs need their vendor
 install metadata for self-update, so mise no longer owns them. The global mise
 config ignores old Codex CLI requests to prevent reinstallation.
 
-`harness update` runs vendor updates in parallel and aggregates failures. The
-Homebrew cask update uses the package-writer lock. The global mise postinstall
-hook updates installed agents, including on no-op installs. A zsh helper covers
+`harness update` runs vendor updates in parallel and aggregates failures.
+T3 desktop updates through its GUI; harness updates cover only the agent CLIs.
+The global mise postinstall hook updates installed agents, including on no-op
+installs. A zsh helper covers
 no-op `mise up` and `mise up --local`, where mise may not run an install hook,
 and suppresses the native hook to avoid duplicate updates. Setup installs Pi
 after the Node inventory. T3 follows nightly explicitly; noninteractive updates
@@ -124,7 +125,7 @@ authentication output is omitted. INT/TERM cancels owned descendants with
 bounded escalation, then releases locks. Logs are removed only after review.
 
 The shell's daily background Git fetch only notifies. `dotfiles-update` pulls
-and reapplies configuration. Agent cask upgrades run only through explicit
-harness/mise commands and the mise setup hook.
+and reapplies configuration. Agent CLI updates run through explicit
+harness/mise commands and the mise setup hook. T3 desktop updates through its GUI.
 Mocked tests verify contracts, not successful clean-Mac provisioning. See
 [real-machine validation](SETUP-SECURITY.md#real-machine-checks-still-required).

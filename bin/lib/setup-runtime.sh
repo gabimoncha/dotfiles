@@ -171,7 +171,7 @@ runtime_cleanup_jobs() {
   for lock in "$DOTFILES_RUNTIME_LOCK_ROOT"/*.lock; do
     [[ -f "$lock/pid" ]] || continue
     read -r owner_pid < "$lock/pid"
-    for pid in $owned; do
+    for pid in "$owner" $owned; do
       if [[ "$owner_pid" == "$pid" ]]; then rm -f "$lock/pid"; rmdir "$lock" 2>/dev/null || true; fi
     done
   done
@@ -218,7 +218,29 @@ runtime_run_job() {
     trap 'runtime_signal INT 130' INT; trap 'runtime_signal TERM 143' TERM
     trap 'runtime_on_exit $?' EXIT
     set -o pipefail
-    "$@" 2>&1 | runtime_sanitize | runtime_stream_output "$log_file" "$name"
+    if [[ "${DOTFILES_JOB_IDLE_TIMEOUT_SECONDS:-0}" == 0 ]]; then
+      "$@" 2>&1 | runtime_sanitize | runtime_stream_output "$log_file" "$name"
+    else
+      # Monitor each job here, even while the parent waits for another job.
+      # The job owns this pipeline and its package-writer locks.
+      : > "$log_file"
+      "$@" 2>&1 | runtime_sanitize | runtime_stream_output "$log_file" "$name" &
+      local pipeline_pid=$! last_output=$SECONDS previous_size=0 size
+      while kill -0 "$pipeline_pid" 2>/dev/null; do
+        size="$(wc -c < "$log_file")"
+        if [[ "$size" -ne "$previous_size" ]]; then
+          last_output=$SECONDS
+          previous_size="$size"
+        fi
+        if (( SECONDS-last_output >= DOTFILES_JOB_IDLE_TIMEOUT_SECONDS )); then
+          runtime_warn "$name timed out after ${DOTFILES_JOB_IDLE_TIMEOUT_SECONDS}s without output; stopping update (log: $log_file)"
+          runtime_cleanup_jobs
+          exit 124
+        fi
+        sleep 0.2
+      done
+      wait "$pipeline_pid"
+    fi
   ) &
   DOTFILES_JOB_PIDS+=("$!"); DOTFILES_JOB_NAMES+=("$name"); DOTFILES_JOB_SEVERITIES+=("$severity"); DOTFILES_JOB_FIXES+=("$fix"); DOTFILES_JOB_LOGS+=("$log_file"); DOTFILES_JOB_STARTS+=("$SECONDS"); DOTFILES_JOB_IDS+=("$id"); DOTFILES_JOB_PARENTS+=("$parent"); DOTFILES_JOB_PREREQS+=("$prerequisites")
   if [[ "${DOTFILES_SETUP_SERIAL:-0}" == 1 ]]; then runtime_wait_job "$index" || DOTFILES_JOB_FAILED=1; fi
@@ -247,7 +269,13 @@ runtime_wait_job() {
   DOTFILES_STAGE_PREREQUISITES="${DOTFILES_JOB_PREREQS[$i]}"
   if [[ "$status" == 20 ]]; then runtime_record_deferred "${DOTFILES_JOB_NAMES[$i]}"
   elif [[ "$status" == 0 ]]; then runtime_record_completed "${DOTFILES_JOB_NAMES[$i]}"
-  else runtime_record_failure "${DOTFILES_JOB_SEVERITIES[$i]}" "${DOTFILES_JOB_NAMES[$i]}" "exited with status $status" "${DOTFILES_JOB_LOGS[$i]}" "${DOTFILES_JOB_FIXES[$i]}"; fi
+  else
+    local reason="exited with status $status"
+    if [[ "$status" == 124 && "${DOTFILES_JOB_IDLE_TIMEOUT_SECONDS:-0}" != 0 ]]; then
+      reason="timed out after ${DOTFILES_JOB_IDLE_TIMEOUT_SECONDS}s without output; update stopped"
+    fi
+    runtime_record_failure "${DOTFILES_JOB_SEVERITIES[$i]}" "${DOTFILES_JOB_NAMES[$i]}" "$reason" "${DOTFILES_JOB_LOGS[$i]}" "${DOTFILES_JOB_FIXES[$i]}"
+  fi
   local outcome=completed stack=""
   if [[ "$status" == 20 ]]; then outcome=deferred
   elif [[ "$status" != 0 ]]; then outcome=failed; stack="$(runtime_stack)"; fi

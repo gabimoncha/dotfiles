@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Vendor commands are resolved directly, never through mise shims.
-harness_names=(codex claude pi t3 opencode cursor t3-desktop)
+harness_names=(codex claude pi t3 opencode cursor)
 
 harness_binary() {
   case "$1" in
@@ -10,14 +10,6 @@ harness_binary() {
     t3) printf '%s/t3\n' "${T3CODE_INSTALL_BIN_DIR:-$HOME/.local/bin}" ;;
     opencode) printf '%s/.opencode/bin/opencode\n' "$HOME" ;;
     cursor) printf '%s/.local/bin/agent\n' "$HOME" ;;
-    t3-desktop)
-      local candidate
-      for candidate in "$(command -v brew || true)" /opt/homebrew/bin/brew /usr/local/bin/brew; do
-        [[ -n "$candidate" && -x "$candidate" ]] || continue
-        printf '%s\n' "$candidate"; return 0
-      done
-      return 1
-      ;;
     *) return 2 ;;
   esac
 }
@@ -36,7 +28,6 @@ harness_installed() {
     t3) root="${T3CODE_HOME:-$HOME/.t3}/runtime/versions" ;;
     opencode) root="$HOME/.opencode/bin" ;;
     cursor) root="$HOME/.local/share/cursor-agent" ;;
-    t3-desktop) "$executable" list --cask t3-code@nightly >/dev/null 2>&1; return $? ;;
   esac
   /usr/bin/ruby -e '
     executable, root = ARGV
