@@ -59,8 +59,9 @@ after the Node inventory. T3 follows nightly explicitly; noninteractive updates
 leave its running background service for manual restart.
 
 mise owns pnpm directly, before Node, so Corepack wrappers do not shadow it.
-The Xcodes GUI uses mise's GitHub backend and retains its app bundle; the
-separate xcodes CLI installs Xcode. Mobile setup is enabled by default.
+The `github:XcodesOrg/Xcodes` entry selects an xcodes CLI release and overlaps
+the separate `xcodes` entry. The xcodes CLI installs Xcode.
+Mobile setup is enabled by default.
 The explicit mobile skip does not remove tools from the common inventory.
 
 ## GitHub and shell startup
