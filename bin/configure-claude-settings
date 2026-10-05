@@ -10,13 +10,18 @@ source, target = ARGV
 # Resolve existing links so the merge preserves their destination.
 target = File.realpath(target) if File.symlink?(target)
 existing = File.exist?(target) ? File.binread(target) : nil
-settings = existing ? JSON.parse(existing) : {}
+begin
+  settings = existing ? JSON.parse(existing) : {}
+rescue JSON::ParserError
+  abort 'Invalid Claude settings JSON; existing settings were preserved.'
+end
 defaults = JSON.parse(File.read(source))
 raise 'Claude settings must be a JSON object' unless settings.is_a?(Hash)
 merge = lambda do |current, desired|
   desired.each do |key, value|
     if value.is_a?(Hash)
-      current[key] = {} unless current[key].is_a?(Hash)
+      raise "Claude setting #{key} must be a JSON object" if current.key?(key) && !current[key].is_a?(Hash)
+      current[key] ||= {}
       merge.call(current[key], value)
     else
       current[key] = value

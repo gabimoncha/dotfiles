@@ -42,4 +42,17 @@ count="$(find "$HOME/.dotfiles-backups" -type f | wc -l)"
 "$repo_root/bin/link-dotfiles" >/dev/null
 [[ "$(find "$HOME/.dotfiles-backups" -type f | wc -l)" == "$count" ]]
 [[ "$(cat "$backup")" == 'existing shell fixture' ]]
+# Refuse an invalid env schema and malformed content before any write.
+printf '{"env":"keep-invalid-fixture"}\n' > "$HOME/.claude/settings.json"
+cp "$HOME/.claude/settings.json" "$fixture/invalid-before"
+if bash "$repo_root/bin/configure-claude-settings" > "$fixture/invalid.log" 2>&1; then exit 1; fi
+cmp "$HOME/.claude/settings.json" "$fixture/invalid-before"
+grep -q 'Claude setting env must be a JSON object' "$fixture/invalid.log"
+printf '{broken synthetic-private-clause\n' > "$HOME/.claude/settings.json"
+cp "$HOME/.claude/settings.json" "$fixture/invalid-before"
+if bash "$repo_root/bin/configure-claude-settings" > "$fixture/invalid.log" 2>&1; then exit 1; fi
+cmp "$HOME/.claude/settings.json" "$fixture/invalid-before"
+grep -q 'Invalid Claude settings JSON' "$fixture/invalid.log"
+! grep -q synthetic-private-clause "$fixture/invalid.log"
+[[ "$(find "$HOME/.dotfiles-backups" -type f | wc -l)" == "$count" ]]
 printf 'PASS: idempotent linking, shared Codex and Claude instructions, existing-file backups, direct credential helper link, service configuration\n'
