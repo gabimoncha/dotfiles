@@ -260,8 +260,9 @@ ensure_github_auth() {
 
   if run_gh auth status --hostname github.com >/dev/null 2>&1; then
     log "GitHub CLI is authenticated"
-    verify_github_api
-    return $?
+    verify_github_api || return 1
+    disable_github_telemetry
+    return 0
   fi
 
   if [[ ! -t 0 ]]; then
@@ -275,7 +276,17 @@ ensure_github_auth() {
     warn "GitHub CLI authentication did not persist; rerun: gh auth login -h github.com"
     return 1
   fi
-  verify_github_api
+  verify_github_api || return 1
+  disable_github_telemetry
+}
+
+# A preference write never gates API readiness or the mise inventory.
+disable_github_telemetry() {
+  run_gh config set telemetry disabled >/dev/null 2>&1 || {
+    warn "Could not disable GitHub CLI telemetry; rerun ./bin/auth-setup --api-only"
+    return 0
+  }
+  log "GitHub CLI telemetry disabled"
 }
 
 verify_github_api() {

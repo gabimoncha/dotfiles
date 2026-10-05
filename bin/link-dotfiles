@@ -6,6 +6,13 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 timestamp="$(date +%Y%m%d-%H%M%S)"
 backup_root="${HOME}/.dotfiles-backups/${timestamp}"
 created_backup_root=0
+telemetry_only=0
+for argument in "$@"; do
+  case "$argument" in
+    --telemetry-only) telemetry_only=1 ;;
+    *) printf 'Usage: link-dotfiles [--telemetry-only]\n' >&2; exit 2 ;;
+  esac
+done
 
 # shellcheck source=bin/lib/setup-runtime.sh
 . "${repo_root}/bin/lib/setup-runtime.sh"
@@ -28,10 +35,13 @@ managed_sources=(
   "${repo_root}/home/bin/harness"
   "${repo_root}/home/bin/gh"
   "${repo_root}/home/bin/dotfiles-gh-real"
+  "${repo_root}/home/bin/dotfiles-telemetry-env"
   "${repo_root}/home/.rgrc"
   "${repo_root}/home/.tmux.conf"
   "${repo_root}/home/.cli-proxy-api/config.yaml"
   "${repo_root}/home/.config/mise/config.toml"
+  "${repo_root}/home/.config/telemetry/env.sh"
+  "${repo_root}/home/Library/LaunchAgents/com.dotfiles.telemetry-env.plist"
   "${repo_root}/home/.config/zsh/env.zsh"
   "${repo_root}/home/.config/zsh/profile.zsh"
   "${repo_root}/home/.config/zsh/interactive.zsh"
@@ -51,7 +61,12 @@ managed_app_sources=(
   "Ghostty|${repo_root}/home/Library/Application Support/com.mitchellh.ghostty/config"
 )
 
-if [[ -d "${repo_root}/nvim" ]] && find "${repo_root}/nvim" -mindepth 1 -maxdepth 1 -print -quit | grep -q .; then
+if [[ "$telemetry_only" == 1 ]]; then
+  managed_sources=("${repo_root}/home/.config/telemetry/env.sh"
+    "${repo_root}/home/bin/dotfiles-telemetry-env"
+    "${repo_root}/home/Library/LaunchAgents/com.dotfiles.telemetry-env.plist")
+  managed_app_sources=()
+elif [[ -d "${repo_root}/nvim" ]] && find "${repo_root}/nvim" -mindepth 1 -maxdepth 1 -print -quit | grep -q .; then
   managed_sources+=("${repo_root}/nvim")
 else
   printf 'Skipping nvim link; submodule is not initialized\n'
@@ -169,15 +184,17 @@ append_installed_app_sources() {
     app_bundle="${entry%%|*}"
     source="${entry#*|}"
 
-    if [[ -d "/Applications/${app_bundle}.app" ]]; then
+    if [[ -d "${DOTFILES_APPLICATIONS_DIR:-/Applications}/${app_bundle}.app" ]]; then
       managed_sources+=("${source}")
     else
-      printf 'Skipping %s config link; /Applications/%s.app is not installed\n' "${app_bundle}" "${app_bundle}"
+      printf 'Skipping %s config link; %s/%s.app is not installed\n' "${app_bundle}" "${DOTFILES_APPLICATIONS_DIR:-/Applications}" "${app_bundle}"
     fi
   done
 }
 
-append_installed_app_sources
+if [[ "$telemetry_only" == 0 ]]; then
+  append_installed_app_sources
+fi
 
 for source in "${managed_sources[@]}"; do
   if [[ ! -e "${source}" && ! -L "${source}" ]]; then
@@ -188,11 +205,13 @@ for source in "${managed_sources[@]}"; do
   link_path "${source}"
 done
 
-if [[ "${DOTFILES_LINK_AGENT_CONFIG:-1}" == 1 ]]; then
+if [[ "$telemetry_only" == 0 && "${DOTFILES_LINK_AGENT_CONFIG:-1}" == 1 ]]; then
   agent_instructions="${repo_root}/home/.codex/AGENTS.md"
   link_path "$agent_instructions" "${HOME}/.codex/AGENTS.md"
   link_path "$agent_instructions" "${HOME}/.claude/CLAUDE.md"
   bash "${repo_root}/bin/configure-claude-settings"
 fi
 
-runtime_with_lock homebrew link_cliproxyapi_homebrew_config
+if [[ "$telemetry_only" == 0 ]]; then
+  runtime_with_lock homebrew link_cliproxyapi_homebrew_config
+fi

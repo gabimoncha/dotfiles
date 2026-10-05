@@ -9,7 +9,7 @@ logs.mkdir(parents=True, mode=0o700)
 with tempfile.TemporaryDirectory(prefix='dotfiles-plan-') as directory:
     root=pathlib.Path(directory); fixture=root/'repo'; fixture.mkdir()
     shutil.copytree(repo/'bin',fixture/'bin')
-    actions=['app_settings','screenshots','permission_handoff','verify_apps','sudo','keepalive','touch_id','preflight','clt','homebrew','mise','install_gh','api','ssh','verify_auth','links','final_links','brew_environment','brewfiles','brew_inventory','mise_inventory','manifest_apps','app_store','editor_extensions','submodules','capabilities','shell','standalone_agents','mobile_tools','xcode','mobile_finish','skills_runtime','skills','defaults','finder','restores']
+    actions=['telemetry','app_settings','screenshots','permission_handoff','verify_apps','sudo','keepalive','touch_id','preflight','clt','homebrew','mise','install_gh','api','ssh','verify_auth','links','final_links','brew_environment','brewfiles','brew_inventory','mise_inventory','manifest_apps','app_store','editor_extensions','submodules','capabilities','shell','standalone_agents','mobile_tools','xcode','mobile_finish','skills_runtime','skills','defaults','finder','restores']
     text='''#!/usr/bin/env bash
 fixture_action() {
   printf '%s start\\n' "$1" >> "$FIXTURE_EVENTS"
@@ -47,6 +47,7 @@ fixture_action() {
     assert events.index('mise start') < events.index('homebrew end')
     assert events.index('homebrew end') < events.index('standalone_agents start')
     assert events.index('standalone_agents end') < events.index('permission_handoff start')
+    assert events.index('standalone_agents end') < events.index('telemetry start') < events.index('permission_handoff start')
     assert not any(name+' start' in events for name in ('links','api','ssh','brew_inventory','mise_inventory','xcode','restores','defaults'))
     assert 'touch_id end' in events
     assert 'permission_handoff end' in events
@@ -54,6 +55,10 @@ fixture_action() {
     assert result.returncode!=0
     assert 'permission_handoff start' not in events and 'brew_inventory start' not in events
     assert 'homebrew end' in events
+    # A telemetry failure fails the run but still reaches the handoff.
+    result,records,events=run('prepare-telemetry-failed',fail='telemetry',prepare=True)
+    assert result.returncode!=0
+    assert 'telemetry failed' in events and 'permission_handoff end' in events
     result,records,events=run('prepare-dry',dry=True,prepare=True)
     assert result.returncode==0
     assert events==['preflight start','preflight end'],events
@@ -73,6 +78,8 @@ fixture_action() {
     final_links_start=events.index('final_links start')
     assert events.index('mise_inventory end') < final_links_start
     assert events.index('standalone_agents end') < final_links_start
+    assert events.index('restores end') < events.index('telemetry start')
+    assert final_links_start < events.index('telemetry start')
     starts={r['stage_id'] for r in records if r['event'] in ('stage_start','run_start')}
     for r in records:
         assert not r['parent_stage_id'] or r['parent_stage_id'] in starts,r
@@ -86,6 +93,7 @@ fixture_action() {
             assert 'api end' in events and 'mise_inventory start' not in events
         if failure=='ssh': assert 'mise_inventory end' in events
         if failure=='mise_inventory': assert 'capabilities end' in events and 'restores end' in events
+        assert 'telemetry end' in events
         assert any(r['outcome']=='failed' and r['stack'] for r in records)
     result,records,events=run('required-deferred',defer='skills')
     assert result.returncode!=0

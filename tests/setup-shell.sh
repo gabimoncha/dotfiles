@@ -6,6 +6,9 @@ trap 'rm -rf "$fixture"' EXIT
 mkdir -p "$fixture/home/.config/zsh" "$fixture/home/bin" "$fixture/home/.local/bin" "$fixture/home/.local/share/mise/shims" "$fixture/repo" "$fixture/other"
 cp "$repo_root/home/.config/zsh/"*.zsh "$fixture/home/.config/zsh/"
 cp "$repo_root/home/.zshrc" "$fixture/home/.zshrc"
+cp "$repo_root/home/.zshenv" "$fixture/home/.zshenv"
+mkdir -p "$fixture/home/.config/telemetry"
+cp "$repo_root/home/.config/telemetry/env.sh" "$fixture/home/.config/telemetry/env.sh"
 cat > "$fixture/home/bin/brew" <<'STUB'
 #!/bin/bash
 [[ "$*" == shellenv ]] || exit 99
@@ -31,9 +34,11 @@ run_shell() {
   env -i HOME="$fixture/home" DOTFILES_ROOT="$fixture/repo" \
     PATH="$fixture/home/bin:/usr/bin:/bin:/usr/sbin:/sbin" \
     FIXTURE_CALLS="$fixture/calls" FIXTURE_ROOT="$fixture" \
-    /bin/zsh -dfc 'source "$HOME/.zshrc"; [[ $commands[codex] == "$HOME/.local/bin/codex" ]] || exit 2; [[ $path[1] == "$HOME/bin" && $path[2] == "$HOME/.local/bin" && ${path[(Ie)$HOME/.bun/bin]} -gt 0 ]] || exit 3; eval "$1"' -- "$1"
+    /bin/zsh -dfc 'source "$HOME/.zshenv"; source "$HOME/.zshrc"; [[ $commands[codex] == "$HOME/.local/bin/codex" ]] || exit 2; [[ $path[1] == "$HOME/bin" && $path[2] == "$HOME/.local/bin" && ${path[(Ie)$HOME/.bun/bin]} -gt 0 ]] || exit 3; eval "$1"' -- "$1"
 }
 run_shell '! (( $+aliases[npm] )); ! (( $+functions[z] )); ! _dotfiles_real_tool zoxide >/dev/null' > "$fixture/startup.log" 2>&1
+run_shell '[[ $DO_NOT_TRACK == 1 && $GH_TELEMETRY == false && $PI_TELEMETRY == 0 && $T3CODE_TELEMETRY_ENABLED == false && $AZ_CRS_ARGUMENTS == enable=false ]]' >> "$fixture/startup.log" 2>&1
+env -i HOME="$fixture/home" PATH=/usr/bin:/bin /bin/zsh -c '[[ $DO_NOT_TRACK == 1 && $VERCEL_TELEMETRY_DISABLED == 1 && $DISABLE_ERROR_REPORTING == 1 && $AZ_CRS_ARGUMENTS == enable=false ]]'
 [[ ! -s "$fixture/calls" ]]
 # Installed optional integrations are initialized directly, never via shims.
 mkdir -p "$fixture/home/.local/share/mise/installs/zoxide/1.0.0/bin" "$fixture/home/.local/share/mise/installs/fzf/1.0.0/bin"

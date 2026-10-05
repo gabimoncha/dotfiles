@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 # Bash 3.2 compatible. Never enable xtrace here: credentials may be in memory.
+# Apply opt-outs before installers and health probes can run managed tools.
+if [[ -n "${repo_root:-}" && -r "$repo_root/home/.config/telemetry/env.sh" ]]; then
+  . "$repo_root/home/.config/telemetry/env.sh"
+fi
 runtime_sanitize() {
   /usr/bin/ruby -e '
     STDOUT.sync = true

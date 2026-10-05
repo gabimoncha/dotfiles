@@ -44,6 +44,34 @@ or a terminal restart. Some apps request consent only after installation.
 Continuation rechecks foundations, authenticates GitHub, installs packages,
 offers restores, and applies configuration. API authentication gates broad mise
 installation; an SSH-only failure does not invalidate working API access.
+After login and API checks pass, setup runs `gh config set telemetry disabled`.
+If this command fails, setup shows a warning; API readiness is not affected.
+Setup also applies documented telemetry opt-outs to installed tools. The same
+environment controls apply to installers and new managed zsh sessions.
+`./bin/configure-telemetry` reapplies saved preferences; add `--dry-run` to
+preview changes. Existing settings are preserved, with backups before edits.
+The [telemetry guide](apps/telemetry.md) lists automatic controls and manual
+settings. The [full audit](apps/telemetry-audit.json) records every reviewed
+tool, its official sources, and any unverified or unavailable control.
+This audit covers the tracked inventories and explicit setup tools, not every
+project dependency. Account settings and GUI-only switches need manual action.
+Explicit command options or project settings can override some controls.
+Wrangler dependency metadata needs `dependencies_instrumentation.enabled=false`
+in each project. Turborepo experimental OTel settings need the project
+observability feature flag; setup does not export that experimental control.
+The Vercel `skills` telemetry opt-out also suppresses its security-audit API
+lookups. `sfw` Free does not offer a telemetry opt-out; `cloudflared` has no
+documented control for its automatic error reporting.
+Cursor's inherited telemetry/crash settings are merged without removing JSONC
+comments. A complete Cursor opt-out is not established; account Privacy Mode
+remains manual. Setup uses a user login job at `~/Library/LaunchAgents/com.dotfiles.telemetry-env.plist` to set the
+documented telemetry environment values for GUI launches, including T3 desktop.
+Start a new shell and reopen apps after setup. An already running app or
+one started before the login job can retain its previous environment. To
+remove the login job, run
+`launchctl bootout gui/$(id -u)/com.dotfiles.telemetry-env` and remove the linked
+plist; `launchctl unsetenv <variable>` clears a selected telemetry variable for
+the session. The job sets only keys from the managed telemetry environment file.
 Homebrew and mise inventories can overlap, but both finish before foreground
 Xcode sign-in. Mobile completion currently runs after restore offers.
 The exact order and dependencies are in [setup-plan.sh](bin/lib/setup-plan.sh).
@@ -113,6 +141,7 @@ managed runtime does not prevent recovery.
 | `./bin/link-dotfiles` | Reconcile managed links and back up replaced targets. |
 | `./bin/setup-tmux` | Install missing TPM plugins and reload a running server. |
 | `./bin/configure-app-settings` | Retry automatic login-item creation. |
+| `./bin/configure-telemetry [--dry-run]` | Apply documented telemetry opt-outs to installed tools. |
 | `./bin/configure-screenshots` | Repair PNG destination preferences at `~/Screenshots`. |
 | `./bin/finder-sidebar-favorites` | Retry `development` and `screenshots` favorites. |
 | `./bin/configure-sudo-touch-id --check` | Inspect Touch ID for sudo; `--enable`/`--disable` change it. |

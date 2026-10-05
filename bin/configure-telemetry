@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+# Apply documented local preferences to installed tools. Never install a tool.
+set -euo pipefail
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+agents_only=0
+for argument in "$@"; do
+  case "$argument" in
+    --dry-run) export DOTFILES_RUN_MODE=dry-run ;;
+    --agents-only) agents_only=1 ;;
+    -h|--help) printf 'Usage: configure-telemetry [--dry-run] [--agents-only]\n'; exit 0 ;;
+    *) printf 'Unknown argument: %s\n' "$argument" >&2; exit 2 ;;
+  esac
+done
+. "$repo_root/bin/lib/setup-runtime.sh"
+. "$repo_root/bin/lib/harnesses.sh"
+runtime_init configure-telemetry
+trap 'runtime_on_exit "$?"' EXIT
+runtime_acquire_lock telemetry 'telemetry configuration' || exit 1
+
+telemetry_tool() {
+  local name="$1" candidate=""
+  if [[ -x "$HOME/.local/bin/mise" ]]; then
+    candidate="$(MISE_AUTO_INSTALL=0 MISE_OFFLINE=1 harness_probe "$HOME/.local/bin/mise" which "$name" 2>/dev/null)" || candidate=""
+  fi
+  case "$candidate" in */shims/*) candidate="" ;; esac
+  if [[ -n "$candidate" && -x "$candidate" ]]; then printf '%s\n' "$candidate"; return 0; fi
+  candidate="$(command -v "$name" 2>/dev/null)" || return 1
+  case "$candidate" in /*/shims/*) return 1 ;; esac
+  [[ "$candidate" == /* && -x "$candidate" ]] || return 1
+  printf '%s\n' "$candidate"
+}
+
+status=0
+telemetry_command() {
+  local name="$1" executable result=0
+  shift
+  executable="$(telemetry_tool "$name")" || return 0
+  if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
+    printf 'Would configure telemetry: %s' "$name"; printf ' %q' "$@"; printf '\n'
+    return 0
+  fi
+  harness_probe "$executable" "$@" >/dev/null 2>&1 || result=$?
+  if [[ "$result" != 0 ]]; then
+    printf 'Could not configure %s telemetry (status %s). Rerun ./bin/configure-telemetry.\n' "$name" "$result" >&2
+    status=1
+  else printf 'Configured %s telemetry\n' "$name"; fi
+}
+
+telemetry_file() {
+  local name="$1" kind="$2" target="$3" source="${4:-}"
+  if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
+    printf 'Would configure %s telemetry in %s\n' "$name" "$target"
+    return 0
+  fi
+  if /usr/bin/ruby "$repo_root/bin/lib/telemetry-config.rb" "$kind" "$target" "$source"; then
+    printf 'Configured %s telemetry\n' "$name"
+  else
+    printf 'Could not configure %s telemetry; existing settings were preserved.\n' "$name" >&2
+    status=1
+  fi
+}
+
+telemetry_gui_environment() {
+  local launchctl_path domain="gui/$UID" job="com.dotfiles.telemetry-env" result=0
+  if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
+    printf 'Would link and load the telemetry environment login job\n'
+    return 0
+  fi
+  # Reuse backup-before-link behavior without applying other personal settings.
+  "$repo_root/bin/link-dotfiles" --telemetry-only || { status=1; return; }
+  launchctl_path="$(telemetry_tool launchctl)" || { status=1; return; }
+  harness_probe "$HOME/bin/dotfiles-telemetry-env" || result=$?
+  if ! harness_probe "$launchctl_path" print "$domain/$job" >/dev/null 2>&1; then
+    harness_probe "$launchctl_path" bootstrap "$domain" "$HOME/Library/LaunchAgents/$job.plist" || result=$?
+  fi
+  if [[ "$result" != 0 ]]; then
+    printf 'Could not load the telemetry environment login job; rerun in your macOS GUI session.\n' >&2
+    status=1
+  else printf 'Configured the GUI telemetry environment; reopen apps to use the new values.\n'; fi
+}
+
+if harness_installed codex || [[ -d "${DOTFILES_APPLICATIONS_DIR:-/Applications}/ChatGPT.app" ]]; then
+  telemetry_file 'Codex local runtime' codex "${CODEX_HOME:-$HOME/.codex}/config.toml"
+fi
+if harness_installed claude; then
+  telemetry_file claude json "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json" "$repo_root/home/.config/telemetry/claude.json"
+fi
+if [[ "$agents_only" == 0 ]]; then
+  telemetry_command brew analytics off
+  telemetry_command vercel telemetry disable
+  telemetry_command gcloud config set core/disable_usage_reporting true
+  telemetry_command eas analytics off
+  telemetry_command wrangler telemetry disable
+  telemetry_command flyctl settings analytics disable
+  telemetry_command turbo telemetry disable
+  if [[ -d "${DOTFILES_APPLICATIONS_DIR:-/Applications}/Cursor.app" ]]; then
+    telemetry_file cursor jsonc "$HOME/Library/Application Support/Cursor/User/settings.json" "$repo_root/home/.config/telemetry/cursor-settings.json"
+    telemetry_file cursor jsonc "$HOME/.cursor/argv.json" "$repo_root/home/.config/telemetry/cursor-argv.json"
+  fi
+  telemetry_gui_environment
+  printf 'Manual settings and unavailable controls: see %s/apps/telemetry.md\n' "$repo_root"
+fi
+exit "$status"

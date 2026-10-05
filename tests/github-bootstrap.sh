@@ -38,6 +38,12 @@ case "$1 $2" in
  '--version ') echo 'gh fixture' ;;
  'auth status') [[ ! -f "$MISE_DATA_DIR/fail-login" ]] ;;
  'auth token') printf 'synthetic-credential-do-not-log\n' ;;
+ 'config set')
+   [[ "$*" == 'config set telemetry disabled' ]]
+   [[ ! -f "$MISE_DATA_DIR/fail-login" && ! -f "$MISE_DATA_DIR/fail-api" && ! -f "$MISE_DATA_DIR/quota-exhausted" ]]
+   printf 'telemetry disabled\n' >> "$MISE_DATA_DIR/config-calls"
+   [[ ! -f "$MISE_DATA_DIR/fail-config" ]] || exit 1
+   ;;
  'api --hostname')
    case "$4" in
      user) [[ ! -f "$MISE_DATA_DIR/fail-api" ]] || { echo 'HTTP 403 synthetic-credential-do-not-log' >&2; exit 1; } ;;
@@ -60,7 +66,11 @@ chmod +x "$fixture/bin/"*
 "$repo_root/bin/github-bootstrap" >> "$fixture/acquire.log" 2>&1
 [[ $(wc -l < "$MISE_DATA_DIR/calls" | tr -d ' ') == 1 ]]
 [[ $("$HOME/bin/dotfiles-gh-real" --resolve) == */2.100.0/gh_2.100.0_macOS_arm64/bin/gh ]]
+[[ ! -f "$MISE_DATA_DIR/config-calls" ]]
 "$repo_root/bin/auth-setup" --api-only > "$fixture/api.log" 2>&1
+[[ $(cat "$MISE_DATA_DIR/config-calls") == 'telemetry disabled' ]]
+"$repo_root/bin/auth-setup" --api-only >> "$fixture/api.log" 2>&1
+[[ $(wc -l < "$MISE_DATA_DIR/config-calls" | tr -d ' ') == 2 ]]
 "$repo_root/bin/auth-setup" --verify-mise > "$fixture/mise.log" 2>&1
 # Authentication and API failures never cause a second install.
 touch "$MISE_DATA_DIR/fail-login"
@@ -72,6 +82,14 @@ rm "$MISE_DATA_DIR/fail-api"
 touch "$MISE_DATA_DIR/quota-exhausted"
 if "$repo_root/bin/auth-setup" --api-only >> "$fixture/api.log" 2>&1; then exit 1; fi
 rm "$MISE_DATA_DIR/quota-exhausted"
+[[ $(wc -l < "$MISE_DATA_DIR/config-calls" | tr -d ' ') == 2 ]]
+# A telemetry preference failure warns but keeps API readiness.
+touch "$MISE_DATA_DIR/fail-config"
+"$repo_root/bin/auth-setup" --api-only >> "$fixture/api.log" 2>&1
+grep -q 'Could not disable GitHub CLI telemetry' "$fixture/api.log"
+rm "$MISE_DATA_DIR/fail-config"
+"$repo_root/bin/auth-setup" --api-only >> "$fixture/api.log" 2>&1
+[[ $(wc -l < "$MISE_DATA_DIR/config-calls" | tr -d ' ') == 4 ]]
 grep -q '1234567890' "$fixture/api.log"
 [[ $(wc -l < "$MISE_DATA_DIR/calls" | tr -d ' ') == 1 ]]
 ! grep -q 'synthetic-credential-do-not-log' "$fixture/"*.log
@@ -109,4 +127,4 @@ mv "$MISE_DATA_DIR/installs" "$MISE_DATA_DIR/saved-installs"
 touch "$MISE_DATA_DIR/fail-acquire"
 if "$repo_root/bin/github-bootstrap" > "$fixture/acquire-fail.log" 2>&1; then exit 1; fi
 [[ $(wc -l < "$MISE_DATA_DIR/calls" | tr -d ' ') == 1 ]]
-printf 'PASS: isolated acquisition, idempotency, API/403/quota gates, direct credentials, upgrade resolution, routing, published host validation\n'
+printf 'PASS: isolated acquisition, idempotency, API/403/quota gates, telemetry configuration/recovery, direct credentials, upgrade resolution, routing, published host validation\n'

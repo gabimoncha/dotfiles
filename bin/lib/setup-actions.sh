@@ -49,6 +49,7 @@ setup_standalone_agents() {
     "${repo_root}/bin/ensure-harnesses-standalone"
   fi
 }
+setup_telemetry() { "${repo_root}/bin/configure-telemetry"; }
 setup_app_settings() { "${repo_root}/bin/configure-app-settings"; }
 setup_screenshots() { "${repo_root}/bin/configure-screenshots"; }
 setup_permission_handoff() {

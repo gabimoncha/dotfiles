@@ -21,3 +21,5 @@ home/.cli-proxy-api/*
 
 # Private, persistent setup diagnostics (normal and dry-run).
 .local/setup-runs/
+# Working notes for documentation audits; reviewed results live under apps/.
+.local/telemetry-audit/

@@ -115,7 +115,10 @@ setup_plan() {
     plan_wait homebrew
     plan_stage brew_environment foundations 'homebrew' local setup_brew_environment
     plan_stage standalone_agents foundations 'brew_environment' capture setup_standalone_agents
-    if [[ "$plan_status" == 0 ]]; then
+    local foundations_status="$plan_status"
+    # A telemetry failure fails the run but does not block the handoff.
+    plan_stage telemetry_foundations environment 'clt' capture setup_telemetry
+    if [[ "$foundations_status" == 0 ]]; then
       plan_stage permission_handoff foundations 'homebrew mise install_gh standalone_agents' capture setup_permission_handoff
     else
       runtime_warn 'Foundation setup is incomplete. Fix the failed stages and rerun ./bin/setup before continuing.'
@@ -177,6 +180,7 @@ setup_plan() {
   plan_stage screenshots environment 'clt' capture setup_screenshots
   plan_stage app_settings environment 'clt' sensitive setup_app_settings
   plan_stage finder environment 'clt' sensitive setup_finder
+  plan_stage telemetry environment 'clt' capture setup_telemetry
   setup_plan_finish "$plan_started"
   return "$plan_status"
 }

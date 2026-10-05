@@ -11,6 +11,11 @@ entrypoint and function library. Preparation stops before bulk packages,
 personal configuration, authentication, and restores so the user can review
 App Management and restart the terminal. `--continue` acknowledges that step;
 no marker or TCC probe claims to verify consent or restart.
+Telemetry opt-outs are an explicit exception to the personal-configuration
+boundary: setup exports them before installers and applies saved preferences
+after foundations. Continuation reapplies them after installation and restores,
+including when an unrelated package stage fails. Tool settings use supported
+commands or backed-up merges; unrelated state and update checks are preserved.
 
 Homebrew and mise foundations overlap after CLT readiness. Their inventories
 can overlap later. Both inventories finish before Xcode sign-in so background

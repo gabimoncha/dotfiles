@@ -3,7 +3,8 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 fixture="$(mktemp -d)"
 trap 'rm -rf "$fixture"' EXIT
-mkdir -p "$fixture/home" "$fixture/bin" "$fixture/brew/etc"
+mkdir -p "$fixture/home" "$fixture/bin" "$fixture/brew/etc" "$fixture/apps"
+export DOTFILES_APPLICATIONS_DIR="$fixture/apps"
 export HOME="$fixture/home" PATH="$fixture/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 export DOTFILES_SETUP_RUN_ROOT="$fixture/runs" DOTFILES_RUNTIME_LOCK_ROOT="$fixture/locks" FIXTURE_BREW="$fixture/brew"
 printf '#!/bin/bash\nprintf "%%s\\n" "$FIXTURE_BREW"\n' > "$fixture/bin/brew"
@@ -11,11 +12,19 @@ chmod +x "$fixture/bin/brew"
 printf 'existing shell fixture\n' > "$HOME/.zshrc"
 mkdir -p "$HOME/.claude"
 printf 'existing Claude instructions fixture\n' > "$HOME/.claude/CLAUDE.md"
+printf '{"keep":true,"env":{"LOCAL_KEEP":"fixture"}}\n' > "$HOME/.claude/settings.json"
+cp "$HOME/.claude/settings.json" "$fixture/settings-before"
 printf 'existing service fixture\n' > "$fixture/brew/etc/cliproxyapi.conf"
+"$repo_root/bin/link-dotfiles" --telemetry-only >/dev/null
+[[ ! -L "$HOME/.zshrc" && ! -L "$HOME/.claude/CLAUDE.md" && ! -L "$fixture/brew/etc/cliproxyapi.conf" ]]
+[[ -L "$HOME/.config/telemetry/env.sh" && -L "$HOME/bin/dotfiles-telemetry-env" ]]
+[[ -L "$HOME/Library/LaunchAgents/com.dotfiles.telemetry-env.plist" ]]
+cmp "$HOME/.claude/settings.json" "$fixture/settings-before"
 "$repo_root/bin/link-dotfiles" >/dev/null
 [[ -L "$HOME/.zshrc" && -L "$HOME/bin/dotfiles-gh-real" ]]
 [[ -L "$HOME/bin/harness" ]]
 [[ -L "$HOME/.config/zsh/harness.zsh" ]]
+[[ -L "$HOME/.config/telemetry/env.sh" ]]
 "$HOME/bin/harness" --help | grep -q 'harness update'
 [[ -L "$HOME/.codex/AGENTS.md" ]]
 [[ -L "$HOME/.claude/CLAUDE.md" ]]
@@ -24,6 +33,7 @@ printf 'existing service fixture\n' > "$fixture/brew/etc/cliproxyapi.conf"
 grep -Fqx "If you're working on coding tasks, use Simplified Technical English, defined by the ASD-STE100 standard, when replying back to the user." "$HOME/.codex/AGENTS.md"
 grep -Fqx "If you're working on coding tasks, use Simplified Technical English, defined by the ASD-STE100 standard, when replying back to the user." "$HOME/.claude/CLAUDE.md"
 [[ -L "$fixture/brew/etc/cliproxyapi.conf" ]]
+/usr/bin/ruby -rjson -e 's=JSON.parse(File.read(ARGV[0])); abort unless s["keep"] && s["env"]["LOCAL_KEEP"]=="fixture" && s["env"]["DISABLE_TELEMETRY"]=="1"' "$HOME/.claude/settings.json"
 backup="$(find "$HOME/.dotfiles-backups" -name .zshrc -type f)"
 [[ "$(cat "$backup")" == 'existing shell fixture' ]]
 claude_backup="$(find "$HOME/.dotfiles-backups" -path '*/.claude/CLAUDE.md' -type f)"

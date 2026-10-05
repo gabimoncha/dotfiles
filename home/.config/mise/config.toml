@@ -91,6 +91,7 @@ hunk = "latest"
 
 [settings]
 experimental = true
+use_versions_host_track = false
 # Codex CLI is vendor-owned. Ignore old project or shell version requests too.
 # This does not disable codex-acp or its private npm dependency.
 disable_tools = ["codex", "aqua:openai/codex", "npm:@openai/codex"]
