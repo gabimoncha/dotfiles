@@ -83,6 +83,7 @@ mas = "latest"
 "conda:wget" = "latest"
 "npm:@agentclientprotocol/codex-acp" = "latest"
 "npm:@agentclientprotocol/claude-agent-acp" = "latest"
+"npm:cf" = "latest"
 wrangler = { version = "latest", allow_builds = ["esbuild", "sharp", "workerd"] }
 herdr = "latest"
 hunk = "latest"
