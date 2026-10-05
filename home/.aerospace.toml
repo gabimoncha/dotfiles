@@ -340,6 +340,17 @@ run = 'layout floating'
 if.app-id = 'com.superduper.superwhisper'
 run = 'layout floating'
 
+### Typeless status pill
+[[on-window-detected]]
+if.app-id = 'now.typeless.desktop'
+if.window-title-regex-substring = '^Status$'
+run = 'layout floating'
+
+### Typeless main window
+[[on-window-detected]]
+if.app-id = 'now.typeless.desktop'
+run = ['layout floating', 'move-node-to-workspace D']
+
 ### GIPHY
 [[on-window-detected]]
 if.app-id = 'com.fasthatchapps.gifgrabberosx'

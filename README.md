@@ -183,6 +183,11 @@ share `home/.codex/AGENTS.md` with Codex and Claude, and merge tracked Claude
 settings without discarding other keys. Replaced files are backed up.
 `bash ./bin/configure-claude-settings` applies only the settings merge.
 
+AeroSpace leaves the workspace unchanged for Superwhisper. The main Typeless
+window floats on workspace `D`. A separate rule matches Typeless's `Status`
+pill by app ID and window title, applies floating layout, and leaves its
+workspace unchanged. This rule does not make the pill visible on all workspaces.
+
 CLIProxyAPI binds to `127.0.0.1:49156`. Its tracked configuration is linked into
 HOME and Homebrew's `etc/cliproxyapi.conf` before the service starts. Provider
 OAuth files remain local and must not be copied into tracked configuration.
