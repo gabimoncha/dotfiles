@@ -61,17 +61,27 @@ telemetry_file() {
 }
 
 telemetry_gui_environment() {
-  local launchctl_path domain="gui/$UID" job="com.dotfiles.telemetry-env" result=0
+  local launchctl_path domain="gui/$UID" job="com.dotfiles.telemetry-env" result=0 changed=0 loaded=0
+  local plist="$HOME/Library/LaunchAgents/com.dotfiles.telemetry-env.plist"
   if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
-    printf 'Would link and load the telemetry environment login job\n'
+    printf 'Would install and load the telemetry environment login job\n'
     return 0
   fi
-  # Reuse backup-before-link behavior without applying other personal settings.
+  [[ -f "$plist" && ! -L "$plist" ]] && cmp -s "$repo_root/home/Library/LaunchAgents/$job.plist" "$plist" || changed=1
+  # Reuse backup-before-replace behavior without applying other personal settings.
   "$repo_root/bin/link-dotfiles" --telemetry-only || { status=1; return; }
   launchctl_path="$(telemetry_tool launchctl)" || { status=1; return; }
   harness_probe "$HOME/bin/dotfiles-telemetry-env" || result=$?
-  if ! harness_probe "$launchctl_path" print "$domain/$job" >/dev/null 2>&1; then
-    harness_probe "$launchctl_path" bootstrap "$domain" "$HOME/Library/LaunchAgents/$job.plist" || result=$?
+  if [[ "$changed" == 1 ]]; then
+    # Unload a changed definition; the old job can be absent.
+    harness_probe "$launchctl_path" bootout "$domain/$job" >/dev/null 2>&1 || true
+  elif harness_probe "$launchctl_path" print "$domain/$job" >/dev/null 2>&1; then
+    loaded=1
+  fi
+  if [[ "$loaded" == 0 ]]; then
+    # bootstrap can fail briefly right after bootout; retry once.
+    harness_probe "$launchctl_path" bootstrap "$domain" "$plist" ||
+      { sleep 1; harness_probe "$launchctl_path" bootstrap "$domain" "$plist"; } || result=$?
   fi
   if [[ "$result" != 0 ]]; then
     printf 'Could not load the telemetry environment login job; rerun in your macOS GUI session.\n' >&2

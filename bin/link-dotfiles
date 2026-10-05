@@ -41,7 +41,6 @@ managed_sources=(
   "${repo_root}/home/.cli-proxy-api/config.yaml"
   "${repo_root}/home/.config/mise/config.toml"
   "${repo_root}/home/.config/telemetry/env.sh"
-  "${repo_root}/home/Library/LaunchAgents/com.dotfiles.telemetry-env.plist"
   "${repo_root}/home/.config/zsh/env.zsh"
   "${repo_root}/home/.config/zsh/profile.zsh"
   "${repo_root}/home/.config/zsh/interactive.zsh"
@@ -63,8 +62,7 @@ managed_app_sources=(
 
 if [[ "$telemetry_only" == 1 ]]; then
   managed_sources=("${repo_root}/home/.config/telemetry/env.sh"
-    "${repo_root}/home/bin/dotfiles-telemetry-env"
-    "${repo_root}/home/Library/LaunchAgents/com.dotfiles.telemetry-env.plist")
+    "${repo_root}/home/bin/dotfiles-telemetry-env")
   managed_app_sources=()
 elif [[ -d "${repo_root}/nvim" ]] && find "${repo_root}/nvim" -mindepth 1 -maxdepth 1 -print -quit | grep -q .; then
   managed_sources+=("${repo_root}/nvim")
@@ -177,6 +175,28 @@ link_path() {
   printf 'Linked %s -> %s\n' "${target}" "${source}"
 }
 
+# Copy, not link: configure-telemetry compares the copy to reload a changed job.
+copy_path() {
+  local source="$1"
+  local target="${HOME}/${source#${repo_root}/home/}"
+
+  mkdir -p "$(dirname "${target}")"
+  if [[ -f "${target}" && ! -L "${target}" ]] && cmp -s "${source}" "${target}"; then
+    printf 'Already installed %s\n' "${target}"
+    return 0
+  fi
+
+  if [[ -L "${target}" && "$(readlink "${target}")" == "${source}" ]]; then
+    # An earlier link to the same source holds no user state.
+    rm "${target}"
+  elif [[ -e "${target}" || -L "${target}" ]]; then
+    backup_target "${target}"
+  fi
+
+  cp "${source}" "${target}"
+  printf 'Installed %s\n' "${target}"
+}
+
 append_installed_app_sources() {
   local entry app_bundle source
 
@@ -204,6 +224,10 @@ for source in "${managed_sources[@]}"; do
 
   link_path "${source}"
 done
+
+if [[ "$telemetry_only" == 1 ]]; then
+  copy_path "${repo_root}/home/Library/LaunchAgents/com.dotfiles.telemetry-env.plist"
+fi
 
 if [[ "$telemetry_only" == 0 && "${DOTFILES_LINK_AGENT_CONFIG:-1}" == 1 ]]; then
   agent_instructions="${repo_root}/home/.codex/AGENTS.md"

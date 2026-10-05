@@ -9,12 +9,17 @@ export CLAUDE_CONFIG_DIR="$HOME/.claude"
 export DOTFILES_APPLICATIONS_DIR="$fixture/apps"
 export DOTFILES_SETUP_RUN_ROOT="$fixture/runs" DOTFILES_RUNTIME_LOCK_ROOT="$fixture/locks"
 export CALLS="$fixture/calls"
-# Preserve unrelated CRS properties while replacing duplicate/bare enable.
-export AZ_CRS_ARGUMENTS='api.url=https://example.test,enable=true,log=warning,enable'
+# The GUI job merges launchd's CRS properties only, never the caller's shell.
+export AZ_CRS_ARGUMENTS='shell.only=1,enable=true'
 mkdir -p "$fixture/bin" "$DOTFILES_APPLICATIONS_DIR" "$CODEX_HOME/packages/standalone/current/bin" "$HOME/.local/bin" "$HOME/.local/share/claude/versions/1" "$HOME/.claude"
 printf '#!/bin/bash\nexit 0\n' > "$CODEX_HOME/packages/standalone/current/bin/codex"
 cp "$CODEX_HOME/packages/standalone/current/bin/codex" "$HOME/.local/share/claude/versions/1/claude"
 chmod +x "$CODEX_HOME/packages/standalone/current/bin/codex" "$HOME/.local/share/claude/versions/1/claude"
+# Preserve unrelated CRS properties while replacing duplicate/bare enable.
+printf 'api.url=https://example.test,enable=true,log=warning,enable' > "$HOME/launchd-crs"
+[[ $(AZ_CRS_ARGUMENTS='a=1,enable,b=2,enable=true' /bin/sh -c '. "$1"; printf %s "$AZ_CRS_ARGUMENTS"' sh "$repo_root/home/.config/telemetry/env.sh") == 'a=1,b=2,enable=false' ]]
+# The Claude settings values must match the shared environment.
+/usr/bin/ruby -rjson -e 'JSON.parse(File.read(ARGV[0]))["env"].each { |k, v| File.read(ARGV[1]).include?("export #{k}=#{v}\n") or abort("#{k} differs") }' "$repo_root/home/.config/telemetry/claude.json" "$repo_root/home/.config/telemetry/env.sh"
 ln -s "$CODEX_HOME/packages/standalone/current/bin/codex" "$HOME/.local/bin/codex"
 ln -s "$HOME/.local/share/claude/versions/1/claude" "$HOME/.local/bin/claude"
 for tool in brew vercel gcloud eas wrangler flyctl turbo; do
@@ -41,11 +46,19 @@ set -eu
 printf 'launchctl %s\n' "$*" >> "$CALLS"
 case "$1" in
   print) [[ -f "$HOME/job-loaded" ]] ;;
-  bootstrap) [[ "${FAIL_LAUNCH:-0}" != 1 ]] || exit 1; touch "$HOME/job-loaded" ;;
+  bootstrap)
+    if [[ -f "$HOME/fail-bootstrap-once" ]]; then rm "$HOME/fail-bootstrap-once"; exit 1; fi
+    [[ "${FAIL_LAUNCH:-0}" != 1 && ! -f "$HOME/job-loaded" ]] || exit 1; touch "$HOME/job-loaded" ;;
+  bootout) [[ -f "$HOME/job-loaded" ]] || exit 3; rm "$HOME/job-loaded" ;;
+  getenv) [[ "$2" == AZ_CRS_ARGUMENTS ]]; [[ ! -f "$HOME/launchd-crs" ]] || cat "$HOME/launchd-crs" ;;
   setenv)
     case "$2" in ''|*[!A-Z0-9_]*) exit 99 ;; esac
     if [[ "$2" == AZ_CRS_ARGUMENTS ]]; then
-      [[ "$3" == 'api.url=https://example.test,log=warning,enable=false' ]]
+      if [[ -f "$HOME/launchd-crs" ]]; then
+        [[ "$3" == 'api.url=https://example.test,log=warning,enable=false' ]]
+      else
+        [[ "$3" == enable=false ]]
+      fi
     else
       case "$3" in 1|0|true|false|YES) ;; *) exit 99 ;; esac
     fi ;;
@@ -208,7 +221,8 @@ grep -Fq '"keep": { "array": ["/* literal */",], }' "$HOME/Library/Application S
 grep -Fq '"telemetry.telemetryLevel": "off", // preserve this comment' "$HOME/Library/Application Support/Cursor/User/settings.json"
 grep -Fq '"crash-reporter-id": "fixture-id", // keep identity' "$HOME/.cursor/argv.json"
 grep -Fq '"enable-crash-reporter": false' "$HOME/.cursor/argv.json"
-[[ -L "$HOME/.config/telemetry/env.sh" && -L "$HOME/bin/dotfiles-telemetry-env" && -L "$HOME/Library/LaunchAgents/com.dotfiles.telemetry-env.plist" ]]
+plist="$HOME/Library/LaunchAgents/com.dotfiles.telemetry-env.plist"
+[[ -L "$HOME/.config/telemetry/env.sh" && -L "$HOME/bin/dotfiles-telemetry-env" && -f "$plist" && ! -L "$plist" ]]
 cp "$HOME/Library/Application Support/Cursor/User/settings.json" "$fixture/cursor-after"
 "$repo_root/bin/configure-telemetry" >> "$fixture/apps.log" 2>&1
 cmp "$HOME/Library/Application Support/Cursor/User/settings.json" "$fixture/cursor-after"
@@ -221,6 +235,33 @@ assert config['RunAtLoad'] and 'KeepAlive' not in config
 args=config['ProgramArguments']
 subprocess.run(args,check=True)
 PY
+# A login without launchd CRS properties sets only enable=false.
+rm "$HOME/launchd-crs"
+: > "$CALLS"
+"$HOME/bin/dotfiles-telemetry-env"
+grep -Fqx 'launchctl setenv AZ_CRS_ARGUMENTS enable=false' "$CALLS"
+# A changed installed plist is backed up, replaced, and reloaded.
+printf '<!-- local change -->\n' >> "$plist"
+: > "$CALLS"
+"$repo_root/bin/configure-telemetry" >> "$fixture/apps.log" 2>&1
+cmp "$plist" "$repo_root/home/Library/LaunchAgents/com.dotfiles.telemetry-env.plist"
+grep -rqF -- '<!-- local change -->' "$HOME/.dotfiles-backups"
+[[ $(grep -c '^launchctl bootout ' "$CALLS") == 1 && $(grep -c '^launchctl bootstrap ' "$CALLS") == 1 ]]
+# An unchanged loaded job is not reloaded.
+: > "$CALLS"
+"$repo_root/bin/configure-telemetry" >> "$fixture/apps.log" 2>&1
+! grep -q '^launchctl boot' "$CALLS"
+# An earlier link to the tracked plist is replaced without a backup, and a
+# bootstrap that fails right after bootout is retried once.
+rm "$plist"
+ln -s "$repo_root/home/Library/LaunchAgents/com.dotfiles.telemetry-env.plist" "$plist"
+count="$(find "$HOME/.dotfiles-backups" -type f | wc -l)"
+touch "$HOME/fail-bootstrap-once"
+: > "$CALLS"
+"$repo_root/bin/configure-telemetry" >> "$fixture/apps.log" 2>&1
+[[ -f "$plist" && ! -L "$plist" ]]
+[[ $(find "$HOME/.dotfiles-backups" -type f | wc -l) == "$count" ]]
+[[ $(grep -c '^launchctl bootstrap ' "$CALLS") == 2 && -f "$HOME/job-loaded" ]]
 rm "$HOME/job-loaded"
 if FAIL_LAUNCH=1 "$repo_root/bin/configure-telemetry" > "$fixture/job-fail.log" 2>&1; then exit 1; fi
 grep -q 'Could not load the telemetry environment login job' "$fixture/job-fail.log"

@@ -66,12 +66,16 @@ Cursor's inherited telemetry/crash settings are merged without removing JSONC
 comments. A complete Cursor opt-out is not established; account Privacy Mode
 remains manual. Setup uses a user login job at `~/Library/LaunchAgents/com.dotfiles.telemetry-env.plist` to set the
 documented telemetry environment values for GUI launches, including T3 desktop.
+Setup copies this plist instead of linking it. When the copy differs from the
+tracked plist, setup backs it up, replaces it, and reloads the job.
 Start a new shell and reopen apps after setup. An already running app or
 one started before the login job can retain its previous environment. To
 remove the login job, run
-`launchctl bootout gui/$(id -u)/com.dotfiles.telemetry-env` and remove the linked
+`launchctl bootout gui/$(id -u)/com.dotfiles.telemetry-env` and remove the
 plist; `launchctl unsetenv <variable>` clears a selected telemetry variable for
 the session. The job sets only keys from the managed telemetry environment file.
+For GUI apps, `AZ_CRS_ARGUMENTS` keeps only properties already in the launchd
+environment, not the properties of the shell that runs setup.
 Homebrew and mise inventories can overlap, but both finish before foreground
 Xcode sign-in. Mobile completion currently runs after restore offers.
 The exact order and dependencies are in [setup-plan.sh](bin/lib/setup-plan.sh).

@@ -18,7 +18,10 @@ printf 'existing service fixture\n' > "$fixture/brew/etc/cliproxyapi.conf"
 "$repo_root/bin/link-dotfiles" --telemetry-only >/dev/null
 [[ ! -L "$HOME/.zshrc" && ! -L "$HOME/.claude/CLAUDE.md" && ! -L "$fixture/brew/etc/cliproxyapi.conf" ]]
 [[ -L "$HOME/.config/telemetry/env.sh" && -L "$HOME/bin/dotfiles-telemetry-env" ]]
-[[ -L "$HOME/Library/LaunchAgents/com.dotfiles.telemetry-env.plist" ]]
+# The login job plist is a copy, so configure-telemetry can detect changes.
+plist="$HOME/Library/LaunchAgents/com.dotfiles.telemetry-env.plist"
+[[ -f "$plist" && ! -L "$plist" ]]
+cmp "$plist" "$repo_root/home/Library/LaunchAgents/com.dotfiles.telemetry-env.plist"
 cmp "$HOME/.claude/settings.json" "$fixture/settings-before"
 "$repo_root/bin/link-dotfiles" >/dev/null
 [[ -L "$HOME/.zshrc" && -L "$HOME/bin/dotfiles-gh-real" ]]
@@ -33,7 +36,7 @@ cmp "$HOME/.claude/settings.json" "$fixture/settings-before"
 grep -Fqx "If you're working on coding tasks, use Simplified Technical English, defined by the ASD-STE100 standard, when replying back to the user." "$HOME/.codex/AGENTS.md"
 grep -Fqx "If you're working on coding tasks, use Simplified Technical English, defined by the ASD-STE100 standard, when replying back to the user." "$HOME/.claude/CLAUDE.md"
 [[ -L "$fixture/brew/etc/cliproxyapi.conf" ]]
-/usr/bin/ruby -rjson -e 's=JSON.parse(File.read(ARGV[0])); abort unless s["keep"] && s["env"]["LOCAL_KEEP"]=="fixture" && s["env"]["DISABLE_TELEMETRY"]=="1"' "$HOME/.claude/settings.json"
+/usr/bin/ruby -rjson -e 's=JSON.parse(File.read(ARGV[0])); abort unless s["keep"] && s["env"]=={"LOCAL_KEEP"=>"fixture"} && s["pluginConfigs"].is_a?(Hash)' "$HOME/.claude/settings.json"
 backup="$(find "$HOME/.dotfiles-backups" -name .zshrc -type f)"
 [[ "$(cat "$backup")" == 'existing shell fixture' ]]
 claude_backup="$(find "$HOME/.dotfiles-backups" -path '*/.claude/CLAUDE.md' -type f)"
@@ -43,11 +46,11 @@ count="$(find "$HOME/.dotfiles-backups" -type f | wc -l)"
 [[ "$(find "$HOME/.dotfiles-backups" -type f | wc -l)" == "$count" ]]
 [[ "$(cat "$backup")" == 'existing shell fixture' ]]
 # Refuse an invalid env schema and malformed content before any write.
-printf '{"env":"keep-invalid-fixture"}\n' > "$HOME/.claude/settings.json"
+printf '{"pluginConfigs":"keep-invalid-fixture"}\n' > "$HOME/.claude/settings.json"
 cp "$HOME/.claude/settings.json" "$fixture/invalid-before"
 if bash "$repo_root/bin/configure-claude-settings" > "$fixture/invalid.log" 2>&1; then exit 1; fi
 cmp "$HOME/.claude/settings.json" "$fixture/invalid-before"
-grep -q 'Claude setting env must be a JSON object' "$fixture/invalid.log"
+grep -q 'Claude setting pluginConfigs must be a JSON object' "$fixture/invalid.log"
 printf '{broken synthetic-private-clause\n' > "$HOME/.claude/settings.json"
 cp "$HOME/.claude/settings.json" "$fixture/invalid-before"
 if bash "$repo_root/bin/configure-claude-settings" > "$fixture/invalid.log" 2>&1; then exit 1; fi

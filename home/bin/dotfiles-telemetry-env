@@ -2,6 +2,9 @@
 # One-shot login job: share only the documented telemetry controls with launchd.
 set -eu
 settings="$HOME/.config/telemetry/env.sh"
+# Merge only CRS properties already in launchd, as at login. Never the caller's.
+AZ_CRS_ARGUMENTS=$(launchctl getenv AZ_CRS_ARGUMENTS 2>/dev/null) || AZ_CRS_ARGUMENTS=
+[ -n "$AZ_CRS_ARGUMENTS" ] || unset AZ_CRS_ARGUMENTS
 . "$settings"
 while IFS= read -r line; do
   case "$line" in
