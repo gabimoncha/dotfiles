@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+repo_root="$(cd "$(dirname "$0")/.." && pwd)"
+target="${CODEX_HOME:-$HOME/.codex}/config.toml"
+case "${1:-}" in
+  --dry-run) printf 'Would merge Codex settings into %s\n' "$target"; exit 0 ;;
+  '') ;;
+  *) printf 'Usage: configure-codex-settings [--dry-run]\n' >&2; exit 2 ;;
+esac
+/usr/bin/ruby "$repo_root/bin/lib/telemetry-config.rb" toml "$target" "$repo_root/home/.codex/config.toml"
+printf 'Configured Codex settings\n'
