@@ -212,9 +212,16 @@ uses the nightly Homebrew cask.
 See [DECISIONS.md](DECISIONS.md) for the reasons and constraints.
 
 AeroSpace and Ghostty links wait for their application bundles. Final links
-share `home/.codex/AGENTS.md` with Codex and Claude, and merge tracked Claude
-settings without discarding other keys. Replaced files are backed up.
-`bash ./bin/configure-claude-settings` applies only the settings merge.
+share `home/.codex/AGENTS.md` with Codex and Claude, and merge tracked Codex and
+Claude settings without discarding other keys. Replaced files are backed up.
+The tracked settings disable [Codex memories](https://learn.chatgpt.com/docs/config-file/config-basic)
+with `features.memories = false` and [Claude auto memory](https://code.claude.com/docs/en/env-vars)
+with `env.CLAUDE_CODE_DISABLE_AUTO_MEMORY = "1"`. Existing memory files remain.
+Start new agent sessions after applying these settings.
+`bash ./bin/configure-codex-settings` applies only the Codex settings merge.
+It respects `CODEX_HOME` and supports `--dry-run`. Complex representations of
+managed TOML keys require a manual edit. The helper preserves the file on failure.
+`bash ./bin/configure-claude-settings` applies only the Claude settings merge.
 
 AeroSpace leaves the workspace unchanged for Superwhisper. The main Typeless
 window floats on workspace `D`. A separate rule matches Typeless's `Status`

@@ -233,6 +233,7 @@ if [[ "$telemetry_only" == 0 && "${DOTFILES_LINK_AGENT_CONFIG:-1}" == 1 ]]; then
   agent_instructions="${repo_root}/home/.codex/AGENTS.md"
   link_path "$agent_instructions" "${HOME}/.codex/AGENTS.md"
   link_path "$agent_instructions" "${HOME}/.claude/CLAUDE.md"
+  bash "${repo_root}/bin/configure-codex-settings"
   bash "${repo_root}/bin/configure-claude-settings"
 fi
 
