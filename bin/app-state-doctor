@@ -175,11 +175,32 @@ check_sudo_touch_id() {
   info "Apple Watch approval depends on macOS Auto Unlock settings and is not directly managed by this repo."
 }
 
+check_background_jobs() {
+  if [[ "$(uname)" != "Darwin" ]]; then
+    return 0
+  fi
+
+  local output enabled disabled
+  output="$("${repo_root}/bin/configure-background-jobs" --check 2>&1 || true)"
+  enabled="$(grep -c ' is not disabled$' <<<"$output" || true)"
+  disabled="$(grep -c ' is disabled' <<<"$output" || true)"
+  # The script is opt-in, so only a partly disabled list is drift.
+  if [[ "$disabled" -eq 0 ]]; then
+    info "Background jobs in macos/disabled-jobs.txt are enabled; ./bin/configure-background-jobs disables them."
+  elif [[ "$enabled" -eq 0 ]]; then
+    ok "Photos analysis and Siri voice training jobs are disabled"
+  else
+    warn "${enabled} jobs in macos/disabled-jobs.txt are enabled again"
+    info "Run ./bin/configure-background-jobs --check to list them, then ./bin/configure-background-jobs."
+  fi
+}
+
 check_aerospace
 check_ghostty
 check_tmux
 check_raycast
 check_sudo_touch_id
+check_background_jobs
 
 if [[ $issues -gt 0 ]]; then
   printf '\nFound %s app-state issue(s).\n' "$issues"

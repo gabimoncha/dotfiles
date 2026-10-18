@@ -1,0 +1,17 @@
+# User launchd jobs that ./bin/configure-background-jobs disables in gui/<uid>.
+# One label per line. Lines and text after # are ignored.
+#
+# Keep Siri, Apple Intelligence, and Spotlight jobs out of this list. On macOS 27
+# Siri runs as part of Apple Intelligence (com.apple.campo starts "Siri AI.app"),
+# and mas needs Spotlight to find installed App Store apps.
+
+# Photos and media analysis. Disabling these stops Live Text, Visual Look Up,
+# the Photos app, iCloud Photos, and the photo picker in other apps.
+com.apple.mediaanalysisd
+com.apple.photoanalysisd
+com.apple.photolibraryd
+com.apple.cloudphotod
+com.apple.mediastream.mstreamd
+
+# On-device training for the Siri voice.
+com.apple.SiriTTSTrainingAgent

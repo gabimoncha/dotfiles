@@ -1,0 +1,191 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+jobs_file="${repo_root}/macos/disabled-jobs.txt"
+domain="gui/$(id -u)"
+mode="apply"
+dry_run=0
+labels=()
+
+log() {
+  printf '==> %s\n' "$1"
+}
+
+warn() {
+  printf '!! %s\n' "$1" >&2
+}
+
+usage() {
+  cat <<'EOF' >&2
+Usage: ./bin/configure-background-jobs [--check|--revert] [--dry-run]
+
+Disables the user launchd jobs listed in macos/disabled-jobs.txt.
+--check reports jobs that are not disabled. --revert enables them again.
+EOF
+}
+
+load_labels() {
+  local label
+
+  if [[ ! -f "$jobs_file" ]]; then
+    warn "Job list not found: ${jobs_file}"
+    return 1
+  fi
+
+  while IFS= read -r label; do
+    if [[ ! "$label" =~ ^[A-Za-z0-9._-]+$ ]]; then
+      warn "Refusing invalid job label in ${jobs_file}: ${label}"
+      return 1
+    fi
+    labels+=("$label")
+  done < <(sed -e 's/#.*//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' "$jobs_file" | awk 'NF')
+
+  if [[ ${#labels[@]} -eq 0 ]]; then
+    warn "Job list is empty: ${jobs_file}"
+    return 1
+  fi
+}
+
+# Read the overrides once per pass. Older macOS releases print "true" for a
+# disabled job instead of "disabled".
+disabled_overrides() {
+  launchctl print-disabled "$domain"
+}
+
+job_disabled() {
+  grep -qE "\"${1//./\\.}\" => (disabled|true)\$" <<<"$2"
+}
+
+job_loaded() {
+  launchctl print "${domain}/$1" >/dev/null 2>&1
+}
+
+apply_change() {
+  local overrides label failed=0 still_loaded=0
+
+  overrides="$(disabled_overrides)"
+  for label in "${labels[@]}"; do
+    if job_disabled "$label" "$overrides" && ! job_loaded "$label"; then
+      log "${label} is already disabled"
+      continue
+    fi
+
+    if [[ $dry_run -eq 1 ]]; then
+      log "dry-run: would disable ${label}"
+      continue
+    fi
+
+    # Disable before bootout, so launchd cannot start the job again on demand.
+    if ! launchctl disable "${domain}/${label}"; then
+      warn "Could not disable ${label}"
+      failed=1
+      continue
+    fi
+
+    if job_loaded "$label"; then
+      launchctl bootout "${domain}/${label}" >/dev/null 2>&1 || true
+    fi
+    if job_loaded "$label"; then
+      warn "${label} is disabled but still loaded"
+      still_loaded=1
+    else
+      log "Disabled ${label}"
+    fi
+  done
+
+  if [[ $still_loaded -eq 1 ]]; then
+    warn "Log out and back in to stop the jobs that are still loaded."
+  fi
+  return "$failed"
+}
+
+check_status() {
+  local overrides label failed=0
+
+  overrides="$(disabled_overrides)"
+  for label in "${labels[@]}"; do
+    if ! job_disabled "$label" "$overrides"; then
+      warn "${label} is not disabled"
+      failed=1
+    elif job_loaded "$label"; then
+      warn "${label} is disabled but still loaded; log out and back in"
+    else
+      log "${label} is disabled"
+    fi
+  done
+
+  if [[ $failed -eq 1 ]]; then
+    warn "Run ./bin/configure-background-jobs to disable them."
+  fi
+  return "$failed"
+}
+
+revert_change() {
+  local overrides label failed=0 changed=0
+
+  overrides="$(disabled_overrides)"
+  for label in "${labels[@]}"; do
+    if ! job_disabled "$label" "$overrides"; then
+      log "${label} is already enabled"
+      continue
+    fi
+
+    if [[ $dry_run -eq 1 ]]; then
+      log "dry-run: would enable ${label}"
+      continue
+    fi
+
+    if launchctl enable "${domain}/${label}"; then
+      log "Enabled ${label}"
+      changed=1
+    else
+      warn "Could not enable ${label}"
+      failed=1
+    fi
+  done
+
+  if [[ $changed -eq 1 ]]; then
+    log "Log out and back in to start the enabled jobs."
+  fi
+  return "$failed"
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --check)
+      mode="check"
+      shift
+      ;;
+    --revert)
+      mode="revert"
+      shift
+      ;;
+    --dry-run)
+      dry_run=1
+      shift
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+if [[ "$(uname)" != "Darwin" ]]; then
+  warn "launchd jobs can only be configured on macOS."
+  exit 1
+fi
+
+load_labels
+
+case "$mode" in
+  apply) apply_change ;;
+  check) check_status ;;
+  revert) revert_change ;;
+esac
