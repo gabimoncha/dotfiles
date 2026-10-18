@@ -1,6 +1,6 @@
 # Telemetry controls
 
-Reviewed on 2026-10-03. Coverage: 194 of 194 tracked entries.
+Reviewed on 2026-10-03. Coverage: 193 of 193 tracked entries.
 
 Setup exports the supported environment controls before installers run. It applies saved preferences after foundation installation, and again at the end of continuation after restores. A failed setter makes the stage fail; other installed tools are still configured.
 
@@ -51,7 +51,6 @@ No supported script interface was established for these controls. Apply them in 
 | Tool | Action and limit | Evidence |
 | --- | --- | --- |
 | Chrome | Settings > You and Google > Google services: turn off “Help improve Chrome’s features and performance.” The managed MetricsReportingEnabled policy is not established for an unmanaged Mac. | [Official source](https://support.google.com/chrome/answer/14746339?hl=en) |
-| Warp | Settings > Privacy: turn off “Help improve Warp” and “Send crash reports.” Availability can depend on the plan or team policy. | [Official source](https://docs.warp.dev/support-and-community/privacy-and-security/privacy) |
 | Android Studio | Settings > Appearance & Behavior > Data Sharing: turn off usage sharing. Older releases put Data Sharing under System Settings. | [Official source](https://developer.android.com/studio/gemini/data-and-privacy) |
 | Transporter / macOS | System Settings > Privacy & Security > Analytics & Improvements: turn off “Share Mac Analytics” and “Share with app developers.” No app-specific switch was verified. | [Official source](https://support.apple.com/en-hk/guide/mac-help/mh27990/mac) |
 | Xcode / macOS | System Settings > Privacy & Security > Analytics & Improvements: turn off “Share Mac Analytics” and “Share with app developers.” These are system controls. | [Official source](https://support.apple.com/en-za/guide/mac-help/mh27990/26/mac/26) |

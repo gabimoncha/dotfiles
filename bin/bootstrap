@@ -150,7 +150,6 @@ cask_app_bundle_name() {
     tailscale-app) printf 'Tailscale' ;;
     the-unarchiver) printf 'The Unarchiver' ;;
     visual-studio-code) printf 'Visual Studio Code' ;;
-    warp) printf 'Warp' ;;
     whatsapp) printf 'WhatsApp' ;;
     yaak) printf 'Yaak' ;;
     zen) printf 'Zen' ;;

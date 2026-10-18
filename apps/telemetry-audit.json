@@ -3,8 +3,8 @@
   "scope": "Tracked mise/Brewfile/app inventories, explicit setup tools, and managed shell/tmux plugins. Excludes project dependencies, other plugins, nvim repository dependencies, and unrelated manually installed tools.",
   "verification": "Official documentation and upstream source reviews; fake-command tests only. No live installations, account changes, personal settings edits, or network-capture tests.",
   "coverage": {
-    "total": 194,
-    "reviewed": 194,
+    "total": 193,
+    "reviewed": 193,
     "pending": 0
   },
   "limitations": [
@@ -3010,25 +3010,6 @@
           "https://tailscale.com/docs/features/tailscale-system-policies"
         ],
         "notes": "Client diagnostic logs are centrally collected at log.tailscale.com. TS_NO_LOGS_NO_SUPPORT=true is a documented daemon control on supported platforms, but shell exports must not be treated as effective for the macOS network extension. Disabling client logging may prevent technical support. VPN data transport, coordination/authentication, optional network-flow logging, server audit logs, and updates are separate service activity. No separate macOS crash-upload switch was found. Preserve app preferences, network-extension setup, keys, and tailnet membership; do not replace state or disconnect the service to implement an inferred opt-out.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {}
-    },
-    {
-      "id": "warp",
-      "tool": "warp",
-      "source": "cask",
-      "kind": "app",
-      "research": {
-        "tool": "Warp terminal",
-        "status": "manual",
-        "mechanism": "Persistent app controls: Settings > Privacy > Help improve Warp = off; Send crash reports = off. The Command Palette can open Privacy settings. No documented supported environment variable or exact file-edit schema was established in the checked sources.",
-        "sources": [
-          "https://docs.warp.dev/support-and-community/privacy-and-security/privacy",
-          "https://docs.warp.dev/terminal/more-features/settings-sync",
-          "https://docs.warp.dev/support-and-community/troubleshooting-and-support/logging-out-and-uninstalling"
-        ],
-        "notes": "Warp documents Rudderstack app analytics and Sentry crash reporting as separate controls. macOS settings use defaults domain dev.warp.Warp-Stable (Preview: dev.warp.Warp-Preview), but the checked official documentation does not specify telemetry key names/types. Apply the two UI controls to preserve all unrelated preferences; do not replace/delete the domain, group-container database, or ~/.warp. Privacy settings can sync when Settings Sync is enabled, so account/team policy can affect persistence. The dedicated privacy page says Free-plan AI requires telemetry, while other current pages describe broader opt-out availability; plan-specific behavior should be verified in the app. Account, AI/cloud features, settings sync, downloads and update requests remain separate service traffic.",
         "checked_date": "2026-10-03"
       },
       "setup_actions": {}
