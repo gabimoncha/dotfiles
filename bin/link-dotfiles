@@ -239,4 +239,7 @@ fi
 
 if [[ "$telemetry_only" == 0 ]]; then
   runtime_with_lock homebrew link_cliproxyapi_homebrew_config
+  # A t3 conflict must not block the package stages that need these links.
+  bash "${repo_root}/bin/link-t3-command" ||
+    printf '!! t3 command not linked; run ./bin/link-t3-command after you resolve the conflict\n' >&2
 fi

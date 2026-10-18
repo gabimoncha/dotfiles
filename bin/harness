@@ -15,6 +15,8 @@ for argument in "$@"; do
 done
 . "$repo_root/bin/lib/setup-runtime.sh"
 . "$repo_root/bin/lib/harnesses.sh"
+# Setup can serialize its stages without serializing independent vendor updates.
+DOTFILES_SETUP_SERIAL=0
 DOTFILES_JOB_IDLE_TIMEOUT_SECONDS="${DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS:-30}"
 if [[ ! "$DOTFILES_JOB_IDLE_TIMEOUT_SECONDS" =~ ^[1-9][0-9]*$ ]]; then
   printf 'DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS must be a positive integer.\n' >&2
@@ -31,7 +33,6 @@ harness_update_one() {
     codex|cursor) args=(update) ;;
     claude|opencode) args=(upgrade) ;;
     pi) args=(update --all) ;;
-    t3) args=(update --channel nightly) ;;
   esac
   if [[ "${2:-}" == --dry-run ]]; then
     printf 'Would run: %q' "$executable"

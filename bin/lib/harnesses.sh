@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Vendor commands are resolved directly, never through mise shims.
-harness_names=(codex claude pi t3 opencode cursor)
+# The T3 Code desktop app updates its launcher; setup only creates its PATH link.
+harness_names=(codex claude pi opencode cursor)
 
 harness_binary() {
   case "$1" in
     codex) printf '%s/codex\n' "${CODEX_INSTALL_DIR:-$HOME/.local/bin}" ;;
     claude) printf '%s/.local/bin/claude\n' "$HOME" ;;
     pi) printf '%s/bin/pi\n' "${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}" ;;
-    t3) printf '%s/t3\n' "${T3CODE_INSTALL_BIN_DIR:-$HOME/.local/bin}" ;;
     opencode) printf '%s/.opencode/bin/opencode\n' "$HOME" ;;
     cursor) printf '%s/.local/bin/agent\n' "$HOME" ;;
     *) return 2 ;;
@@ -25,7 +25,6 @@ harness_installed() {
       root="${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}"
       [[ -f "$root/install/managed-install.json" ]] || return 1
       ;;
-    t3) root="${T3CODE_HOME:-$HOME/.t3}/runtime/versions" ;;
     opencode) root="$HOME/.opencode/bin" ;;
     cursor) root="$HOME/.local/share/cursor-agent" ;;
   esac

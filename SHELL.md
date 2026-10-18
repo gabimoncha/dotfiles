@@ -59,7 +59,7 @@ real npm runner through Socket Firewall Free.
 Interactive aliases wrap `npm`, `pnpm`, `yarn`, `pip`, `uv`, and `cargo` with
 Socket Firewall Free when it is available. `command <tool>` bypasses an alias.
 Bun/Bunx and noninteractive installers do not inherit that protection.
-See [execution policy](SETUP-SECURITY.md#execution-policy) for its limits.
+See [execution policy](SECURITY.md#what-setup-trusts) for its limits.
 When shims are absent from PATH, use `mise exec -- <command>`.
 
 ## Android
@@ -75,13 +75,13 @@ keytool -list -v -keystore "$HOME/.android/debug.keystore" -alias androiddebugke
 
 ## Coding agent updates
 
-`harness update` updates Codex, Claude Code, Pi and its packages, T3 nightly CLI,
-OpenCode v2, Cursor Agent, and the T3 nightly desktop cask. Vendor updates
-run in parallel; Homebrew writes share a lock. A failure does not stop other
+`harness update` updates Codex, Claude Code, Pi and its packages, OpenCode v2,
+and Cursor Agent. Vendor updates run in parallel. The T3 Code desktop app
+updates itself and its `t3` command. A failure does not stop other
 updates, and the command returns nonzero when any update fails.
 
 The mise postinstall hook runs the updater for installed agents. The zsh `mise`
 helper makes `mise install`, `mise up`, and `mise up --local` run it once after
 success, including when no mise tools change. Help and dry-run commands do not
 update agents. `command mise` bypasses the shell helper and uses mise's native
-hook behavior. T3 service restarts remain manual after background updates.
+hook behavior.

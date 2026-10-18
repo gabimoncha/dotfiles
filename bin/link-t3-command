@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+usage() { printf 'Usage: link-t3-command [--dry-run]\n' >&2; }
+dry_run=0
+case "${1:-}" in
+  --dry-run) dry_run=1 ;;
+  '') ;;
+  *) usage; exit 2 ;;
+esac
+[[ $# -le 1 ]] || { usage; exit 2; }
+app="${DOTFILES_APPLICATIONS_DIR:-/Applications}/T3 Code (Nightly).app"
+launcher="${HOME}/.t3/bin/t3"
+if [[ ! -d "$app" ]]; then
+  printf 'Skipping t3 command link; T3 Code Nightly is not installed\n'
+  exit 0
+fi
+prefix="$(brew --prefix)"
+target="$prefix/bin/t3"
+if [[ -L "$target" && "$(readlink "$target")" == "$launcher" ]]; then
+  printf 'Already linked %s\n' "$target"
+  exit 0
+fi
+existing="$(command -v t3 || true)"
+for conflict in "$target" "$existing"; do
+  if [[ -n "$conflict" && "$conflict" != "$launcher" ]] && [[ -e "$conflict" || -L "$conflict" ]]; then
+    printf 'Cannot link t3; existing command preserved at %s\n' "$conflict" >&2
+    exit 1
+  fi
+done
+if [[ "$dry_run" == 1 ]]; then
+  printf 'Would link %s -> %s\n' "$target" "$launcher"
+  exit 0
+fi
+. "$repo_root/bin/lib/setup-runtime.sh"
+runtime_init link-t3-command
+# The app creates and updates the launcher on first launch.
+runtime_with_lock homebrew ln -s "$launcher" "$target"
+printf 'Linked %s -> %s\n' "$target" "$launcher"
+if [[ ! -x "$launcher" ]]; then
+  printf 'Open T3 Code Nightly once to create its launcher\n'
+fi

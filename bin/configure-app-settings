@@ -7,17 +7,31 @@ status=0
 while IFS= read -r app; do
   [[ -n "$app" && "$app" != \#* ]] || continue
   app_path="${DOTFILES_APPLICATIONS_DIR:-/Applications}/$app.app"
-  if [[ "$mode" == --dry-run ]]; then printf 'Would ensure login item: %s\n' "$app_path"; continue; fi
+  previous_app_path=''
+  if [[ "$app" == 'T3 Code (Nightly)' ]]; then
+    previous_app_path="${DOTFILES_APPLICATIONS_DIR:-/Applications}/Codex.app"
+  fi
+  if [[ "$mode" == --dry-run ]]; then
+    printf 'Would ensure login item: %s\n' "$app_path"
+    if [[ -n "$previous_app_path" ]]; then
+      printf 'Would remove login item if %s is added: %s\n' "$app" "$previous_app_path"
+    fi
+    continue
+  fi
   if [[ ! -d "$app_path" ]]; then printf 'Deferred login item (app missing): %s\n' "$app"; status=1; continue; fi
   printf 'Ensuring login item: %s\n' "$app"
-  osascript - "$app_path" <<'APPLESCRIPT' || { status=1; break; }
+  osascript - "$app_path" "$previous_app_path" <<'APPLESCRIPT' || { status=1; break; }
 on run argv
   set appPath to item 1 of argv
+  set previousAppPath to item 2 of argv
   with timeout of 15 seconds
   tell application "System Events"
     set existingPaths to path of every login item
     if existingPaths does not contain appPath then
       make login item at end with properties {path:appPath, hidden:false}
+    end if
+    if previousAppPath is not "" then
+      delete (every login item whose path is previousAppPath)
     end if
   end tell
   end timeout
