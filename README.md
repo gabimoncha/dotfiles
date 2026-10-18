@@ -211,6 +211,9 @@ CLIs and mise itself are explicit standalone-installer exceptions. T3 desktop
 uses the nightly Homebrew cask.
 See [DECISIONS.md](DECISIONS.md) for the reasons and constraints.
 
+`vscode "publisher.extension"` entries in `Brewfile` select Cursor extensions.
+Setup uses Cursor's editor CLI and skips installed extensions.
+
 AeroSpace and Ghostty links wait for their application bundles. Final links
 share `home/.codex/AGENTS.md` with Codex and Claude, and merge tracked Codex and
 Claude settings without discarding other keys. Replaced files are backed up.

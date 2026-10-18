@@ -54,7 +54,7 @@ mode or add apps whose files this repository already links.
 
 Cursor settings belong here; AeroSpace and Ghostty belong to the repository.
 OBS uses Mackup's built-in profile for preferences, profiles and scenes, not
-plugins, logs or caches. VS Code is not in the current inventory.
+plugins, logs or caches.
 
 Successful Synology backups are mirrored to iCloud when available. Restore
 selects a hydrated Synology tree, then iCloud. Mackup has one current tree;

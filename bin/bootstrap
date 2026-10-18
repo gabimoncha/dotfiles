@@ -7,7 +7,7 @@ macos_defaults_flag="${HOME}/.macos-defaults-applied"
 temp_brewfile=""
 xcode_brewfile=""
 mas_brewfile=""
-vscode_brewfile=""
+cursor_extensions_brewfile=""
 mas_checked=0
 mas_available=0
 homebrew_xcode_checked=0
@@ -149,7 +149,6 @@ cask_app_bundle_name() {
     t3-code@nightly) printf 'T3 Code (Nightly)' ;;
     tailscale-app) printf 'Tailscale' ;;
     the-unarchiver) printf 'The Unarchiver' ;;
-    visual-studio-code) printf 'Visual Studio Code' ;;
     whatsapp) printf 'WhatsApp' ;;
     yaak) printf 'Yaak' ;;
     zen) printf 'Zen' ;;
@@ -308,53 +307,53 @@ install_mas_apps() {
   return "$status"
 }
 
-code_cli() {
-  if command -v code >/dev/null 2>&1; then
-    command -v code
+cursor_cli() {
+  if command -v cursor >/dev/null 2>&1; then
+    command -v cursor
     return 0
   fi
 
-  if [[ -x "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" ]]; then
-    printf '/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code\n'
+  if [[ -x "${DOTFILES_APPLICATIONS_DIR:-/Applications}/Cursor.app/Contents/Resources/app/bin/cursor" ]]; then
+    printf '%s/Cursor.app/Contents/Resources/app/bin/cursor\n' "${DOTFILES_APPLICATIONS_DIR:-/Applications}"
     return 0
   fi
 
   return 1
 }
 
-install_vscode_extensions() {
-  local code_cmd line extension_id installed_extensions status=0
+install_cursor_extensions() {
+  local cursor_cmd line extension_id installed_extensions status=0
 
-  if [[ ! -s "$vscode_brewfile" ]]; then
+  if [[ ! -s "$cursor_extensions_brewfile" ]]; then
     return 0
   fi
 
-  code_cmd="$(code_cli || true)"
-  if [[ -z "$code_cmd" ]]; then
-    warn "Skipped VS Code extensions; code CLI is not available yet"
-    runtime_record_deferred "VS Code extensions" "code CLI is not available yet" "Open VS Code once or rerun ./bin/setup after the cask install completes."
+  cursor_cmd="$(cursor_cli || true)"
+  if [[ -z "$cursor_cmd" ]]; then
+    warn "Skipped Cursor extensions; Cursor editor CLI is not available yet"
+    runtime_record_deferred "Cursor extensions" "Cursor editor CLI is not available yet" "Open Cursor once or rerun ./bin/setup after the cask install completes."
     return 20
   fi
 
-  installed_extensions="$("$code_cmd" --list-extensions 2>/dev/null || true)"
+  installed_extensions="$("$cursor_cmd" --list-extensions 2>/dev/null || true)"
 
   while IFS= read -r line || [[ -n "$line" ]]; do
     if [[ "$line" =~ ^vscode[[:space:]]+\"([^\"]+)\" ]]; then
       extension_id="${BASH_REMATCH[1]}"
 
       if grep -Fixq "$extension_id" <<< "$installed_extensions"; then
-        log "VS Code extension ${extension_id} already installed"
+        log "Cursor extension ${extension_id} already installed"
         continue
       fi
 
-      log "Installing VS Code extension ${extension_id}"
-      "$code_cmd" --install-extension "$extension_id" || {
-        warn "Skipping VS Code extension ${extension_id}; it is unavailable or failed to install"
-        runtime_record_failure recoverable "VS Code extension ${extension_id}" "extension install failed" "" "Rerun ./bin/setup after VS Code is ready."
+      log "Installing Cursor extension ${extension_id}"
+      "$cursor_cmd" --install-extension "$extension_id" || {
+        warn "Skipping Cursor extension ${extension_id}; it is unavailable or failed to install"
+        runtime_record_failure recoverable "Cursor extension ${extension_id}" "extension install failed" "" "Rerun ./bin/setup after Cursor is ready."
         status=1
       }
     fi
-  done < "$vscode_brewfile"
+  done < "$cursor_extensions_brewfile"
 
   return "$status"
 }
@@ -413,7 +412,7 @@ filter_brewfile_for_existing_apps() {
   local target_file="$2"
   local deferred_xcode_file="$3"
   local mas_file="$4"
-  local vscode_file="$5"
+  local extensions_file="$5"
   local line brew_name cask_name app_name mas_name mas_id mas_bundle
 
   while IFS= read -r line || [[ -n "$line" ]]; do
@@ -458,7 +457,7 @@ filter_brewfile_for_existing_apps() {
 
     if [[ "$line" =~ ^vscode[[:space:]]+\"([^\"]+)\" ]]; then
       printf '# Installed separately by bootstrap: %s\n' "$line" >> "$target_file"
-      printf '%s\n' "$line" >> "$vscode_file"
+      printf '%s\n' "$line" >> "$extensions_file"
       continue
     fi
 
@@ -482,12 +481,12 @@ prepare_brewfiles() {
   temp_brewfile="${DOTFILES_SETUP_LOG_DIR}/homebrew.Brewfile"
   xcode_brewfile="${DOTFILES_SETUP_LOG_DIR}/xcode.Brewfile"
   mas_brewfile="${DOTFILES_SETUP_LOG_DIR}/mas.Brewfile"
-  vscode_brewfile="${DOTFILES_SETUP_LOG_DIR}/vscode.Brewfile"
+  cursor_extensions_brewfile="${DOTFILES_SETUP_LOG_DIR}/cursor-extensions.Brewfile"
   : > "$temp_brewfile"
   : > "$xcode_brewfile"
   : > "$mas_brewfile"
-  : > "$vscode_brewfile"
-  filter_brewfile_for_existing_apps "${repo_root}/Brewfile" "$temp_brewfile" "$xcode_brewfile" "$mas_brewfile" "$vscode_brewfile"
+  : > "$cursor_extensions_brewfile"
+  filter_brewfile_for_existing_apps "${repo_root}/Brewfile" "$temp_brewfile" "$xcode_brewfile" "$mas_brewfile" "$cursor_extensions_brewfile"
 }
 
 install_brewfile() {

@@ -32,7 +32,7 @@ setup_brew_inventory() { install_brewfile; }
 setup_mise_inventory() { install_and_check_mise_tools; }
 setup_manifest_apps() { "${repo_root}/bin/install-apps"; }
 setup_app_store() { install_mas_apps; }
-setup_editor_extensions() { install_vscode_extensions; }
+setup_editor_extensions() { install_cursor_extensions; }
 setup_submodules() { initialize_submodules; }
 setup_capabilities() { "${repo_root}/bin/check-mise-tools"; }
 setup_shell() {
