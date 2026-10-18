@@ -9,7 +9,6 @@ tap "felixkratz/formulae", trusted: true
 tap "grishka/grishka", trusted: true
 tap "homebrew-zathura/zathura", trusted: true
 tap "nikitabobko/tap", trusted: true
-tap "nkzw-tech/tap", trusted: true
 tap "xykong/tap", trusted: true
 
 brew "apktool"
@@ -50,7 +49,6 @@ mas "Portal", id: 1436994560
 
 cask "nikitabobko/tap/aerospace"
 cask "blackhole-2ch"
-cask "nkzw-tech/tap/codiff"
 cask "cursor"
 cask "discord"
 cask "expo-orbit"

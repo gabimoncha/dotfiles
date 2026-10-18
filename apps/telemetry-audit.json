@@ -3,8 +3,8 @@
   "scope": "Tracked mise/Brewfile/app inventories, explicit setup tools, and managed shell/tmux plugins. Excludes project dependencies, other plugins, nvim repository dependencies, and unrelated manually installed tools.",
   "verification": "Official documentation and upstream source reviews; fake-command tests only. No live installations, account changes, personal settings edits, or network-capture tests.",
   "coverage": {
-    "total": 190,
-    "reviewed": 190,
+    "total": 189,
+    "reviewed": 189,
     "pending": 0
   },
   "limitations": [
@@ -2344,24 +2344,6 @@
           "https://existential.audio/blackhole/"
         ],
         "notes": "Upstream documents local audio routing between applications, driver installation, and build-time audio customization. Vendor policy covers names/email, website Matomo analytics, and third-party GitHub/Facebook/Apple analytics; it does not establish automatic driver telemetry or a driver opt-out. Mailing-list unsubscribe is separate. Homebrew download/update traffic and diagnostics from CoreAudio or receiving audio apps are separate. No full driver source or runtime network audit was performed; none_found is not proof of no telemetry. No live settings or driver were accessed.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {}
-    },
-    {
-      "id": "nkzw_tech_tap_codiff",
-      "tool": "nkzw-tech/tap/codiff",
-      "source": "cask",
-      "kind": "app",
-      "research": {
-        "tool": "CoDiff desktop app (nkzw-tech/tap/codiff)",
-        "status": "none_found",
-        "mechanism": "No documented opt-out found for app analytics, usage, crash, or error reporting. Upstream documents ~/.codiff/codiff.jsonc, JSONC comments/trailing commas, and the core/config/codiff-config.schema.json schema, but no exact telemetry control was established. Preserve existing JSONC comments, settings, keymap, repository paths, models, and agent configuration; do not insert unsupported keys or replace the file.",
-        "sources": [
-          "https://github.com/nkzw-tech/codiff",
-          "https://nkzw.tech/"
-        ],
-        "notes": "Official upstream identifies the Homebrew desktop app as a local Git diff viewer. LLM walkthroughs invoke configured agent backends; GitHub/GitLab review features use gh/glab; optional --share uploads a walkthrough when available. These are service features and have their own provider privacy controls, separate from app telemetry. Homebrew/GitHub release downloads and updates are separate. Bounded README/config documentation review is not a full source, dependency, or runtime audit and does not prove no telemetry. No live configuration or app was accessed.",
         "checked_date": "2026-10-03"
       },
       "setup_actions": {}
