@@ -1,6 +1,5 @@
 # key	type	token_or_url	app_bundle	notes
 aerospace	cask	nikitabobko/tap/aerospace	AeroSpace	Homebrew cask because mise ls-remote aerospace errors.
-chatgpt	cask	chatgpt	ChatGPT	Homebrew cask.
 claude	cask	claude	Claude	Homebrew cask.
 cursor	cask	cursor	Cursor	Homebrew cask.
 davinci-resolve	manual	https://www.blackmagicdesign.com/products/davinciresolve	DaVinci Resolve	Blackmagic requires a vendor download/account flow; install manually or use Codex-assisted browser automation after bootstrap.

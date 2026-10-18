@@ -116,7 +116,6 @@ cask_app_bundle_name() {
   case "$1" in
     beeper) printf 'Beeper Desktop' ;;
     blackhole-2ch) printf 'BlackHole 2ch' ;;
-    chatgpt) printf 'ChatGPT' ;;
     claude) printf 'Claude' ;;
     cursor) printf 'Cursor' ;;
     discord) printf 'Discord' ;;

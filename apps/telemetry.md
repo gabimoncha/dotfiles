@@ -1,6 +1,6 @@
 # Telemetry controls
 
-Reviewed on 2026-10-03. Coverage: 191 of 191 tracked entries.
+Reviewed on 2026-10-03. Coverage: 190 of 190 tracked entries.
 
 Setup exports the supported environment controls before installers run. It applies saved preferences after foundation installation, and again at the end of continuation after restores. A failed setter makes the stage fail; other installed tools are still configured.
 
@@ -16,7 +16,6 @@ The environment values are in [env.sh](../home/.config/telemetry/env.sh). The ex
 | --- | --- | --- |
 | bun | `DO_NOT_TRACK=1` | [Official source](https://bun.sh/docs/runtime/environment-variables) |
 | cargo-binstall | `BINSTALL_DISABLE_TELEMETRY=true` | [Official source](https://github.com/cargo-bins/cargo-binstall/blob/main/README.md) |
-| chatgpt | Shared Codex local-runtime analytics and OTel settings in $CODEX_HOME/config.toml (default ~/.codex/config.toml). Does not establish a native crash-report or account-training opt-out. | [Official source](https://learn.chatgpt.com/docs/config-file/config-advanced) |
 | claude-code | `DISABLE_TELEMETRY=1`, `DISABLE_ERROR_REPORTING=1`, `CLAUDE_CODE_ENABLE_TELEMETRY=0`, `CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=1`; Merge telemetry environment values into $CLAUDE_CONFIG_DIR/settings.json (default ~/.claude/settings.json). | [Official source](https://code.claude.com/docs/en/data-usage#telemetry-services) |
 | cocoapods | `COCOAPODS_DISABLE_STATS=true` | [Official source](https://blog.cocoapods.org/Stats/) |
 | codex | analytics.enabled=false; OTel exporter, metrics_exporter and trace_exporter=none; log_user_prompt=false in $CODEX_HOME/config.toml. Standard tables are merged; ambiguous inline/dotted forms fail without changes. | [Official source](https://learn.chatgpt.com/docs/config-file/config-advanced#metrics) |

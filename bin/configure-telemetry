@@ -89,7 +89,7 @@ telemetry_gui_environment() {
   else printf 'Configured the GUI telemetry environment; reopen apps to use the new values.\n'; fi
 }
 
-if harness_installed codex || [[ -d "${DOTFILES_APPLICATIONS_DIR:-/Applications}/ChatGPT.app" ]]; then
+if harness_installed codex; then
   telemetry_file 'Codex local runtime' codex "${CODEX_HOME:-$HOME/.codex}/config.toml"
 fi
 if harness_installed claude; then

@@ -49,7 +49,6 @@ mas "Portal", id: 1436994560
 
 cask "nikitabobko/tap/aerospace"
 cask "blackhole-2ch"
-cask "chatgpt"
 cask "nkzw-tech/tap/codiff"
 cask "cursor"
 cask "discord"

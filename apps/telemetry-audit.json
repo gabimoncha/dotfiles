@@ -3,8 +3,8 @@
   "scope": "Tracked mise/Brewfile/app inventories, explicit setup tools, and managed shell/tmux plugins. Excludes project dependencies, other plugins, nvim repository dependencies, and unrelated manually installed tools.",
   "verification": "Official documentation and upstream source reviews; fake-command tests only. No live installations, account changes, personal settings edits, or network-capture tests.",
   "coverage": {
-    "total": 191,
-    "reviewed": 191,
+    "total": 190,
+    "reviewed": 190,
     "pending": 0
   },
   "limitations": [
@@ -2347,27 +2347,6 @@
         "checked_date": "2026-10-03"
       },
       "setup_actions": {}
-    },
-    {
-      "id": "chatgpt",
-      "tool": "chatgpt",
-      "source": "cask",
-      "kind": "app",
-      "research": {
-        "tool": "ChatGPT macOS desktop app",
-        "status": "supported",
-        "mechanism": "For the current shared local runtime, merge TOML user configuration at $CODEX_HOME/config.toml (default ~/.codex/config.toml): [analytics] enabled = false; [feedback] enabled = false; [otel] exporter = \"none\", metrics_exporter = \"none\", trace_exporter = \"none\", log_user_prompt = false. Official advanced configuration explicitly applies analytics and feedback controls to the ChatGPT desktop app, Codex CLI, and IDE extension on the machine. Use a TOML-aware merge, update existing tables without duplicates, and preserve unrelated keys, comments, profiles, and credentials.",
-        "sources": [
-          "https://learn.chatgpt.com/docs/config-file/config-advanced",
-          "https://learn.chatgpt.com/docs/config-file/config-reference",
-          "https://learn.chatgpt.com/docs/reference/settings"
-        ],
-        "notes": "Analytics controls anonymous usage/health metrics; feedback disables explicit /feedback submissions; OTel exporters are separate. Evidence covers the current documented shared runtime; it does not establish a universal native macOS crash-report switch or guarantee behavior for older standalone ChatGPT versions. Model-training/account data controls, optional Computer History, authentication, inference, sync, and updates are separate. Managed configuration/profile precedence may apply. Local repository docs supplied no ChatGPT-specific control; live settings and runtime traffic were not inspected.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {
-        "file_merge": "Shared Codex local-runtime analytics and OTel settings in $CODEX_HOME/config.toml (default ~/.codex/config.toml). Does not establish a native crash-report or account-training opt-out."
-      }
     },
     {
       "id": "nkzw_tech_tap_codiff",

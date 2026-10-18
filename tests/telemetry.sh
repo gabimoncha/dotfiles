@@ -196,12 +196,12 @@ mv "$HOME/.claude/settings.json" "$fixture/settings.json"
 ln -s "$fixture/settings.json" "$HOME/.claude/settings.json"
 "$repo_root/bin/configure-telemetry" --agents-only > "$fixture/link.log" 2>&1
 [[ -L "$HOME/.claude/settings.json" ]]
-# The desktop app also uses the shared runtime when the CLI is absent.
+# An unavailable Codex CLI leaves its configuration unchanged.
 chmod -x "$CODEX_HOME/packages/standalone/current/bin/codex"
-mkdir -p "$DOTFILES_APPLICATIONS_DIR/ChatGPT.app"
 printf '[analytics]\nenabled = true\n' > "$CODEX_HOME/config.toml"
-"$repo_root/bin/configure-telemetry" --agents-only > "$fixture/desktop-runtime.log" 2>&1
-grep -Fqx 'enabled = false' "$CODEX_HOME/config.toml"
+cp "$CODEX_HOME/config.toml" "$fixture/unavailable-codex-before"
+"$repo_root/bin/configure-telemetry" --agents-only > "$fixture/unavailable-codex.log" 2>&1
+cmp "$CODEX_HOME/config.toml" "$fixture/unavailable-codex-before"
 chmod +x "$CODEX_HOME/packages/standalone/current/bin/codex"
 # App settings retain JSONC comments, nested state, and runtime identity.
 mkdir -p "$DOTFILES_APPLICATIONS_DIR/Cursor.app" "$DOTFILES_APPLICATIONS_DIR/T3 Code (Nightly).app" "$HOME/Library/Application Support/Cursor/User" "$HOME/.cursor"
