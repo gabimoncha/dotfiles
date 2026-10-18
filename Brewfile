@@ -82,6 +82,7 @@ cask "synology-image-assistant"
 # T3 nightly desktop app; its t3 CLI uses the vendor standalone installer.
 cask "t3-code@nightly"
 cask "tailscale-app"
+cask "vorssaint"
 cask "xykong/tap/flux-markdown"
 cask "yaak"
 cask "zoom"

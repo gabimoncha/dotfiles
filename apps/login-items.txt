@@ -9,3 +9,4 @@ superwhisper
 Synology Drive Client
 Synology Image Assistant
 Tailscale
+Vorssaint
