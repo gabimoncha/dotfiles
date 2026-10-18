@@ -38,7 +38,6 @@ brew "webp"
 brew "zlib"
 
 # Mac App Store
-mas "Amphetamine", id: 937984704
 mas "DevCleaner for Xcode", id: 1388020431
 mas "Endel", id: 1346247457
 mas "TestFlight", id: 899247664

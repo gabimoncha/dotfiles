@@ -23,7 +23,7 @@ with tempfile.TemporaryDirectory() as d:
     assert result.returncode==1 and 'app missing' in result.stdout and not log.exists()
     for app in (repo/'apps/login-items.txt').read_text().splitlines(): (apps/(app+'.app')).mkdir()
     assert run('configure-app-settings').returncode==0
-    assert len(log.read_text().splitlines())==13
+    assert len(log.read_text().splitlines())==12
     log.unlink()
     assert run('configure-screenshots','--dry-run').returncode==0 and not log.exists()
 print('App settings fixtures passed')

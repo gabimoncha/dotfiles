@@ -3,8 +3,8 @@
   "scope": "Tracked mise/Brewfile/app inventories, explicit setup tools, and managed shell/tmux plugins. Excludes project dependencies, other plugins, nvim repository dependencies, and unrelated manually installed tools.",
   "verification": "Official documentation and upstream source reviews; fake-command tests only. No live installations, account changes, personal settings edits, or network-capture tests.",
   "coverage": {
-    "total": 193,
-    "reviewed": 193,
+    "total": 192,
+    "reviewed": 192,
     "pending": 0
   },
   "limitations": [
@@ -2158,24 +2158,6 @@
           "https://zlib.net/manual.html"
         ],
         "notes": "Homebrew entry is a data-compression library. Stream totals are caller-visible counters. Application, installer and package-manager telemetry is separate. Bounded documentation check, not a source/network audit.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {}
-    },
-    {
-      "id": "amphetamine",
-      "tool": "Amphetamine",
-      "source": "mas",
-      "kind": "app",
-      "research": {
-        "tool": "Amphetamine macOS app",
-        "status": "none_found",
-        "mechanism": "No documented app-specific analytics or crash-report opt-out found. No supported persistent preference key, environment variable, or exact reporting UI toggle was established. App Store release notes mention disabling statistics collection, but the exact UI and remote-reporting scope were not verified; do not treat this as a crash/telemetry switch.",
-        "sources": [
-          "https://apps.apple.com/us/app/amphetamine/id937984704?mt=12",
-          "https://iffy.freshdesk.com/support/solutions/articles/48000078252-privacy-policy"
-        ],
-        "notes": "Developer App Store description says no tracking/data harvesting, while its privacy declaration lists unlinked crash diagnostics for app functionality. Apple states that developer privacy responses are not independently verified. The linked developer privacy policy returned 404, so collection mechanism and Apple-versus-app reporting scope remain unverified. Local session statistics, debug mode/logs, explicit feedback/support, optional enhancer/script downloads, and App Store updates are separate. Preserve triggers, session preferences, scripts, and existing settings; no file edit or live inspection was performed.",
         "checked_date": "2026-10-03"
       },
       "setup_actions": {}
