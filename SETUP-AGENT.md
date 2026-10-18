@@ -26,6 +26,9 @@ as completed.
 
 ## Find the failed stage
 
+Setup keeps the latest three runs under `.local/setup-runs/`. Copy the failed
+run outside that directory before repeated repair attempts if you need its logs.
+
 1. Open `summary.txt` in the newest `.local/setup-runs/<run-id>/` directory.
    Each line has the outcome, the stage, the reason, the log file, and the
    repair hint.

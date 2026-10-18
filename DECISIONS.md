@@ -157,5 +157,12 @@ System Bash and `/usr/bin/ruby` run diagnostics, so a broken managed runtime
 does not block recovery. Each run keeps private, sanitized logs. Authentication
 output is omitted. INT and TERM stop owned child processes, then release locks.
 
+Git ignores the entire `.local/` directory. When a run starts, the runtime keeps
+the latest three run directories and removes older setup logs. This preserves
+recent logs for comparison without an unlimited history. Active runs are exempt
+until a later run finds that their owner process has stopped. Nested helpers
+share their parent run's directory. The limit also includes dry runs and
+standalone helpers.
+
 The shell's daily background `git fetch` only notifies. `dotfiles-update`
 pulls and reapplies configuration.

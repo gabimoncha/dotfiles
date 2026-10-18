@@ -20,6 +20,8 @@ before changing ownership, bootstrap boundaries, or other design decisions.
   `home/.config/local/`; only examples belong in Git.
 - Never commit credentials, private identities, backup payloads, or machine-local
   state. See [SECURITY.md](SECURITY.md).
+- Keep test fixtures and diagnostic scratch files in system temporary directories.
+  Setup logs use ignored `.local/setup-runs/` with automatic retention.
 - `nvim/` is a separate repository. Do not edit it unless explicitly requested.
 - Keep macOS changes conservative and reversible. Correct documentation drift
   when found; distinguish current behavior from proposed fixes.

@@ -19,7 +19,5 @@ home/.cli-proxy-api/*
 # Local worktree noise from nested repos/submodules.
 .submodule-seed/
 
-# Private, persistent setup diagnostics (normal and dry-run).
-.local/setup-runs/
-# Working notes for documentation audits; reviewed results live under apps/.
-.local/telemetry-audit/
+# Generated diagnostics and local working files.
+/.local/

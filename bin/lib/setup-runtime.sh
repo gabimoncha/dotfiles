@@ -43,10 +43,50 @@ runtime_merge_trace() {
   cat "$DOTFILES_SETUP_LOG_DIR"/streams/*.jsonl > "$temporary"
   mv "$temporary" "$DOTFILES_SETUP_LOG_DIR/events.jsonl"
 }
+runtime_prune_logs() {
+  /usr/bin/ruby -rfileutils - "$1" <<'RUBY'
+root = File.expand_path(ARGV.fetch(0))
+File.open(File.join(root, '.retention.lock'), File::RDWR | File::CREAT | File::NOFOLLOW, 0600) do |lock|
+  lock.flock(File::LOCK_EX)
+  runs = Dir.children(root).each_with_object([]) do |name, entries|
+    next unless name.match?(/\A\d{8}T\d{6}Z-[A-Za-z0-9]{6}\z/)
+    path = File.join(root, name)
+    stat = File.lstat(path)
+    next unless stat.directory? && stat.uid == Process.uid
+    next unless %w[summary.txt events.jsonl streams].all? do |entry|
+      child = File.join(path, entry)
+      !File.symlink?(child) && (entry == 'streams' ? File.directory?(child) : File.file?(child))
+    end
+    entries << [path, stat.birthtime]
+  end
+  runs.sort_by { |path, created| [created, path] }.reverse.drop(3).each do |path, _|
+    owner = File.join(path, '.owner-pid')
+    if File.exist?(owner) || File.symlink?(owner)
+      next if File.symlink?(owner) || !File.file?(owner)
+      begin
+        pid = File.read(owner).strip
+      rescue Errno::ENOENT
+        next
+      end
+      next unless pid.match?(/\A[1-9]\d*\z/)
+      begin
+        Process.kill(0, pid.to_i)
+        next
+      rescue Errno::ESRCH
+        # A killed run has no exit cleanup. Its logs can still expire.
+      rescue Errno::EPERM
+        next
+      end
+    end
+    FileUtils.remove_entry_secure(path)
+  end
+end
+RUBY
+}
 runtime_init() {
   [[ "${DOTFILES_RUNTIME_INITIALIZED:-0}" == 1 ]] && return 0
   DOTFILES_RUNTIME_INITIALIZED=1
-  DOTFILES_RUNTIME_PID="$(sh -c 'echo "$PPID"')"
+  DOTFILES_RUNTIME_PID="$(exec sh -c 'echo "$PPID"')"
   DOTFILES_RUNTIME_SCRIPT="${1:-setup}"
   DOTFILES_RUN_MODE="${2:-${DOTFILES_RUN_MODE:-normal}}"
   DOTFILES_RUNTIME_STREAM_ID="${RANDOM}.${RANDOM}"
@@ -62,6 +102,7 @@ runtime_init() {
     local root="${DOTFILES_SETUP_RUN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/.local/setup-runs}"
     mkdir -p "$root"
     DOTFILES_SETUP_LOG_DIR="$(mktemp -d "$root/$(date -u +%Y%m%dT%H%M%SZ)-XXXXXX")"
+    printf '%s\n' "$DOTFILES_RUNTIME_PID" > "$DOTFILES_SETUP_LOG_DIR/.owner-pid"
     DOTFILES_RUNTIME_OWNS_LOG_DIR=1
     DOTFILES_RUNTIME_OWNS_SUMMARY=1
   fi
@@ -81,6 +122,9 @@ runtime_init() {
   trap 'runtime_signal INT 130' INT
   trap 'runtime_signal TERM 143' TERM
   trap 'runtime_on_exit $?' EXIT
+  if [[ "$DOTFILES_RUNTIME_OWNS_LOG_DIR" == 1 ]]; then
+    runtime_prune_logs "$(dirname "$DOTFILES_SETUP_LOG_DIR")" || runtime_warn "Could not remove old setup logs."
+  fi
 }
 runtime_stack() {
   local i
@@ -204,6 +248,13 @@ runtime_on_exit() {
     runtime_event failure "${DOTFILES_STAGE_ID:-setup}" setup failed "$status" "process exited" "" 0 "$(runtime_stack)"
   fi
   runtime_cleanup
+  if [[ "${DOTFILES_RUNTIME_OWNS_LOG_DIR:-0}" == 1 && -f "$DOTFILES_SETUP_LOG_DIR/.owner-pid" ]]; then
+    local owner
+    read -r owner < "$DOTFILES_SETUP_LOG_DIR/.owner-pid"
+    if [[ "$owner" == "$(exec sh -c 'echo "$PPID"')" ]]; then
+      rm -- "$DOTFILES_SETUP_LOG_DIR/.owner-pid"
+    fi
+  fi
 }
 runtime_run_job() {
   local name="$1" severity="$2" fix="$3" index="${#DOTFILES_JOB_PIDS[@]}" log_file id
@@ -218,7 +269,7 @@ runtime_run_job() {
     DOTFILES_RUNTIME_HELD_LOCKS=(); DOTFILES_JOB_PIDS=(); DOTFILES_RUNTIME_CLEANED=0
     DOTFILES_RUNTIME_STREAM_ID="$RANDOM.$RANDOM"
     export DOTFILES_STAGE_ID="$id" DOTFILES_STAGE_PARENT="$parent" DOTFILES_STAGE_PREREQUISITES="$prerequisites"
-    DOTFILES_RUNTIME_PID="$(sh -c 'echo "$PPID"')"
+    DOTFILES_RUNTIME_PID="$(exec sh -c 'echo "$PPID"')"
     trap 'runtime_signal INT 130' INT; trap 'runtime_signal TERM 143' TERM
     trap 'runtime_on_exit $?' EXIT
     set -o pipefail
@@ -374,7 +425,7 @@ runtime_execute_stage() {
     # Explicit stdin preserves interactive prompts; wait is interruptible even
     # when a foreground external command would defer the shell's signal trap.
     (
-      DOTFILES_RUNTIME_PID="$(sh -c 'echo "$PPID"')"
+      DOTFILES_RUNTIME_PID="$(exec sh -c 'echo "$PPID"')"
       DOTFILES_RUNTIME_HELD_LOCKS=(); DOTFILES_JOB_PIDS=(); DOTFILES_RUNTIME_CLEANED=0
       DOTFILES_RUNTIME_STREAM_ID="$RANDOM.$RANDOM"
       export DOTFILES_STAGE_ID DOTFILES_STAGE_PARENT DOTFILES_STAGE_PREREQUISITES

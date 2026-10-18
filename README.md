@@ -116,8 +116,13 @@ Each run prints its private `.local/setup-runs/<run-id>/` directory:
 - `events.jsonl`: stage IDs, prerequisites, timing, status, and failure locations.
 - `*.log` and `streams/`: sanitized stage output and original event streams.
 
-Authentication output is omitted. Review logs before sharing them. Logs remain
-until manually removed; keep unresolved failures and the latest successful run.
+The entire `.local/` directory is ignored by Git. Each new run keeps the latest
+three run directories and removes older ones. Active runs are kept until a
+later run can remove them. Normal runs, dry runs, and standalone helper commands
+share this limit. Helpers called by setup use the parent run's directory.
+Copy logs elsewhere before further runs if you need to keep them longer.
+
+Authentication output is omitted. Review logs before sharing them.
 Cancellation stops owned descendants and releases locks. This requires process
 inspection access. System Bash and `/usr/bin/ruby` handle diagnostics so a broken
 managed runtime does not prevent recovery.
