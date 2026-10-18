@@ -3,8 +3,8 @@
   "scope": "Tracked mise/Brewfile/app inventories, explicit setup tools, and managed shell/tmux plugins. Excludes project dependencies, other plugins, nvim repository dependencies, and unrelated manually installed tools.",
   "verification": "Official documentation and upstream source reviews; fake-command tests only. No live installations, account changes, personal settings edits, or network-capture tests.",
   "coverage": {
-    "total": 195,
-    "reviewed": 195,
+    "total": 194,
+    "reviewed": 194,
     "pending": 0
   },
   "limitations": [
@@ -2893,24 +2893,6 @@
           "https://support.spotify.com/me-en/article/data-rights-and-privacy-settings/"
         ],
         "notes": "Opened privacy policy effective July 1, 2026 describes streaming history, app actions, device/network performance, identifiers, and app version within Usage Data. It is the US policy; available rights and controls can differ by account market. Tailored-ad opt-out does not remove all ads or prevent contextual advertising. Private session and social-sharing controls do not establish telemetry suppression. Streaming, authentication, DRM, Spotify Connect, downloads, and updates are separate service activity. Preserve account state, preferences, local files, and downloaded music; no live settings or runtime traffic was inspected.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {}
-    },
-    {
-      "id": "stats",
-      "tool": "stats",
-      "source": "cask",
-      "kind": "app",
-      "research": {
-        "tool": "Stats macOS menu-bar system monitor (exelban)",
-        "status": "none_found",
-        "mechanism": "No documented telemetry opt-out found. The official FAQ states Stats does not collect telemetry or analytics. No persistent crash/error reporting key or telemetry configuration schema was established. Preserve existing module, widget, sensor, fan, and update settings; do not disable local system monitoring as a telemetry substitute.",
-        "sources": [
-          "https://mac-stats.com/faq/",
-          "https://www.mac-stats.com/"
-        ],
-        "notes": "The official FAQ identifies api.mac-stats.com for update checks/public-IP lookup and api.github.com as an update fallback. These are functional requests, separate from usage telemetry. It mentions blocking them would remove updates/public-IP display, not a telemetry preference. Crash support is described as manually opening a GitHub issue. The separate System Stats remote monitoring service, local desktop-widget communication, Homebrew downloads, and macOS crash sharing have separate scope. Bounded official documentation review does not verify all installed runtime behavior. No live settings or app were accessed.",
         "checked_date": "2026-10-03"
       },
       "setup_actions": {}

@@ -143,7 +143,6 @@ cask_app_bundle_name() {
     signal) printf 'Signal' ;;
     slack) printf 'Slack' ;;
     spotify) printf 'Spotify' ;;
-    stats) printf 'Stats' ;;
     superwhisper) printf 'superwhisper' ;;
     synology-drive) printf 'Synology Drive Client' ;;
     synology-image-assistant) printf 'Synology Image Assistant' ;;
