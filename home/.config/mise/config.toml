@@ -28,17 +28,15 @@ yq = "latest"
 jq = "latest"
 awscli = "2.35.18"
 gh = "2.100.0"
-gcloud = "latest"
-flyctl = "latest"
+gcloud = "589.0.0"
+flyctl = "0.4.117"
 cloudflared = "latest"
 mkcert = "latest"
 hub = "latest"
 act = "latest"
 cmake = "latest"
-ollama = "latest"
+ollama = "0.40.2"
 redis = "latest"
-ffmpeg = "latest"
-yt-dlp = "2026.06.09"
 bat = "latest"
 eza = "0.23.4"
 zoxide = "latest"
@@ -87,7 +85,8 @@ mas = "latest"
 wrangler = { version = "latest", allow_builds = ["esbuild", "sharp", "workerd"] }
 herdr = "latest"
 hunk = "latest"
-"github:flowcopilot/aether" = "0.2.2"
+"github:flowcopilot/aether" = "0.2.6"
+xcodegen = "latest"
 
 [settings]
 experimental = true
@@ -96,7 +95,7 @@ use_versions_host_track = false
 # This does not disable codex-acp or its private npm dependency.
 disable_tools = ["codex", "aqua:openai/codex", "npm:@openai/codex"]
 minimum_release_age = "4d"
-minimum_release_age_excludes = ["npm:agent-browser", "npm:agent-device", "npm:agent-browser", "npm:eas-cli", "@agentclientprotocol/codex-acp", "@agentclientprotocol/claude-agent-acp"]
+minimum_release_age_excludes = ["npm:agent-browser", "npm:agent-device", "npm:agent-browser", "npm:eas-cli", "@agentclientprotocol/codex-acp", "@agentclientprotocol/claude-agent-acp", "npm:cf", "github:flowcopilot/aether"]
 
 [settings.npm]
 package_manager = "bun"
@@ -107,6 +106,9 @@ binstall = true
 [settings.github]
 credential_command = '"$HOME/bin/dotfiles-gh-real" auth token --hostname "$MISE_CREDENTIAL_HOST"'
 use_git_credentials = true
+
+[settings.self_update]
+auto = true
 
 # Update vendor-owned agents after direct mise installation/upgrade commands.
 # The interactive shell helper covers no-op upgrades and prevents duplicate runs.

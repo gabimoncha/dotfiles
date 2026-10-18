@@ -5,5 +5,5 @@
 source ~/.orbstack/shell/init.zsh 2>/dev/null || :
 
 # >>> Codex installer >>>
-export PATH="/Users/macowl/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 # <<< Codex installer <<<

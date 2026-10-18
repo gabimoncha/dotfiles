@@ -1,6 +1,5 @@
 # key	type	token_or_url	app_bundle	notes
 aerospace	cask	nikitabobko/tap/aerospace	AeroSpace	Homebrew cask because mise ls-remote aerospace errors.
-claude	cask	claude	Claude	Homebrew cask.
 cursor	cask	cursor	Cursor	Homebrew cask.
 davinci-resolve	manual	https://www.blackmagicdesign.com/products/davinciresolve	DaVinci Resolve	Blackmagic requires a vendor download/account flow; install manually or use Codex-assisted browser automation after bootstrap.
 discord	cask	discord	Discord	Homebrew cask.
@@ -29,7 +28,8 @@ spotify	cask	spotify	Spotify	Homebrew cask.
 superwhisper	cask	superwhisper	superwhisper	Homebrew cask.
 synology-drive	cask	synology-drive	Synology Drive Client	Homebrew cask.
 synology-image-assistant	cask	synology-image-assistant	Synology Image Assistant	Homebrew cask.
-t3-code	cask	t3-code@nightly	T3 Code (Nightly)	Nightly desktop app only; the t3 CLI uses the vendor nightly installer.
+t3-code	cask	t3-code@nightly	T3 Code (Nightly)	Nightly desktop app.
 tailscale	cask	tailscale-app	Tailscale	Homebrew cask for the menu-bar app and full Mac UX.
+typeless	cask	typeless	Typeless	Homebrew cask.
 yaak	cask	yaak	Yaak	Homebrew cask; GUI companion to @yaakapp/cli in mise.
 zoom	cask	zoom	zoom.us	Homebrew cask.

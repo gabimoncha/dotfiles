@@ -5,7 +5,6 @@
 
 # Every third-party tap here has been reviewed as part of this machine setup.
 # Persist that approval so later Homebrew commands use the same trust policy.
-tap "facebook/fb", trusted: true
 tap "felixkratz/formulae", trusted: true
 tap "grishka/grishka", trusted: true
 tap "homebrew-zathura/zathura", trusted: true
@@ -18,6 +17,7 @@ brew "borders"
 brew "btop"
 brew "cliproxyapi", restart_service: true
 brew "curl"
+brew "ffmpeg"
 brew "gcc"
 brew "git"
 brew "ghostscript"
@@ -35,6 +35,7 @@ brew "smartmontools"
 brew "switchaudio-osx"
 brew "telnet"
 brew "webp"
+brew "yt-dlp"
 brew "zlib"
 
 # Mac App Store
@@ -79,9 +80,9 @@ cask "steam"
 cask "superwhisper"
 cask "synology-drive"
 cask "synology-image-assistant"
-# T3 nightly desktop app; its t3 CLI uses the vendor standalone installer.
 cask "t3-code@nightly"
 cask "tailscale-app"
+cask "typeless"
 cask "vorssaint"
 cask "xykong/tap/flux-markdown"
 cask "yaak"
