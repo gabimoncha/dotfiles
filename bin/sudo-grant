@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# Share one sudo timestamp across this user's processes, so setup stages and an
+# agent shell without a terminal can use sudo after one authentication. The
+# timestamp expires after 30 idle minutes. Setup removes the drop-in at exit.
+
+set -euo pipefail
+
+dropin=/etc/sudoers.d/dotfiles-setup
+timeout_minutes=30
+temp_file=""
+
+log() {
+  printf '==> %s\n' "$1"
+}
+
+warn() {
+  printf '!! %s\n' "$1" >&2
+}
+
+usage() {
+  printf 'Usage: ./bin/sudo-grant [--enable|--disable|--check]\n' >&2
+}
+
+cleanup() {
+  if [[ -n "$temp_file" ]]; then
+    rm -f "$temp_file"
+  fi
+}
+
+trap cleanup EXIT
+
+render_dropin() {
+  local user="$1"
+  printf '# Temporary grant from dotfiles bin/sudo-grant. Remove with: ./bin/sudo-grant --disable\n'
+  printf 'Defaults:%s timestamp_type=global, timestamp_timeout=%s\n' "$user" "$timeout_minutes"
+}
+
+enable_grant() {
+  local user
+
+  if [[ "${EUID}" -eq 0 ]]; then
+    warn "Run ./bin/sudo-grant as your normal user, not with sudo."
+    return 1
+  fi
+  user="$(id -un)"
+  if [[ ! "$user" =~ ^[A-Za-z_][A-Za-z0-9_.-]*$ ]]; then
+    warn "User name ${user} is not safe to write into sudoers."
+    return 1
+  fi
+
+  temp_file="$(mktemp)"
+  render_dropin "$user" > "$temp_file"
+  if ! visudo -cf "$temp_file" >/dev/null; then
+    warn "visudo rejected the generated drop-in; nothing was installed."
+    return 1
+  fi
+
+  log "Installing a ${timeout_minutes}-minute shared sudo timestamp at ${dropin}"
+  # One sudo call installs, validates, and rolls back. After the install, the
+  # terminal's timestamp no longer counts, so a second call would prompt.
+  # shellcheck disable=SC2016
+  if ! sudo /bin/sh -c 'install -m 0440 -o root -g wheel "$1" "$2" &&
+    { visudo -c >/dev/null || { rm -f "$2"; exit 3; }; }' sh "$temp_file" "$dropin"; then
+    warn "Could not install a valid ${dropin}; nothing was left behind."
+    return 1
+  fi
+  # Create the shared timestamp. This is the second and last prompt.
+  sudo -v
+}
+
+disable_grant() {
+  if [[ ! -e "$dropin" ]]; then
+    return 0
+  fi
+  # A valid shared timestamp removes the file without a prompt.
+  sudo -n rm -f "$dropin" 2>/dev/null || sudo rm -f "$dropin"
+  sudo -K
+  log "Removed the temporary sudo grant at ${dropin}"
+}
+
+check_grant() {
+  if [[ -e "$dropin" ]]; then
+    printf 'warn - temporary sudo grant is installed at %s; run ./bin/sudo-grant --disable\n' "$dropin"
+    return 1
+  fi
+  printf 'ok  - no temporary sudo grant is installed\n'
+}
+
+case "${1:-}" in
+  --enable) enable_grant ;;
+  --disable) disable_grant ;;
+  --check) check_grant ;;
+  -h | --help) usage ;;
+  *) usage; exit 1 ;;
+esac

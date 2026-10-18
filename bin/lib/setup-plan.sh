@@ -55,7 +55,8 @@ plan_stage() {
     20)
       plan_set "$id" deferred
       # Only an explicit user opt-out is optional at this planner level.
-      [[ "$id" == touch_id && "${DOTFILES_SKIP_SUDO_TOUCH_ID:-0}" == 1 ]] || plan_status=1
+      [[ "$id" == touch_id && "${DOTFILES_SKIP_SUDO_TOUCH_ID:-0}" == 1 ]] ||
+        [[ "$id" == sudo_grant && "${DOTFILES_SKIP_SUDO_GRANT:-0}" == 1 ]] || plan_status=1
       ;;
     *) plan_set "$id" failed; plan_status=1 ;;
   esac
@@ -106,6 +107,7 @@ setup_plan() {
   plan_stage clt setup 'preflight' capture setup_clt
   plan_stage touch_id environment 'clt' sensitive setup_touch_id
   plan_stage sudo foundations 'clt' sensitive setup_sudo
+  plan_stage sudo_grant foundations 'sudo' sensitive setup_sudo_grant
   plan_stage sudo_keepalive foundations 'sudo' local setup_keepalive
   plan_start homebrew foundations 'clt sudo' capture setup_homebrew
   plan_start mise foundations 'clt' capture setup_mise
@@ -141,20 +143,7 @@ setup_plan() {
   plan_stage service_links environment 'brew_environment links_before_packages' capture setup_links
   plan_stage brewfiles packages 'brew_environment service_links' local setup_brewfiles
   plan_start homebrew_inventory packages 'brewfiles' capture setup_brew_inventory
-  if [[ "${DOTFILES_SKIP_MOBILE_DEV:-0}" == 1 ]]; then
-    plan_defer mobile_tools mobile ''
-  else
-    plan_stage mobile_tools mobile 'brew_environment verify_mise_access' capture setup_mobile_tools
-  fi
   plan_start mise_inventory packages 'brew_environment verify_mise_access links_before_packages' capture setup_mise_inventory
-  if [[ "${DOTFILES_SKIP_MOBILE_DEV:-0}" == 1 ]]; then
-    plan_defer xcode mobile ''
-  else
-    # Finish background output before handing the terminal to Apple sign-in.
-    plan_wait homebrew_inventory
-    plan_wait mise_inventory
-    plan_stage xcode mobile 'mobile_tools' sensitive setup_xcode
-  fi
   plan_stage submodules environment 'clt' capture setup_submodules
   plan_wait homebrew_inventory
   plan_stage manifest_apps packages 'brew_environment' capture setup_manifest_apps
@@ -169,17 +158,18 @@ setup_plan() {
   plan_stage skills_runtime environment 'mise' capture setup_skills_runtime
   plan_stage skills environment 'skills_runtime' sensitive setup_skills
   plan_stage restores restore 'clt' sensitive setup_restores
-  plan_wait xcode
-  if [[ "${DOTFILES_SKIP_MOBILE_DEV:-0}" == 1 ]]; then
-    plan_defer mobile_finish mobile ''
-  else
-    plan_stage mobile_finish mobile 'xcode brew_environment' capture setup_mobile_finish
-  fi
   plan_stage final_links environment 'mise_inventory standalone_agents' capture setup_final_links
   plan_stage defaults environment 'clt' sensitive setup_defaults
   plan_stage screenshots environment 'clt' capture setup_screenshots
   plan_stage app_settings environment 'clt' sensitive setup_app_settings
   plan_stage finder environment 'clt' sensitive setup_finder
+  if [[ "${DOTFILES_SKIP_MOBILE_DEV:-0}" == 1 ]]; then
+    plan_defer mobile_setup mobile ''
+  else
+    # After every interactive stage, so the long Xcode download runs unattended.
+    # Before telemetry, so its opt-outs cover the installed mobile tools.
+    plan_stage mobile_setup mobile 'brew_environment' capture setup_mobile
+  fi
   plan_stage telemetry environment 'clt' capture setup_telemetry
   setup_plan_finish "$plan_started"
   return "$plan_status"

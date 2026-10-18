@@ -12,8 +12,16 @@ setup_touch_id() {
   "${repo_root}/bin/configure-sudo-touch-id" --enable
 }
 setup_sudo() { ensure_admin_user; sudo -v; }
+setup_sudo_grant() {
+  [[ "${DOTFILES_SKIP_SUDO_GRANT:-0}" == 1 ]] && return 20
+  "${repo_root}/bin/sudo-grant" --enable || return
+  # bin/setup removes only a grant that this run installed.
+  : > "${DOTFILES_SETUP_LOG_DIR}/sudo-grant-installed"
+}
 setup_keepalive() {
-  (while sudo -n true; do sleep 30; done) >/dev/null 2>&1 &
+  local owner=$$
+  # A shared timestamp outlives this loop, so the loop must not outlive setup.
+  (while kill -0 "$owner" 2>/dev/null && sudo -n true; do sleep 30; done) >/dev/null 2>&1 &
 }
 setup_homebrew() { ensure_homebrew; }
 setup_mise() { "${repo_root}/bin/ensure-mise-standalone" --skip-update; }
@@ -57,6 +65,8 @@ setup_permission_handoff() {
 Foundation installation finished. This phase does not install the bulk app inventory.
 
 Before continuing:
+0. Open the App Store app and sign in. Continuation installs App Store apps,
+   including Xcode, without another sign-in prompt.
 1. Open System Settings > Privacy & Security > App Management.
 2. Enable the terminal application you will use for setup, if listed; use Add
    if macOS offers it. Approve App Management when macOS requests it.
@@ -72,18 +82,7 @@ for package installation. App-specific consent is handled later, as needed.
 Both phases retain live output and private diagnostic logs.
 INSTRUCTIONS
 }
-setup_mobile_tools() {
-  [[ "${DOTFILES_SKIP_MOBILE_DEV:-0}" == 1 ]] && return 20
-  "${repo_root}/bin/install-mobile-dev" --prepare-tools-only
-}
-setup_xcode() { "${repo_root}/bin/install-mobile-dev" --xcode-install-only; }
-setup_mobile_finish() {
-  local status=0
-  "${repo_root}/bin/install-mobile-dev" --android-only || status=1
-  "${repo_root}/bin/install-mobile-dev" --ios-platform-only || status=1
-  "${repo_root}/bin/install-mobile-dev" --xcode-formulae-only || status=1
-  return "$status"
-}
+setup_mobile() { "${repo_root}/bin/install-mobile-dev"; }
 setup_skills_runtime() {
   local node
   node="$(setup_real_tool node)" || return 1
@@ -111,7 +110,7 @@ setup_verify_apps() {
   while IFS=$'\t' read -r key type token bundle notes || [[ -n "${key:-}" ]]; do
     [[ -n "${key:-}" && "$key" != \#* ]] || continue
     case "$type" in
-      cask)
+      cask|script)
         if [[ "$bundle" != - && -n "$bundle" ]]; then
           if [[ ! -d "${DOTFILES_APPLICATIONS_DIR:-/Applications}/${bundle}.app" ]]; then
             runtime_record_failure recoverable "app.$key" "application bundle is unavailable"

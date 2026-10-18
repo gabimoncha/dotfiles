@@ -90,6 +90,10 @@ check_apple_release_policy() {
     if [[ "$bundle_id" != "com.apple.dt.Xcode" ]]; then
       continue
     fi
+    # The App Store offers only public releases.
+    if [[ -f "${app}/Contents/_MASReceipt/receipt" ]]; then
+      continue
+    fi
 
     xcode_build="$("$plistbuddy_bin" -c 'Print :DTXcodeBuild' "$plist" 2>/dev/null || true)"
     if [[ -z "$xcode_build" ]]; then
@@ -162,6 +166,11 @@ check_script_syntax() {
     "bin/ensure-mise-standalone"
     "bin/install-apps"
     "bin/install-mobile-dev"
+    "bin/check-mobile-ready"
+    "bin/lib/mobile-state.sh"
+    "bin/sudo-grant"
+    "bin/link-t3-command"
+    "bin/configure-background-jobs"
     "bin/finder-sidebar-favorites"
     "bin/setup-tmux"
     "bin/app-state-doctor"
@@ -217,6 +226,15 @@ check_repo_state() {
   fi
 }
 
+check_sudo_grant() {
+  local output
+  if output="$("${repo_root}/bin/sudo-grant" --check)"; then
+    pass "${output#ok  - }"
+  else
+    warn "${output#warn - }"
+  fi
+}
+
 check_app_manifest() {
   local bad_rows
 
@@ -237,6 +255,7 @@ check_homebrew
 check_submodule_url
 check_repo_state
 check_app_manifest
+check_sudo_grant
 check_script_syntax
 
 if [[ $failures -gt 0 ]]; then

@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# Read-only: never runs sudo, downloads, installs, or changes the selected Xcode.
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=bin/lib/mobile-state.sh
+. "${repo_root}/bin/lib/mobile-state.sh"
+failures=0
+
+pass() {
+  printf 'ok  - %s\n' "$1"
+}
+
+fail() {
+  printf 'fail - %s\n' "$1"
+  failures=$((failures + 1))
+}
+
+if xcode_app="$(mobile_selected_xcode_app)"; then
+  pass "full Xcode is selected: ${xcode_app}"
+  if mobile_xcode_is_public "$xcode_app"; then
+    pass "selected Xcode is a public build: $(mobile_xcode_build "$xcode_app")"
+  else
+    fail "selected Xcode is a prerelease or its build is unknown"
+  fi
+  if mobile_ios_sdk_ready; then
+    pass "iOS simulator SDK is available"
+  else
+    fail "iOS simulator SDK is unavailable (license, first launch, or iOS platform is incomplete)"
+  fi
+  if mobile_ios_runtime_ready; then
+    pass "an iOS simulator runtime is available"
+  else
+    fail "no available iOS simulator runtime"
+  fi
+else
+  fail "full Xcode is not selected (xcode-select -p: $(xcode-select -p 2>/dev/null || printf none))"
+fi
+
+if mobile_android_studio_ready; then
+  pass "Android Studio is installed"
+else
+  fail "Android Studio is not installed"
+fi
+
+if command -v brew >/dev/null 2>&1; then
+  while IFS= read -r formula; do
+    if mobile_formula_installed "$formula"; then
+      pass "formula ${formula} is installed"
+    else
+      fail "formula ${formula} is not installed"
+    fi
+  done < <(mobile_formulae)
+else
+  fail "brew is not on PATH; cannot check apps/mobile.Brewfile formulae"
+fi
+
+if [[ "$failures" -gt 0 ]]; then
+  printf '\nMobile setup is incomplete (%s issue(s)). Run ./bin/install-mobile-dev, or see SETUP-AGENT.md.\n' "$failures"
+  exit 1
+fi
+printf '\nMobile setup is ready.\n'

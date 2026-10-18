@@ -24,6 +24,15 @@ unset DOTFILES_BOOTSTRAP_LIBRARY
 . "${repo_root}/bin/lib/setup-actions.sh"
 . "${repo_root}/bin/lib/setup-plan.sh"
 
+setup_release_sudo_grant() {
+  # Keep a grant that another run or the user installed.
+  [[ -f "${DOTFILES_SETUP_LOG_DIR}/sudo-grant-installed" ]] || return 0
+  "${repo_root}/bin/sudo-grant" --disable ||
+    printf '!! Could not remove the temporary sudo grant. Run ./bin/sudo-grant --disable.\n' >&2
+}
+# Signals exit through runtime_signal, so this also covers cancellation.
+trap 'setup_exit_status=$?; setup_release_sudo_grant; runtime_on_exit "$setup_exit_status"' EXIT
+
 ensure_not_root
 runtime_acquire_global_lock || exit 1
 export PATH="${HOME}/.local/bin:${HOME}/.local/share/mise/shims:$PATH"

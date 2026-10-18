@@ -157,51 +157,9 @@ cask_app_bundle_name() {
   esac
 }
 
-preferred_xcode_developer_dir() {
-  local app
-
-  if [[ -d "/Applications/Xcode.app/Contents/Developer" ]]; then
-    printf '/Applications/Xcode.app/Contents/Developer\n'
-    return 0
-  fi
-
-  while IFS= read -r app; do
-    if [[ -d "${app}/Contents/Developer" ]]; then
-      printf '%s/Contents/Developer\n' "$app"
-      return 0
-    fi
-  done < <(ls -dt /Applications/Xcode*.app 2>/dev/null || true)
-
-  return 1
-}
-
-full_xcode_selected() {
-  local developer_dir
-
-  developer_dir="$(preferred_xcode_developer_dir || true)"
-  [[ -n "$developer_dir" && "$(xcode-select -p 2>/dev/null || true)" == "$developer_dir" ]]
-}
-
-full_xcode_dependent_formula() {
-  case "$1" in
-    facebook/fb/idb-companion | idb-companion | sourcekitten | wix/brew/applesimutils | applesimutils)
-      return 0
-      ;;
-    *)
-      return 1
-      ;;
-  esac
-}
-
+# borders fails to build when Homebrew reports the Xcode app as too old.
 homebrew_xcode_sensitive_formula() {
-  case "$1" in
-    borders | facebook/fb/idb-companion | idb-companion | sourcekitten | wix/brew/applesimutils | applesimutils)
-      return 0
-      ;;
-    *)
-      return 1
-      ;;
-  esac
+  [[ "$1" == borders ]]
 }
 
 homebrew_reports_xcode_too_old() {
@@ -295,7 +253,8 @@ install_mas_apps() {
       fi
 
       log "Installing App Store app ${app_name}"
-      "$mas_cmd" install "$app_id" || {
+      # mas 7 needs root to install apps.
+      sudo "$mas_cmd" install "$app_id" || {
         warn "Skipping ${app_name}; App Store did not start the download. Open it in the App Store once, then rerun ./bin/setup."
         runtime_record_failure recoverable "App Store app ${app_name}" "mas install did not start the download" "" "Open ${app_name} in the App Store once, then rerun ./bin/setup."
         status=1
@@ -417,13 +376,6 @@ filter_brewfile_for_existing_apps() {
   while IFS= read -r line || [[ -n "$line" ]]; do
     if [[ "$line" =~ ^brew[[:space:]]+\"([^\"]+)\" ]]; then
       brew_name="${BASH_REMATCH[1]}"
-
-      if full_xcode_dependent_formula "$brew_name" && ! full_xcode_selected; then
-        warn "Deferring ${brew_name}; full Xcode is required"
-        printf '# Deferred until full Xcode is selected: %s\n' "$line" >> "$target_file"
-        printf '%s\n' "$line" >> "$deferred_xcode_file"
-        continue
-      fi
 
       if homebrew_xcode_sensitive_formula "$brew_name"; then
         if homebrew_reports_xcode_too_old; then
