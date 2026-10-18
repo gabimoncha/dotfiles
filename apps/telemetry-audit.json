@@ -3,8 +3,8 @@
   "scope": "Tracked mise/Brewfile/app inventories, explicit setup tools, and managed shell/tmux plugins. Excludes project dependencies, other plugins, nvim repository dependencies, and unrelated manually installed tools.",
   "verification": "Official documentation and upstream source reviews; fake-command tests only. No live installations, account changes, personal settings edits, or network-capture tests.",
   "coverage": {
-    "total": 192,
-    "reviewed": 192,
+    "total": 191,
+    "reviewed": 191,
     "pending": 0
   },
   "limitations": [
@@ -2613,24 +2613,6 @@
           "https://linear.app/privacy"
         ],
         "notes": "Official security documentation identifies usage analytics, selected workspace/account data for analytics, and user account information linked to client/request crashes. Privacy policy effective March 17, 2025 documents browser cookie controls and says browser Do Not Track requests are not supported; these are not a verified desktop telemetry control. Authentication, workspace sync, notifications, and updates are separate service activity. Preserve existing app settings, caches, credentials, and workspace data; do not replace local files based on an inferred key. No runtime traffic was inspected.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {}
-    },
-    {
-      "id": "lm_studio",
-      "tool": "lm-studio",
-      "source": "cask",
-      "kind": "app",
-      "research": {
-        "tool": "LM Studio",
-        "status": "none_found",
-        "mechanism": "No documented persistent analytics or crash-report opt-out preference, command, environment variable, or configuration key found in the checked official sources.",
-        "sources": [
-          "https://lmstudio.ai/app-privacy",
-          "https://lmstudio.ai/docs/app/offline"
-        ],
-        "notes": "The current app privacy policy says the application does not include telemetry or user-specific tracking. It separately describes update requests containing device/app metadata and IP addresses, and anonymized aggregate model-search measurements. Optional Cloud Services process chosen requests. Offline operation supports local inference after downloads; it is not a documented analytics-specific setting. No preference-file edit is supported by the checked evidence, so preserve existing app state. Crash-report controls were not documented in the checked sources.",
         "checked_date": "2026-10-03"
       },
       "setup_actions": {}

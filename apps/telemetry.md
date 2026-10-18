@@ -1,6 +1,6 @@
 # Telemetry controls
 
-Reviewed on 2026-10-03. Coverage: 192 of 192 tracked entries.
+Reviewed on 2026-10-03. Coverage: 191 of 191 tracked entries.
 
 Setup exports the supported environment controls before installers run. It applies saved preferences after foundation installation, and again at the end of continuation after restores. A failed setter makes the stage fail; other installed tools are still configured.
 
