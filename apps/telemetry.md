@@ -8,6 +8,8 @@ Run `./bin/configure-telemetry --dry-run` to preview the changes. Run it without
 
 Start a new shell and reopen apps after setup. A user LaunchAgent applies the managed privacy environment to GUI launches at login. An app already running, or started before the login job, can retain its old environment. Explicit flags, managed policy, local project configuration, remote servers, and extensions can have separate behavior.
 
+The login job is `~/Library/LaunchAgents/com.dotfiles.telemetry-env.plist`. Setup copies it instead of linking it. If the copy differs from the tracked plist, setup backs it up, replaces it, and reloads the job. The job sets only the keys in `env.sh`. To remove it, run `launchctl bootout gui/$(id -u)/com.dotfiles.telemetry-env` and delete the plist. `launchctl unsetenv <variable>` clears one variable for the current session. For GUI apps, `AZ_CRS_ARGUMENTS` keeps only the properties already in the launchd environment, not those of the shell that runs setup.
+
 ## Automatic controls
 
 The environment values are in [env.sh](../home/.config/telemetry/env.sh). The exact scope and all source links are in [telemetry-audit.json](telemetry-audit.json). These controls do not disable service requests or update checks.

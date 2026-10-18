@@ -2,6 +2,8 @@
 
 This repo must stay safe to clone onto a fresh Mac without exposing private state.
 
+## Keep private state out of Git
+
 Do not commit:
 
 - API keys, tokens, passwords, cookies, or auth headers
@@ -21,13 +23,38 @@ Local-only shell state belongs under:
 home/.config/local/*.zsh
 ```
 
-The tracked shell config sources those files if present. Keep secrets there or in Keychain-backed tooling, not in tracked dotfiles. Repo-local examples may be tracked as `*.example`; real `*.zsh` files must stay ignored.
+The tracked shell config sources those files if present. Keep secrets there or
+in Keychain-backed tooling. Repo-local examples may be tracked as `*.example`;
+real `*.zsh` files must stay ignored.
 
-Before committing, run:
+Before you commit, run `git diff --cached --check` and scan new config files
+for private values.
 
-```bash
-git diff --check
-git diff --cached --check
-```
+## What setup trusts
 
-Then scan any new config files for private values.
+Bootstrap pins the mise, gh, and Homebrew installer inputs. Inventory entries
+that use `latest` are not a lockfile. mise's four-day `minimum_release_age`
+reduces exposure to new releases, not to malicious older releases. Review a
+tool before you add it to an inventory.
+
+The interactive SFW aliases cover only the commands they wrap. Direct Bun
+calls, the Bun branch of `npx`/`bx`, Bash installers, mise backends, Homebrew
+casks, shell plugins, editor extensions, and personal skills run without SFW.
+
+Homebrew tap trust is declared per tap in the Brewfiles. NearDrop quarantine
+stays intact. Setup checks GitHub SSH host keys against published values, and
+new SSH keys need a passphrase.
+
+During each setup phase, a temporary sudoers file shares one `sudo` timestamp
+across your processes. Package install scripts and agent shells can then run
+`sudo` without a prompt until setup exits or 30 idle minutes pass. Do not run
+untrusted code while setup runs. See
+[the decision](DECISIONS.md#temporary-sudo-grant).
+
+## Check a fresh Mac by hand
+
+No script proves a fresh-Mac install. On a disposable public-release Mac,
+check the Command Line Tools handoff, Keychain and device login, SSH prompts,
+the shared `sudo` timestamp in stages without a terminal, `sudo mas get` for
+Xcode, iOS downloads, cloud backup hydration, GUI imports, and macOS permission
+prompts. Never use personal backups or credentials for this check.

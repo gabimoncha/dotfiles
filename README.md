@@ -26,10 +26,20 @@ cd ~/development/dotfiles
 Run setup as your normal user, not with `sudo`. If Git or setup opens the
 Command Line Tools installer, finish it and retry the command.
 
+Each phase asks twice for your password, or Touch ID, near its start. The
+first prompt is for `sudo`. The second installs a temporary sudoers file at
+`/etc/sudoers.d/dotfiles-setup`, so all your processes share one `sudo`
+timestamp. Later stages, and a coding agent shell without a terminal, can then
+use `sudo` without a prompt. The timestamp expires after 30 minutes without a
+`sudo` command. Setup removes the file when it exits, also after a failure or
+Ctrl-C. Preflight reports a file that a killed run left behind. Set
+`DOTFILES_SKIP_SUDO_GRANT=1` to skip the grant. Later `sudo` steps then ask in
+the terminal.
+
 The first phase installs foundation tools: Homebrew, standalone mise, isolated
-GitHub CLI, Codex CLI, Claude Code, Cursor Agent, OpenCode v2, and the T3 nightly
-CLI. Pi is installed after mise provides Node and npm in the continuation phase.
-Preparation then exits. Review **System Settings
+GitHub CLI, Codex CLI, Claude Code, Cursor Agent, and OpenCode v2. Pi installs
+in the continuation phase, after mise provides Node and npm. Preparation then
+exits. Sign in to the App Store app. Review **System Settings
 > Privacy & Security > App Management** for the terminal application you use.
 Approve access when requested and fully quit/reopen that application as directed.
 Return to the repository and continue:
@@ -42,42 +52,17 @@ This flag acknowledges the manual checkpoint; it does not verify permissions
 or a terminal restart. Some apps request consent only after installation.
 
 Continuation rechecks foundations, authenticates GitHub, installs packages,
-offers restores, and applies configuration. API authentication gates broad mise
-installation; an SSH-only failure does not invalidate working API access.
-After login and API checks pass, setup runs `gh config set telemetry disabled`.
-If this command fails, setup shows a warning; API readiness is not affected.
-Setup also applies documented telemetry opt-outs to installed tools. The same
-environment controls apply to installers and new managed zsh sessions.
-`./bin/configure-telemetry` reapplies saved preferences; add `--dry-run` to
-preview changes. Existing settings are preserved, with backups before edits.
-The [telemetry guide](apps/telemetry.md) lists automatic controls and manual
-settings. The [full audit](apps/telemetry-audit.json) records every reviewed
-tool, its official sources, and any unverified or unavailable control.
-This audit covers the tracked inventories and explicit setup tools, not every
-project dependency. Account settings and GUI-only switches need manual action.
-Explicit command options or project settings can override some controls.
-Wrangler dependency metadata needs `dependencies_instrumentation.enabled=false`
-in each project. Turborepo experimental OTel settings need the project
-observability feature flag; setup does not export that experimental control.
-The Vercel `skills` telemetry opt-out also suppresses its security-audit API
-lookups. `sfw` Free does not offer a telemetry opt-out; `cloudflared` has no
-documented control for its automatic error reporting.
-Cursor's inherited telemetry/crash settings are merged without removing JSONC
-comments. A complete Cursor opt-out is not established; account Privacy Mode
-remains manual. Setup uses a user login job at `~/Library/LaunchAgents/com.dotfiles.telemetry-env.plist` to set the
-documented telemetry environment values for GUI launches, including T3 desktop.
-Setup copies this plist instead of linking it. When the copy differs from the
-tracked plist, setup backs it up, replaces it, and reloads the job.
-Start a new shell and reopen apps after setup. An already running app or
-one started before the login job can retain its previous environment. To
-remove the login job, run
-`launchctl bootout gui/$(id -u)/com.dotfiles.telemetry-env` and remove the
-plist; `launchctl unsetenv <variable>` clears a selected telemetry variable for
-the session. The job sets only keys from the managed telemetry environment file.
-For GUI apps, `AZ_CRS_ARGUMENTS` keeps only properties already in the launchd
-environment, not the properties of the shell that runs setup.
-Homebrew and mise inventories can overlap, but both finish before foreground
-Xcode sign-in. Mobile completion currently runs after restore offers.
+offers restores, and applies configuration. GitHub API access gates the large
+mise install. An SSH-only failure does not block it. The mobile stage runs
+after every interactive stage and before telemetry. It installs Xcode from the
+App Store without an Apple ID prompt.
+
+Setup exports documented telemetry opt-outs before installers run and applies
+saved preferences to installed tools. A login job sets the same values for GUI
+apps. Reopen apps after setup. `./bin/configure-telemetry [--dry-run]`
+reapplies them. The [telemetry guide](apps/telemetry.md) lists every control,
+the manual settings, and the tools without an opt-out.
+
 The exact order and dependencies are in [setup-plan.sh](bin/lib/setup-plan.sh).
 `bin/bootstrap` delegates to this same planner.
 
@@ -85,7 +70,7 @@ The exact order and dependencies are in [setup-plan.sh](bin/lib/setup-plan.sh).
 | --- | --- |
 | `--dry-run` | Run preflight probes and write private logs; plan provisioning without executing it. Add `--continue` to preview that phase. |
 | `--serial` | Wait for each scheduled job before starting the next. |
-| `--skip-mobile-dev` | Skip explicit mobile stages. Mobile tools in the common mise inventory still install. |
+| `--skip-mobile-dev` | Skip the mobile stage: Xcode, iOS support, Android Studio, and `apps/mobile.Brewfile`. Mobile tools in the common mise inventory still install. |
 
 ## Manual completion
 
@@ -97,8 +82,8 @@ The exact order and dependencies are in [setup-plan.sh](bin/lib/setup-plan.sh).
   backups do not transfer macOS permission grants.
 - Complete eligible restore prompts. Raycast import needs its GUI and password.
   Existing Codex state is preserved for comparison. See [MACKUP.md](MACKUP.md).
-- Complete first launch for Xcode, Android Studio, OrbStack, and vendor apps
-  listed as `manual` in [the app manifest](apps/manifest.tsv).
+- Complete first launch for Android Studio, OrbStack, and vendor apps listed as
+  `manual` in [the app manifest](apps/manifest.tsv).
 - For the configured Android workflow, install SDK Platform 35, Sources for
   Android 35, Build-Tools and Emulator in Android Studio; create a virtual device.
 - Personal skills require a reviewed `skills` CLI and
@@ -109,17 +94,21 @@ The exact order and dependencies are in [setup-plan.sh](bin/lib/setup-plan.sh).
 Missing optional restore prerequisites do not fail a run; an attempted restore
 that fails does. Required failed, blocked, or deferred stages return nonzero.
 Use `./bin/app-state-doctor` to check managed app links, tmux plugins, Raycast,
-Spotlight hotkeys, and Touch ID. It is not a complete installation test.
+Spotlight hotkeys, Touch ID, and disabled background jobs. It is not a complete
+installation test.
 
 ## Recovery
 
+To let a coding agent repair a failed stage, ask it to follow
+[the setup repair guide](SETUP-AGENT.md).
 Repair the failed prerequisite. If preparation failed before the permission
 handoff, rerun `./bin/setup`. After completing that handoff, use
 `./bin/setup --continue`.
 Existing links and installations are reused where possible; changed link targets
 are backed up under `~/.dotfiles-backups/<timestamp>/`. Homebrew inventory uses
-`--no-upgrade`. Update T3 desktop through its GUI. Normal setup does not
-self-update a healthy mise binary.
+`--no-upgrade`. T3 desktop updates itself. Setup does not update a healthy
+mise binary, but mise updates itself because the global config sets
+`self_update.auto`.
 
 Each run prints its private `.local/setup-runs/<run-id>/` directory:
 
@@ -142,13 +131,17 @@ managed runtime does not prevent recovery.
 | `./bin/auth-setup --verify-mise` | Check the direct credential helper. |
 | `./bin/check-mise-tools` | Probe real installed tools without provisioning. |
 | `./bin/install-apps [--dry-run]` | Retry or preview the app manifest. |
+| `./bin/check-mobile-ready` | Check Xcode, iOS, Android Studio, and `apps/mobile.Brewfile` without changes. |
+| `./bin/install-mobile-dev [--dry-run]` | Install or repair Xcode, iOS support, Android Studio, and the mobile formulae. |
+| `./bin/sudo-grant --check` | Report a leftover sudo grant; `--enable` and `--disable` change it. |
 | `./bin/link-dotfiles` | Reconcile managed links and back up replaced targets. |
 | `./bin/setup-tmux` | Install missing TPM plugins and reload a running server. |
-| `./bin/configure-app-settings` | Retry automatic login-item creation. |
+| `./bin/configure-app-settings` | Retry automatic login-item setup. |
 | `./bin/configure-telemetry [--dry-run]` | Apply documented telemetry opt-outs to installed tools. |
 | `./bin/configure-screenshots` | Repair PNG destination preferences at `~/Screenshots`. |
 | `./bin/finder-sidebar-favorites` | Retry `development` and `screenshots` favorites. |
 | `./bin/configure-sudo-touch-id --check` | Inspect Touch ID for sudo; `--enable`/`--disable` change it. |
+| `./bin/configure-background-jobs [--dry-run]` | Disable the user launchd jobs in `macos/disabled-jobs.txt`; `--check` reports drift and `--revert` enables them. |
 | `./bin/ensure-mise-standalone --update` | Explicitly update standalone mise. |
 
 Capability resolution and version probes each default to a 10-second deadline;
@@ -160,10 +153,10 @@ Use `DOTFILES_SKIP_SUDO_TOUCH_ID=1` to skip Touch ID setup or
 separate and still runs. General defaults use the `~/.macos-defaults-applied`
 stamp. Apple Watch approval is configured in macOS, not by these scripts.
 
-Xcode uses the latest public release and experimental unxip by default;
-`DOTFILES_XCODE_EXPERIMENTAL_UNXIP=0` selects regular unxip.
-**Other Xcode major versions are removed unless `DOTFILES_KEEP_OLD_XCODES=1`.**
-If Apple authentication fails, download the public `.xip` from
+Setup installs Xcode with `sudo mas get 497799835`. The App Store offers only
+public releases. It also updates Xcode automatically, unless you turn off
+automatic updates in the App Store settings. Setup does not remove other Xcode
+apps. If the App Store cannot install Xcode, download the public `.xip` from
 [Apple Developer Downloads](https://developer.apple.com/download/all/), then run:
 
 ```bash
@@ -178,21 +171,20 @@ dragging the floating thumbnail can also change where the capture ends up.
 
 ### Known limits
 
-The review found defects that this documentation cleanup does not repair:
+These defects are not fixed yet:
 
 - General defaults currently disable display sleep on battery and power.
-- The generated deferred Xcode Brewfile is not consumed after Xcode installation.
-- The full direct `install-mobile-dev` path backgrounds Xcode despite its terminal
-  input requirement. Direct mobile actions also omit the setup Apple preflight.
-  Prefer the main continuation path for now.
+- If Homebrew reports the Xcode app as too old, setup skips `borders` and does
+  not retry it after Xcode installs. Rerun `./bin/setup --continue`.
+- A direct `./bin/install-mobile-dev` run omits the macOS update check in
+  preflight. It rejects only a prerelease Xcode.
 - Raycast backup can create absent provider directories; confirm real cloud
   synchronization. Combined backup can exit zero when neither provider is ready.
 - Finder failures can be reported as success; check the resulting sidebar.
 - The optional Postgres 18 Compose service uses a legacy data-volume target.
-- The tracked login profile still contains a machine-specific Codex PATH entry.
 
-Fixture tests do not prove a clean-Mac installation. See the
-[remaining real-machine checks](SETUP-SECURITY.md#real-machine-checks-still-required).
+No script proves a fresh-Mac install. See
+[the manual checks](SECURITY.md#check-a-fresh-mac-by-hand).
 
 ## Ownership and configuration
 
@@ -203,6 +195,7 @@ Fixture tests do not prove a clean-Mac installation. See the
 | [app manifest](apps/manifest.tsv) | Explicit app installation status and manual vendor steps. |
 | [link-dotfiles](bin/link-dotfiles) and `home/` | Managed files and backup-before-replace behavior. |
 | [macOS defaults](macos/defaults.sh) | OS preferences. |
+| [disabled jobs](macos/disabled-jobs.txt) | Apple user launchd jobs that `bin/configure-background-jobs` disables. |
 | [Mackup config](home/.mackup.cfg) | Allowlisted app settings, separate from repo-owned files. |
 | `nvim/` | Separate Neovim submodule linked to `~/.config/nvim`; plugins download at first launch. |
 
@@ -239,86 +232,56 @@ OAuth files remain local and must not be copied into tracked configuration.
 helpers, package runners, and Android paths. [SECURITY.md](SECURITY.md) lists
 state that must stay out of Git.
 
-## Updating and validation
+## Coding agents
 
-Run `./bin/setup --continue` to install the agent CLIs. Healthy vendor installs
-are reused. Commands replaced during repair are backed up and restored if the
-installer fails. Setup no longer checks for or removes old package-manager
-copies; the migration is complete.
+Setup installs the agent CLIs with their vendor installers and reuses healthy
+installs. `./bin/ensure-harnesses-standalone` installs or repairs only the
+agent CLIs on an existing Mac.
 
-`harness update` updates installed agents in parallel and reports every failure:
+`harness update` updates installed agents in parallel and reports every
+failure. `--dry-run` previews the commands, and `--installed-only` skips absent
+agents. Each update stops after 30 seconds without new output. Set
+`DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS` to allow a longer idle period.
 
 | Agent | Install source | Update command |
 | --- | --- | --- |
 | Codex | `https://chatgpt.com/codex/install.sh` with sh | `codex update` |
 | Claude Code | `https://claude.ai/install.sh` with Bash | `claude upgrade` |
 | Pi | `https://pi.dev/install.sh` with sh; requires Node >=22.19 and npm | `pi update --all` |
-| T3 CLI | `https://t3.codes/install.sh` with `T3CODE_CHANNEL=nightly sh` | `t3 update --channel nightly` |
 | OpenCode v2 | `https://opencode.ai/v2/install` with Bash | `opencode upgrade` |
 | Cursor Agent | `https://cursor.com/install` with Bash | `agent update` |
 
-Use `./bin/harness update` before the managed command is linked, or add
-`--dry-run` to preview it. Direct runs return nonzero for missing installations
-or failed updates. `--installed-only` skips absent agents during initial setup.
-T3 desktop updates through its GUI and is excluded from harness updates.
-T3's background service is not restarted by a noninteractive update; run
-`t3 service restart` when ready.
-Desktop apps and running agents may need to be reopened after an update.
+The global mise `postinstall` hook runs `harness update --installed-only`. The
+zsh `mise` helper also runs it after a no-op `mise install` or `mise up`, where
+mise fires no hook. The global mise config disables the old Codex CLI tool
+names, so a stale request cannot reinstall them. The `codex-acp` adapter stays
+enabled and still pulls its own npm `@openai/codex` dependency.
 
-Each harness update stops after 30 seconds without new log output. Output resets
-the timer. A timeout stops that update and its child processes; other updates
-continue. The summary reports the timeout as a failure and the command returns
-nonzero. Set `DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS` to a positive number of
-seconds to allow a longer idle period. This limit applies only to harness updates.
+The T3 Code nightly app updates itself and its `t3` launcher. Setup links
+Homebrew's `bin/t3` to `~/.t3/bin/t3`. Open the app once to create the
+launcher. `./bin/link-t3-command [--dry-run]` repairs the link and keeps any
+other `t3` command. To adopt an existing app bundle, run
+`brew install --cask --adopt t3-code@nightly`.
 
-For an existing Mac, run `./bin/link-dotfiles` and
-`./bin/ensure-harnesses-standalone` to install or repair only the agent CLIs.
-This does not install the T3 desktop cask. Install it with
-`brew install --cask --adopt t3-code@nightly`. `--adopt` keeps an existing
-nightly app bundle and creates the Homebrew installation record. Homebrew permits
-a different bundle version for this cask because it declares `auto_updates true`. Avoid
-`--force` when the installed app is newer than the cask's version.
+## Login items and permissions
 
-The global mise config disables the old Codex CLI tool names, including
-`aqua:openai/codex`, so obsolete project or shell requests cannot reinstall
-them. The `npm:@agentclientprotocol/codex-acp` adapter stays enabled. Its npm
-package requires a private `@openai/codex` dependency; this is separate from
-the old Aqua installation. The adapter supports `CODEX_PATH` to select the
-standalone executable, but that does not remove its npm dependency.
+Setup adds the apps in [the login item list](apps/login-items.txt) as login
+items. This can ask for Automation access to System Events. After setup adds
+T3 Code Nightly, it removes the `/Applications/Codex.app` login item. Run
+`./bin/configure-app-settings --dry-run` to preview the changes.
 
-The global mise `postinstall` hook invokes `harness update --installed-only`.
-The managed zsh helper also covers `mise install`, `mise up`, and
-`mise up --local` when no tools change, and prevents a duplicate hook run.
-Preview/help commands and failed mise commands do not run the shell updater.
-Outside that shell helper, mise runs the native hook only on the paths supported
-by mise; a direct no-op `mise up` does not fire the install hook. Open a new
-terminal after linking the helper.
+Privacy permissions are manual for every app. Setup does not write the macOS
+consent database, grant TCC access, or clear quarantine.
 
-Privacy permissions remain manual for every app. No setup helper writes the
-macOS consent database, grants TCC access, or clears quarantine. Setup does not
-print app permission lists. App settings and backups remain managed; permission
-grants are separate. Touch ID for sudo and login-item creation remain automatic.
-Login-item creation can request Automation access to System Events; approve
-that manually if you want setup to add the login items.
+## Updating and checking changes
 
-`dotfiles-update` runs `git pull --ff-only`, then the continuation plan with
-general defaults skipped. The mise hook updates installed coding agents; other
-installed packages are not all upgraded. The
-shell's daily background check only reports new repository commits.
-`./bin/prepare-sync` compares live inventory and saves a Brewfile copy under
-`.sync-backups/`; it does not rewrite tracked inventories.
+`dotfiles-update` runs `git pull --ff-only`, then the continuation plan without
+general defaults. It does not upgrade every installed package. The shell's
+daily background check only reports new repository commits.
+`./bin/prepare-sync` compares the live inventory with the repo and saves a
+Brewfile copy under `.sync-backups/`. It does not change tracked inventories.
 
-After changes, run syntax checks on edited scripts and the relevant fixture
-suite. To run all repository test scripts:
-
-```bash
-(for test in tests/*.sh; do bash "$test" || exit; done)
-git diff --check
-```
-
-Tests use temporary HOME/config/state directories and fake external actions.
-They must not install real packages, use personal backups, or change accounts
-and system defaults. Runtime tests need permission to inspect their process
-trees. Planner tests retain traces under the ignored setup-runs directory.
-Use `./bin/setup --dry-run` or `./bin/setup --continue --dry-run` to inspect the
-real preflight and plan; these commands query Apple's update catalog and write logs.
+Before you commit a change, run `bash -n` on the changed scripts,
+`./bin/preflight`, and `git diff --check`. Use `./bin/setup --dry-run` or
+`./bin/setup --continue --dry-run` to inspect the real preflight and plan.
+These commands query Apple's update catalog and write logs.

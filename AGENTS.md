@@ -22,6 +22,13 @@ before changing ownership, bootstrap boundaries, or other design decisions.
 - Keep macOS changes conservative and reversible. Correct documentation drift
   when found; distinguish current behavior from proposed fixes.
 
+## Setup repairs
+
+When a `./bin/setup` stage fails, is blocked, or is deferred, or the user asks
+you to repair setup, follow [SETUP-AGENT.md](SETUP-AGENT.md). Put each
+repeatable setup step in a `bin/` script. The guide covers failures and
+judgment only.
+
 ## Apple releases
 
 Use only public macOS, Xcode, iOS and simulator releases. Setup must stop when
@@ -31,11 +38,8 @@ Direct the user to System Settings, restart if needed, and rerun setup.
 
 ## Validation
 
-Run syntax checks for changed Bash/zsh files, the relevant `tests/*.sh` suites
-with Bash, and `git diff --check`. For setup or app-install changes, also check
-the applicable dry-run path. Preserve tests for failures and interrupted runs.
-
-Tests must use isolated state and fake external commands, not live installs,
-account changes, personal restores, or macOS defaults. Process cancellation
-tests need process inspection. A passing fixture suite does not establish a
-successful fresh-Mac setup; report what remains untested.
+The repo has no test suite. Run `bash -n` or `zsh -n` on changed shell files,
+`./bin/preflight`, and `git diff --check`. For setup or app-install changes,
+also run the matching `--dry-run` path. Do not validate with live installs,
+account changes, personal restores, or macOS defaults. Report what remains
+unchecked on a real Mac.

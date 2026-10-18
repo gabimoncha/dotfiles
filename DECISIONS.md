@@ -1,137 +1,141 @@
 # Design decisions
 
-Operational commands belong in [README.md](README.md), shell usage in
-[SHELL.md](SHELL.md), and migration instructions in [MACKUP.md](MACKUP.md).
-This file records constraints and their reasons, not a second setup plan.
+This file records constraints and their reasons. Commands are in
+[README.md](README.md), shell usage in [SHELL.md](SHELL.md), and backups in
+[MACKUP.md](MACKUP.md).
 
 ## One planner, two phases
 
-`bin/setup` owns the dependency plan; `bin/bootstrap` is a compatibility
-entrypoint and function library. Preparation stops before bulk packages,
-personal configuration, authentication, and restores so the user can review
-App Management and restart the terminal. `--continue` acknowledges that step;
-no marker or TCC probe claims to verify consent or restart.
-Telemetry opt-outs are an explicit exception to the personal-configuration
-boundary: setup exports them before installers and applies saved preferences
-after foundations. Continuation reapplies them after installation and restores,
-including when an unrelated package stage fails. Tool settings use supported
-commands or backed-up merges; unrelated state and update checks are preserved.
+`bin/setup` owns the dependency plan. `bin/bootstrap` is a compatibility
+entrypoint and a function library. Normal, serial, and dry-run runs share the
+planner. A dry run executes only the preflight probes.
 
-Homebrew and mise foundations overlap after CLT readiness. Their inventories
-can overlap later. Both inventories finish before Xcode sign-in so background
-output does not obscure credentials. Resource locks serialize writes to each
-package manager across nested helpers. The planner is shared by normal,
-serial, and dry-run execution; dry-run executes only preflight probes.
+Preparation stops before bulk packages, personal configuration, authentication,
+and restores. The user then signs in to the App Store, reviews App Management,
+and restarts the terminal. `--continue` acknowledges that step. No marker or TCC
+probe can verify consent or a restart.
 
-Failed prerequisites block consumers while independent work continues. Partial
-mise installation still reshims and checks real tools. Required deferred work,
-including unreviewed personal skills, returns nonzero. Missing optional restore
-prerequisites and explicit mobile opt-out do not fail the run.
+Telemetry opt-outs are the one exception to that boundary. Setup exports them
+before installers run and reapplies them after packages and restores, also when
+an unrelated stage fails.
+
+Homebrew and mise can run at the same time. Resource locks serialize writes to
+each package manager across nested helpers. A failed prerequisite blocks only
+its consumers. Required failed or deferred stages make setup return nonzero.
+Missing optional restore inputs and the explicit mobile opt-out do not.
+
+Scripts own every repeatable step. A coding agent repairs failed stages through
+[SETUP-AGENT.md](SETUP-AGENT.md), but it does not replace a script step.
+Inference is slower, costs tokens, and can give a different result on each run.
 
 ## Ownership
 
-Prefer Mac App Store apps via mas, then supported runtimes/tools via mise,
-then Homebrew. Brewfile stores Homebrew and App Store entries; the app manifest
-adds explicit status and manual vendor steps. Third-party tap trust is declared
-per tap; never disable trust checks globally.
+Install GUI apps from the Mac App Store through mas, then supported tools
+through mise, then Homebrew. The Brewfile holds Homebrew and App Store entries.
+The app manifest adds install status and manual vendor steps. Third-party tap
+trust is declared per tap, never disabled globally.
 
-Vendor coding-agent installers and mise are exceptions:
+Coding agent CLIs and mise use vendor installers, because self-update needs the
+vendor install metadata:
 
-- Codex owns `~/.codex/packages/standalone` for installer/app-server integration.
+- Codex owns `~/.codex/packages/standalone`.
 - Claude Code owns `~/.local/share/claude` and `~/.local/bin/claude`.
-- Pi owns its managed install under `~/.pi/agent`; mise still owns Node and npm.
-- T3 CLI owns `~/.t3/runtime/versions` and `~/.local/bin/t3`, always on nightly.
-  Its desktop app uses `t3-code@nightly` in Homebrew.
-- OpenCode v2 owns `~/.opencode/bin` through its v2 installer.
-- Cursor Agent owns `~/.local/share/cursor-agent` and local command links;
-  Cursor's GUI stays a Homebrew cask.
-- mise lives at `~/.local/bin/mise` to support explicit self-update. Its pinned
-  installer is checksum-verified; tool data stays in normal mise directories.
+- Pi owns `~/.pi/agent`. mise still owns Node and npm, so setup installs Pi
+  after the Node inventory.
+- OpenCode v2 owns `~/.opencode/bin`.
+- Cursor Agent owns `~/.local/share/cursor-agent`. The Cursor GUI is a cask.
+- mise lives at `~/.local/bin/mise`. Its pinned installer is checksum-verified.
+  The global config sets `self_update.auto`, so mise updates itself.
+- The T3 Code nightly cask owns the app and its `~/.t3/bin/t3` launcher, and
+  the app updates both. Setup only links Homebrew's `bin/t3` to that launcher,
+  and it keeps any other `t3` command.
 
-Reuse healthy standalone binaries and preserve settings during repair. The
-package-manager migration is complete; agent setup no longer scans for old copies,
-uninstalls packages, or writes migration receipts. Agent CLIs need their vendor
-install metadata for self-update, so mise no longer owns them. The global mise
-config ignores old Codex CLI requests to prevent reinstallation.
+The global mise config disables the old Codex tool names so that a stale
+request cannot reinstall them. `harness update` updates the agent CLIs in
+parallel and reports every failure. The mise postinstall hook runs it, and a
+zsh helper covers no-op `mise up` runs, where mise fires no hook.
 
-`harness update` runs vendor updates in parallel and aggregates failures.
-T3 desktop updates through its GUI; harness updates cover only the agent CLIs.
-The global mise postinstall hook updates installed agents, including on no-op
-installs. A zsh helper covers
-no-op `mise up` and `mise up --local`, where mise may not run an install hook,
-and suppresses the native hook to avoid duplicate updates. Setup installs Pi
-after the Node inventory. T3 follows nightly explicitly; noninteractive updates
-leave its running background service for manual restart.
+mise owns pnpm before Node, so Corepack wrappers do not shadow it.
 
-mise owns pnpm directly, before Node, so Corepack wrappers do not shadow it.
-The `github:XcodesOrg/Xcodes` entry selects an xcodes CLI release and overlaps
-the separate `xcodes` entry. The xcodes CLI installs Xcode.
-Mobile setup is enabled by default.
-The explicit mobile skip does not remove tools from the common inventory.
+## Xcode and mobile tools
+
+The App Store installs Xcode with `sudo mas get`. After the App Store sign-in
+at the checkpoint, it needs no Apple ID prompt and offers only public releases.
+mas 7 needs root to install apps. The xcodes CLI is the fallback installer.
+
+The mobile stage runs after every interactive stage, so the long download runs
+unattended. It runs before telemetry, so the opt-outs cover the new tools.
+`bin/install-mobile-dev` skips finished steps, and `bin/check-mobile-ready` is
+its read-only check. `apps/mobile.Brewfile` lists the formulae that need full
+Xcode. Mobile setup is on by default. The skip flag does not remove mobile
+tools from the common mise inventory.
+
+## Temporary sudo grant
+
+After the first `sudo -v`, setup installs `/etc/sudoers.d/dotfiles-setup`. The
+file sets `timestamp_type=global` and `timestamp_timeout=30` for the setup user
+and grants no new commands. Stages without a terminal, and an agent shell, can
+then use the timestamp that the user created.
+
+The keepalive loop stops when setup exits, so the timestamp expires at most 30
+minutes later. The EXIT trap removes the file, also after a failure or a signal.
+A killed run can leave the file, and preflight reports it. While the grant is
+active, every process of the user can run `sudo` without a prompt. This risk is
+accepted for setup on a new Mac.
 
 ## GitHub and shell startup
 
-GitHub CLI owns API credentials. Bootstrap installs only pinned gh in isolated
-configuration. `dotfiles-gh-real` resolves its installed binary without mise,
-shims, or the routing wrapper; mise uses that helper for tokens without storing
-them. API access gates broad tool acquisition; SSH readiness is separate.
-Preserve existing identities, require passphrases for new SSH keys, and verify
-GitHub host keys against published material.
+GitHub CLI owns API credentials. Bootstrap installs pinned gh with isolated
+configuration. mise gets tokens through `dotfiles-gh-real`, which resolves the
+real gh binary without shims or the routing wrapper. API access gates the large
+mise install. SSH readiness is a separate check.
 
-Git identity, SSH identity and API account routing remain separate and local.
-The gh wrapper supplies a selected stored token to one command; explicit token
-variables remain authoritative. Shell startup uses static shims and verified
-installed integrations, without provisioning or credential discovery.
+Git identity, SSH identity, and API account routing stay separate and local.
+Shell startup uses static shims and installed integrations. It never installs
+tools or looks up credentials.
 
-## Apple tooling, consent and configuration
+## Apple releases and macOS settings
 
-Use public Apple releases only. Preflight stops on offered macOS updates,
-unknown update status, or apparent prereleases. Its human-readable catalog
-probe fails closed; it cannot prove availability outside the active catalog.
-Setup never installs OS updates or changes beta enrollment.
+Setup uses public Apple releases only. Preflight stops on an offered macOS
+update, an unknown update status, or an apparent prerelease. Setup never
+installs OS updates or changes beta enrollment.
 
-App privacy permissions are manual. Setup does not maintain or print app
-permission lists, grant TCC consent, or edit its database. App settings and
-portable backups remain managed separately from permission grants. Touch ID for
-sudo remains automatic as an authentication setting. Login items are matched by app path;
-missing apps and failed additions remain retryable. NearDrop quarantine stays
-intact. General defaults are stamped; screenshot repair is independent so a
-stamp cannot suppress destination repair. Screenshot toolbar keys are observed
-macOS implementation details, not a documented API; readback is checked and
-actual capture remains manual. Temporary `caffeinate` applies during setup;
-the separate defaults script currently disables display sleep (an open defect).
+App privacy permissions are manual. Setup does not grant TCC consent or edit
+its database. Touch ID for sudo and login items are automatic. Login items are
+matched by app path. General defaults run once per stamp. Screenshot repair
+runs separately, so the stamp cannot block it.
 
-CLIProxyAPI configuration is linked before Homebrew starts its service. It binds
-to loopback; credentials stay local. Neovim is a separate submodule linked into
-HOME. Its plugins are installed at editor startup, not by this planner.
+`bin/configure-background-jobs` disables Photos media analysis and Siri voice
+training with `launchctl disable`. It runs only when you invoke it. SIP blocks
+`bootout` of Apple jobs, so a running job stops at the next login. The list
+excludes Siri and Apple Intelligence jobs, which share services on macOS 27. It
+also excludes Spotlight, because mas reads installed App Store apps from the
+Spotlight index. `--revert` enables the jobs again.
+
+CLIProxyAPI configuration is linked before Homebrew starts its service, and the
+service binds to loopback. Neovim is a separate submodule. Its plugins install
+at editor startup.
 
 ## Portable state
 
-Mackup uses explicit copy-mode backup/restore with a narrow allowlist. It must
-not own repo-managed symlinks. Synology Drive is primary and iCloud is a
-best-effort secondary/fallback. Raycast uses encrypted app exports instead of
-its full support directory.
+Mackup runs explicit copy-mode backups with a narrow allowlist, and it must not
+own repo-managed symlinks. Synology Drive is the primary store. iCloud is a
+best-effort fallback. Raycast uses its encrypted export instead of its support
+directory.
 
-Codex uses an age-encrypted allowlist of portable configuration, memories and
-automation definitions. Authentication, runtime, database and global app state
-are excluded. Restore preserves active files and stages incoming conflicts;
-replacement requires `--replace`. Shared discovery preserves provider priority
-and checks hydration before selecting files. Archive path checks do not certify
-that allowed executable configuration is safe.
+Codex state uses an age-encrypted allowlist of configuration, memories, and
+automation definitions. It excludes authentication, runtime, and database
+state. Restore keeps active files and stages conflicts. `--replace` overwrites.
+Path checks do not prove that restored executable configuration is safe.
 
-Personal skills come from a reviewed commit and an explicitly installed,
-reviewed skills CLI. Skills and generated locks remain local, outside the repo
-and Codex archives.
+Personal skills come from a reviewed commit and a reviewed skills CLI. They
+stay outside the repo and the Codex archive.
 
-## Diagnostics and maintenance
+## Diagnostics
 
-System Bash and `/usr/bin/ruby` support diagnostics before managed tools work.
-Private per-run logs retain sanitized output and per-process events;
-authentication output is omitted. INT/TERM cancels owned descendants with
-bounded escalation, then releases locks. Logs are removed only after review.
+System Bash and `/usr/bin/ruby` run diagnostics, so a broken managed runtime
+does not block recovery. Each run keeps private, sanitized logs. Authentication
+output is omitted. INT and TERM stop owned child processes, then release locks.
 
-The shell's daily background Git fetch only notifies. `dotfiles-update` pulls
-and reapplies configuration. Agent CLI updates run through explicit
-harness/mise commands and the mise setup hook. T3 desktop updates through its GUI.
-Mocked tests verify contracts, not successful clean-Mac provisioning. See
-[real-machine validation](SETUP-SECURITY.md#real-machine-checks-still-required).
+The shell's daily background `git fetch` only notifies. `dotfiles-update`
+pulls and reapplies configuration.
