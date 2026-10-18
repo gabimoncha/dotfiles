@@ -165,6 +165,7 @@ check_script_syntax() {
     "bin/ensure-cursor-agent-standalone"
     "bin/ensure-mise-standalone"
     "bin/install-apps"
+    "bin/install-steam"
     "bin/install-mobile-dev"
     "bin/check-mobile-ready"
     "bin/lib/mobile-state.sh"

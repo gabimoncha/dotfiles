@@ -12,6 +12,8 @@ before changing ownership, bootstrap boundaries, or other design decisions.
 - Add GUI apps through mas when available, then use mise for supported tools,
   then Homebrew. Coding agent CLIs and mise are explicit standalone exceptions.
   The T3 nightly desktop app stays in Homebrew.
+- Steam uses `bin/install-steam` for Valve's verified ARM64 bootstrapper.
+  Preserve its update channel and quarantine. Keep Rosetta installation manual.
 - Keep Brewfile entries alphabetized within sections unless deliberately grouped.
 - Put managed files under `home/`, wire them through `bin/link-dotfiles`, and
   update the relevant documentation. Keep local companions under ignored

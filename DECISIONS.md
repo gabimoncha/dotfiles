@@ -57,6 +57,26 @@ zsh helper covers no-op `mise up` runs, where mise fires no hook.
 
 mise owns pnpm before Node, so Corepack wrappers do not shadow it.
 
+### Native Steam installer
+
+Steam is a standalone exception. The Homebrew cask installs an Intel-only
+launcher that asks for Rosetta. `bin/install-steam` uses Valve's stable update
+manifest to obtain the ARM64 bootstrapper. The app manifest runs that script.
+Steam then owns client updates. Existing update-channel settings remain intact.
+
+The script checks the package SHA-256, both launcher architectures, Valve's
+signature and Team ID, and Gatekeeper acceptance before replacing the app.
+It retains the previous app under `~/.dotfiles-backups/`, removes the old
+Homebrew cask without `--zap`, and preserves its `Steam.AppBundle` cache.
+Replacement failure restores the app but does not recreate the Homebrew receipt.
+Games and account data remain in place. Setup does not install Rosetta or clear
+quarantine. Intel-only games can still require Rosetta.
+
+The download method comes from a review of
+[steam-arm64-mac at ea9223e](https://github.com/i1rr/steam-arm64-mac/tree/ea9223e092bdb91a8e14b588805258f5e53eab0a).
+Setup does not execute that repository's script, which clears quarantine,
+forces the beta channel, and deletes the old app backup after copying.
+
 ## Xcode and mobile tools
 
 The App Store installs Xcode with `sudo mas get`. After the App Store sign-in

@@ -156,6 +156,19 @@ Notes: ${notes}
 EOF
 }
 
+install_script() {
+  local script="$1"
+  [[ "$script" =~ ^bin/[a-z0-9-]+$ && -x "${repo_root}/${script}" ]] || {
+    warn "Invalid app installer: ${script}"
+    return 1
+  }
+  if [[ $dry_run -eq 1 ]]; then
+    "${repo_root}/${script}" --dry-run
+  else
+    "${repo_root}/${script}"
+  fi
+}
+
 if [[ "${1:-}" == "--dry-run" ]]; then
   dry_run=1
 elif [[ $# -gt 0 ]]; then
@@ -188,6 +201,9 @@ while IFS=$'\t' read -r key type token_or_url app_bundle notes || [[ -n "${key:-
       ;;
     mise)
       install_mise_tool "$token_or_url" || install_status=1
+      ;;
+    script)
+      install_script "$token_or_url" || install_status=1
       ;;
     manual)
       report_manual "$key" "$token_or_url" "$app_bundle" "$notes"

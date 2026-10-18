@@ -131,6 +131,7 @@ managed runtime does not prevent recovery.
 | `./bin/auth-setup --verify-mise` | Check the direct credential helper. |
 | `./bin/check-mise-tools` | Probe real installed tools without provisioning. |
 | `./bin/install-apps [--dry-run]` | Retry or preview the app manifest. |
+| `./bin/install-steam [--dry-run]` | Install Valve's verified ARM64 Steam bootstrapper and replace the old Homebrew cask. |
 | `./bin/check-mobile-ready` | Check Xcode, iOS, Android Studio, and `apps/mobile.Brewfile` without changes. |
 | `./bin/install-mobile-dev [--dry-run]` | Install or repair Xcode, iOS support, Android Studio, and the mobile formulae. |
 | `./bin/sudo-grant --check` | Report a leftover sudo grant; `--enable` and `--disable` change it. |
@@ -202,6 +203,7 @@ No script proves a fresh-Mac install. See
 Add packages in this order: Mac App Store, then mise, then Homebrew. Coding agent
 CLIs and mise itself are explicit standalone-installer exceptions. T3 desktop
 uses the nightly Homebrew cask.
+Steam uses the verified native installer described below.
 See [DECISIONS.md](DECISIONS.md) for the reasons and constraints.
 
 `vscode "publisher.extension"` entries in `Brewfile` select Cursor extensions.
@@ -231,6 +233,30 @@ OAuth files remain local and must not be copied into tracked configuration.
 [Shell usage](SHELL.md) covers local secrets, GitHub account routing, command
 helpers, package runners, and Android paths. [SECURITY.md](SECURITY.md) lists
 state that must stay out of Git.
+
+### Steam without Rosetta
+
+The app manifest runs `bin/install-steam`. It downloads the native bootstrapper
+from Valve and checks its checksum, ARM64 support, Valve signature, and Gatekeeper
+acceptance. A healthy native installation is reused. Steam updates itself after
+first launch. The script preserves your existing update channel.
+
+To preview the replacement, run `./bin/install-steam --dry-run`.
+Use `./bin/install-steam --verify-download` to download and verify the package
+without installing or starting Steam. To replace an existing installation,
+quit Steam and run `./bin/install-steam`. Repository preflight must pass first.
+If preflight fails, the installer leaves the old app in place. An Intel-only
+app will still ask for Rosetta until the replacement completes.
+Use `./bin/install-steam --check` to check the installed launchers and signature.
+These checks do not prove that first launch or game downloads work.
+
+The installer retains the old app under `~/.dotfiles-backups/` and removes its
+Homebrew cask without `--zap`. It preserves games, account data, and the
+`Steam.AppBundle` cache. If replacement fails, it restores the old app.
+The Homebrew receipt is not restored. Keep the backup until Steam starts correctly.
+The download receives a quarantine attribute for macOS first-launch confirmation.
+The installer does not install Rosetta or clear quarantine. Intel-only games
+can still require Rosetta even when the Steam client runs natively.
 
 ## Coding agents
 

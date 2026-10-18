@@ -25,6 +25,7 @@ rectangle	cask	rectangle	Rectangle	Homebrew cask.
 signal	cask	signal	Signal	Homebrew cask.
 slack	cask	slack	Slack	Homebrew cask.
 spotify	cask	spotify	Spotify	Homebrew cask.
+steam	script	bin/install-steam	Steam	Verified Valve ARM64 bootstrapper; preserves the update channel and does not install Rosetta.
 superwhisper	cask	superwhisper	superwhisper	Homebrew cask.
 synology-drive	cask	synology-drive	Synology Drive Client	Homebrew cask.
 synology-image-assistant	cask	synology-image-assistant	Synology Image Assistant	Homebrew cask.

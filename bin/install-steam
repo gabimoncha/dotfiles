@@ -1,0 +1,200 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+app=/Applications/Steam.app
+support_app="${HOME}/Library/Application Support/Steam/Steam.AppBundle"
+cdn=https://client-update.steamstatic.com
+mode="${1:-install}"
+work_dir=""
+stage_dir=""
+backup_dir=""
+restore_app=0
+runtime_started=0
+
+log() { printf '==> %s\n' "$1"; }
+die() { printf '!! %s\n' "$1" >&2; exit 1; }
+
+verify_app() {
+  local bundle="$1" executable details
+  for executable in steam_osx steam.sh; do
+    [[ -x "$bundle/Contents/MacOS/$executable" ]] || return 1
+    if ! /usr/bin/file -b "$bundle/Contents/MacOS/$executable" | /usr/bin/grep -qw arm64; then
+      printf '!! Steam launcher has no ARM64 code: %s/Contents/MacOS/%s\n' "$bundle" "$executable" >&2
+      return 1
+    fi
+  done
+  /usr/bin/codesign --verify --deep --strict "$bundle" || return 1
+  details="$(/usr/bin/codesign -dv "$bundle" 2>&1)" || return 1
+  /usr/bin/grep -qx 'TeamIdentifier=MXGJJ98X76' <<< "$details" || return 1
+  /usr/bin/grep -qx 'Identifier=com.valvesoftware.steam' <<< "$details" || return 1
+  /usr/sbin/spctl --assess --type execute "$bundle" || return 1
+}
+
+cleanup() {
+  local status=$?
+  trap - EXIT
+  trap '' INT TERM
+  set +e
+  if [[ -n "$backup_dir" && -d "$backup_dir/Steam.AppBundle" && ! -e "$support_app" ]]; then
+    /usr/bin/ditto "$backup_dir/Steam.AppBundle" "$support_app" || status=1
+  fi
+  if [[ "$restore_app" == 1 ]]; then
+    if ! /bin/rm -rf "$app"; then
+      printf '!! Cannot remove the failed Steam app. Check the backup at %s.\n' "$backup_dir" >&2
+    elif [[ -d "$backup_dir/Steam.app" ]]; then
+      if /usr/bin/ditto "$backup_dir/Steam.app" "$app"; then
+        log "Restored the previous Steam app. Its backup remains at $backup_dir."
+      else
+        printf '!! Restore failed. The previous app remains at %s/Steam.app.\n' "$backup_dir" >&2
+      fi
+    fi
+    status=1
+  fi
+  [[ -z "$work_dir" ]] || /bin/rm -rf "$work_dir"
+  [[ -z "$stage_dir" ]] || /bin/rm -rf "$stage_dir"
+  if [[ "$runtime_started" == 1 ]]; then runtime_on_exit "$status"; fi
+  exit "$status"
+}
+
+download() {
+  /usr/bin/curl --fail --silent --show-error --location \
+    --proto '=https' --proto-redir '=https' --connect-timeout 15 \
+    --max-time 120 --retry 2 --retry-max-time 180 "$1" -o "$2"
+}
+
+prepare_download() {
+  local metadata package digest actual
+  work_dir="$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-steam.XXXXXX")"
+  download "$cdn/steam_client_osx" "$work_dir/manifest"
+  # Read only direct fields in appdmg_osx. Its steamchina child has different hashes.
+  metadata="$(/usr/bin/awk -F '"' '
+    $2 == "appdmg_osx" { blocks++; active=1; next }
+    active && /^[[:space:]]*\{/ { depth++; next }
+    active && /^[[:space:]]*\}/ { depth--; if (depth == 0) active=0; next }
+    active && depth == 1 && $2 == "file" { file=$4; files++ }
+    active && depth == 1 && $2 == "sha2" { sha=$4; hashes++ }
+    END {
+      if (blocks != 1 || files != 1 || hashes != 1 || active) exit 1
+      print file, sha
+    }
+  ' "$work_dir/manifest")" || die "Cannot read Valve's bootstrapper package metadata."
+  read -r package digest <<< "$metadata"
+  [[ "$package" =~ ^appdmg_osx\.zip\.[0-9a-f]{40}$ ]] || die "Unexpected package filename in Valve's manifest."
+  [[ "$digest" =~ ^[0-9a-f]{64}$ ]] || die "Invalid SHA-256 digest in Valve's manifest."
+  log "Downloading Valve package $package"
+  download "$cdn/$package" "$work_dir/package.zip"
+  actual="$(/usr/bin/shasum -a 256 "$work_dir/package.zip")"
+  [[ "${actual%% *}" == "$digest" ]] || die "Valve package checksum does not match."
+  /usr/bin/unzip -p "$work_dir/package.zip" SteamMacBootstrapper.tar.gz > "$work_dir/bootstrap.tar.gz"
+  /usr/bin/tar -tzf "$work_dir/bootstrap.tar.gz" > "$work_dir/entries"
+  /usr/bin/awk '
+    $0 !~ /^Steam\.app\// || $0 ~ /(^|\/)\.\.(\/|$)/ { bad=1 }
+    END { exit (bad || NR == 0) }
+  ' "$work_dir/entries" || die "Unexpected paths in Valve's bootstrapper archive."
+  /usr/bin/tar -xzf "$work_dir/bootstrap.tar.gz" -C "$work_dir"
+  # AppleDouble sidecars are archive metadata, not signed application files.
+  /usr/bin/find "$work_dir/Steam.app" -type f -name '._*' -delete
+  # curl does not mark downloads for Gatekeeper's first-launch confirmation.
+  /usr/bin/xattr -w com.apple.quarantine "0081;$(printf '%x' "$(date +%s)");dotfiles;" "$work_dir/Steam.app"
+  verify_app "$work_dir/Steam.app" || die "Steam failed its ARM64, Valve signature, or Gatekeeper check."
+  log "Verified SHA-256, ARM64 launchers, Valve signature, and Gatekeeper acceptance."
+}
+
+[[ $# -le 1 ]] || die "Usage: ./bin/install-steam [--dry-run | --verify-download | --check]"
+case "$mode" in install|--dry-run|--verify-download|--check) ;; *) die "Unknown option: $mode" ;; esac
+[[ "$(uname -s)" == Darwin && "$(uname -m)" == arm64 ]] || die "Steam setup requires an Apple Silicon Mac."
+
+if [[ "$mode" == --check ]]; then
+  verify_app "$app" || die "The installed Steam app failed its native app checks."
+  log "The installed Steam launchers support ARM64 and pass Valve signature and Gatekeeper checks."
+  exit 0
+fi
+
+if [[ "$mode" == --dry-run ]]; then
+  log "dry-run: require repository preflight before installation"
+  log "dry-run: reuse a verified native Steam app or download and verify Valve's stable bootstrapper"
+  log "dry-run: back up the existing app and Steam.AppBundle before removing the Homebrew steam cask without --zap"
+  log "dry-run: install /Applications/Steam.app and retain the backup; restore it if replacement fails"
+  log "dry-run: preserve games, account data, update channel, and quarantine; do not install Rosetta"
+  exit 0
+fi
+
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+if [[ "$mode" == --verify-download ]]; then
+  prepare_download
+  log "Download verification finished. Steam was not installed or started."
+  exit 0
+fi
+
+[[ "$EUID" != 0 ]] || die "Run Steam setup as your normal user, without sudo."
+if ! "$repo_root/bin/preflight"; then
+  die "Steam was not installed or replaced because repository preflight failed. /Applications/Steam.app is unchanged."
+fi
+. "$repo_root/bin/lib/setup-runtime.sh"
+runtime_init install-steam
+runtime_started=1
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+runtime_acquire_lock homebrew
+
+[[ ! -L "$app" && ! -L "$support_app" ]] || die "Steam uses a symlink. Review its target before replacing it."
+[[ ! -e "$app" || -d "$app" ]] || die "The Steam app path is not a directory."
+[[ ! -e "$support_app" || -d "$support_app" ]] || die "Steam.AppBundle is not a directory."
+brew_bin=""
+for candidate in "${HOMEBREW_PREFIX:-/opt/homebrew}/bin/brew" /opt/homebrew/bin/brew /usr/local/bin/brew; do
+  if [[ -x "$candidate" ]]; then brew_bin="$candidate"; break; fi
+done
+cask_installed=0
+if [[ -n "$brew_bin" ]]; then
+  casks="$(HOMEBREW_NO_AUTO_UPDATE=1 "$brew_bin" list --cask)"
+  if /usr/bin/grep -qx steam <<< "$casks"; then cask_installed=1; fi
+fi
+native_installed=0
+if verify_app "$app" >/dev/null 2>&1; then native_installed=1; fi
+if [[ "$native_installed" == 1 && "$cask_installed" == 0 ]]; then
+  log "Verified native Steam is already installed. Steam manages its updates."
+  exit 0
+fi
+if /usr/bin/pgrep -x 'steam_osx|Steam|steam|steamwebhelper' >/dev/null; then
+  die "Quit Steam before replacing its app."
+fi
+[[ -w /Applications ]] || die "Write access to /Applications is required."
+
+source_app="$app"
+if [[ "$native_installed" == 0 ]]; then
+  prepare_download
+  source_app="$work_dir/Steam.app"
+fi
+stage_dir="$(mktemp -d /Applications/.dotfiles-steam.XXXXXX)"
+/usr/bin/ditto "$source_app" "$stage_dir/Steam.app"
+verify_app "$stage_dir/Steam.app" || die "The staged Steam app failed verification."
+
+mkdir -p "$HOME/.dotfiles-backups"
+backup_dir="$(mktemp -d "$HOME/.dotfiles-backups/$(date -u +%Y%m%dT%H%M%SZ)-steam.XXXXXX")"
+if [[ -d "$app" ]]; then /usr/bin/ditto "$app" "$backup_dir/Steam.app"; fi
+if [[ "$cask_installed" == 1 && -d "$support_app" ]]; then
+  /usr/bin/ditto "$support_app" "$backup_dir/Steam.AppBundle"
+fi
+log "Steam backup: $backup_dir"
+if /usr/bin/pgrep -x 'steam_osx|Steam|steam|steamwebhelper' >/dev/null; then
+  die "Steam started during preparation. Quit it and rerun this command."
+fi
+restore_app=1
+if [[ "$cask_installed" == 1 ]]; then
+  # The cask removes Steam.AppBundle. Preserve that cache as well as the app.
+  HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_AUTOREMOVE=1 "$brew_bin" uninstall --cask steam
+fi
+if [[ -d "$backup_dir/Steam.AppBundle" && ! -e "$support_app" ]]; then
+  /usr/bin/ditto "$backup_dir/Steam.AppBundle" "$support_app"
+fi
+/bin/rm -rf "$app"
+/bin/mv "$stage_dir/Steam.app" "$app"
+verify_app "$app" || die "The installed Steam app failed verification."
+restore_app=0
+log "Native Steam is installed. Open Steam to finish its own client update."
+log "The previous app remains at $backup_dir. Intel-only games can still require Rosetta."
