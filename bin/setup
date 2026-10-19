@@ -37,6 +37,8 @@ ensure_not_root
 runtime_acquire_global_lock || exit 1
 export PATH="${HOME}/.local/bin:${HOME}/.local/share/mise/shims:$PATH"
 export MISE_AUTO_INSTALL=0
+# A mise self-update during setup would replace the binary that later stages use.
+export MISE_SELF_UPDATE_AUTO=0
 export MISE_HTTP_TIMEOUT="${MISE_HTTP_TIMEOUT:-60}" MISE_HTTP_RETRIES="${MISE_HTTP_RETRIES:-0}"
 export GIT_HTTP_LOW_SPEED_LIMIT="${GIT_HTTP_LOW_SPEED_LIMIT:-1024}" GIT_HTTP_LOW_SPEED_TIME="${GIT_HTTP_LOW_SPEED_TIME:-60}"
 # Keep the system awake only for this process's lifetime; preserve display lock.

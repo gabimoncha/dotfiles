@@ -164,6 +164,8 @@ check_script_syntax() {
     "bin/ensure-codex-standalone"
     "bin/ensure-cursor-agent-standalone"
     "bin/ensure-mise-standalone"
+    "bin/repo-mise"
+    "bin/lib/mise-pin.sh"
     "bin/install-apps"
     "bin/install-steam"
     "bin/install-mobile-dev"

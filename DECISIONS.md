@@ -45,7 +45,10 @@ vendor install metadata:
 - OpenCode v2 owns `~/.opencode/bin`.
 - Cursor Agent owns `~/.local/share/cursor-agent`. The Cursor GUI is a cask.
 - mise lives at `~/.local/bin/mise`. Its pinned installer is checksum-verified.
-  The global config sets `self_update.auto`, so mise updates itself.
+  Setup replaces a mise older than the pin, because the repo's mise files need
+  that release. The global config sets `self_update.auto`, so mise updates
+  itself between setup runs. Setup sets `MISE_SELF_UPDATE_AUTO=0`, so the binary
+  does not change during a run.
 - The T3 Code nightly cask owns the app and its `~/.t3/bin/t3` launcher, and
   the app updates both. Setup only links Homebrew's `bin/t3` to that launcher,
   and it keeps any other `t3` command.
@@ -56,6 +59,47 @@ parallel and reports every failure. The mise postinstall hook runs it, and a
 zsh helper covers no-op `mise up` runs, where mise fires no hook.
 
 mise owns pnpm before Node, so Corepack wrappers do not shadow it.
+
+### mise configuration files
+
+`~/.config/mise/config.toml` links to the tracked global config, so an edit
+changes every machine that links it at once. That file must stay readable by
+the oldest mise still in use. Its `min_version` makes an older mise stop with
+an upgrade message after a short parse warning. The pin, its installer digest,
+and the version check are in `bin/lib/mise-pin.sh`.
+
+Features that need the pinned mise go in separate files that `bin/repo-mise`
+loads as the only global config:
+
+- `mise/setup.toml` declares the shell framework checkouts.
+  `install_shell_framework` clones only the missing ones with
+  `mise bootstrap repos update <paths>`, because `repos apply` stops at the
+  first conflicting path. It also
+  lists the managed files for `link-dotfiles --status`. `bin/link-dotfiles`
+  still writes the links, because mise does not back up a file that it
+  replaces.
+- `mise/setup.toml` also has `merge = true` entries for
+  `~/.claude/settings.json` and `~/.codex/config.toml`. Both agents rewrite
+  these files, so the repo owns only some keys. `bin/link-dotfiles` backs up a
+  file that will change, then runs `mise dot apply` for these two targets only.
+  mise does not render templates in `[dotfiles]` keys, so the Codex entry
+  cannot follow `CODEX_HOME`. mise writes these files in place, not with an
+  atomic rename. The backup and the mise journal (`mise dot recover`) cover an
+  interrupted write. The merge hides mise's error text, because a TOML parse
+  error quotes the file.
+- `macos/defaults.toml` holds the plain preference writes. `macos/defaults.sh`
+  applies it with `mise bootstrap macos defaults apply`. The script keeps the
+  input sources, the Dock prune, pmset, and app restarts, which mise does not
+  cover.
+
+`bin/repo-mise` runs from `/`. From a directory inside HOME, mise would also
+load `~/.config/mise/config.toml` as an untrusted project config.
+
+The tracked `home/.config/mise/mise.lock` and its `locks/` folder record the
+versions that `mise install` installs. mise reads a global lockfile only at
+`~/.config/mise/mise.lock`, so `bin/link-dotfiles` links that path. It links it
+only for the pinned mise, because mise before 2026.10.11 can drop the pipx
+dependency graphs from the lockfile.
 
 ### Native Steam installer
 

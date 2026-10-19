@@ -3,8 +3,8 @@
   "scope": "Tracked mise/Brewfile/app inventories, explicit setup tools, and managed shell/tmux plugins. Excludes project dependencies, other plugins, nvim repository dependencies, and unrelated manually installed tools.",
   "verification": "Official documentation and upstream source reviews; fake-command tests only. No live installations, account changes, personal settings edits, or network-capture tests.",
   "coverage": {
-    "total": 189,
-    "reviewed": 189,
+    "total": 187,
+    "reviewed": 187,
     "pending": 0
   },
   "limitations": [
@@ -366,24 +366,6 @@
         },
         "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
-    },
-    {
-      "id": "github_xcodesorg_xcodes",
-      "tool": "github:XcodesOrg/Xcodes",
-      "source": "mise",
-      "kind": "cli",
-      "research": {
-        "tool": "github:XcodesOrg/Xcodes (xcodes CLI release via mise)",
-        "status": "none_found",
-        "mechanism": "No documented opt-out found for xcodes CLI usage analytics, automatic crash reporting, or error-report uploads in the official README and bounded upstream search.",
-        "sources": [
-          "https://github.com/XcodesOrg/Xcodes",
-          "https://github.com/XcodesOrg/xcodes/blob/main/README.md"
-        ],
-        "notes": "Tracked mise config selects the xcodes.zip release asset. The upstream repository resolves to XcodesOrg/xcodes and explicitly identifies itself as the command-line tool; the GUI is the separate XcodesOrg/XcodesApp repository. This is the CLI release and overlaps the separate xcodes inventory entry. Apple authentication, Xcode/runtime downloads, version-list refreshes, aria2 transport and mise release/update traffic are service/install traffic, not evidence of telemetry. No execution or live settings inspection; none_found does not prove no telemetry.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {}
     },
     {
       "id": "fzf",
@@ -1492,24 +1474,6 @@
           "https://rtyley.github.io/bfg-repo-cleaner/"
         ],
         "notes": "Local Git-history cleaning tool. Requested Git clone/push operations, JVM/OS crash reporting and Conda downloads have separate scope. Bounded official documentation check; tool was not run.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {}
-    },
-    {
-      "id": "conda_ghostscript",
-      "tool": "conda:ghostscript",
-      "source": "mise",
-      "kind": "cli",
-      "research": {
-        "tool": "conda:ghostscript",
-        "status": "none_found",
-        "mechanism": "No documented product analytics or crash-upload opt-out found in official usage documentation.",
-        "sources": [
-          "https://ghostscript.readthedocs.io/en/latest/Use.html",
-          "https://ghostscript.readthedocs.io/en/latest/Develop.html"
-        ],
-        "notes": "PostScript/PDF interpreter and utilities. Debug/tracing output is local. Conda package-manager and consumer application telemetry is separate. Bounded official documentation check.",
         "checked_date": "2026-10-03"
       },
       "setup_actions": {}

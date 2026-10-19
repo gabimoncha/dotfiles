@@ -32,9 +32,17 @@ for private values.
 
 ## What setup trusts
 
-Bootstrap pins the mise, gh, and Homebrew installer inputs. Inventory entries
-that use `latest` are not a lockfile. mise's four-day `minimum_release_age`
-reduces exposure to new releases, not to malicious older releases. Review a
+Bootstrap pins the mise, gh, and Homebrew installer inputs. The mise
+inventory requests `latest`, but `home/.config/mise/mise.lock` records the exact
+version of each mise tool. For most tools it also records the download URL and
+checksum. pipx tools record a uv dependency graph with hashes under
+`home/.config/mise/locks/`. npm, gem, and Rust tools record only a version,
+and some aqua and vfox tools have no upstream checksum. Homebrew `latest`
+entries have no lockfile. mise's four-day `minimum_release_age` reduces
+exposure to new releases, not to malicious older releases. Tools in
+`minimum_release_age_excludes` skip that delay. The mise pin in
+`bin/lib/mise-pin.sh` can also be newer than four days when a needed feature
+requires it; that file names the feature. Review a
 tool before you add it to an inventory.
 
 The interactive SFW aliases cover only the commands they wrap. Direct Bun

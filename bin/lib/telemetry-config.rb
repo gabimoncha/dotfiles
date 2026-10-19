@@ -190,32 +190,11 @@ def toml_value_depth(code)
   depth
 end
 
-def read_toml_defaults(path)
-  desired = {}
-  section = nil
-  File.readlines(path).each do |line|
-    code, multiline = toml_line_code(line, nil)
-    raise 'Managed TOML defaults must use simple scalar values.' if multiline
-    next if code.empty?
-    if (table = code[/\A\[([A-Za-z_]+)\]\z/, 1])
-      raise 'Duplicate managed TOML table' if desired.key?(table)
-      section = table
-      desired[section] = {}
-    elsif section && (match = code.match(/\A([A-Za-z_]+)\s*=\s*(true|false|"[^"\n]*"|'[^'\n]*')\z/))
-      raise 'Duplicate managed TOML key' if desired[section].key?(match[1])
-      desired[section][match[1]] = match[2]
-    else
-      raise 'Managed TOML defaults must use standard tables and simple scalar values.'
-    end
-  end
-  desired
-end
-
-def merge_codex(path, desired = nil)
+def merge_codex(path)
   # This is a surgical merger, not a complete TOML parser.
   # Only change simple scalar keys in standard TOML tables. Reject ambiguous
   # representations before any write, rather than duplicate a TOML table/key.
-  desired ||= {'analytics' => {'enabled' => 'false'},
+  desired = {'analytics' => {'enabled' => 'false'},
              'otel' => {'exporter' => '"none"', 'metrics_exporter' => '"none"',
                         'trace_exporter' => '"none"', 'log_user_prompt' => 'false'}}
   managed_tables = Regexp.union(desired.keys)
@@ -302,7 +281,6 @@ begin
   kind, path, source = ARGV
   case kind
   when 'codex' then merge_codex(path)
-  when 'toml' then merge_codex(path, read_toml_defaults(source))
   when 'json' then merge_json(path, JSON.parse(File.read(source)))
   when 'jsonc' then merge_jsonc(path, JSON.parse(File.read(source)))
   else abort 'Unknown telemetry configuration format'

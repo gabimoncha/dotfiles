@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Run the standalone mise with one repo-owned config as its only global config.
+# Usage: ./bin/repo-mise <config.toml> <mise arguments...>
+set -euo pipefail
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+. "${repo_root}/bin/lib/mise-pin.sh"
+if [[ $# -lt 2 ]]; then
+  printf 'Usage: repo-mise <config.toml> <mise arguments...>\n' >&2
+  exit 2
+fi
+config="$1"
+shift
+[[ "$config" == /* ]] || config="${PWD}/${config}"
+if [[ ! -f "$config" ]]; then
+  printf 'repo-mise: config not found: %s\n' "$config" >&2
+  exit 2
+fi
+mise_bin="${MISE_INSTALL_PATH:-${HOME}/.local/bin/mise}"
+if [[ ! -x "$mise_bin" ]]; then
+  printf 'repo-mise: mise is not installed at %s. Run ./bin/ensure-mise-standalone.\n' "$mise_bin" >&2
+  exit 127
+fi
+# `mise self-update` can stop below the pin because of minimum_release_age.
+if ! mise_at_pin "$mise_bin"; then
+  printf 'repo-mise: %s is older than the pinned mise %s. Run ./bin/ensure-mise-standalone.\n' \
+    "$mise_bin" "$pinned_mise_version" >&2
+  exit 1
+fi
+# Inside HOME, mise would also load ~/.config/mise/config.toml as an untrusted
+# project config. Sources in [dotfiles] without a source key resolve under home/.
+cd /
+MISE_GLOBAL_CONFIG_FILE="$config" MISE_DOTFILES_ROOT="${repo_root}/home" MISE_SELF_UPDATE_AUTO=0 \
+  exec "$mise_bin" "$@"

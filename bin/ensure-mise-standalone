@@ -4,6 +4,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 . "${repo_root}/bin/lib/setup-runtime.sh"
+. "${repo_root}/bin/lib/mise-pin.sh"
 for runtime_argument in "$@"; do
   [[ "$runtime_argument" != --dry-run ]] || DOTFILES_RUN_MODE=dry-run
 done
@@ -41,8 +42,18 @@ load_homebrew_shellenv() {
   fi
 }
 
+# The repo config and mise/setup.toml need the pinned release or newer.
 standalone_mise_ok() {
-  [[ -x "$mise_bin" ]] && "$mise_bin" --version >/dev/null 2>&1
+  local version
+  [[ -x "$mise_bin" ]] || return 1
+  if ! version="$(mise_installed_version "$mise_bin")"; then
+    log "Cannot read the version of ${mise_bin}"
+    return 1
+  fi
+  if ! mise_version_at_least "$version" "$pinned_mise_version"; then
+    log "mise ${version} is older than the pinned ${pinned_mise_version}"
+    return 1
+  fi
 }
 
 brew_mise_installed() {
@@ -57,7 +68,7 @@ brew_mise_installed() {
 
 install_standalone_mise() {
   if [[ "$dry_run" -eq 1 ]]; then
-    log "dry-run: would install verified pinned mise v2026.9.6 release"
+    log "dry-run: would install verified pinned mise v${pinned_mise_version} release"
     return 0
   fi
 
@@ -70,11 +81,11 @@ install_standalone_mise() {
   installer="${installer_dir}/install.sh"
   # Release asset digest is published in GitHub's official release metadata.
   "$real_curl" -fsSL --connect-timeout 15 --max-time 120 --retry 2 --retry-max-time 180 \
-    https://github.com/jdx/mise/releases/download/v2026.9.6/install.sh -o "$installer" || status=$?
+    "https://github.com/jdx/mise/releases/download/v${pinned_mise_version}/install.sh" -o "$installer" || status=$?
   if [[ "$status" -eq 0 ]]; then
     digest="$(shasum -a 256 "$installer")" || status=$?
     digest="${digest%% *}"
-    if [[ "$digest" != e7b3042ccfafae822a1ec3ea013c70cf08f0cf2f8e63e4e4a87cc32959e9e8f5 ]]; then
+    if [[ "$digest" != "$pinned_installer_sha256" ]]; then
       warn "Pinned mise installer checksum mismatch; refusing to execute it"
       status=1
     fi
@@ -90,7 +101,7 @@ CURL
   fi
   if [[ "$status" -eq 0 ]]; then
     PATH="${installer_dir}:${PATH}" DOTFILES_INSTALLER_CURL="$real_curl" \
-      MISE_VERSION=v2026.9.6 MISE_INSTALL_PATH="$mise_bin" MISE_INSTALL_HELP=0 sh "$installer" || status=$?
+      MISE_VERSION="v${pinned_mise_version}" MISE_INSTALL_PATH="$mise_bin" MISE_INSTALL_HELP=0 sh "$installer" || status=$?
   fi
   rm -rf "$installer_dir"
   return "$status"

@@ -50,6 +50,8 @@ run outside that directory before repeated repair attempts if you need its logs.
 | `authenticate_ssh` | `./bin/auth-setup --ssh-only` |
 | `verify_mise_access` | `./bin/auth-setup --verify-mise` |
 | `links_before_packages`, `service_links`, `final_links` | `./bin/link-dotfiles` |
+| `shell` | `./bin/setup --continue` reruns it. Check with `./bin/repo-mise "$PWD/mise/setup.toml" bootstrap repos status`. For a `conflict`, ask the user before you move the path aside. |
+| `defaults` | `./macos/defaults.sh` |
 | `manifest_apps` | `./bin/install-apps` |
 | `capabilities` | `./bin/check-mise-tools` |
 | `standalone_agents` | `./bin/ensure-harnesses-standalone` |

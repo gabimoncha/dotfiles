@@ -1,3 +1,7 @@
+# An older mise cannot parse [settings.self_update]. With this floor it stops
+# with an upgrade message. Run ./bin/ensure-mise-standalone to install the pin.
+min_version = "2026.10.4"
+
 [tools]
 pnpm = "latest"
 node = "24.14.1"
@@ -17,7 +21,6 @@ uv = "latest"
 fastfetch = "latest"
 xcodes = "latest"
 "github:entireio/cli" = "latest"
-"github:XcodesOrg/Xcodes" = { version = "latest", asset_pattern = "xcodes.zip", strip_components = 0 }
 fzf = "latest"
 ast-grep = "latest"
 ripgrep = "latest"
@@ -74,7 +77,6 @@ mas = "latest"
 "pipx:tldr" = "latest"
 "conda:aria2" = "latest"
 "conda:bfg" = "latest"
-"conda:ghostscript" = "latest"
 "conda:sox" = "latest"
 "conda:tig" = "latest"
 "conda:tree" = "latest"
@@ -95,7 +97,8 @@ use_versions_host_track = false
 # This does not disable codex-acp or its private npm dependency.
 disable_tools = ["codex", "aqua:openai/codex", "npm:@openai/codex"]
 minimum_release_age = "4d"
-minimum_release_age_excludes = ["npm:agent-browser", "npm:agent-device", "npm:agent-browser", "npm:eas-cli", "@agentclientprotocol/codex-acp", "@agentclientprotocol/claude-agent-acp", "npm:cf", "github:flowcopilot/aether"]
+# Entries match a full backend ID, a registry short name, or a backend wildcard.
+minimum_release_age_excludes = ["npm:agent-browser", "npm:agent-device", "npm:eas-cli", "npm:@agentclientprotocol/codex-acp", "npm:@agentclientprotocol/claude-agent-acp", "npm:cf", "github:flowcopilot/aether"]
 
 [settings.npm]
 package_manager = "bun"

@@ -159,7 +159,8 @@ setup_plan() {
   plan_stage skills environment 'skills_runtime' sensitive setup_skills
   plan_stage restores restore 'clt' sensitive setup_restores
   plan_stage final_links environment 'mise_inventory standalone_agents' capture setup_final_links
-  plan_stage defaults environment 'clt' sensitive setup_defaults
+  # macos/defaults.sh applies macos/defaults.toml with the standalone mise.
+  plan_stage defaults environment 'clt mise' sensitive setup_defaults
   plan_stage screenshots environment 'clt' capture setup_screenshots
   plan_stage app_settings environment 'clt' sensitive setup_app_settings
   plan_stage finder environment 'clt' sensitive setup_finder

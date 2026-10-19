@@ -15,8 +15,9 @@ before changing ownership, bootstrap boundaries, or other design decisions.
 - Steam uses `bin/install-steam` for Valve's verified ARM64 bootstrapper.
   Preserve its update channel and quarantine. Keep Rosetta installation manual.
 - Keep Brewfile entries alphabetized within sections unless deliberately grouped.
-- Put managed files under `home/`, wire them through `bin/link-dotfiles`, and
-  update the relevant documentation. Keep local companions under ignored
+- Put managed files under `home/`, wire them through `bin/link-dotfiles`, add
+  them to `[dotfiles]` in `mise/setup.toml`, and update the relevant
+  documentation. Keep local companions under ignored
   `home/.config/local/`; only examples belong in Git.
 - Never commit credentials, private identities, backup payloads, or machine-local
   state. See [SECURITY.md](SECURITY.md).

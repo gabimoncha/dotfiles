@@ -8,29 +8,6 @@ log() {
   printf '==> %s\n' "$1"
 }
 
-set_disabled_symbolic_hotkey() {
-  local key="$1"
-  local key_code="$2"
-  local modifiers="$3"
-  local plist="${HOME}/Library/Preferences/com.apple.symbolichotkeys.plist"
-
-  if ! /usr/libexec/PlistBuddy -c "Print :AppleSymbolicHotKeys" "$plist" >/dev/null 2>&1; then
-    /usr/libexec/PlistBuddy -c "Add :AppleSymbolicHotKeys dict" "$plist" >/dev/null 2>&1
-  fi
-
-  /usr/libexec/PlistBuddy -c "Delete :AppleSymbolicHotKeys:${key}" "$plist" >/dev/null 2>&1 || true
-  /usr/libexec/PlistBuddy \
-    -c "Add :AppleSymbolicHotKeys:${key} dict" \
-    -c "Add :AppleSymbolicHotKeys:${key}:enabled bool false" \
-    -c "Add :AppleSymbolicHotKeys:${key}:value dict" \
-    -c "Add :AppleSymbolicHotKeys:${key}:value:type string standard" \
-    -c "Add :AppleSymbolicHotKeys:${key}:value:parameters array" \
-    -c "Add :AppleSymbolicHotKeys:${key}:value:parameters:0 integer 32" \
-    -c "Add :AppleSymbolicHotKeys:${key}:value:parameters:1 integer ${key_code}" \
-    -c "Add :AppleSymbolicHotKeys:${key}:value:parameters:2 integer ${modifiers}" \
-    "$plist" >/dev/null
-}
-
 apply_symbolic_hotkey_changes() {
   local activate_settings="/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings"
 
@@ -97,83 +74,23 @@ prune_dock_persistent_apps() {
   done
 }
 
-log "Applying global keyboard and locale defaults"
-defaults write NSGlobalDomain AppleLocale -string "en_US@currency=RON"
-defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
-defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
-defaults write NSGlobalDomain InitialKeyRepeat -int 15
-defaults write NSGlobalDomain KeyRepeat -int 2
-defaults write NSGlobalDomain NSAutomaticCapitalizationEnabled -bool false
-defaults write NSGlobalDomain NSAutomaticDashSubstitutionEnabled -bool true
-defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool true
-defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
-defaults write NSGlobalDomain KB_SpellingLanguage -dict KB_SpellingLanguageIsAutomatic -bool true
-defaults write NSGlobalDomain NSSpellCheckerAutomaticallyIdentifiesLanguages -bool true
-defaults write NSGlobalDomain com.apple.keyboard.fnState -bool true
+log "Applying preferences from macos/defaults.toml"
+"${script_dir}/../bin/repo-mise" "${script_dir}/defaults.toml" bootstrap macos defaults apply --yes
 
-log "Applying input source and dictation defaults"
+log "Applying input sources"
 ensure_keyboard_input_sources
-defaults write com.apple.assistant.support "Dictation Enabled" -bool true
-defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMNetworkBasedLocaleIdentifier -string "ro_RO"
-defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs DictationIMPreferredLanguageIdentifiers -array "ro_RO" "en_US"
-defaults write com.apple.speech.recognition.AppleSpeechRecognition.prefs VisibleNetworkSRLocaleIdentifiers -dict "ro_RO" -bool true "en_US" -bool true
-
-log "Applying pointer and trackpad defaults"
-defaults write NSGlobalDomain com.apple.mouse.scaling -float 3
-defaults write NSGlobalDomain com.apple.scrollwheel.scaling -float 1.7
-defaults write NSGlobalDomain com.apple.swipescrolldirection -bool true
-defaults write NSGlobalDomain com.apple.trackpad.forceClick -bool false
-defaults write NSGlobalDomain com.apple.trackpad.scaling -float 3
-defaults write com.apple.AppleMultitouchMouse MouseButtonMode -string "OneButton"
-defaults write com.apple.AppleMultitouchMouse MouseHorizontalScroll -bool true
-defaults write com.apple.AppleMultitouchMouse MouseMomentumScroll -bool true
-defaults write com.apple.AppleMultitouchMouse MouseOneFingerDoubleTapGesture -int 1
-defaults write com.apple.AppleMultitouchMouse MouseTwoFingerHorizSwipeGesture -int 2
-defaults write com.apple.AppleMultitouchTrackpad Clicking -bool true
-defaults write com.apple.AppleMultitouchTrackpad Dragging -bool false
-defaults write com.apple.AppleMultitouchTrackpad TrackpadRightClick -bool true
-defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerDrag -bool false
-defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
-defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadRightClick -bool true
-defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeFingerDrag -bool false
-
-log "Applying Finder defaults"
-defaults write com.apple.finder AppleShowAllFiles -bool true
-defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"
-defaults write com.apple.finder ShowPathbar -bool true
-defaults write com.apple.finder ShowStatusBar -bool true
 
 log "Applying screenshot defaults"
 "${script_dir}/../bin/configure-screenshots"
-defaults write com.apple.screencapture disable-shadow -bool true
 
-log "Applying Dock defaults"
-defaults write com.apple.dock autohide -bool true
-defaults write com.apple.dock largesize -int 51
-defaults write com.apple.dock magnification -bool true
-defaults write com.apple.dock orientation -string "bottom"
-defaults write com.apple.dock expose-group-apps -bool true
-defaults write com.apple.dock tilesize -int 34
+log "Removing Dock apps that are not allowed"
 prune_dock_persistent_apps
-
-log "Applying Control Center and menu bar defaults"
-defaults -currentHost write com.apple.controlcenter Battery -int 19
-defaults -currentHost write com.apple.controlcenter BatteryShowPercentage -bool true
-
-log "Applying Activity Monitor defaults"
-defaults write com.apple.ActivityMonitor SortDirection -int 1
-
-log "Applying software update defaults"
-defaults write com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
-defaults write com.apple.SoftwareUpdate AutomaticDownload -bool true
 
 log "Applying display sleep defaults"
 sudo pmset -b displaysleep 0
 sudo pmset -c displaysleep 0
 
-log "Disabling Spotlight shortcuts for Raycast"
-set_disabled_symbolic_hotkey 64 49 1048576
-set_disabled_symbolic_hotkey 65 49 1572864
+log "Activating the Spotlight shortcut changes for Raycast"
 apply_symbolic_hotkey_changes
 
 log "Reloading affected macOS services"

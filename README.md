@@ -106,9 +106,10 @@ handoff, rerun `./bin/setup`. After completing that handoff, use
 `./bin/setup --continue`.
 Existing links and installations are reused where possible; changed link targets
 are backed up under `~/.dotfiles-backups/<timestamp>/`. Homebrew inventory uses
-`--no-upgrade`. T3 desktop updates itself. Setup does not update a healthy
-mise binary, but mise updates itself because the global config sets
-`self_update.auto`.
+`--no-upgrade`. T3 desktop updates itself. Setup replaces a mise older than
+the pinned release with the pinned release, and it does not update a newer one.
+Between setup runs, mise updates itself because the global config sets
+`self_update.auto`. Setup turns that off for its own run.
 
 Each run prints its private `.local/setup-runs/<run-id>/` directory:
 
@@ -141,6 +142,10 @@ managed runtime does not prevent recovery.
 | `./bin/install-mobile-dev [--dry-run]` | Install or repair Xcode, iOS support, Android Studio, and the mobile formulae. |
 | `./bin/sudo-grant --check` | Report a leftover sudo grant; `--enable` and `--disable` change it. |
 | `./bin/link-dotfiles` | Reconcile managed links and back up replaced targets. |
+| `./bin/link-dotfiles --status` | Report managed files that are missing or differ, without changing them. |
+| `./bin/repo-mise "$PWD/mise/setup.toml" bootstrap repos status` | Check the Oh My Zsh, plugin, and TPM checkouts without changing them. |
+| `./bin/repo-mise "$PWD/macos/defaults.toml" bootstrap macos defaults status` | Compare macOS preferences with `macos/defaults.toml` without changing them. |
+| `./macos/defaults.sh` | Reapply macOS preferences, input sources, the Dock, and display sleep. |
 | `./bin/setup-tmux` | Install missing TPM plugins and reload a running server. |
 | `./bin/configure-app-settings` | Retry automatic login-item setup. |
 | `./bin/configure-telemetry [--dry-run]` | Apply documented telemetry opt-outs to installed tools. |
@@ -149,6 +154,13 @@ managed runtime does not prevent recovery.
 | `./bin/configure-sudo-touch-id --check` | Inspect Touch ID for sudo; `--enable`/`--disable` change it. |
 | `./bin/configure-background-jobs [--dry-run]` | Disable the user launchd jobs in `macos/disabled-jobs.txt`; `--check` reports drift and `--revert` enables them. |
 | `./bin/ensure-mise-standalone --update` | Explicitly update standalone mise. |
+
+The `repo-mise` commands, `link-dotfiles --status`, and `macos/defaults.sh`
+need the pinned mise. Plain `./bin/link-dotfiles` also needs it for the agent
+settings merge and the `mise.lock` link. Without it, the script makes the other
+links, skips those two steps, and exits 1. If a command reports an older mise,
+run `./bin/ensure-mise-standalone`. `mise self-update` can stop below the pin
+because of the four-day `minimum_release_age`.
 
 Capability resolution and version probes each default to a 10-second deadline;
 set `DOTFILES_TOOL_CHECK_TIMEOUT_SECONDS` to override it. The macOS update probe
@@ -198,9 +210,11 @@ No script proves a fresh-Mac install. See
 | --- | --- |
 | [Brewfile](Brewfile) | Homebrew formulae, casks, taps and App Store entries. |
 | [mise config](home/.config/mise/config.toml) | Runtimes and supported global developer tools. |
+| [mise lockfile](home/.config/mise/mise.lock) | Exact tool versions, download URLs, and checksums for the mise config. |
+| [setup mise config](mise/setup.toml) | Shell framework checkouts, the managed-file list for `link-dotfiles --status`, and the Claude and Codex settings merges. |
 | [app manifest](apps/manifest.tsv) | Explicit app installation status and manual vendor steps. |
 | [link-dotfiles](bin/link-dotfiles) and `home/` | Managed files and backup-before-replace behavior. |
-| [macOS defaults](macos/defaults.sh) | OS preferences. |
+| [macOS defaults](macos/defaults.toml) and [defaults.sh](macos/defaults.sh) | OS preferences. The script applies the TOML with mise and handles input sources, the Dock, and display sleep. |
 | [disabled jobs](macos/disabled-jobs.txt) | Apple user launchd jobs that `bin/configure-background-jobs` disables. |
 | [Mackup config](home/.mackup.cfg) | Allowlisted app settings, separate from repo-owned files. |
 | `nvim/` | Separate Neovim submodule linked to `~/.config/nvim`; plugins download at first launch. |
@@ -210,6 +224,20 @@ CLIs and mise itself are explicit standalone-installer exceptions. T3 desktop
 uses the nightly Homebrew cask.
 Steam uses the verified native installer described below.
 See [DECISIONS.md](DECISIONS.md) for the reasons and constraints.
+
+`~/.config/mise/mise.lock` links to the tracked lockfile. `bin/link-dotfiles`
+creates that link only when the pinned mise is installed. `mise install`
+installs the locked versions, and `mise up` writes newer versions into the
+tracked file. To add a tool, add it to the mise config, then run
+`mise lock --global --platform macos-arm64`. After either change, run
+`git add home/.config/mise` and commit `config.toml`, `mise.lock`, and the
+`locks/` folder. The pipx entries need their `locks/` dependency graphs.
+
+The first `mise install` after the link is created installs the three pipx
+tools again, in new folders that match their locked dependency graphs. It also
+adds checksums for tools whose releases publish none. Commit that lockfile
+change once. A lockfile that is older than your installs moves the tools back
+to the locked versions, so commit the lockfile after each `mise up`.
 
 `vscode "publisher.extension"` entries in `Brewfile` select Cursor extensions.
 Setup uses Cursor's editor CLI and skips installed extensions.
@@ -221,10 +249,17 @@ The tracked settings disable [Codex memories](https://learn.chatgpt.com/docs/con
 with `features.memories = false` and [Claude auto memory](https://code.claude.com/docs/en/env-vars)
 with `env.CLAUDE_CODE_DISABLE_AUTO_MEMORY = "1"`. Existing memory files remain.
 Start new agent sessions after applying these settings.
-`bash ./bin/configure-codex-settings` applies only the Codex settings merge.
-It respects `CODEX_HOME` and supports `--dry-run`. Complex representations of
-managed TOML keys require a manual edit. The helper preserves the file on failure.
-`bash ./bin/configure-claude-settings` applies only the Claude settings merge.
+`./bin/link-dotfiles` merges these keys with `mise dot apply`, from the
+`[dotfiles]` merge entries in `mise/setup.toml`. It backs up each file that
+will change, and it creates a missing file with mode 0600. To preview the
+merge, run
+`./bin/repo-mise "$PWD/mise/setup.toml" dot diff '~/.claude/settings.json' '~/.codex/config.toml'`.
+The Codex merge always uses `~/.codex/config.toml` and ignores `CODEX_HOME`.
+mise refuses a settings file that is a symlink or that is not valid JSON or
+TOML, and it leaves that file unchanged. A managed key that holds a value of
+another type is replaced; the backup keeps the old value. mise writes the file
+in place, not through a temporary file, so the backup under
+`~/.dotfiles-backups/` or `mise dot recover` restores an interrupted write.
 
 AeroSpace leaves the workspace unchanged for Superwhisper. The main Typeless
 window floats on workspace `D`. A separate rule matches Typeless's `Status`
