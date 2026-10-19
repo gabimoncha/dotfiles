@@ -21,7 +21,6 @@ pgadmin4	cask	pgadmin4	pgAdmin 4	Homebrew cask.
 pinokio	manual	https://pinokio.computer/	Pinokio	No Homebrew cask currently exists; install from vendor.
 postgresql	formula	postgresql@18	-	Homebrew formula because mise ls-remote postgresql errors.
 raycast	cask	raycast	Raycast	Homebrew cask; restore settings with a .rayconfig export.
-rectangle	cask	rectangle	Rectangle	Homebrew cask.
 signal	cask	signal	Signal	Homebrew cask.
 slack	cask	slack	Slack	Homebrew cask.
 spotify	cask	spotify	Spotify	Homebrew cask.

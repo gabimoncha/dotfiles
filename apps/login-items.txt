@@ -4,7 +4,6 @@ Ghostty
 Mole
 Notion Calendar
 Raycast
-Rectangle
 superwhisper
 Synology Drive Client
 Synology Image Assistant

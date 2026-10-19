@@ -3,8 +3,8 @@
   "scope": "Tracked mise/Brewfile/app inventories, explicit setup tools, and managed shell/tmux plugins. Excludes project dependencies, other plugins, nvim repository dependencies, and unrelated manually installed tools.",
   "verification": "Official documentation and upstream source reviews; fake-command tests only. No live installations, account changes, personal settings edits, or network-capture tests.",
   "coverage": {
-    "total": 187,
-    "reviewed": 187,
+    "total": 186,
+    "reviewed": 186,
     "pending": 0
   },
   "limitations": [
@@ -2708,25 +2708,6 @@
           "https://manual.raycast.com/ai/dictation"
         ],
         "notes": "The current June 19, 2026 privacy policy covers app and website together and describes analytics/product improvement; its documented opt-out is for marketing communications, not a general telemetry switch. AI enablement, Memory, Cloud Sync, provider traffic and user-consented AI feedback have separate controls and are not general analytics opt-outs. Official manual states Dictation statistics are computed on-device and not sent as telemetry. No supported analytics/crash preference path/schema was established, so preserve existing app preferences/database and do not add guessed defaults keys or replace user state. Account, extension/API requests, billing, downloads and updates are separate service traffic. Third-party extensions can have their own reporting. No live app/settings were inspected.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {}
-    },
-    {
-      "id": "rectangle",
-      "tool": "rectangle",
-      "source": "cask",
-      "kind": "app",
-      "research": {
-        "tool": "Rectangle free macOS window manager",
-        "status": "none_found",
-        "mechanism": "No documented opt-out found for app usage analytics or automatic crash/error reporting. The official Rectangle privacy policy states that no user data is gathered. No telemetry preference key, environment variable, or configuration schema was established. Preserve existing shortcuts, snap areas, app exclusions, launch behavior, and other user preferences.",
-        "sources": [
-          "https://rectangleapp.com/terms",
-          "https://rectangleapp.com/",
-          "https://github.com/rxhanson/Rectangle"
-        ],
-        "notes": "Scope is the free/open-source Rectangle app, not Rectangle Pro or other Ryan Hanson apps. The privacy policy is dated February 9, 2020; it is not an independent current binary audit. Its Error Reporting and Feedback section describes voluntary direct feedback, not a verified automatic crash upload switch. Update checks/downloads, Homebrew analytics, manually supplied feedback, Accessibility window management, and macOS system diagnostics are separate. No live settings or app were accessed.",
         "checked_date": "2026-10-03"
       },
       "setup_actions": {}

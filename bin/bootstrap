@@ -138,7 +138,6 @@ cask_app_bundle_name() {
     orbstack) printf 'OrbStack' ;;
     pgadmin4) printf 'pgAdmin 4' ;;
     raycast) printf 'Raycast' ;;
-    rectangle) printf 'Rectangle' ;;
     signal) printf 'Signal' ;;
     slack) printf 'Slack' ;;
     spotify) printf 'Spotify' ;;
