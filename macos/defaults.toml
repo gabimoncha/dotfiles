@@ -4,7 +4,7 @@
 #   ./bin/repo-mise "$PWD/macos/defaults.toml" bootstrap macos defaults status
 # defaults.sh keeps the input sources, the Dock prune, pmset, and app restarts.
 # Do not declare login items here: `defaults apply` applies them too.
-min_version = "2026.10.13"
+min_version = "2026.10.17"
 
 [bootstrap.macos.defaults.NSGlobalDomain]
 AppleLocale = "en_US@currency=RON"

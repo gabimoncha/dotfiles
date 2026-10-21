@@ -496,13 +496,13 @@ url = "https://github.com/sharkdp/bat/releases/download/v0.26.1/bat-v0.26.1-aarc
 url_api = "https://api.github.com/repos/sharkdp/bat/releases/assets/323548442"
 
 [[tools.bun]]
-version = "1.4.2"
+version = "1.4.3"
 backend = "core:bun"
-specifiers = ["1.4.2"]
+specifiers = ["1.4.3"]
 
 [tools.bun."platforms.macos-arm64"]
-checksum = "sha256:90987a3a16d7db556d886ac3d551e7b6d3edf0a1cf43acaed622e8676be1d12f"
-url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.2/bun-darwin-aarch64.zip"
+checksum = "sha256:80afd4c069b46a6fa8f3ec520bebc750a7843e4a8d5b9583d29ad436c00a3403"
+url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.3/bun-darwin-aarch64.zip"
 
 [[tools.cargo-binstall]]
 version = "1.20.0"
@@ -1076,13 +1076,13 @@ specifiers = ["latest"]
 url = "https://github.com/neovim/neovim/releases/download/v0.12.6/nvim-macos-arm64.tar.gz"
 
 [[tools.node]]
-version = "24.14.1"
+version = "24.22.1"
 backend = "core:node"
-specifiers = ["24.14.1"]
+specifiers = ["24.22.1"]
 
 [tools.node."platforms.macos-arm64"]
-checksum = "sha256:25495ff85bd89e2d8a24d88566d7e2f827c6b0d3d872b2cebf75371f93fcb1fe"
-url = "https://nodejs.org/dist/v24.14.1/node-v24.14.1-darwin-arm64.tar.gz"
+checksum = "sha256:89c682593d76cd44233fa53b1563264e7de9cbb189cad169135c5b4fadfbc0a7"
+url = "https://nodejs.org/dist/v24.22.1/node-v24.22.1-darwin-arm64.tar.gz"
 
 [[tools."npm:@agentclientprotocol/claude-agent-acp"]]
 version = "0.93.0"
@@ -1179,7 +1179,10 @@ url_api = "https://api.github.com/repos/skaji/relocatable-perl/releases/assets/2
 version = "3.2.4"
 backend = "pipx:httpie"
 specifiers = ["latest"]
-uv = { path = "locks/pipx-httpie/3.2.4", digest = "sha256:1f6a2ea1ee8025cede338b2eb61a283a5e043355a8479b59cae5b44de2ba6a74" }
+uv = { path = "locks/pipx-httpie/3.2.4~2f338564", digest = "sha256:3bfebc47757187e82cf0431dee430eec2e59ecca30c433a312bb7b1e5b721bcf" }
+
+[tools."pipx:httpie".options]
+with = '["certifi==2026.10.19"]'
 
 [[tools."pipx:mackup"]]
 version = "0.11.2"
@@ -1210,13 +1213,13 @@ backend = "npm:portless"
 specifiers = ["latest"]
 
 [[tools.python]]
-version = "3.14.5"
+version = "3.14.8"
 backend = "core:python"
-specifiers = ["3.14.5"]
+specifiers = ["3.14.8"]
 
 [tools.python."platforms.macos-arm64"]
-checksum = "sha256:3a0373cc39fefd494754ef555267f245c720cddbaaabf63a7c9a4269f1e56532"
-url = "https://github.com/astral-sh/python-build-standalone/releases/download/20260602/cpython-3.14.5+20260602-aarch64-apple-darwin-install_only_stripped.tar.gz"
+checksum = "sha256:f0f1402b45a8a655fc78c8ee62462fddcb9dc8717a022e79700d07e44fd18d4a"
+url = "https://github.com/astral-sh/python-build-standalone/releases/download/20261020/cpython-3.14.8+20261020-aarch64-apple-darwin-install_only_stripped.tar.gz"
 provenance = "github-attestations"
 
 [[tools.redis]]
@@ -1247,20 +1250,18 @@ url = "https://github.com/BurntSushi/ripgrep/releases/download/15.2.0/ripgrep-15
 url_api = "https://api.github.com/repos/BurntSushi/ripgrep/releases/assets/478118851"
 
 [[tools.ruby]]
-version = "3.4.9"
+version = "3.4.11"
 backend = "core:ruby"
-specifiers = ["3.4.9"]
+specifiers = ["3.4.11"]
 
 [tools.ruby.options]
-compile = "false"
-precompiled_url = "jdx/ruby"
+compile = "true"
 ruby_build_repo = "https://github.com/rbenv/ruby-build.git"
 ruby_install = "false"
 
 [tools.ruby."platforms.macos-arm64"]
-checksum = "sha256:f7569e4f455ddd7c1e17b50ace8d7adf91b4205d6e9fdc382316ea95b8cf75eb"
-url = "https://github.com/jdx/ruby/releases/download/3.4.9-7/ruby-3.4.9.macos.tar.gz"
-provenance = "github-attestations"
+checksum = "sha256:5c22be44524312b3d433d68739bcc530633b1da5ef8ba0afa0a37680da17d3de"
+url = "https://cache.ruby-lang.org/pub/ruby/3.4/ruby-3.4.11.tar.gz"
 
 [[tools.rust]]
 version = "1.99.0"
@@ -1293,14 +1294,14 @@ url = "https://github.com/typst/typst/releases/download/v0.15.1/typst-aarch64-ap
 url_api = "https://api.github.com/repos/typst/typst/releases/assets/480299147"
 
 [[tools.uv]]
-version = "0.13.1"
+version = "0.13.4"
 backend = "aqua:astral-sh/uv"
-specifiers = ["latest"]
+specifiers = ["0.13.4"]
 
 [tools.uv."platforms.macos-arm64"]
-checksum = "sha256:cfe454573412ff7380d15fc7dae5997ab53ffce72fce0a78e91ddbc84001acd2"
-url = "https://github.com/astral-sh/uv/releases/download/0.13.1/uv-aarch64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/639312976"
+checksum = "sha256:e0b1d4743ce64c55d9f0f4a444afa6b81125680070ee04e853fcd0f6c1ebf8f1"
+url = "https://github.com/astral-sh/uv/releases/download/0.13.4/uv-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/659693291"
 provenance = "github-attestations"
 
 [[tools.vercel]]

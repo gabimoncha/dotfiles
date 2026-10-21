@@ -4,10 +4,10 @@
 #
 # Change the version and the installer digest together. The digest is the
 # release's install.sh digest in GitHub's release metadata. Pick a release that
-# passes the four-day minimum_release_age, unless a needed feature is newer.
-# 2026.10.13 is newer: mise/setup.toml needs its [bootstrap.repos] depth option.
-pinned_mise_version=2026.10.13
-pinned_installer_sha256=d2c31e93cd13f7686f151e2f85faae77111d7ce2c1e5474209e19fd8bc7b861b
+# passes the four-day minimum_release_age, unless a needed feature or an
+# explicitly requested release is newer.
+pinned_mise_version=2026.10.17
+pinned_installer_sha256=314162b17b5fe78e31d464416ab91ede17e9149aea4322f5f3539f1ebe46242f
 
 # An older mise can refuse the current global config, so read only its version.
 mise_installed_version() {
