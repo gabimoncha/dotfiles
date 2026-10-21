@@ -4,10 +4,10 @@ min_version = "2026.10.4"
 
 [tools]
 pnpm = "latest"
-node = "24.14.1"
+node = "24.22.1"
 perl = "5.42.0"
-python = "3.14.5"
-ruby = "3.4.9"
+python = "3.14.8"
+ruby = "3.4.11"
 rust = "latest"
 cargo-binstall = "1.20.0"
 ccache = "latest"
@@ -15,9 +15,9 @@ age = "latest"
 cocoapods = "latest"
 coreutils = "latest"
 direnv = "latest"
-bun = "1.4.2"
+bun = "1.4.3"
 git-lfs = "latest"
-uv = "latest"
+uv = "0.13.4"
 fastfetch = "latest"
 xcodes = "latest"
 "github:entireio/cli" = "latest"
@@ -33,7 +33,7 @@ awscli = "2.35.18"
 gh = "2.100.0"
 gcloud = "589.0.0"
 flyctl = "0.4.117"
-cloudflared = "latest"
+cloudflared = "2026.10.2"
 mkcert = "latest"
 hub = "latest"
 act = "latest"
@@ -69,7 +69,7 @@ mas = "latest"
 "github:CoastalFuturist/bodhi" = "latest"
 "github:CoastalFuturist/ytcli" = "latest"
 "gem:fastlane" = "2.237.0"
-"pipx:httpie" = "latest"
+"pipx:httpie" = { version = "latest", with = ["certifi==2026.10.19"] }
 "pipx:mackup" = "latest"
 "npm:ios-deploy" = "latest"
 "github:boyter/scc" = "latest"
@@ -102,6 +102,10 @@ minimum_release_age_excludes = ["npm:agent-browser", "npm:agent-device", "npm:ea
 
 [settings.npm]
 package_manager = "bun"
+
+# The precompiled Ruby 3.4.11 still bundles OpenSSL 3.5.5.
+[settings.ruby]
+compile = true
 
 [settings.cargo]
 binstall = true
