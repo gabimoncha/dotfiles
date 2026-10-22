@@ -1,16 +1,23 @@
-alias grep='rg'
-alias cat='bat'
-alias ls='eza'
-alias ll='eza -la --git'
-alias la='eza -a'
+# Replace a system command only when the replacement is installed.
+if (( $+commands[rg] )); then alias grep='rg'; fi
+if (( $+commands[bat] )); then alias cat='bat'; fi
+if (( $+commands[eza] )); then
+  alias ls='eza'
+  alias ll='eza -la --git'
+  alias la='eza -a'
+fi
 alias tree='tree -a -I .git'
 alias g='git'
 alias gcai='commit-ai'
 alias myip='curl ifconfig.me'
-alias localip='ipconfig getifaddr en0'
-alias cleanup='find . -name ".DS_Store" -delete'
 alias hosts='sudo nvim /etc/hosts'
-alias brewup='brew update && brew upgrade && brew cleanup'
+if [[ "$OSTYPE" == darwin* ]]; then
+  alias localip='ipconfig getifaddr en0'
+  alias cleanup='find . -name ".DS_Store" -delete'
+  alias brewup='brew update && brew upgrade && brew cleanup'
+else
+  alias localip="hostname -I | awk '{print \$1}'"
+fi
 alias help='use-my-mac'
 alias cc='claude'
 alias n='nvim'

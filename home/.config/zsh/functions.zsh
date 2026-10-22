@@ -82,7 +82,9 @@ serve() {
     return 1
   fi
 
-  open "http://localhost:${port}/" >/dev/null 2>&1 &
+  if (( $+commands[open] )); then
+    open "http://localhost:${port}/" >/dev/null 2>&1 &
+  fi
   python3 -m http.server "$port"
 }
 
@@ -634,8 +636,12 @@ EOF
   [[ -z "$selected" ]] && return 0
 
   command_line="$(print -r -- "$selected" | sed 's/[[:space:]][[:space:]]*- .*//')"
-  print -n "$command_line" | pbcopy
-  print "Copied to clipboard: $command_line"
+  if (( $+commands[pbcopy] )); then
+    print -n "$command_line" | pbcopy
+    print "Copied to clipboard: $command_line"
+  else
+    print "Command: $command_line"
+  fi
 
   print -n "Execute now? [y/N] "
   read -r reply
