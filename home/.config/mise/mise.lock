@@ -1152,19 +1152,19 @@ url_api = "https://api.github.com/repos/cargo-bins/cargo-binstall/releases/asset
 provenance = "github-attestations"
 
 [[tools.ccache]]
-version = "4.14.1"
+version = "4.14.2"
 backend = "github:ccache/ccache"
 specifiers = ["latest"]
 
 [tools.ccache."platforms.linux-x64"]
-checksum = "sha256:ad63d19f5d09ea13f749651653a561c98a59994e673504a4266617b8754218f7"
-url = "https://github.com/ccache/ccache/releases/download/v4.14.1/ccache-4.14.1-linux-x86_64-glibc.tar.xz"
-url_api = "https://api.github.com/repos/ccache/ccache/releases/assets/592501808"
+checksum = "sha256:bd1313f5316f594443dcb4113a4191c666ac6450e0cf016ff8cb8b080f46c160"
+url = "https://github.com/ccache/ccache/releases/download/v4.14.2/ccache-4.14.2-linux-x86_64-glibc.tar.xz"
+url_api = "https://api.github.com/repos/ccache/ccache/releases/assets/653390076"
 
 [tools.ccache."platforms.macos-arm64"]
-checksum = "sha256:c279fa81e2e806b4d9e64d4a06cb569a84ef54151feef796e5d4f4e95a464563"
-url = "https://github.com/ccache/ccache/releases/download/v4.14.1/ccache-4.14.1-darwin.tar.gz"
-url_api = "https://api.github.com/repos/ccache/ccache/releases/assets/592501700"
+checksum = "sha256:cf240009630b605b775c7c5c7b7105a3b196c79f31af322c1557969aa28003fc"
+url = "https://github.com/ccache/ccache/releases/download/v4.14.2/ccache-4.14.2-darwin.tar.gz"
+url_api = "https://api.github.com/repos/ccache/ccache/releases/assets/653389938"
 
 [[tools.cloudflared]]
 version = "2026.10.2"
