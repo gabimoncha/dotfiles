@@ -12,6 +12,11 @@ setup_touch_id() {
   "${repo_root}/bin/configure-sudo-touch-id" --enable
 }
 setup_sudo() { ensure_admin_user; sudo -v; }
+setup_linux_sudo() { sudo -v; }
+# apt packages and the zsh login shell. mise uses sudo for both.
+setup_linux_system() {
+  "${repo_root}/bin/repo-mise" "${repo_root}/linux/mise.toml" bootstrap --only packages,user --yes
+}
 setup_sudo_grant() {
   [[ "${DOTFILES_SKIP_SUDO_GRANT:-0}" == 1 ]] && return 20
   "${repo_root}/bin/sudo-grant" --enable || return
@@ -24,10 +29,11 @@ setup_keepalive() {
   (while kill -0 "$owner" 2>/dev/null && sudo -n true; do sleep 30; done) >/dev/null 2>&1 &
 }
 setup_homebrew() { ensure_homebrew; }
-setup_mise() { "${repo_root}/bin/ensure-mise-standalone" --skip-update; }
+setup_mise() { "${repo_root}/bin/install-standalone" install mise; }
 setup_install_gh() { "${repo_root}/bin/github-bootstrap" install-gh; }
 setup_api() { "${repo_root}/bin/auth-setup" --api-only; }
 setup_ssh() { "${repo_root}/bin/auth-setup" --ssh-only; }
+setup_git_https() { "${repo_root}/bin/auth-setup" --git-only; }
 setup_verify_auth() { "${repo_root}/bin/auth-setup" --verify-mise; }
 setup_links() { DOTFILES_LINK_AGENT_CONFIG=0 "${repo_root}/bin/link-dotfiles"; }
 setup_final_links() { DOTFILES_LINK_AGENT_CONFIG=1 "${repo_root}/bin/link-dotfiles"; }
@@ -52,9 +58,9 @@ setup_shell() {
 }
 setup_standalone_agents() {
   if [[ "${DOTFILES_SETUP_PHASE:-continue}" == prepare ]]; then
-    "${repo_root}/bin/ensure-harnesses-standalone" --foundation-only
+    "${repo_root}/bin/install-standalone" install --first-only
   else
-    "${repo_root}/bin/ensure-harnesses-standalone"
+    "${repo_root}/bin/install-standalone" install
   fi
 }
 setup_telemetry() { "${repo_root}/bin/configure-telemetry"; }

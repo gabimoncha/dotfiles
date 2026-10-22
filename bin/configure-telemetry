@@ -12,7 +12,7 @@ for argument in "$@"; do
   esac
 done
 . "$repo_root/bin/lib/setup-runtime.sh"
-. "$repo_root/bin/lib/harnesses.sh"
+. "$repo_root/bin/lib/standalone.sh"
 runtime_init configure-telemetry
 trap 'runtime_on_exit "$?"' EXIT
 runtime_acquire_lock telemetry 'telemetry configuration' || exit 1
@@ -20,7 +20,7 @@ runtime_acquire_lock telemetry 'telemetry configuration' || exit 1
 telemetry_tool() {
   local name="$1" candidate=""
   if [[ -x "$HOME/.local/bin/mise" ]]; then
-    candidate="$(MISE_AUTO_INSTALL=0 MISE_OFFLINE=1 harness_probe "$HOME/.local/bin/mise" which "$name" 2>/dev/null)" || candidate=""
+    candidate="$(MISE_AUTO_INSTALL=0 MISE_OFFLINE=1 standalone_probe "$HOME/.local/bin/mise" which "$name" 2>/dev/null)" || candidate=""
   fi
   case "$candidate" in */shims/*) candidate="" ;; esac
   if [[ -n "$candidate" && -x "$candidate" ]]; then printf '%s\n' "$candidate"; return 0; fi
@@ -39,7 +39,7 @@ telemetry_command() {
     printf 'Would configure telemetry: %s' "$name"; printf ' %q' "$@"; printf '\n'
     return 0
   fi
-  harness_probe "$executable" "$@" >/dev/null 2>&1 || result=$?
+  standalone_probe "$executable" "$@" >/dev/null 2>&1 || result=$?
   if [[ "$result" != 0 ]]; then
     printf 'Could not configure %s telemetry (status %s). Rerun ./bin/configure-telemetry.\n' "$name" "$result" >&2
     status=1
@@ -71,17 +71,17 @@ telemetry_gui_environment() {
   # Reuse backup-before-replace behavior without applying other personal settings.
   "$repo_root/bin/link-dotfiles" --telemetry-only || { status=1; return; }
   launchctl_path="$(telemetry_tool launchctl)" || { status=1; return; }
-  harness_probe "$HOME/bin/dotfiles-telemetry-env" || result=$?
+  standalone_probe "$HOME/bin/dotfiles-telemetry-env" || result=$?
   if [[ "$changed" == 1 ]]; then
     # Unload a changed definition; the old job can be absent.
-    harness_probe "$launchctl_path" bootout "$domain/$job" >/dev/null 2>&1 || true
-  elif harness_probe "$launchctl_path" print "$domain/$job" >/dev/null 2>&1; then
+    standalone_probe "$launchctl_path" bootout "$domain/$job" >/dev/null 2>&1 || true
+  elif standalone_probe "$launchctl_path" print "$domain/$job" >/dev/null 2>&1; then
     loaded=1
   fi
   if [[ "$loaded" == 0 ]]; then
     # bootstrap can fail briefly right after bootout; retry once.
-    harness_probe "$launchctl_path" bootstrap "$domain" "$plist" ||
-      { sleep 1; harness_probe "$launchctl_path" bootstrap "$domain" "$plist"; } || result=$?
+    standalone_probe "$launchctl_path" bootstrap "$domain" "$plist" ||
+      { sleep 1; standalone_probe "$launchctl_path" bootstrap "$domain" "$plist"; } || result=$?
   fi
   if [[ "$result" != 0 ]]; then
     printf 'Could not load the telemetry environment login job; rerun in your macOS GUI session.\n' >&2
@@ -89,10 +89,10 @@ telemetry_gui_environment() {
   else printf 'Configured the GUI telemetry environment; reopen apps to use the new values.\n'; fi
 }
 
-if harness_installed codex; then
+if standalone_installed codex; then
   telemetry_file 'Codex local runtime' codex "${CODEX_HOME:-$HOME/.codex}/config.toml"
 fi
-if harness_installed claude; then
+if standalone_installed claude; then
   telemetry_file claude json "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json" "$repo_root/home/.config/telemetry/claude.json"
 fi
 if [[ "$agents_only" == 0 ]]; then
@@ -107,7 +107,8 @@ if [[ "$agents_only" == 0 ]]; then
     telemetry_file cursor jsonc "$HOME/Library/Application Support/Cursor/User/settings.json" "$repo_root/home/.config/telemetry/cursor-settings.json"
     telemetry_file cursor jsonc "$HOME/.cursor/argv.json" "$repo_root/home/.config/telemetry/cursor-argv.json"
   fi
-  telemetry_gui_environment
+  # The login job sets the GUI app environment, which exists only on macOS.
+  [[ "$(uname -s)" != Darwin ]] || telemetry_gui_environment
   printf 'Manual settings and unavailable controls: see %s/apps/telemetry.md\n' "$repo_root"
 fi
 exit "$status"

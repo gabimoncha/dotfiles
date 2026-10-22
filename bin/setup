@@ -9,11 +9,23 @@ for argument in "$@"; do
     --serial) export DOTFILES_SETUP_SERIAL=1 ;;
     --skip-mobile-dev) export DOTFILES_SKIP_MOBILE_DEV=1 ;;
     --continue) DOTFILES_SETUP_PHASE=continue ;;
-    -h|--help) printf 'Usage: ./bin/setup [--continue] [--dry-run] [--serial] [--skip-mobile-dev]\nDefault: prepare foundation tools, then stop for permissions and terminal restart.\n--continue: run remaining setup after reviewing permissions and restarting the terminal.\n'; exit 0 ;;
+    -h|--help) printf 'Usage: ./bin/setup [--continue] [--dry-run] [--serial] [--skip-mobile-dev]\nDefault: prepare foundation tools, then stop for permissions and terminal restart.\n--continue: run remaining setup after reviewing permissions and restarting the terminal.\nLinux runs every stage in one run; --continue has no effect there.\n'; exit 0 ;;
     *) printf 'Unknown setup argument: %s\n' "$argument" >&2; exit 1 ;;
   esac
 done
 export DOTFILES_RUN_MODE DOTFILES_SETUP_PHASE
+# The setup runtime runs on /usr/bin/ruby, so Linux installs it first.
+if [[ "$(uname -s)" == Linux ]]; then
+  if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
+    "${repo_root}/bin/linux-prerequisites" --dry-run || exit 1
+    if [[ ! -x /usr/bin/ruby ]]; then
+      printf 'The dry run stops here: setup needs /usr/bin/ruby. Run ./bin/linux-prerequisites first.\n' >&2
+      exit 1
+    fi
+  else
+    "${repo_root}/bin/linux-prerequisites" || exit 1
+  fi
+fi
 . "${repo_root}/bin/lib/setup-runtime.sh"
 runtime_init setup "$DOTFILES_RUN_MODE"
 # Source the existing package functions without running the legacy bootstrap.
@@ -46,12 +58,15 @@ if [[ "$DOTFILES_RUN_MODE" == normal ]] && command -v caffeinate >/dev/null 2>&1
   caffeinate -i -w "$$" >/dev/null 2>&1 &
 fi
 status=0
-. "${repo_root}/bin/lib/setup-backup-checklist.sh"
-setup_backup_checklist
+# The cloud backups and their restores exist only for a Mac.
+if [[ "$(uname -s)" == Darwin ]]; then
+  . "${repo_root}/bin/lib/setup-backup-checklist.sh"
+  setup_backup_checklist
+fi
 setup_plan || status=$?
 runtime_print_summary
 runtime_exit_status || status=1
-if [[ "$DOTFILES_SETUP_PHASE" == continue ]]; then
+if [[ "$DOTFILES_SETUP_PHASE" == continue || "$(uname -s)" == Linux ]]; then
   printf '\nOpen a new terminal to use the available tools.\n'
 fi
 exit "$status"

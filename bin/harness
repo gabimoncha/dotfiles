@@ -1,69 +1,13 @@
 #!/usr/bin/env bash
+# Kept for the mise postinstall hook and the zsh mise helper. The tool list
+# and the update commands live in apps/standalone.tsv.
 set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 usage() { printf 'Usage: harness update [--dry-run] [--installed-only]\n'; }
 [[ "${1:-}" != --help && "${1:-}" != -h ]] || { usage; exit 0; }
 [[ "${1:-}" == update ]] || { usage >&2; exit 2; }
 shift
-installed_only=0
 for argument in "$@"; do
-  case "$argument" in
-    --dry-run) export DOTFILES_RUN_MODE=dry-run ;;
-    --installed-only) installed_only=1 ;;
-    *) usage >&2; exit 2 ;;
-  esac
+  case "$argument" in --dry-run|--installed-only) ;; *) usage >&2; exit 2 ;; esac
 done
-. "$repo_root/bin/lib/setup-runtime.sh"
-. "$repo_root/bin/lib/harnesses.sh"
-# Setup can serialize its stages without serializing independent vendor updates.
-DOTFILES_SETUP_SERIAL=0
-DOTFILES_JOB_IDLE_TIMEOUT_SECONDS="${DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS:-30}"
-if [[ ! "$DOTFILES_JOB_IDLE_TIMEOUT_SECONDS" =~ ^[1-9][0-9]*$ ]]; then
-  printf 'DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS must be a positive integer.\n' >&2
-  exit 2
-fi
-runtime_init harness
-harness_prepare_path
-# Serialize updates against setup's vendor installers and other update runs.
-runtime_acquire_lock harness 'harness update' || exit 1
-harness_update_one() {
-  local name="$1" executable args=()
-  executable="$(harness_binary "$name")"
-  case "$name" in
-    codex|cursor) args=(update) ;;
-    claude|opencode) args=(upgrade) ;;
-    pi) args=(update --all) ;;
-  esac
-  if [[ "${2:-}" == --dry-run ]]; then
-    printf 'Would run: %q' "$executable"
-    printf ' %q' "${args[@]}"
-    printf '\n'
-    return 0
-  fi
-  case "$name" in
-    codex) CODEX_NON_INTERACTIVE=1 "$executable" "${args[@]}" ;;
-    *) "$executable" "${args[@]}" ;;
-  esac
-}
-
-status=0
-for name in "${harness_names[@]}"; do
-  if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
-    harness_update_one "$name" --dry-run
-    continue
-  fi
-  if ! harness_installed "$name"; then
-    if [[ "$installed_only" == 1 ]]; then
-      printf 'Skipping %s: managed installation is not present\n' "$name"
-    else
-      repair='Run ./bin/ensure-harnesses-standalone.'
-      runtime_record_failure recoverable "$name" 'managed installation is not present' '' "$repair"
-      status=1
-    fi
-    continue
-  fi
-  runtime_run_job "$name" recoverable 'Run harness update after fixing the reported error.' harness_update_one "$name" </dev/null
-done
-runtime_wait_jobs || status=1
-runtime_print_summary
-exit "$status"
+exec "$repo_root/bin/install-standalone" update "$@"

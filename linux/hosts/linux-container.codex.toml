@@ -1,0 +1,3 @@
+# Kernel 4.4 has no user namespaces, so the Codex sandbox (bwrap) cannot start
+# and sandboxed commands fail. The container is the boundary.
+sandbox_mode = "danger-full-access"

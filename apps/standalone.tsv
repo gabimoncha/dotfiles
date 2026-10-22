@@ -1,0 +1,17 @@
+# Tools that a vendor installer owns. bin/install-standalone reads this file.
+# Vendor installs keep the metadata that each tool's self-update needs.
+# os: all, macos, or linux. phase: first (before mise tools) or after-mise.
+# root: the command must resolve to a path inside it. installer: the vendor
+# script URL, or "pinned" for the digest-checked release in bin/lib/mise-pin.sh.
+# update: arguments for the tool's own update command, or "-" when the tool
+# updates itself. The T3 app updates the Linux T3 server through its service
+# launcher, with a database backup and rollback. The T3 Code app on macOS is a
+# Homebrew cask, not a row here.
+# name	os	phase	command	root	installer	update
+mise	all	first	~/.local/bin/mise	~/.local/bin/mise	pinned	-
+codex	all	first	~/.local/bin/codex	~/.codex/packages/standalone	https://chatgpt.com/codex/install.sh	update
+claude	all	first	~/.local/bin/claude	~/.local/share/claude	https://claude.ai/install.sh	upgrade
+cursor	all	first	~/.local/bin/agent	~/.local/share/cursor-agent	https://cursor.com/install	update
+opencode	all	first	~/.opencode/bin/opencode	~/.opencode/bin	https://opencode.ai/v2/install	upgrade
+pi	all	after-mise	~/.pi/agent/bin/pi	~/.pi/agent	https://pi.dev/install.sh	update --all
+t3	linux	first	~/.local/bin/t3	~/.t3/runtime/versions	https://t3.codes/install.sh	-

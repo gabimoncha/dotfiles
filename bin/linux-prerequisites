@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Installs what setup itself needs on Debian or Ubuntu, before the setup
+# runtime and mise exist. Setup diagnostics run on /usr/bin/ruby, as they do on
+# macOS. Uses only Bash and apt. Other system packages are in linux/mise.toml.
+set -euo pipefail
+usage() { printf 'Usage: linux-prerequisites [--dry-run]\n'; }
+dry_run=0
+case "${1:-}" in
+  --dry-run) dry_run=1 ;;
+  '') ;;
+  -h|--help) usage; exit 0 ;;
+  *) usage >&2; exit 2 ;;
+esac
+if [[ "$(uname -s)" != Linux ]]; then
+  printf 'linux-prerequisites runs only on Linux.\n' >&2
+  exit 1
+fi
+if [[ "${EUID}" -eq 0 ]]; then
+  printf 'Run setup as your normal user. It uses sudo for the steps that need root.\n' >&2
+  exit 1
+fi
+if ! command -v apt-get >/dev/null 2>&1 || ! command -v dpkg-query >/dev/null 2>&1; then
+  printf 'Setup supports Debian and Ubuntu (apt). This system has no apt-get.\n' >&2
+  exit 1
+fi
+packages=(ruby git curl ca-certificates)
+missing=()
+for package in "${packages[@]}"; do
+  state="$(dpkg-query -W -f='${db:Status-Status}' "$package" 2>/dev/null || true)"
+  [[ "$state" == installed ]] || missing+=("$package")
+done
+if [[ ${#missing[@]} -eq 0 ]]; then
+  printf 'Setup prerequisites are installed: %s\n' "${packages[*]}"
+  exit 0
+fi
+if [[ "$dry_run" == 1 ]]; then
+  printf 'Would run: sudo apt-get update && sudo apt-get install -y --no-install-recommends %s\n' "${missing[*]}"
+  exit 0
+fi
+printf 'Installing setup prerequisites: %s\n' "${missing[*]}"
+sudo env DEBIAN_FRONTEND=noninteractive apt-get update
+sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${missing[@]}"

@@ -38,6 +38,43 @@ check_macos() {
   fi
 }
 
+check_linux() {
+  local tool
+  pass "running on Linux"
+  if [[ "${EUID}" -eq 0 ]]; then
+    fail "run setup as your normal user, not as root"
+  fi
+  if command -v apt-get >/dev/null 2>&1; then
+    pass "apt is available"
+  else
+    fail "setup supports Debian and Ubuntu (apt); this system has no apt-get"
+  fi
+  for tool in /usr/bin/ruby git curl; do
+    if command -v "$tool" >/dev/null 2>&1; then
+      pass "${tool##*/} is available"
+    else
+      fail "${tool##*/} is missing; run ./bin/linux-prerequisites"
+    fi
+  done
+  if ! command -v sudo >/dev/null 2>&1; then
+    fail "sudo is missing; apt packages and the login shell need it"
+  elif sudo -n true 2>/dev/null; then
+    pass "sudo works without a password"
+  else
+    warn "sudo will ask for a password in the sudo stage"
+  fi
+}
+
+check_standalone_manifest() {
+  local bad_rows
+  bad_rows="$(awk -F '\t' 'NF != 7 && $0 !~ /^#/ && $0 != "" { print NR }' "${repo_root}/apps/standalone.tsv")"
+  if [[ -z "$bad_rows" ]]; then
+    pass "standalone manifest has seven TSV columns"
+  else
+    fail "standalone manifest malformed rows: ${bad_rows}"
+  fi
+}
+
 check_macos_updates() {
   if ! "${repo_root}/bin/check-macos-updates"; then
     failures=$((failures + 1))
@@ -159,11 +196,10 @@ check_script_syntax() {
     "bin/configure-sudo-touch-id"
     "bin/harness"
     "home/bin/harness"
-    "bin/lib/harnesses.sh"
-    "bin/ensure-harnesses-standalone"
-    "bin/ensure-codex-standalone"
-    "bin/ensure-cursor-agent-standalone"
-    "bin/ensure-mise-standalone"
+    "bin/install-standalone"
+    "bin/lib/standalone.sh"
+    "bin/linux-prerequisites"
+    "bin/t3-dev-supervise"
     "bin/repo-mise"
     "bin/lib/mise-pin.sh"
     "bin/install-apps"
@@ -249,16 +285,24 @@ check_app_manifest() {
   fi
 }
 
-check_macos
-check_macos_updates
-check_xcode_clt
-check_apple_release_policy
-check_homebrew
+case "$(uname -s)" in
+  Darwin)
+    check_macos
+    check_macos_updates
+    check_xcode_clt
+    check_apple_release_policy
+    check_homebrew
+    ;;
+  Linux) check_linux ;;
+  *) fail "setup supports macOS and Linux, not $(uname -s)" ;;
+esac
 # API and SSH checks belong to the explicit authentication stages.
 check_submodule_url
 check_repo_state
 check_app_manifest
-check_sudo_grant
+check_standalone_manifest
+# The temporary sudoers grant is part of the macOS plan only.
+[[ "$(uname -s)" != Darwin ]] || check_sudo_grant
 check_script_syntax
 
 if [[ $failures -gt 0 ]]; then

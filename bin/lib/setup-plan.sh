@@ -98,6 +98,10 @@ plan_defer() {
 }
 
 setup_plan() {
+  if [[ "$(uname -s)" == Linux ]]; then
+    setup_plan_linux
+    return
+  fi
   runtime_stage_begin setup "" ""
   local group plan_started=$SECONDS
   for group in foundations github packages mobile environment restore; do
@@ -172,6 +176,50 @@ setup_plan() {
     plan_stage mobile_setup mobile 'brew_environment' capture setup_mobile
   fi
   plan_stage telemetry environment 'clt' capture setup_telemetry
+  setup_plan_finish "$plan_started"
+  return "$plan_status"
+}
+
+# Linux has one phase: it has no App Store, permission, or restart checkpoint.
+# DOTFILES_SKIP_GITHUB_AUTH=1 defers the GitHub login, so mise installs tools
+# without a GitHub token. Run ./bin/auth-setup later to log in.
+setup_plan_linux() {
+  runtime_stage_begin setup "" ""
+  local group plan_started=$SECONDS inventory_prerequisites='mise system_packages links_before_packages'
+  export DOTFILES_SETUP_PHASE=continue
+  for group in foundations github packages mobile environment restore; do
+    runtime_stage_begin "$group" setup ''
+  done
+  plan_stage preflight setup '' probe setup_preflight
+  plan_stage sudo foundations 'preflight' sensitive setup_linux_sudo
+  plan_stage sudo_keepalive foundations 'sudo' local setup_keepalive
+  plan_stage mise foundations 'preflight' capture setup_mise
+  plan_stage system_packages foundations 'sudo mise' capture setup_linux_system
+  plan_stage install_gh github 'mise' capture setup_install_gh
+  plan_stage links_before_packages environment 'preflight' capture setup_links
+  plan_stage submodules environment 'preflight' capture setup_submodules
+  # Linux uses Git over HTTPS with the GitHub CLI token. See bin/auth-setup.
+  if [[ "${DOTFILES_SKIP_GITHUB_AUTH:-0}" == 1 ]]; then
+    plan_defer authenticate_api github 'install_gh'
+    plan_defer configure_git github 'authenticate_api'
+    plan_defer verify_mise_access github 'authenticate_api links_before_packages'
+  else
+    plan_stage authenticate_api github 'install_gh' sensitive setup_api
+    plan_stage configure_git github 'authenticate_api' sensitive setup_git_https
+    plan_stage verify_mise_access github 'authenticate_api links_before_packages' sensitive setup_verify_auth
+    inventory_prerequisites+=' verify_mise_access'
+  fi
+  if [[ "$(plan_state verify_mise_access)" == completed ]]; then
+    export DOTFILES_SETUP_API_READY=1
+  else
+    export DOTFILES_SETUP_API_READY=0
+  fi
+  plan_stage mise_inventory packages "$inventory_prerequisites" capture setup_mise_inventory
+  plan_stage shell environment 'mise_inventory system_packages' capture setup_shell
+  # Pi needs Node from the mise inventory.
+  plan_stage standalone_agents packages 'mise_inventory' capture setup_standalone_agents
+  plan_stage final_links environment 'mise_inventory standalone_agents submodules' capture setup_final_links
+  plan_stage telemetry environment 'preflight' capture setup_telemetry
   setup_plan_finish "$plan_started"
   return "$plan_status"
 }

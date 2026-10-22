@@ -5,15 +5,12 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 mise_bin_dir="${HOME}/.local/bin"
 shim_dir="${HOME}/.local/share/mise/shims"
+# Commands from the Mac and Linux tool list in home/.config/mise/config.toml.
 smoke_commands=(
   tmux
   gh
-  age
-  mackup
   bun
   node
-  python
-  ruby
   pnpm
   sfw
   uv
@@ -21,12 +18,14 @@ smoke_commands=(
   fd
   fzf
   jq
-  yq
   lazygit
   nvim
-  turbo
-  vercel
+  sccache
 )
+# Mac-only tools (os = "macos" in the config).
+if [[ "$(uname -s)" == Darwin ]]; then
+  smoke_commands+=(age mackup python ruby yq turbo vercel)
+fi
 
 log() {
   printf '==> %s\n' "$1"

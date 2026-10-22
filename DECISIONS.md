@@ -36,7 +36,10 @@ The app manifest adds install status and manual vendor steps. Third-party tap
 trust is declared per tap, never disabled globally.
 
 Coding agent CLIs and mise use vendor installers, because self-update needs the
-vendor install metadata:
+vendor install metadata. `apps/standalone.tsv` lists them with their commands,
+install folders, installers, and update commands. `bin/install-standalone` is
+the one script that installs, updates, and checks them; vendor quirks stay in
+small cases in that script:
 
 - Codex owns `~/.codex/packages/standalone`.
 - Claude Code owns `~/.local/share/claude` and `~/.local/bin/claude`.
@@ -120,6 +123,35 @@ The download method comes from a review of
 [steam-arm64-mac at ea9223e](https://github.com/i1rr/steam-arm64-mac/tree/ea9223e092bdb91a8e14b588805258f5e53eab0a).
 Setup does not execute that repository's script, which clears quarantine,
 forces the beta channel, and deletes the old app backup after copying.
+
+## Linux hosts
+
+`bin/setup` runs a one-phase Linux plan on Debian and Ubuntu. The NAS
+container is the first host. A GCP VM is the next one.
+
+- Setup diagnostics stay on `/usr/bin/ruby`. Debian's `ruby` package provides
+  it, as the Command Line Tools do on macOS. `bin/linux-prerequisites` installs
+  it with Git and curl before the runtime starts, because the runtime needs it.
+- mise installs tools first. `linux/mise.toml` lists only the system packages
+  that mise cannot install, and `mise bootstrap` installs them with apt. Linux
+  has no Homebrew and no Nix.
+- One tool list serves both systems. Tools that only the Mac needs carry
+  `os = "macos"`. Platform config files would need `auto_env`, and
+  `MISE_GLOBAL_CONFIG_FILE` (set by `bin/repo-mise` and `bin/auth-setup`)
+  stops them from loading. The lockfile holds macos-arm64 and linux-x64.
+- `bin/link-dotfiles` still writes the links. `mise dot apply --force` keeps no
+  backup and no undo point for a replaced file.
+- Codex reads one global instructions file and has no include syntax. On
+  Linux, `bin/link-dotfiles` writes `~/.codex/AGENTS.md` from the shared file
+  and `linux/hosts/<profile>.md`, backs up a changed file, and stops when the
+  host file is missing. Claude reads the host file from `~/.claude/rules/`.
+- Linux hosts use Git over HTTPS with the GitHub CLI token. Agents there start
+  without an SSH agent, so a protected SSH key would block every push, and an
+  unprotected key would add a second credential next to the token.
+- Kernel 4.4 on the NAS has no user namespaces, so the agent sandboxes cannot
+  run there. The container is the boundary, so its Codex config sets
+  `sandbox_mode = "danger-full-access"`. A VM with a current kernel can use
+  the sandboxes.
 
 ## Xcode and mobile tools
 

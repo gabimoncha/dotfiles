@@ -1,0 +1,287 @@
+#!/usr/bin/env bash
+# Installs, updates, or checks the vendor-owned tools in apps/standalone.tsv.
+set -euo pipefail
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+usage() {
+  printf 'Usage: install-standalone [install|update|status] [--dry-run] [--first-only] [--installed-only] [NAME...]\n'
+  printf 'install (default): install missing or broken tools. --first-only skips after-mise rows.\n'
+  printf 'update: run each installed tool'"'"'s own update command. --installed-only skips missing tools.\n'
+  printf 'status: print each tool'"'"'s state. Exits 1 when a tool is missing.\n'
+}
+action=install
+case "${1:-}" in install|update|status) action="$1"; shift ;; esac
+first_only=0
+installed_only=0
+requested=()
+for argument in "$@"; do
+  case "$argument" in
+    --dry-run) export DOTFILES_RUN_MODE=dry-run ;;
+    --first-only) first_only=1 ;;
+    --installed-only) installed_only=1 ;;
+    -h|--help) usage; exit 0 ;;
+    -*) printf 'Unknown argument: %s\n' "$argument" >&2; usage >&2; exit 2 ;;
+    *) requested+=("$argument") ;;
+  esac
+done
+. "$repo_root/bin/lib/setup-runtime.sh"
+. "$repo_root/bin/lib/standalone.sh"
+if [[ "$action" == update ]]; then
+  # Setup can serialize its stages without serializing independent vendor updates.
+  DOTFILES_SETUP_SERIAL=0
+  DOTFILES_JOB_IDLE_TIMEOUT_SECONDS="${DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS:-30}"
+  if [[ ! "$DOTFILES_JOB_IDLE_TIMEOUT_SECONDS" =~ ^[1-9][0-9]*$ ]]; then
+    printf 'DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS must be a positive integer.\n' >&2
+    exit 2
+  fi
+fi
+runtime_init install-standalone
+standalone_prepare_path
+
+known_names=()
+while IFS= read -r name; do known_names+=("$name"); done < <(standalone_names)
+for name in ${requested[@]+"${requested[@]}"}; do
+  case " ${known_names[*]} " in
+    *" $name "*) ;;
+    *) printf 'Unknown tool for this OS: %s (known: %s)\n' "$name" "${known_names[*]}" >&2; exit 2 ;;
+  esac
+done
+selected() {
+  [[ ${#requested[@]} -eq 0 ]] && return 0
+  case " ${requested[*]} " in *" $1 "*) return 0 ;; esac
+  return 1
+}
+
+work_dir=""
+pending_command=""
+pending_backup=""
+rollback_command() {
+  if [[ -n "$pending_backup" && ( -e "$pending_backup" || -L "$pending_backup" ) ]]; then
+    rm -f "$pending_command"
+    mv "$pending_backup" "$pending_command"
+    printf 'Restored %s\n' "$pending_command"
+  fi
+  pending_command=""; pending_backup=""
+}
+cleanup() {
+  local status=$?
+  [[ -z "$work_dir" ]] || rm -rf "$work_dir"
+  rollback_command
+  runtime_on_exit "$status"
+  return "$status"
+}
+trap cleanup EXIT
+
+download() {
+  curl -fsSL --connect-timeout 15 --max-time 120 --retry 2 --retry-max-time 180 "$1" -o "$2"
+}
+
+# Downloads the pinned mise installer and refuses it unless its digest matches.
+prepare_mise_installer() {
+  local installer="$1" real_curl digest
+  real_curl="$(command -v curl)" || return 1
+  [[ "$real_curl" == /* && -x "$real_curl" ]] || return 1
+  download "https://github.com/jdx/mise/releases/download/v${pinned_mise_version}/install.sh" "$installer" || return
+  digest="$(standalone_sha256 "$installer")" || return
+  if [[ "$digest" != "$pinned_installer_sha256" ]]; then
+    runtime_warn 'Pinned mise installer checksum mismatch; refusing to execute it'
+    return 1
+  fi
+  # The installer calls PATH curl for its asset download. Bound those requests
+  # too, with the absolute curl so the wrapper cannot call itself.
+  cat > "$work_dir/curl" <<'CURL'
+#!/bin/sh
+exec "$DOTFILES_INSTALLER_CURL" --connect-timeout 15 --max-time 300 --retry 2 --retry-max-time 600 "$@"
+CURL
+  chmod 700 "$work_dir/curl"
+  printf '%s\n' "$real_curl" > "$work_dir/real-curl"
+}
+
+run_installer() {
+  local name="$1" installer="$2" command="$3"
+  case "$name" in
+    mise)
+      PATH="$work_dir:$PATH" DOTFILES_INSTALLER_CURL="$(cat "$work_dir/real-curl")" \
+        MISE_VERSION="v${pinned_mise_version}" MISE_INSTALL_PATH="$command" MISE_INSTALL_HELP=0 sh "$installer"
+      ;;
+    codex)
+      PATH="$(dirname "$command"):$PATH" CODEX_NON_INTERACTIVE=1 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}" \
+        CODEX_INSTALL_DIR="$(dirname "$command")" sh "$installer"
+      ;;
+    claude) bash "$installer" ;;
+    cursor) PATH="$(dirname "$command"):$PATH" bash "$installer" ;;
+    opencode) bash "$installer" --no-modify-path ;;
+    # Pi reads /dev/tty even with redirected stdin. A new session prevents
+    # interactive prompts and prevents it from changing shell profiles.
+    pi) PI_LEGACY_INSTALL=0 /usr/bin/ruby -e 'Process.setsid; exec("sh", ARGV.fetch(0))' "$installer" ;;
+    t3) T3CODE_CHANNEL=nightly T3CODE_INSTALL_BIN_DIR="$(dirname "$command")" sh "$installer" ;;
+    *) runtime_warn "No installer runner for $name"; return 1 ;;
+  esac
+}
+
+# Cursor's installer does not reach GUI apps. Add its folder to the launchd PATH.
+repair_cursor_launchd_path() {
+  local install_dir="$1" launchd_path
+  [[ "$(uname -s)" == Darwin ]] && command -v launchctl >/dev/null 2>&1 || return 0
+  launchd_path="$(launchctl getenv PATH 2>/dev/null || true)"
+  [[ ":${launchd_path}:" == *":${install_dir}:"* ]] && return 0
+  if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
+    printf 'Would add %s to the user launchd PATH\n' "$install_dir"
+    return 0
+  fi
+  launchctl setenv PATH "${install_dir}:${launchd_path:-/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin}"
+  printf 'Added %s to the user launchd PATH. Restart GUI apps that need the agent command.\n' "$install_dir"
+}
+
+# Setup used to install mise with Homebrew. Remove that copy after the standalone one works.
+remove_homebrew_mise() {
+  local brew_bin
+  for brew_bin in "${HOMEBREW_PREFIX:-}/bin/brew" /opt/homebrew/bin/brew /usr/local/bin/brew; do
+    [[ -x "$brew_bin" ]] && break
+    brew_bin=""
+  done
+  [[ -n "$brew_bin" ]] && "$brew_bin" list --formula --versions mise >/dev/null 2>&1 || return 0
+  if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
+    printf 'Would uninstall the Homebrew formula mise\n'
+    return 0
+  fi
+  printf 'Uninstalling the Homebrew formula mise\n'
+  runtime_with_lock homebrew "$brew_bin" uninstall mise
+  hash -r 2>/dev/null || true
+}
+
+install_one() {
+  local name="$1" command="$2" installer_url="$3" installer status=0
+  if standalone_installed "$name" && standalone_probe "$command" --version >/dev/null 2>&1; then
+    printf '%s is installed: %s\n' "$name" "$command"
+    [[ "$name" != mise ]] || remove_homebrew_mise
+    [[ "$name" != cursor ]] || repair_cursor_launchd_path "$(dirname "$command")"
+    return 0
+  fi
+  if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
+    printf 'Would install %s with %s\n' "$name" "$installer_url"
+    return 0
+  fi
+  if [[ "$name" == pi ]]; then
+    command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1 || {
+      runtime_warn 'Pi requires installed Node and npm. Install the mise tools first.'; return 1;
+    }
+    standalone_probe node -e 'const [a,b] = process.versions.node.split(".").map(Number); process.exit(a > 22 || (a === 22 && b >= 19) ? 0 : 1)' || {
+      runtime_warn 'Pi requires Node 22.19 or newer.'; return 1;
+    }
+  fi
+  work_dir="$(mktemp -d "${TMPDIR:-/tmp}/install-standalone.XXXXXX")" || return 1
+  installer="$work_dir/install.sh"
+  if [[ "$name" == mise ]]; then
+    prepare_mise_installer "$installer" || status=$?
+  else
+    download "$installer_url" "$installer" || status=$?
+  fi
+  if [[ "$status" == 0 && ( -e "$command" || -L "$command" ) ]]; then
+    pending_backup="${HOME}/.dotfiles-backups/$(date +%Y%m%d-%H%M%S)-$$/standalone/$name"
+    mkdir -p "$(dirname "$pending_backup")"
+    mv "$command" "$pending_backup" || { pending_backup=""; status=1; }
+    if [[ -n "$pending_backup" ]]; then
+      pending_command="$command"
+      printf 'Backed up %s to %s\n' "$command" "$pending_backup"
+    fi
+  fi
+  if [[ "$status" == 0 ]]; then
+    printf 'Installing %s with %s\n' "$name" "$installer_url"
+    mkdir -p "$(dirname "$command")"
+    # Waiting on an owned child lets Bash handle signals while the installer runs.
+    run_installer "$name" "$installer" "$command" </dev/null &
+    wait "$!" || status=$?
+  fi
+  rm -rf "$work_dir"; work_dir=""
+  if [[ "$status" == 0 ]]; then
+    standalone_installed "$name" && standalone_probe "$command" --version >/dev/null 2>&1 || status=1
+  fi
+  if [[ "$status" != 0 ]]; then
+    runtime_warn "$name installation failed. Existing settings were preserved."
+    rollback_command
+    return "$status"
+  fi
+  pending_command=""; pending_backup=""
+  printf 'Installed %s\n' "$name"
+  [[ "$name" != mise ]] || remove_homebrew_mise
+  [[ "$name" != cursor ]] || repair_cursor_launchd_path "$(dirname "$command")"
+}
+
+update_one() {
+  local name="$1" command="$2" arguments="$3" args=()
+  if [[ "$name" == mise ]]; then
+    args=(self-update --yes --no-plugins)
+  elif [[ "$arguments" == - ]]; then
+    printf 'Skipping %s: it updates itself\n' "$name"
+    return 0
+  else
+    read -r -a args <<< "$arguments"
+  fi
+  if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
+    printf 'Would run: %q' "$command"; printf ' %q' "${args[@]}"; printf '\n'
+    return 0
+  fi
+  case "$name" in
+    codex) CODEX_NON_INTERACTIVE=1 "$command" "${args[@]}" ;;
+    *) "$command" "${args[@]}" ;;
+  esac
+}
+
+status_one() {
+  local name="$1" command="$2" version
+  if standalone_installed "$name"; then
+    version="$(standalone_probe "$command" --version 2>/dev/null | head -n 1)" || version="version check failed"
+    printf 'ok       %-9s %s (%s)\n' "$name" "$command" "$version"
+  else
+    printf 'missing  %-9s %s\n' "$name" "$command"
+    return 1
+  fi
+}
+
+status=0
+rows="$(standalone_rows)"
+case "$action" in
+  status)
+    while IFS=$'\t' read -r name phase command root installer update; do
+      [[ -n "$name" ]] && selected "$name" || continue
+      status_one "$name" "$command" || status=1
+    done <<< "$rows"
+    ;;
+  install)
+    runtime_acquire_lock harness 'standalone tool installation' || exit 1
+    while IFS=$'\t' read -r name phase command root installer update; do
+      [[ -n "$name" ]] && selected "$name" || continue
+      [[ "$first_only" == 0 || "$phase" == first ]] || continue
+      install_one "$name" "$command" "$installer" || status=1
+    done <<< "$rows"
+    ;;
+  update)
+    # Serialize updates against installs and other update runs.
+    runtime_acquire_lock harness 'standalone tool update' || exit 1
+    while IFS=$'\t' read -r name phase command root installer update; do
+      [[ -n "$name" ]] && selected "$name" || continue
+      # Rows with "-" update themselves. A named mise runs self-update.
+      if [[ "$update" == - ]] && ! { [[ ${#requested[@]} -gt 0 ]] && selected "$name"; }; then
+        continue
+      fi
+      if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
+        update_one "$name" "$command" "$update"
+        continue
+      fi
+      if ! standalone_installed "$name"; then
+        if [[ "$installed_only" == 1 ]]; then
+          printf 'Skipping %s: managed installation is not present\n' "$name"
+        else
+          runtime_record_failure recoverable "$name" 'managed installation is not present' '' "Run ./bin/install-standalone $name."
+          status=1
+        fi
+        continue
+      fi
+      runtime_run_job "$name" recoverable 'Run ./bin/install-standalone update after fixing the reported error.' \
+        update_one "$name" "$command" "$update" </dev/null
+    done <<< "$rows"
+    runtime_wait_jobs || status=1
+    runtime_print_summary
+    ;;
+esac
+exit "$status"

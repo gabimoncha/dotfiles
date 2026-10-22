@@ -72,6 +72,50 @@ The exact order and dependencies are in [setup-plan.sh](bin/lib/setup-plan.sh).
 | `--serial` | Wait for each scheduled job before starting the next. |
 | `--skip-mobile-dev` | Skip the mobile stage: Xcode, iOS support, Android Studio, and `apps/mobile.Brewfile`. Mobile tools in the common mise inventory still install. |
 
+## Linux box
+
+Setup also runs on Debian and Ubuntu, for example the NAS container in
+[remote development](apps/remote-development.md). Run it as your normal user.
+It needs sudo for apt and the login shell.
+
+```bash
+mkdir -p ~/development
+git clone https://github.com/gabimoncha/dotfiles.git ~/development/dotfiles
+cd ~/development/dotfiles
+./bin/setup --dry-run
+./bin/setup
+```
+
+Linux runs every stage in one run. It has no App Store or restart checkpoint.
+
+1. `bin/linux-prerequisites` installs Ruby, Git, and curl with apt. Setup's
+   diagnostics run on `/usr/bin/ruby`, as they do on macOS.
+2. `linux/mise.toml` installs the other system packages (zsh,
+   build-essential, unzip) and makes zsh the login shell.
+3. Setup installs mise, the Mac and Linux tool list, the agent CLIs, and T3
+   (`apps/standalone.tsv`), then links the shared files.
+
+The tools marked `os = "macos"` in `home/.config/mise/config.toml` stay on the
+Mac. Move a tool to the shared list when a Linux box needs it. Mac-only links,
+such as Karabiner and the Library files, are skipped.
+
+Codex reads one global instructions file. On Linux, `bin/link-dotfiles`
+writes `~/.codex/AGENTS.md` from `home/.codex/AGENTS.md` plus the host file
+`linux/hosts/<profile>.md`. Claude reads the host file through
+`~/.claude/rules/host.md`. The profile is `linux-container` inside Docker and
+`linux-vm` elsewhere. Set `DOTFILES_PROFILE` to choose another file. Only
+`linux-container.md` exists today. The agent links stop with an error until the
+host file exists, so add `linux/hosts/linux-vm.md` before the first VM setup.
+An optional `linux/hosts/<profile>.toml` merges host keys into the agent
+settings after the shared keys. The container uses it to turn off the Codex
+sandbox, which cannot start on its kernel. Edit the source files, then rerun
+`./bin/link-dotfiles`.
+
+`DOTFILES_SKIP_GITHUB_AUTH=1 ./bin/setup` defers the GitHub login. mise then
+installs tools without a GitHub token. Log in later with `./bin/auth-setup`.
+Linux uses Git over HTTPS with the GitHub CLI token, not an SSH key. Agents on
+a headless host start without an SSH agent and cannot unlock a protected key.
+
 ## Manual completion
 
 - Sign in to Apple/App Store/iCloud and the applications you use.
@@ -134,6 +178,7 @@ managed runtime does not prevent recovery.
 | `./bin/github-bootstrap install-gh` | Repair isolated GitHub CLI acquisition. |
 | `./bin/auth-setup --api-only` | Repair GitHub API login. |
 | `./bin/auth-setup --ssh-only` | Repair Git identity and SSH access. |
+| `./bin/auth-setup --git-only` | Linux: repair Git identity and Git over HTTPS. |
 | `./bin/auth-setup --verify-mise` | Check the direct credential helper. |
 | `./bin/check-mise-tools` | Probe real installed tools without provisioning. |
 | `./bin/install-apps [--dry-run]` | Retry or preview the app manifest. |
@@ -153,13 +198,14 @@ managed runtime does not prevent recovery.
 | `./bin/finder-sidebar-favorites` | Retry `development` and `screenshots` favorites. |
 | `./bin/configure-sudo-touch-id --check` | Inspect Touch ID for sudo; `--enable`/`--disable` change it. |
 | `./bin/configure-background-jobs [--dry-run]` | Disable the user launchd jobs in `macos/disabled-jobs.txt`; `--check` reports drift and `--revert` enables them. |
-| `./bin/ensure-mise-standalone --update` | Explicitly update standalone mise. |
+| `./bin/install-standalone status` | Report the vendor-installed tools in `apps/standalone.tsv`. |
+| `./bin/install-standalone [NAME...]` | Install or repair those tools. `--dry-run` previews. |
 
 The `repo-mise` commands, `link-dotfiles --status`, and `macos/defaults.sh`
 need the pinned mise. Plain `./bin/link-dotfiles` also needs it for the agent
 settings merge and the `mise.lock` link. Without it, the script makes the other
 links, skips those two steps, and exits 1. If a command reports an older mise,
-run `./bin/ensure-mise-standalone`. `mise self-update` can stop below the pin
+run `./bin/install-standalone mise`. `mise self-update` can stop below the pin
 because of the four-day `minimum_release_age`.
 
 Capability resolution and version probes each default to a 10-second deadline;
@@ -300,22 +346,21 @@ can still require Rosetta even when the Steam client runs natively.
 
 ## Coding agents
 
-Setup installs the agent CLIs with their vendor installers and reuses healthy
-installs. `./bin/ensure-harnesses-standalone` installs or repairs only the
-agent CLIs on an existing Mac.
+[`apps/standalone.tsv`](apps/standalone.tsv) lists every tool that a vendor
+installer owns: mise, the agent CLIs, and T3 on Linux. Each row names the
+command, the folder that the vendor install owns, the installer, and the
+update command. `./bin/install-standalone` reads it. Setup runs it and reuses
+healthy installs. Run it yourself to install or repair one tool, for example
+`./bin/install-standalone codex`. Pi installs after the mise tools, because it
+needs Node 22.19 or newer.
 
-`harness update` updates installed agents in parallel and reports every
-failure. `--dry-run` previews the commands, and `--installed-only` skips absent
-agents. Each update stops after 30 seconds without new output. Set
-`DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS` to allow a longer idle period.
-
-| Agent | Install source | Update command |
-| --- | --- | --- |
-| Codex | `https://chatgpt.com/codex/install.sh` with sh | `codex update` |
-| Claude Code | `https://claude.ai/install.sh` with Bash | `claude upgrade` |
-| Pi | `https://pi.dev/install.sh` with sh; requires Node >=22.19 and npm | `pi update --all` |
-| OpenCode v2 | `https://opencode.ai/v2/install` with Bash | `opencode upgrade` |
-| Cursor Agent | `https://cursor.com/install` with Bash | `agent update` |
+`harness update` runs `./bin/install-standalone update`. It updates the
+installed tools in parallel and reports every failure. `--dry-run` previews
+the commands, and `--installed-only` skips absent tools. mise updates itself,
+so `update` skips it unless you name it. The T3 app updates the Linux T3
+server, so `update` skips T3. Each update stops after 30 seconds
+without new output. Set `DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS` to allow a
+longer idle period.
 
 The global mise `postinstall` hook runs `harness update --installed-only`. The
 zsh `mise` helper also runs it after a no-op `mise install` or `mise up`, where

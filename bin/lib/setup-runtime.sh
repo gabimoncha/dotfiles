@@ -57,7 +57,14 @@ File.open(File.join(root, '.retention.lock'), File::RDWR | File::CREAT | File::N
       child = File.join(path, entry)
       !File.symlink?(child) && (entry == 'streams' ? File.directory?(child) : File.file?(child))
     end
-    entries << [path, stat.birthtime]
+    # Linux Ruby has no birthtime. Run names start with their UTC start time,
+    # which sorts in the same order.
+    created = begin
+      stat.birthtime.utc.strftime('%Y%m%dT%H%M%SZ')
+    rescue NotImplementedError
+      name[0, 16]
+    end
+    entries << [path, created]
   end
   runs.sort_by { |path, created| [created, path] }.reverse.drop(3).each do |path, _|
     owner = File.join(path, '.owner-pid')

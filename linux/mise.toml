@@ -1,0 +1,18 @@
+# Linux system packages and the login shell. On Linux, bin/setup applies this
+# file with `bin/repo-mise linux/mise.toml bootstrap --only packages,user`.
+# Install tools with [tools] in home/.config/mise/config.toml. List a package
+# here only when mise cannot install it. bin/linux-prerequisites installs the
+# packages that setup itself needs (Ruby, Git, curl) before mise exists.
+min_version = "2026.10.17"
+
+[bootstrap.packages]
+# mise has no zsh. The login shell needs a fixed path in /etc/shells.
+"apt:zsh" = "latest"
+# C compiler and make: Rust crates, Neovim parsers, and node-gyp builds.
+"apt:build-essential" = "latest"
+# Neovim plugin installers unpack zip archives.
+"apt:unzip" = "latest"
+
+[bootstrap.user]
+# A full path: a bare name would take the first zsh on PATH.
+login_shell = "/usr/bin/zsh"

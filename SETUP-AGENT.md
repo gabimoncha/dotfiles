@@ -44,17 +44,20 @@ run outside that directory before repeated repair attempts if you need its logs.
 | `preflight` | `./bin/preflight` |
 | `touch_id` | `./bin/configure-sudo-touch-id --enable` |
 | `sudo_grant` | `./bin/sudo-grant --enable` (the user runs it in a terminal) |
-| `mise` | `./bin/ensure-mise-standalone --skip-update` |
+| `mise` | `./bin/install-standalone mise` |
 | `install_gh` | `./bin/github-bootstrap install-gh` |
 | `authenticate_api` | `./bin/auth-setup --api-only` |
 | `authenticate_ssh` | `./bin/auth-setup --ssh-only` |
+| `configure_git` (Linux) | `./bin/auth-setup --git-only` |
 | `verify_mise_access` | `./bin/auth-setup --verify-mise` |
 | `links_before_packages`, `service_links`, `final_links` | `./bin/link-dotfiles` |
 | `shell` | `./bin/setup --continue` reruns it. Check with `./bin/repo-mise "$PWD/mise/setup.toml" bootstrap repos status`. For a `conflict`, ask the user before you move the path aside. |
 | `defaults` | `./macos/defaults.sh` |
 | `manifest_apps` | `./bin/install-apps` |
 | `capabilities` | `./bin/check-mise-tools` |
-| `standalone_agents` | `./bin/ensure-harnesses-standalone` |
+| `standalone_agents` | `./bin/install-standalone` (`--first-only` in the first phase) |
+| `system_packages` (Linux) | `./bin/repo-mise "$PWD/linux/mise.toml" bootstrap --only packages,user --yes`; check with `bootstrap packages status` |
+| Linux prerequisites | `./bin/linux-prerequisites` (bin/setup runs it before the runtime starts) |
 | `telemetry_foundations`, `telemetry` | `./bin/configure-telemetry` |
 | `app_settings` | `./bin/configure-app-settings` |
 | `screenshots` | `./bin/configure-screenshots` |

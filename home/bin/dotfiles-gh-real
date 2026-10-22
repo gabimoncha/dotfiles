@@ -10,7 +10,9 @@ resolve() {
     # Backends either flatten the archive or retain gh's release directory.
     for candidate in "${root}/${version}/bin/gh" \
       "${root}/${version}/gh_${version}_macOS_arm64/bin/gh" \
-      "${root}/${version}/gh_${version}_macOS_amd64/bin/gh"; do
+      "${root}/${version}/gh_${version}_macOS_amd64/bin/gh" \
+      "${root}/${version}/gh_${version}_linux_amd64/bin/gh" \
+      "${root}/${version}/gh_${version}_linux_arm64/bin/gh"; do
       [[ -x "$candidate" && ! -L "$candidate" && ! -L "$(dirname "$candidate")" && ! -L "$(dirname "$(dirname "$candidate")")" ]] || continue
       "$candidate" --version >/dev/null 2>&1 || continue
       printf '%s\n' "$candidate"

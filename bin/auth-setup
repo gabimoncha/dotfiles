@@ -3,6 +3,11 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# The Mac uses SSH. Linux uses HTTPS; see configure_github_https.
+case "$(uname -s)" in
+  Linux) git_protocol=https ;;
+  *) git_protocol=ssh ;;
+esac
 
 log() {
   printf '==> %s\n' "$1"
@@ -161,8 +166,22 @@ add_ssh_key_to_agent() {
     return 0
   fi
 
-  log "Adding SSH key to macOS keychain-backed agent"
-  ssh-add --apple-use-keychain "$key_path" 2>/dev/null || ssh-add "$key_path"
+  if [[ "$(uname -s)" == Darwin ]]; then
+    log "Adding SSH key to macOS keychain-backed agent"
+    ssh-add --apple-use-keychain "$key_path" 2>/dev/null || ssh-add "$key_path"
+    return
+  fi
+  # A Linux SSH session often has no agent. ssh-add -l exits 2 when it cannot
+  # reach one. Start one for this run; the EXIT trap stops it.
+  local agent_status=0
+  ssh-add -l >/dev/null 2>&1 || agent_status=$?
+  if [[ "$agent_status" == 2 ]]; then
+    log "Starting an SSH agent for this run"
+    eval "$(ssh-agent -s)" >/dev/null || return 1
+    trap 'ssh-agent -k >/dev/null 2>&1 || true' EXIT
+  fi
+  log "Adding SSH key to the SSH agent"
+  ssh-add "$key_path"
 }
 
 ensure_github_known_host() {
@@ -192,8 +211,8 @@ ensure_github_known_host() {
 }
 
 configure_gh_git_protocol() {
-  run_gh config set git_protocol ssh --host github.com >/dev/null 2>&1 || {
-    warn "Could not set gh git_protocol=ssh"
+  run_gh config set git_protocol "$git_protocol" --host github.com >/dev/null 2>&1 || {
+    warn "Could not set gh git_protocol=${git_protocol}"
   }
 }
 
@@ -270,8 +289,8 @@ ensure_github_auth() {
     return 1
   fi
 
-  log "Authenticating GitHub CLI with SSH git protocol"
-  run_gh auth login --hostname github.com --git-protocol ssh --skip-ssh-key || return 1
+  log "Authenticating GitHub CLI with ${git_protocol} git protocol"
+  run_gh auth login --hostname github.com --git-protocol "$git_protocol" --skip-ssh-key || return 1
   if ! run_gh auth status --hostname github.com >/dev/null 2>&1; then
     warn "GitHub CLI authentication did not persist; rerun: gh auth login -h github.com"
     return 1
@@ -438,16 +457,37 @@ configure_github_ssh() {
   configure_dotfiles_origin_remote
 }
 
+# Linux hosts use HTTPS with the GitHub CLI token: agents there start without
+# an SSH agent, so they cannot unlock a protected key. The credential helper in
+# home/.gitconfig runs ~/bin/gh.
+configure_github_https() {
+  local output
+  ensure_git_identity || return 1
+  configure_gh_git_protocol
+  output="$(printf 'protocol=https\nhost=github.com\n\n' | GIT_TERMINAL_PROMPT=0 git credential fill 2>/dev/null)" || output=""
+  if [[ "$output" == *$'\npassword='* ]]; then
+    log "Git over HTTPS uses the GitHub CLI token"
+  else
+    warn "Git cannot read the GitHub CLI token; check gh auth status and the credential helper in ~/.gitconfig"
+    return 1
+  fi
+}
+
 case "${1:-}" in
   --api-only) ensure_github_auth ;;
   --ssh-only) configure_github_ssh ;;
+  --git-only) configure_github_https ;;
   --verify-mise) verify_mise_github_auth ;;
   --verify-host) ensure_github_known_host ;;
   "")
     ensure_github_auth
     verify_mise_github_auth
-    configure_github_ssh
-    print_manual_followup
+    if [[ "$git_protocol" == https ]]; then
+      configure_github_https
+    else
+      configure_github_ssh
+      print_manual_followup
+    fi
     ;;
-  *) printf 'Usage: auth-setup [--api-only|--ssh-only|--verify-mise]\n' >&2; exit 2 ;;
+  *) printf 'Usage: auth-setup [--api-only|--ssh-only|--git-only|--verify-mise]\n' >&2; exit 2 ;;
 esac

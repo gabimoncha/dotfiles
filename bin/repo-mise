@@ -17,12 +17,12 @@ if [[ ! -f "$config" ]]; then
 fi
 mise_bin="${MISE_INSTALL_PATH:-${HOME}/.local/bin/mise}"
 if [[ ! -x "$mise_bin" ]]; then
-  printf 'repo-mise: mise is not installed at %s. Run ./bin/ensure-mise-standalone.\n' "$mise_bin" >&2
+  printf 'repo-mise: mise is not installed at %s. Run ./bin/install-standalone mise.\n' "$mise_bin" >&2
   exit 127
 fi
 # `mise self-update` can stop below the pin because of minimum_release_age.
 if ! mise_at_pin "$mise_bin"; then
-  printf 'repo-mise: %s is older than the pinned mise %s. Run ./bin/ensure-mise-standalone.\n' \
+  printf 'repo-mise: %s is older than the pinned mise %s. Run ./bin/install-standalone mise.\n' \
     "$mise_bin" "$pinned_mise_version" >&2
   exit 1
 fi
