@@ -59,10 +59,12 @@ small cases in that script:
 The global mise config disables the old Codex tool names so that a stale
 request cannot reinstall them. `harness update` updates the agent CLIs in
 parallel and reports every failure. The mise postinstall hook runs it, and a
-zsh helper covers no-op `mise up` runs, where mise fires no hook. Both first
-run `mise prune`. mise's own upgrade prune waits 24 hours, so a broken
-version can go back, and it skips pin changes. Here the old version goes at
-once; going back means a new install.
+zsh helper covers no-op `mise up` runs, where mise fires no hook. After
+`mise up`, or `mise install` without tool names, the helper first runs
+`mise prune`. mise's own upgrade prune waits 24 hours, so a broken version can
+go back, and it skips pin changes. Here the old version goes at once; going
+back means a new install. The hook never prunes: it also fires when
+`mise exec TOOL@VERSION` installs a tool, and prune would delete that version.
 
 mise owns pnpm before Node, so Corepack wrappers do not shadow it.
 
