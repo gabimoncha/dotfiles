@@ -22,8 +22,10 @@ mise releases can bypass the delay.
 
 Socket Firewall Free covers only wrapped commands. Bun, installers, mise
 backends, casks, plugins, extensions, and personal skills run without it.
-Bun remains the default runner. Bun 1.4.3 still includes affected emSign roots;
-its certificate protection remains unresolved. Never disable TLS verification.
+Bun remains the default runner. [Bun 1.4.4](https://bun.com/blog/bun-v1.4.4)
+blocks the compromised emSign intermediate keys and removes three affected
+roots. Rebuild executables that embed older Bun versions. Keep TLS verification
+enabled.
 
 Brewfiles declare tap trust. Setup preserves quarantine, checks GitHub SSH
 host keys against published values, and requires passphrases for new SSH keys.
