@@ -126,7 +126,10 @@ use_git_credentials = true
 [settings.self_update]
 auto = true
 
-# Update vendor-owned agents after direct mise installation/upgrade commands.
-# The interactive shell helper covers no-op upgrades and prevents duplicate runs.
+# After a direct mise install or upgrade: forget configs whose files are gone,
+# delete the tool versions that no tracked config selects, then update the
+# vendor-owned agents. The prune runs at once. mise's own upgrade prune waits
+# 24 hours and skips pin changes. The interactive shell helper covers no-op
+# upgrades and prevents duplicate runs.
 [hooks]
-postinstall = 'if [ "${DOTFILES_HARNESS_SKIP_HOOK:-0}" != 1 ] && [ -x "$HOME/bin/harness" ]; then "$HOME/bin/harness" update --installed-only; fi'
+postinstall = 'if [ "${DOTFILES_HARNESS_SKIP_HOOK:-0}" != 1 ]; then "${MISE_INSTALL_PATH:-$HOME/.local/bin/mise}" prune --yes --quiet || echo "mise prune failed; rerun: mise prune" >&2; [ ! -x "$HOME/bin/harness" ] || "$HOME/bin/harness" update --installed-only; fi'
