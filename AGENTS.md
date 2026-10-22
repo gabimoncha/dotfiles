@@ -1,16 +1,38 @@
 # Repository rules
 
-This repository owns Mac setup, tool inventories, and selected app settings.
-Read [README.md](README.md) for the workflow and [DECISIONS.md](DECISIONS.md)
+This repository owns setup, tool inventories, and selected app settings for
+the owner's Mac and for Linux hosts: Docker containers and VMs. Read
+[README.md](README.md) for the workflow and [DECISIONS.md](DECISIONS.md)
 before changing ownership, bootstrap boundaries, or other design decisions.
+
+## Platforms
+
+Every shared file runs on macOS and on Linux (Debian and Ubuntu). Shared files
+are the `home/` files that both systems link, the `bin/` scripts that both
+setups run, and the mise tool list. A change that works only on the Mac breaks
+the Linux hosts.
+
+- Write shell scripts for Bash 3.2 (macOS `/bin/bash`) and for both BSD and
+  GNU tools. Where the tools differ (`sed -i`, `stat`, `date`, `shasum` and
+  `sha256sum`), branch on `uname -s`, as `standalone_sha256` in
+  `bin/lib/standalone.sh` does. Setup's Ruby helpers run on `/usr/bin/ruby`:
+  2.6 on macOS and 3.1 on Debian 12.
+- Gate macOS-only behavior: `$OSTYPE == darwin*` in zsh, `uname -s` in Bash,
+  `os = "macos"` on a mise tool, and `macos_only_targets` in
+  `bin/link-dotfiles` for a link.
+- Linux hosts have no Homebrew, GUI apps, launchd, or Keychain. A container
+  can also lack systemd and the agent sandboxes. Linux system packages go in
+  `linux/mise.toml`. Host-specific files go in `linux/hosts/<profile>.*`.
 
 ## Editing
 
 - Edit tracked sources here, not live files under HOME.
 - Keep setup rerunnable. Preserve link backups and existing user state.
-- `bin/setup` owns the two-phase planner; `bin/bootstrap` delegates to it.
+- `bin/setup` owns the two-phase macOS plan and the one-phase Linux plan;
+  `bin/bootstrap` delegates to it.
 - Add GUI apps through mas when available, then use mise for supported tools,
-  then Homebrew. Coding agent CLIs and mise are explicit standalone exceptions.
+  then Homebrew. Coding agent CLIs, mise, and the Linux T3 server are
+  standalone exceptions, listed in `apps/standalone.tsv`.
   The T3 nightly desktop app stays in Homebrew.
 - Steam uses `bin/install-steam` for Valve's verified ARM64 bootstrapper.
   Preserve its update channel and quarantine. Keep Rosetta installation manual.
@@ -46,5 +68,6 @@ Direct the user to System Settings, restart if needed, and rerun setup.
 The repo has no test suite. Run `bash -n` or `zsh -n` on changed shell files,
 `./bin/preflight`, and `git diff --check`. For setup or app-install changes,
 also run the matching `--dry-run` path. Do not validate with live installs,
-account changes, personal restores, or macOS defaults. Report what remains
-unchecked on a real Mac.
+account changes, personal restores, or macOS defaults. For a change to a shared
+file, run the same checks on a Linux host when you can reach one. Report what
+remains unchecked on a real Mac and on Linux.

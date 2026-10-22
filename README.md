@@ -1,7 +1,8 @@
 # dotfiles
 
-Mac setup scripts, tool inventories, and managed configuration.
-Start here. [DECISIONS.md](DECISIONS.md) explains the design;
+Setup scripts, tool inventories, and managed configuration for a Mac and for
+Linux hosts (Docker containers and VMs). See [Linux box](#linux-box) for
+Linux. Start here. [DECISIONS.md](DECISIONS.md) explains the design;
 [AGENTS.md](AGENTS.md) contains editing rules.
 
 ## Fresh Mac
