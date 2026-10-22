@@ -294,7 +294,8 @@ Setup uses Cursor's editor CLI and skips installed extensions.
 
 Mise pins `tsrs`, the Rust port of TypeScript 7, on the Mac and on Linux.
 `~/.config/tsrs/tsgo` runs it under the name that the TypeScript 7 extension
-looks for. Neovim's `tsrs` server runs a project's own
+looks for. It runs the native binary from the mise install, not the npm
+package's Node.js launcher, which adds about 100 ms to each start. Neovim's `tsrs` server runs a project's own
 `node_modules/.bin/tsrs` when the project has one, and this launcher
 otherwise. In Cursor, a project sets `js/ts.tsdk.path` to its own launcher.
 For other projects, set it to the absolute path of `~/.config/tsrs` in Cursor
