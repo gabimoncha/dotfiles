@@ -1099,6 +1099,16 @@ checksum = "sha256:e30beff26779c9bf60bb541e1d79046250cb74378f2757f8eb250afddb19e
 url = "https://github.com/sharkdp/bat/releases/download/v0.26.1/bat-v0.26.1-aarch64-apple-darwin.tar.gz"
 url_api = "https://api.github.com/repos/sharkdp/bat/releases/assets/323548442"
 
+[[tools.btop]]
+version = "1.4.7"
+backend = "aqua:aristocratos/btop"
+specifiers = ["latest"]
+
+[tools.btop."platforms.linux-x64"]
+checksum = "sha256:5099054dd6a101bd12eb6ff3702a9a6a3f57aaa27923a0da478ae5b517faf335"
+url = "https://github.com/aristocratos/btop/releases/download/v1.4.7/btop-x86_64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/aristocratos/btop/releases/assets/409963672"
+
 [[tools.bun]]
 version = "1.4.4"
 backend = "core:bun"
@@ -1527,15 +1537,15 @@ url = "https://github.com/docker/compose/releases/download/v5.6.0/docker-compose
 url_api = "https://api.github.com/repos/docker/compose/releases/assets/605922795"
 
 [[tools.eza]]
-version = "0.23.4"
+version = "0.23.5"
 backend = "vfox:eza"
-specifiers = ["0.23.4"]
+specifiers = ["0.23.5"]
 
 [tools.eza."platforms.linux-x64"]
-url = "https://github.com/eza-community/eza/releases/download/v0.23.4/eza_x86_64-unknown-linux-gnu.tar.gz"
+url = "https://github.com/eza-community/eza/releases/download/v0.23.5/eza_x86_64-unknown-linux-gnu.tar.gz"
 
 [tools.eza."platforms.macos-arm64"]
-url = "https://github.com/cargo-bins/cargo-quickinstall/releases/download/eza-0.23.4/eza-0.23.4-aarch64-apple-darwin.tar.gz"
+url = "https://github.com/cargo-bins/cargo-quickinstall/releases/download/eza-0.23.5/eza-0.23.5-aarch64-apple-darwin.tar.gz"
 
 [[tools.fastfetch]]
 version = "2.70.0"
@@ -2143,17 +2153,17 @@ checksum = "sha256:1901d539912c02afa10d1cc126943a8855a7eedebe830119463470db5e6c5
 url = "https://nodejs.org/dist/v26.12.1/node-v26.12.1-darwin-arm64.tar.gz"
 
 [[tools.npm]]
-version = "11.21.1"
+version = "12.2.1"
 backend = "aqua:npm/cli"
-specifiers = ["11.21.1"]
+specifiers = ["12.2.1"]
 
 [tools.npm."platforms.linux-x64"]
-url = "https://registry.npmjs.org/npm/-/npm-11.21.1.tgz"
-checksum = "sha256:dd77c48eb845f4856c2cdba347cfb52bd877a2655a1ea48ff0c4796e3df9dd7b"
+checksum = "blake3:b38b043f13b44b58ff4bf223c3345e3b23ee72347aa1a60a2b1d1f669b922f00"
+url = "https://registry.npmjs.org/npm/-/npm-12.2.1.tgz"
 
 [tools.npm."platforms.macos-arm64"]
-url = "https://registry.npmjs.org/npm/-/npm-11.21.1.tgz"
-checksum = "sha256:dd77c48eb845f4856c2cdba347cfb52bd877a2655a1ea48ff0c4796e3df9dd7b"
+checksum = "blake3:b38b043f13b44b58ff4bf223c3345e3b23ee72347aa1a60a2b1d1f669b922f00"
+url = "https://registry.npmjs.org/npm/-/npm-12.2.1.tgz"
 
 [[tools."npm:@agentclientprotocol/claude-agent-acp"]]
 version = "0.94.0"
@@ -2248,19 +2258,21 @@ url_api = "https://api.github.com/repos/jgm/pandoc/releases/assets/620377370"
 provenance = "github-attestations"
 
 [[tools.perl]]
-version = "5.42.0.0"
+version = "5.44.0.0"
 backend = "aqua:skaji/relocatable-perl"
-specifiers = ["5.42.0"]
+specifiers = ["5.44.0"]
 
 [tools.perl."platforms.linux-x64"]
-checksum = "sha256:ba16ca53f61b1b862781eb71e71e53a1d5b0e46cf8288516b8d9a6ea84a86890"
-url = "https://github.com/skaji/relocatable-perl/releases/download/5.42.0.0/perl-linux-amd64.tar.gz"
-url_api = "https://api.github.com/repos/skaji/relocatable-perl/releases/assets/269745116"
+checksum = "sha256:99fa984bab4eb536dae9630d5d47f3f5bd23a71c361d94dc6ef3a68a7186dcb0"
+url = "https://github.com/skaji/relocatable-perl/releases/download/5.44.0.0/perl-linux-amd64.tar.gz"
+url_api = "https://api.github.com/repos/skaji/relocatable-perl/releases/assets/478554569"
+provenance = "github-attestations"
 
 [tools.perl."platforms.macos-arm64"]
-checksum = "sha256:48086d90a682dce2cf34ee85ba7b21fcc8e8d8d614bb834d641ad002ef407824"
-url = "https://github.com/skaji/relocatable-perl/releases/download/5.42.0.0/perl-darwin-arm64.tar.gz"
-url_api = "https://api.github.com/repos/skaji/relocatable-perl/releases/assets/269745122"
+checksum = "sha256:213733e18662720a3d25fd6e1adeddd05f56ce50b5e1f8bc6bd194e3f43e44d2"
+url = "https://github.com/skaji/relocatable-perl/releases/download/5.44.0.0/perl-darwin-arm64.tar.gz"
+url_api = "https://api.github.com/repos/skaji/relocatable-perl/releases/assets/478554580"
+provenance = "github-attestations"
 
 [[tools."pipx:httpie"]]
 version = "3.2.4"
@@ -2402,6 +2414,36 @@ url_api = "https://api.github.com/repos/mozilla/sccache/releases/assets/56313020
 checksum = "sha256:308184519b646f5125289e8515b36f6ca65a13a041923994aebe702348674e8e"
 url = "https://github.com/mozilla/sccache/releases/download/v0.18.0/sccache-v0.18.0-aarch64-apple-darwin.tar.gz"
 url_api = "https://api.github.com/repos/mozilla/sccache/releases/assets/563129740"
+
+[[tools.shellcheck]]
+version = "0.11.0"
+backend = "aqua:koalaman/shellcheck"
+specifiers = ["latest"]
+
+[tools.shellcheck."platforms.linux-x64"]
+checksum = "sha256:8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198"
+url = "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.xz"
+url_api = "https://api.github.com/repos/koalaman/shellcheck/releases/assets/279056942"
+
+[tools.shellcheck."platforms.macos-arm64"]
+checksum = "sha256:56affdd8de5527894dca6dc3d7e0a99a873b0f004d7aabc30ae407d3f48b0a79"
+url = "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.darwin.aarch64.tar.xz"
+url_api = "https://api.github.com/repos/koalaman/shellcheck/releases/assets/279056932"
+
+[[tools.shfmt]]
+version = "3.14.1"
+backend = "aqua:mvdan/sh"
+specifiers = ["latest"]
+
+[tools.shfmt."platforms.linux-x64"]
+checksum = "sha256:76e77641faa025814b77f153b29796b8e6fa2fca03e0c76a691608b86c7ea7bf"
+url = "https://github.com/mvdan/sh/releases/download/v3.14.1/shfmt_v3.14.1_linux_amd64"
+url_api = "https://api.github.com/repos/mvdan/sh/releases/assets/547320883"
+
+[tools.shfmt."platforms.macos-arm64"]
+checksum = "sha256:b7c872db63553ccffc7253aba3ed7d4885a27d83f1ba567b1138c6315a5847e5"
+url = "https://github.com/mvdan/sh/releases/download/v3.14.1/shfmt_v3.14.1_darwin_arm64"
+url_api = "https://api.github.com/repos/mvdan/sh/releases/assets/547320930"
 
 [[tools.tmux]]
 version = "3.7c"

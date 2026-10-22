@@ -1,0 +1,206 @@
+#!/usr/bin/env bash
+# Standalone opt-in helper: no setup integration or managed SSH dotfiles.
+set -euo pipefail
+umask 077
+exec /usr/bin/ruby --disable-gems - "$@" <<'RUBY'
+require 'optparse'
+require 'shellwords'
+require 'tempfile'
+require 'securerandom'
+require 'open3'
+
+options = { port: '22' }
+parser = OptionParser.new do |o|
+  o.banner = 'Usage: configure-ssh-host --home PATH --source-key PATH --key-name NAME --alias NAME --hostname HOST --user USER [--port PORT] [--reviewed-includes] [--dry-run]'
+  %w[home source-key key-name alias hostname user port].each do |name|
+    o.on("--#{name} VALUE") { |value| options[name.tr('-', '_').to_sym] = value }
+  end
+  o.on('--reviewed-includes') { options[:reviewed_includes] = true }
+  o.on('--dry-run') { options[:dry_run] = true }
+  o.on('-h', '--help') { puts o; exit }
+end
+
+def refuse(message)
+  abort "configure-ssh-host: #{message}"
+end
+
+def regular_owned(path)
+  stat = File.lstat(path)
+  refuse('expected a regular, singly linked file owned by the current user') unless stat.file? && stat.nlink == 1 && stat.uid == Process.uid
+  stat
+end
+
+def existing?(path)
+  File.exist?(path) || File.symlink?(path)
+end
+
+lock = nil
+staged = []
+operation = 'validating inputs'
+begin
+  parser.parse!
+  refuse('unexpected positional arguments; use --help') unless ARGV.empty?
+  %i[home source_key key_name alias hostname user].each do |name|
+    refuse("missing --#{name.to_s.tr('_', '-')}") unless options[name]
+  end
+  %i[home source_key].each do |name|
+    refuse('home and source-key must be absolute paths') unless options[name].start_with?('/')
+  end
+  # Restrict config values rather than attempting to escape SSH tokens/expansions.
+  %i[key_name alias user].each do |name|
+    refuse('key-name, alias and user must be simple names') unless options[name].match?(/\A[A-Za-z0-9_][A-Za-z0-9_.-]*\z/)
+  end
+  refuse('reserved key filename') if %w[config authorized_keys authorized_keys2 known_hosts known_hosts2 .configure-ssh-host.lock].include?(options[:key_name])
+  refuse('invalid hostname') unless options[:hostname].match?(/\A[A-Za-z0-9][A-Za-z0-9.:-]*\z/)
+  refuse('port must be between 1 and 65535') unless options[:port].match?(/\A[0-9]{1,5}\z/) && (1..65535).cover?(options[:port].to_i)
+  home = File.realpath(options[:home])
+  refuse('home must be a directory owned by the current user') unless File.directory?(home) && File.stat(home).uid == Process.uid
+  refuse('home contains characters unsafe in an SSH IdentityFile') if home.match?(/[\x00-\x1f\x7f"\\%$]/)
+  ssh_dir = File.join(home, '.ssh')
+  config = File.join(ssh_dir, 'config')
+  key = File.join(ssh_dir, options[:key_name])
+  operation = 'reading source key'
+  regular_owned(options[:source_key])
+  key_bytes = File.binread(options[:source_key])
+  refuse('source is not a recognized private-key file') unless key_bytes.match?(/\A-----BEGIN (?:OPENSSH |RSA |EC |DSA |ENCRYPTED )?PRIVATE KEY-----\r?\n/)
+
+  check = lambda do
+    operation = 'checking destination state'
+    if existing?(ssh_dir)
+      stat = File.lstat(ssh_dir)
+      refuse('.ssh must be a real directory owned by the current user') unless stat.directory? && stat.uid == Process.uid
+    end
+    if existing?(key)
+      regular_owned(key)
+      refuse('destination key already exists with different contents') unless File.binread(key) == key_bytes
+    end
+    original = nil
+    if existing?(config)
+      regular_owned(config)
+      original = File.binread(config)
+      in_host = false
+      original.each_line do |line|
+        # Comments are not shell input: prose may contain unmatched quotes.
+        next if line.lstrip.start_with?('#') || line.strip.empty?
+        # SSH accepts either whitespace or '=' after the keyword.
+        tokens = Shellwords.shellsplit(line.sub(/\A(\s*[A-Za-z]+)\s*=/, '\1 '))
+        next if tokens.empty? || tokens.first.start_with?('#')
+        directive = tokens.shift.downcase
+        refuse('Match is unsupported; config left unchanged') if directive == 'match'
+        if directive == 'include' && !options[:reviewed_includes]
+          refuse('Include requires explicit --reviewed-includes; config left unchanged')
+        end
+        if !in_host && %w[hostname user port identityfile identitiesonly proxycommand proxyjump].include?(directive)
+          refuse('global connection settings require manual review; config left unchanged')
+        end
+        next unless directive == 'host'
+        in_host = true
+        tokens = tokens.take_while { |token| !token.start_with?('#') }
+        # Conservative: even a negated match or wildcard can affect precedence.
+        if tokens.any? { |pattern| File.fnmatch?(pattern.sub(/\A!/, '').downcase, options[:alias].downcase) }
+          refuse('alias overlaps an existing Host pattern; config left unchanged')
+        end
+      end
+    end
+    original
+  end
+  addition = "\nHost #{options[:alias]}\n  HostName #{options[:hostname]}\n  User #{options[:user]}\n  Port #{options[:port].to_i}\n  IdentityFile \"#{key}\"\n  IdentitiesOnly yes\n"
+  verify_candidate = lambda do |contents|
+    operation = 'verifying candidate config'
+    candidate = Tempfile.new('ssh-host-check-', '/tmp')
+    begin
+      candidate.binmode
+      candidate.chmod(0600)
+      candidate.write((contents || '') + addition)
+      candidate.flush
+      output, _errors, status = Open3.capture3('/usr/bin/ssh', '-G', '-F', candidate.path, options[:alias], stdin_data: '')
+      refuse('SSH could not evaluate candidate config; no config replacement performed') unless status.success?
+      effective = Hash.new { |hash, name| hash[name] = [] }
+      output.each_line do |line|
+        name, value = line.chomp.split(/\s+/, 2)
+        effective[name] << value
+      end
+      expected = { 'hostname' => options[:hostname], 'user' => options[:user],
+                   'port' => options[:port].to_i.to_s, 'identitiesonly' => 'yes', 'identityfile' => key }
+      expected.each do |name, value|
+        refuse("effective #{name} conflicts with requested settings; config left unchanged") unless effective[name] == [value]
+      end
+    ensure
+      candidate.close!
+    end
+  end
+  original = check.call
+  verify_candidate.call(original)
+  if options[:dry_run]
+    puts "Target SSH directory: #{ssh_dir}"
+    puts 'Dry run: validated inputs; would copy/reuse the key, back up any config, append the host, and set permissions. No destination files changed.'
+    exit
+  end
+  operation = 'creating SSH directory'
+  Dir.mkdir(ssh_dir, 0700) unless File.exist?(ssh_dir)
+  operation = 'setting directory permissions'
+  File.chmod(0700, ssh_dir) unless (File.stat(ssh_dir).mode & 07777) == 0700
+  lock_path = File.join(ssh_dir, '.configure-ssh-host.lock')
+  operation = 'creating lock'
+  begin
+    Dir.mkdir(lock_path, 0700)
+    lock = lock_path
+  rescue Errno::EEXIST
+    refuse('another invocation or stale .configure-ssh-host.lock exists; review before retrying')
+  end
+  original = check.call
+  verify_candidate.call(original)
+  stage = lambda do |prefix, bytes|
+    file = Tempfile.new(prefix, ssh_dir)
+    staged << file
+    file.binmode
+    file.chmod(0600)
+    file.write(bytes)
+    file.flush
+    file.fsync
+    file
+  end
+  unless existing?(key)
+    operation = 'staging key'
+    copy = stage.call('.ssh-key-', key_bytes)
+    operation = 'publishing key'
+    File.link(copy.path, key) # Atomic publication, never overwrites a destination.
+    copy.close!
+  end
+  operation = 'setting key permissions'
+  File.chmod(0600, key) unless (File.stat(key).mode & 07777) == 0600
+  backup_path = nil
+  if original
+    operation = 'backing up config'
+    backup_path = File.join(ssh_dir, "config.backup-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}-#{SecureRandom.hex(6)}")
+    File.open(backup_path, File::WRONLY | File::CREAT | File::EXCL, 0600) do |backup|
+      backup.binmode
+      backup.write(original)
+      backup.flush
+      backup.fsync
+    end
+  end
+  operation = 'staging config'
+  replacement = stage.call('.ssh-config-', (original || '') + addition)
+  # Do not silently replace concurrent edits made outside this helper's lock.
+  operation = 'publishing config'
+  if original
+    regular_owned(config)
+    refuse('config changed during migration; key and backup retained') unless File.binread(config) == original
+    File.rename(replacement.path, config)
+  else
+    File.link(replacement.path, config) # Exclusive creation when no config existed.
+  end
+  puts 'Configured SSH host. Source key retained; no connection attempted.'
+  puts "Config backup: #{backup_path}" if backup_path
+rescue OptionParser::ParseError
+  refuse('invalid options; use --help')
+rescue ArgumentError
+  refuse("invalid path or config quoting while #{operation}; no config replacement performed")
+rescue SystemCallError, IOError => error
+  refuse("failed while #{operation} (#{error.class}); source retained, inspect local state before retrying")
+ensure
+  staged.each(&:close!)
+  Dir.rmdir(lock) if lock
+end
+RUBY

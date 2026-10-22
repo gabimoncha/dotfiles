@@ -200,6 +200,7 @@ check_script_syntax() {
     "bin/lib/standalone.sh"
     "bin/linux-prerequisites"
     "bin/t3-dev-supervise"
+    "bin/configure-ssh-host"
     "bin/repo-mise"
     "bin/lib/mise-pin.sh"
     "bin/install-apps"
