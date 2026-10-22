@@ -31,6 +31,7 @@ min_version = "2026.10.17"
 "~/.tmux.conf" = { mode = "symlink" }
 "~/.cli-proxy-api/config.yaml" = { mode = "symlink" }
 "~/.config/mise/config.toml" = { mode = "symlink" }
+"~/.config/mise/gemrc" = { mode = "symlink" }
 "~/.config/mise/mise.lock" = { mode = "symlink" }
 "~/.config/telemetry/env.sh" = { mode = "symlink" }
 "~/.config/zsh/env.zsh" = { mode = "symlink" }

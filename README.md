@@ -280,6 +280,9 @@ tracked file. To add a tool, add it to the mise config, then run
 `git add home/.config/mise` and commit `config.toml`, `mise.lock`, and the
 `locks/` folder. The pipx entries need their `locks/` dependency graphs.
 
+Fastlane uses `home/.config/mise/gemrc` to skip Ruby documentation generation.
+This avoids an RDoc failure with Ruby 3.4.11 during installation.
+
 The first `mise install` after the link is created installs the three pipx
 tools again, in new folders that match their locked dependency graphs. It also
 adds checksums for tools whose releases publish none. Commit that lockfile
