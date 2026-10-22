@@ -131,6 +131,7 @@ managed_sources=(
   "${repo_root}/home/.tmux.conf"
   "${repo_root}/home/.cli-proxy-api/config.yaml"
   "${repo_root}/home/.config/mise/config.toml"
+  "${repo_root}/home/.config/mise/gemrc"
   "${repo_root}/home/.config/telemetry/env.sh"
   "${repo_root}/home/.config/zsh/env.zsh"
   "${repo_root}/home/.config/zsh/profile.zsh"
