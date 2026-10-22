@@ -106,6 +106,9 @@ package_manager = "bun"
 # The precompiled Ruby 3.4.11 still bundles OpenSSL 3.5.5.
 [settings.ruby]
 compile = true
+# configure otherwise runs the first `ruby` on PATH. The mise shim then waits
+# for the Ruby that is being built, and the install hangs. Docs add build time.
+ruby_build_opts = "--without-baseruby --disable-install-doc"
 
 [settings.cargo]
 binstall = true

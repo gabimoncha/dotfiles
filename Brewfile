@@ -24,6 +24,8 @@ brew "glyph"
 brew "grpc"
 brew "homebrew-zathura/zathura/zathura-cb"
 brew "homebrew-zathura/zathura/zathura-pdf-mupdf"
+# mise compiles Ruby (settings.ruby.compile), and its psych extension needs libyaml.
+brew "libyaml"
 brew "minisign"
 brew "mole"
 brew "openssl@3"
