@@ -21,10 +21,15 @@ smoke_commands=(
   lazygit
   nvim
   sccache
+  age
+  python
+  ruby
+  yq
+  shellcheck
 )
 # Mac-only tools (os = "macos" in the config).
 if [[ "$(uname -s)" == Darwin ]]; then
-  smoke_commands+=(age mackup python ruby yq turbo vercel)
+  smoke_commands+=(mackup turbo vercel)
 fi
 
 log() {

@@ -1099,6 +1099,16 @@ checksum = "sha256:e30beff26779c9bf60bb541e1d79046250cb74378f2757f8eb250afddb19e
 url = "https://github.com/sharkdp/bat/releases/download/v0.26.1/bat-v0.26.1-aarch64-apple-darwin.tar.gz"
 url_api = "https://api.github.com/repos/sharkdp/bat/releases/assets/323548442"
 
+[[tools.btop]]
+version = "1.4.7"
+backend = "aqua:aristocratos/btop"
+specifiers = ["latest"]
+
+[tools.btop."platforms.linux-x64"]
+checksum = "sha256:5099054dd6a101bd12eb6ff3702a9a6a3f57aaa27923a0da478ae5b517faf335"
+url = "https://github.com/aristocratos/btop/releases/download/v1.4.7/btop-x86_64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/aristocratos/btop/releases/assets/409963672"
+
 [[tools.bun]]
 version = "1.4.4"
 backend = "core:bun"
@@ -2402,6 +2412,36 @@ url_api = "https://api.github.com/repos/mozilla/sccache/releases/assets/56313020
 checksum = "sha256:308184519b646f5125289e8515b36f6ca65a13a041923994aebe702348674e8e"
 url = "https://github.com/mozilla/sccache/releases/download/v0.18.0/sccache-v0.18.0-aarch64-apple-darwin.tar.gz"
 url_api = "https://api.github.com/repos/mozilla/sccache/releases/assets/563129740"
+
+[[tools.shellcheck]]
+version = "0.11.0"
+backend = "aqua:koalaman/shellcheck"
+specifiers = ["latest"]
+
+[tools.shellcheck."platforms.linux-x64"]
+checksum = "sha256:8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198"
+url = "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.xz"
+url_api = "https://api.github.com/repos/koalaman/shellcheck/releases/assets/279056942"
+
+[tools.shellcheck."platforms.macos-arm64"]
+checksum = "sha256:56affdd8de5527894dca6dc3d7e0a99a873b0f004d7aabc30ae407d3f48b0a79"
+url = "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.darwin.aarch64.tar.xz"
+url_api = "https://api.github.com/repos/koalaman/shellcheck/releases/assets/279056932"
+
+[[tools.shfmt]]
+version = "3.14.1"
+backend = "aqua:mvdan/sh"
+specifiers = ["latest"]
+
+[tools.shfmt."platforms.linux-x64"]
+checksum = "sha256:76e77641faa025814b77f153b29796b8e6fa2fca03e0c76a691608b86c7ea7bf"
+url = "https://github.com/mvdan/sh/releases/download/v3.14.1/shfmt_v3.14.1_linux_amd64"
+url_api = "https://api.github.com/repos/mvdan/sh/releases/assets/547320883"
+
+[tools.shfmt."platforms.macos-arm64"]
+checksum = "sha256:b7c872db63553ccffc7253aba3ed7d4885a27d83f1ba567b1138c6315a5847e5"
+url = "https://github.com/mvdan/sh/releases/download/v3.14.1/shfmt_v3.14.1_darwin_arm64"
+url_api = "https://api.github.com/repos/mvdan/sh/releases/assets/547320930"
 
 [[tools.tmux]]
 version = "3.7c"
