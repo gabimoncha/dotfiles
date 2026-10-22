@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# Install as ~/.local/bin/t3-supervise for the non-root NAS container user.
+# The container has no systemd, so this loop does what the unit from
+# `t3 service install` does: it keeps T3's service launcher running. The
+# launcher starts `t3 serve`, so the desktop app can update this server. An
+# update gets a database backup, and a failed update goes back to the old version.
+set -eu
+[[ "$(uname -s)" == Linux && "$(id -u)" != 0 ]] || {
+  printf 'Run this supervisor as the non-root Linux development user.\n' >&2
+  exit 1
+}
+umask 077
+export PATH="$HOME/.local/bin:$PATH"
+export T3CODE_HOME="$HOME/.t3" T3CODE_HOST=0.0.0.0 T3CODE_PORT=3773
+# `t3 serve` uses the working directory for provider sessions.
+cd /workspace
+logs="$HOME/.local/state/t3"
+service_state="$T3CODE_HOME/runtime/service-state.json"
+mkdir -p "$logs"
+exec 9>"$logs/supervisor.lock"
+flock -n 9 || exit 0
+
+log() { printf 't3-supervise: %s\n' "$1" >> "$logs/server.log"; }
+
+# The launcher runs the version in service-state.json. Without that file, use
+# the runtime that the official installer linked as ~/.local/bin/t3.
+seed_service_state() {
+  local runtime version
+  [[ ! -f "$service_state" ]] || return 0
+  runtime="$(readlink -f "$HOME/.local/bin/t3")" || return 1
+  version="$(basename "$(dirname "$runtime")")"
+  [[ "$(cat "$(dirname "$runtime")/.install-complete" 2>/dev/null)" == "$version" ]] || return 1
+  mkdir -p "$(dirname "$service_state")"
+  printf '{\n  "protocol": 3,\n  "activeVersion": "%s"\n}\n' "$version" > "$service_state.tmp"
+  mv -f "$service_state.tmp" "$service_state"
+  log "pinned t3@$version in $service_state"
+}
+
+pid=""
+# Background sleeps let the trap run at once instead of after the sleep ends.
+pause() { sleep "$1" & wait $! || true; }
+# The launcher stops the server first. 90 seconds matches T3's launchd job.
+stop_launcher() {
+  kill -TERM "$pid" 2>/dev/null || return 0
+  for _ in $(seq 90); do
+    kill -0 "$pid" 2>/dev/null || return 0
+    pause 1
+  done
+  kill -KILL "$pid" 2>/dev/null || true
+}
+trap '[[ -z "$pid" ]] || stop_launcher; exit 0' TERM INT HUP
+
+while true; do
+  [[ ! -f "$logs/server.log" ]] || mv -f "$logs/server.log" "$logs/server.log.1"
+  if seed_service_state; then
+    "$HOME/.local/bin/t3" __service-launcher >> "$logs/server.log" 2>&1 &
+    pid=$!
+    wait "$pid" || log "launcher exited with status $?"
+    pid=""
+  else
+    log "no complete runtime at ~/.local/bin/t3; rerun the T3 install script"
+  fi
+  pause 5
+done
