@@ -377,12 +377,12 @@ longer idle period.
 The global mise `postinstall` hook runs `harness update --installed-only`. The
 zsh `mise` helper also runs it after a no-op `mise install` or `mise up`, where
 mise fires no hook. After `mise up`, or `mise install` without tool names, the
-helper first runs `mise prune`. The prune forgets configs whose files are gone,
-then deletes every installed version that no tracked config selects, such as
-the old Bun after a pin change. A project's version stays when mise has loaded
-that project's config. The hook never prunes, because it also fires when
-`mise exec TOOL@VERSION` installs a tool. The global mise config disables the old Codex CLI tool
-names, so a stale request cannot reinstall them. The `codex-acp` adapter stays
+helper first runs `mise prune --tools` for the tools in the global config. It
+deletes their versions that no tracked config selects, such as the old Bun
+after a pin change. Tools that only projects use stay, also when mise does not
+track the project's config (for example an untrusted one). The hook never
+prunes, because it also fires when `mise exec TOOL@VERSION` installs a tool.
+The global mise config disables the old Codex CLI tool names, so a stale request cannot reinstall them. The `codex-acp` adapter stays
 enabled and still pulls its own npm `@openai/codex` dependency.
 
 The T3 Code nightly app updates itself and its `t3` launcher. Setup links

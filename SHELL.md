@@ -95,7 +95,7 @@ updates, and the command returns nonzero when any update fails.
 The mise postinstall hook runs the updater for installed agents. The zsh `mise`
 helper makes `mise install`, `mise up`, and `mise up --local` run it once after
 success, including when no mise tools change. After `mise up`, or
-`mise install` without tool names, the helper first deletes unused tool
-versions with `mise prune`. Help and dry-run commands do not
+`mise install` without tool names, the helper first deletes the unused
+versions of the tools in the global config (`mise prune --tools TOOL...`). Help and dry-run commands do not
 update agents. `command mise` bypasses the shell helper and uses mise's native
 hook behavior.
