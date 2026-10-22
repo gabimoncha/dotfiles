@@ -5,7 +5,7 @@ min_version = "2026.10.4"
 [tools]
 # Mac and Linux. pnpm stays before node, so Corepack wrappers do not shadow it.
 pnpm = "latest"
-npm = "11.21.1"
+npm = "12.2.1"
 node = "26.12.1"
 rust = "latest"
 cargo-binstall = "1.26.0"
@@ -22,7 +22,7 @@ tmux = "latest"
 jq = "latest"
 gh = "2.103.0"
 bat = "latest"
-eza = "0.23.4"
+eza = "0.23.5"
 zoxide = "latest"
 neovim = "latest"
 "npm:sfw" = "latest"
@@ -54,7 +54,7 @@ shfmt = "latest"
 btop = { version = "latest", os = "linux" }
 
 # Mac only. Add a tool to the list above when a Linux box needs it.
-perl = { version = "5.42.0", os = "macos" }
+perl = { version = "5.44.0", os = "macos" }
 ccache = { version = "latest", os = "macos" }
 cocoapods = { version = "latest", os = "macos" }
 coreutils = { version = "latest", os = "macos" }
