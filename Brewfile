@@ -86,3 +86,5 @@ cask "xykong/tap/flux-markdown"
 cask "yaak"
 cask "zoom"
 cask "zulu@17"
+
+vscode "typescriptteam.native-preview"

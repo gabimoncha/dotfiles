@@ -50,6 +50,8 @@ yamlfmt = "latest"
 wrangler = { version = "latest", allow_builds = ["esbuild", "sharp", "workerd"] }
 shellcheck = "latest"
 shfmt = "latest"
+# TypeScript checks and the editor language server (~/.config/tsrs/tsgo).
+"npm:tsrs" = "0.18.0-ts7.1.0-dev.20260929"
 # Linux only: the Mac installs btop with Homebrew, and btop ships no macOS build.
 btop = { version = "latest", os = "linux" }
 

@@ -292,6 +292,14 @@ to the locked versions, so commit the lockfile after each `mise up`.
 `vscode "publisher.extension"` entries in `Brewfile` select Cursor extensions.
 Setup uses Cursor's editor CLI and skips installed extensions.
 
+Mise pins `tsrs`, the Rust port of TypeScript 7, on the Mac and on Linux.
+`~/.config/tsrs/tsgo` runs it under the name that the TypeScript 7 extension
+looks for. Neovim's `tsrs` server runs a project's own
+`node_modules/.bin/tsrs` when the project has one, and this launcher
+otherwise. In Cursor, a project sets `js/ts.tsdk.path` to its own launcher.
+For other projects, set it to the absolute path of `~/.config/tsrs` in Cursor
+user settings.
+
 AeroSpace and Ghostty links wait for their application bundles. Final links
 share `home/.codex/AGENTS.md` with Codex and Claude, and merge tracked Codex and
 Claude settings without discarding other keys. Replaced files are backed up.

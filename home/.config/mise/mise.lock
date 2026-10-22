@@ -2225,6 +2225,11 @@ version = "0.27.1"
 backend = "npm:tree-sitter-cli"
 specifiers = ["latest"]
 
+[[tools."npm:tsrs"]]
+version = "0.18.0-ts7.1.0-dev.20260929"
+backend = "npm:tsrs"
+specifiers = ["0.18.0-ts7.1.0-dev.20260929"]
+
 [[tools.ollama]]
 version = "0.40.8"
 backend = "aqua:ollama/ollama"

@@ -1,0 +1,3 @@
+#!/bin/sh
+# The TypeScript 7 extension searches for an executable named tsgo or tsc.
+exec "$HOME/.local/bin/mise" exec -- tsrs "$@"
