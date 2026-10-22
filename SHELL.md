@@ -62,9 +62,20 @@ Bun/Bunx and noninteractive installers do not inherit that protection.
 See [execution policy](SECURITY.md#what-setup-trusts) for its limits.
 When shims are absent from PATH, use `mise exec -- <command>`.
 
+## tmux over SSH
+
+An interactive SSH login to a host with these dotfiles opens the tmux session
+`main`, or attaches to it when it exists. The session keeps running when the
+connection drops or you close the terminal. The next login returns to it.
+`prefix d` detaches and ends the SSH connection. `exit` in the last window
+closes the session. The prefix is `Ctrl-a`. In a tmux on your Mac, press
+`Ctrl-a Ctrl-a` to send the prefix to the inner tmux. Run `ssh -t HOST zsh`
+for a shell outside tmux. A container restart ends the session; tmux-resurrect
+restores its windows, but not the programs that ran in them.
+
 ## Android
 
-The configuration sets `JAVA_HOME` to Zulu 17 and `ANDROID_HOME` to
+On macOS, the configuration sets `JAVA_HOME` to Zulu 17 and `ANDROID_HOME` to
 `~/Library/Android/sdk`; it adds JDK, emulator and platform-tools paths.
 Android Studio installs SDK packages and creates emulator images.
 To inspect the debug signing SHA-1:
@@ -77,7 +88,8 @@ keytool -list -v -keystore "$HOME/.android/debug.keystore" -alias androiddebugke
 
 `harness update` updates Codex, Claude Code, Pi and its packages, OpenCode v2,
 and Cursor Agent. Vendor updates run in parallel. The T3 Code desktop app
-updates itself and its `t3` command. A failure does not stop other
+updates itself and its `t3` command. On Linux, the T3 app updates the T3
+server. A failure does not stop other
 updates, and the command returns nonzero when any update fails.
 
 The mise postinstall hook runs the updater for installed agents. The zsh `mise`

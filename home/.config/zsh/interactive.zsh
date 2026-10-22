@@ -23,6 +23,14 @@ unset brew_bin
 
 [ -r "$HOME/.config/zsh/path.zsh" ] && source "$HOME/.config/zsh/path.zsh"
 
+# An interactive SSH login opens the tmux session "main", or attaches to it,
+# so a dropped connection keeps the work. SSH commands, `ssh -t HOST zsh`, and
+# T3 terminals have no login shell with SSH_TTY, so they skip it. If tmux
+# fails, the normal shell starts.
+if [[ -n "${SSH_TTY-}" && -z "${TMUX-}" && -o login && -o interactive ]] && (( $+commands[tmux] )); then
+  tmux new-session -A -s main && exit
+fi
+
 # Static shims avoid invoking mise or credentials during prompt initialization.
 # Missing tools are installed only by an explicit setup/update command.
 _dotfiles_real_tool() {
