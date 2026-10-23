@@ -27,6 +27,23 @@ blocks the compromised emSign intermediate keys and removes three affected
 roots. Rebuild executables that embed older Bun versions. Keep TLS verification
 enabled.
 
+The macOS Conda dependency graphs lock ca-certificates 2026.10.19 to remove the
+emSign ECC Root CA G3 after the [CA security incident](https://blog.python.org/2026/10/python-3151-3149-31317/).
+This is a security exception to the four-day release
+delay and uses the same noarch archive as Linux. Existing tool environments
+need an explicit reinstall to use the new bundle.
+
+ImageMagick remains at 7.1.2-31 because conda-forge has not published the
+[7.1.2-34 security fixes](https://github.com/ImageMagick/ImageMagick/security/advisories).
+Avoid untrusted images until the fixed package is available.
+Conda's SoX 14.4.2 also has unresolved audio parser vulnerabilities, including
+[CVE-2026-111157](https://www.cve.org/CVERecord?id=CVE-2026-111157).
+Avoid untrusted audio, or process it in an isolated account without sensitive
+files or network access.
+Typst 0.15.1 also has an unreleased [`typst init` path traversal fix](https://github.com/typst/typst/security/advisories/GHSA-rw6x-h3xm-cvq5).
+Use only trusted local packages or Typst Universe packages, and inspect the
+generated files before sharing them.
+
 Brewfiles declare tap trust. Setup preserves quarantine, checks GitHub SSH
 host keys against published values, and requires passphrases for new SSH keys.
 During setup, other processes can use its temporary sudo grant. Do not run
