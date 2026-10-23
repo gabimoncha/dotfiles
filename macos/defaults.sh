@@ -74,8 +74,8 @@ prune_dock_persistent_apps() {
   done
 }
 
-log "Applying preferences from macos/defaults.toml"
-"${script_dir}/../bin/repo-mise" "${script_dir}/defaults.toml" bootstrap macos defaults apply --yes
+log "Applying preferences from the selected macOS mise modules"
+"${script_dir}/../bin/repo-mise" --setup bootstrap macos defaults apply --yes
 
 log "Applying input sources"
 ensure_keyboard_input_sources

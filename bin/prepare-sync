@@ -22,15 +22,15 @@ mkdir -p "$backup_dir"
 if command -v brew >/dev/null 2>&1; then
   log "Capturing current Homebrew bundle to a temp file"
   brew bundle dump --file "$temp_brewfile" --force
-  cp "${repo_root}/Brewfile" "${backup_dir}/Brewfile"
-  git --no-pager diff --no-index "${repo_root}/Brewfile" "$temp_brewfile" || true
+  cp "${repo_root}/apps/Brewfile" "${backup_dir}/Brewfile"
+  git --no-pager diff --no-index "${repo_root}/apps/Brewfile" "$temp_brewfile" || true
 else
-  log "Homebrew is not available; skipping Brewfile comparison"
+  log "Homebrew is not available; skipping apps/Brewfile comparison"
 fi
 
 if command -v mise >/dev/null 2>&1; then
   log "Current mise tool state"
-  (cd "$repo_root" && mise current || true)
+  "$repo_root/bin/repo-mise" "$repo_root/mise/global.toml" current || true
 else
   log "mise is not available; skipping mise current"
 fi

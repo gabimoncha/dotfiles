@@ -3,15 +3,34 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+dry_run=0
+for argument in "$@"; do
+  case "$argument" in
+    --dry-run) dry_run=1 ;;
+    --serial|--skip-mobile-dev|--continue) ;;
+    -h|--help)
+      printf 'Usage: dotfiles-update [--dry-run] [--serial] [--skip-mobile-dev]\n'
+      exit 0
+      ;;
+    *) printf 'Unknown update argument: %s\n' "$argument" >&2; exit 2 ;;
+  esac
+done
+. "${repo_root}/bin/lib/dotfiles-profile.sh"
+DOTFILES_PROFILE="$(dotfiles_profile)" || exit 1
+export DOTFILES_PROFILE
 
 log() {
   printf '==> %s\n' "$1"
 }
 
 log "Updating dotfiles repo"
-git -C "$repo_root" pull --ff-only
+if [[ "$dry_run" == 1 ]]; then
+  log "Would run git pull --ff-only"
+else
+  git -C "$repo_root" pull --ff-only
+fi
 
 log "Applying bootstrap-managed updates"
-DOTFILES_SKIP_MACOS_DEFAULTS=1 "${repo_root}/bin/bootstrap" --continue
+DOTFILES_SKIP_MACOS_DEFAULTS=1 "${repo_root}/bin/bootstrap" --continue "$@"
 
 log "Dotfiles update complete"

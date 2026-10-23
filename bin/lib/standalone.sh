@@ -100,7 +100,7 @@ standalone_prepare_path() {
   node_path="$(command -v node || true)"
   case "$node_path" in
     */shims/*)
-      node_path="$(MISE_AUTO_INSTALL=0 MISE_OFFLINE=1 mise which node 2>/dev/null || true)"
+      node_path="$(MISE_AUTO_INSTALL=0 MISE_OFFLINE=1 "$repo_root/bin/repo-mise" "$repo_root/mise/global.toml" which node 2>/dev/null || true)"
       ;;
   esac
   IFS=: read -r -a entries <<< "$PATH"

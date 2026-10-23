@@ -5,6 +5,43 @@ Linux hosts (Docker containers and VMs). See [Linux box](#linux-box) for
 Linux. Start here. [DECISIONS.md](DECISIONS.md) explains the design;
 [AGENTS.md](AGENTS.md) contains editing rules.
 
+## Configuration and profiles
+
+App source folders such as `git/`, `ghostty/`, and `zsh/` sit at the repository
+root. Each folder declares its targets in a mise module. `mise/setup/conf.d/`
+selects the modules, and `bin/link-dotfiles` preserves current files before
+native mise applies them. Runtime tools stay in `mise/global.toml`.
+
+| Profile | Status |
+| --- | --- |
+| `macos/pro` | Supported on this Mac. |
+| `macos/air` | Deferred. Setup stops before changes. |
+| `linux/container` | Supported on the NAS container. |
+| `linux/vm-gcp` | Reserved for a later VM and hardening session. |
+
+Use `DOTFILES_PROFILE` for an explicit selection. The ignored
+`mise/setup/miserc.local.toml` stores the native environment selection, such as
+`env = ["pro"]`. The profile must match the operating system. VM setup does not
+inherit the container's sandbox exception.
+
+After configuration links are installed, these commands work from any directory:
+
+```bash
+mise run dot:status
+mise run dot:diff
+mise run dot:apply -- --dry-run
+mise run dot:apply
+mise run setup -- --dry-run
+mise run backup
+mise run restore
+mise run update
+mise run doctor
+```
+
+The scripts in `bin/` remain direct recovery commands. For configuration changes
+on an existing machine, preview and apply with `bin/link-dotfiles`; a full setup
+run is not required. Keep backups until the new links and a new shell work.
+
 ## Fresh Mac
 
 On the old Mac, run `./bin/prepare-sync` to report inventory drift and
@@ -21,6 +58,7 @@ Setup does not install OS updates or change beta enrollment.
 mkdir -p ~/development
 git clone https://github.com/gabimoncha/dotfiles.git ~/development/dotfiles
 cd ~/development/dotfiles
+printf 'env = ["pro"]\n' > mise/setup/miserc.local.toml
 ./bin/setup
 ```
 
@@ -91,26 +129,21 @@ Linux runs every stage in one run. It has no App Store or restart checkpoint.
 
 1. `bin/linux-prerequisites` installs Ruby, Git, and curl with apt. Setup's
    diagnostics run on `/usr/bin/ruby`, as they do on macOS.
-2. `linux/mise.toml` installs the other system packages (zsh,
+2. `linux/mise.linux.toml` installs the other system packages (zsh,
    build-essential, unzip) and makes zsh the login shell.
 3. Setup installs mise, the Mac and Linux tool list, the agent CLIs, and T3
    (`apps/standalone.tsv`), then links the shared files.
 
-The tools marked `os = "macos"` in `home/.config/mise/config.toml` stay on the
+The tools marked `os = "macos"` in `mise/global.toml` stay on the
 Mac. Move a tool to the shared list when a Linux box needs it. Mac-only links,
 such as Karabiner and the Library files, are skipped.
 
-Codex reads one global instructions file. On Linux, `bin/link-dotfiles`
-writes `~/.codex/AGENTS.md` from `home/.codex/AGENTS.md` plus the host file
-`linux/hosts/<profile>.md`. Claude reads the host file through
-`~/.claude/rules/host.md`. The profile is `linux-container` inside Docker and
-`linux-vm` elsewhere. Set `DOTFILES_PROFILE` to choose another file. Only
-`linux-container.md` exists today. The agent links stop with an error until the
-host file exists, so add `linux/hosts/linux-vm.md` before the first VM setup.
-An optional `linux/hosts/<profile>.toml` merges host keys into the agent
-settings after the shared keys. The container uses it to turn off the Codex
-sandbox, which cannot start on its kernel. Edit the source files, then rerun
-`./bin/link-dotfiles`.
+Native mise renders Linux Codex instructions from `codex/AGENTS.md` and the
+selected host's instructions. Claude reads the host file through
+`~/.claude/rules/host.md`. The container profile owns its sandbox exception in
+`linux/container/codex.toml`. Shared and host settings merge in one operation;
+different owners cannot set different values for the same key. Edit the tracked
+sources, then run `./bin/link-dotfiles`.
 
 `DOTFILES_SKIP_GITHUB_AUTH=1 ./bin/setup` defers the GitHub login. mise then
 installs tools without a GitHub token. Log in later with `./bin/auth-setup`.
@@ -153,7 +186,7 @@ Repair the failed prerequisite. If preparation failed before the permission
 handoff, rerun `./bin/setup`. After completing that handoff, use
 `./bin/setup --continue`.
 Existing links and installations are reused where possible; changed link targets
-are backed up under `~/.dotfiles-backups/<timestamp>/`. Homebrew inventory uses
+are backed up under `~/.dotfiles-backups/<run-id>/`. Homebrew inventory uses
 `--no-upgrade`. T3 desktop updates itself. Setup replaces a mise older than
 the pinned release with the pinned release, and it does not update a newer one.
 Between setup runs, mise updates itself because the global config sets
@@ -192,8 +225,8 @@ managed runtime does not prevent recovery.
 | `./bin/sudo-grant --check` | Report a leftover sudo grant; `--enable` and `--disable` change it. |
 | `./bin/link-dotfiles` | Reconcile managed links and back up replaced targets. |
 | `./bin/link-dotfiles --status` | Report managed files that are missing or differ, without changing them. |
-| `./bin/repo-mise "$PWD/mise/setup.toml" bootstrap repos status` | Check the Oh My Zsh, plugin, and TPM checkouts without changing them. |
-| `./bin/repo-mise "$PWD/macos/defaults.toml" bootstrap macos defaults status` | Compare macOS preferences with `macos/defaults.toml` without changing them. |
+| `./bin/repo-mise --setup bootstrap repos status` | Check the Oh My Zsh, plugin, and TPM checkouts without changing them. |
+| `./bin/repo-mise --setup bootstrap macos defaults status` | Compare macOS preferences with `macos/mise.macos.toml` without changing them. |
 | `./macos/defaults.sh` | Reapply macOS preferences, input sources, the Dock, and display sleep. |
 | `./bin/setup-tmux` | Install missing TPM plugins and reload a running server. |
 | `./bin/configure-app-settings` | Retry automatic login-item setup. |
@@ -205,12 +238,10 @@ managed runtime does not prevent recovery.
 | `./bin/install-standalone status` | Report the vendor-installed tools in `apps/standalone.tsv`. |
 | `./bin/install-standalone [NAME...]` | Install or repair those tools. `--dry-run` previews. |
 
-The `repo-mise` commands, `link-dotfiles --status`, and `macos/defaults.sh`
-need the pinned mise. Plain `./bin/link-dotfiles` also needs it for the agent
-settings merge and the `mise.lock` link. Without it, the script makes the other
-links, skips those two steps, and exits 1. If a command reports an older mise,
-run `./bin/install-standalone mise`. `mise self-update` can stop below the pin
-because of the four-day `minimum_release_age`.
+The native configuration commands require the pinned mise before they change
+files. If a command reports an older mise, run `./bin/install-standalone mise`.
+`mise self-update` can stop below the pin because of the four-day
+`minimum_release_age`.
 
 Capability resolution and version probes each default to a 10-second deadline;
 set `DOTFILES_TOOL_CHECK_TIMEOUT_SECONDS` to override it. The macOS update probe
@@ -258,15 +289,15 @@ No script proves a fresh-Mac install. See
 
 | Source | Owns |
 | --- | --- |
-| [Brewfile](Brewfile) | Homebrew formulae, casks, taps and App Store entries. |
-| [mise config](home/.config/mise/config.toml) | Runtimes and supported global developer tools. |
-| [mise lockfile](home/.config/mise/mise.lock) | Exact tool versions, download URLs, and checksums for the mise config. |
-| [setup mise config](mise/setup.toml) | Shell framework checkouts, the managed-file list for `link-dotfiles --status`, and the Claude and Codex settings merges. |
+| [Brewfile](apps/Brewfile) | Homebrew formulae, casks, taps and App Store entries. |
+| [mise config](mise/global.toml) | Runtimes and supported global developer tools. |
+| [mise lockfile](mise/mise.lock) | Exact tool versions, download URLs, and checksums for the mise config. |
+| [setup modules](mise/setup/) | Native file declarations, profiles, shell checkouts, Linux packages, and macOS preferences. |
 | [app manifest](apps/manifest.tsv) | Explicit app installation status and manual vendor steps. |
-| [link-dotfiles](bin/link-dotfiles) and `home/` | Managed files and backup-before-replace behavior. |
-| [macOS defaults](macos/defaults.toml) and [defaults.sh](macos/defaults.sh) | OS preferences. The script applies the TOML with mise and handles input sources, the Dock, and display sleep. |
+| [link-dotfiles](bin/link-dotfiles) | Selection checks, durable backups, and native file application. |
+| [macOS defaults](macos/mise.macos.toml) and [defaults.sh](macos/defaults.sh) | OS preferences. The script applies the TOML with mise and handles input sources, the Dock, and display sleep. |
 | [disabled jobs](macos/disabled-jobs.txt) | Apple user launchd jobs that `bin/configure-background-jobs` disables. |
-| [Mackup config](home/.mackup.cfg) | Allowlisted app settings, separate from repo-owned files. |
+| [Mackup config](mackup/mackup.cfg) | Allowlisted app settings, separate from repo-owned files. |
 | `nvim/` | Separate Neovim submodule linked to `~/.config/nvim`; plugins download at first launch. |
 
 Add packages in this order: Mac App Store, then mise, then Homebrew. Coding agent
@@ -281,10 +312,10 @@ creates that link only when the pinned mise is installed. `mise install`
 installs the locked versions, and `mise up` writes newer versions into the
 tracked file. To add a tool, add it to the mise config, then run
 `mise lock --global --platform macos-arm64`. After either change, run
-`git add home/.config/mise` and commit `config.toml`, `mise.lock`, and the
+`git add mise/global.toml mise/mise.lock mise/locks` and commit the tool config, lockfile, and
 `locks/` folder. The pipx entries need their `locks/` dependency graphs.
 
-Fastlane uses `home/.config/mise/gemrc` to skip Ruby documentation generation.
+Fastlane uses `mise/gemrc` to skip Ruby documentation generation.
 This avoids an RDoc failure with Ruby 3.4.11 during installation.
 
 The first `mise install` after the link is created installs the three pipx
@@ -293,7 +324,7 @@ adds checksums for tools whose releases publish none. Commit that lockfile
 change once. A lockfile that is older than your installs moves the tools back
 to the locked versions, so commit the lockfile after each `mise up`.
 
-`vscode "publisher.extension"` entries in `Brewfile` select Cursor extensions.
+`vscode "publisher.extension"` entries in `apps/Brewfile` select Cursor extensions.
 Setup uses Cursor's editor CLI and skips installed extensions.
 
 Mise pins `tsrs`, the Rust port of TypeScript 7, on the Mac and on Linux.
@@ -306,17 +337,17 @@ For other projects, set it to the absolute path of `~/.config/tsrs` in Cursor
 user settings.
 
 AeroSpace and Ghostty links wait for their application bundles. Final links
-share `home/.codex/AGENTS.md` with Codex and Claude, and merge tracked Codex and
+share `codex/AGENTS.md` with Codex and Claude, and merge tracked Codex and
 Claude settings without discarding other keys. Replaced files are backed up.
 The tracked settings disable [Codex memories](https://learn.chatgpt.com/docs/config-file/config-basic)
 with `features.memories = false` and [Claude auto memory](https://code.claude.com/docs/en/env-vars)
 with `env.CLAUDE_CODE_DISABLE_AUTO_MEMORY = "1"`. Existing memory files remain.
 Start new agent sessions after applying these settings.
 `./bin/link-dotfiles` merges these keys with `mise dot apply`, from the
-`[dotfiles]` merge entries in `mise/setup.toml`. It backs up each file that
+`[dotfiles]` entries in the app modules. It backs up each file that
 will change, and it creates a missing file with mode 0600. To preview the
 merge, run
-`./bin/repo-mise "$PWD/mise/setup.toml" dot diff '~/.claude/settings.json' '~/.codex/config.toml'`.
+`./bin/repo-mise --setup dot diff '~/.claude/settings.json' '~/.codex/config.toml'`.
 The Codex merge always uses `~/.codex/config.toml` and ignores `CODEX_HOME`.
 mise refuses a settings file that is a symlink or that is not valid JSON or
 TOML, and it leaves that file unchanged. A managed key that holds a value of

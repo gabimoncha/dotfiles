@@ -6,7 +6,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 . "${repo_root}/bin/lib/backup-discovery.sh"
 icloud_drive="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
 synology_drive="${HOME}/Library/CloudStorage/SynologyDrive-personal"
-mackup_config="${repo_root}/home/.mackup.cfg"
+mackup_config="${repo_root}/mackup/mackup.cfg"
 
 codex_stage_dir=""
 codex_temp_archive=""

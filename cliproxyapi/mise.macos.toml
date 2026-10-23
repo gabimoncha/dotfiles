@@ -1,0 +1,2 @@
+[dotfiles]
+"~/.cli-proxy-api/config.yaml" = { source = "config.yaml", mode = "symlink" }

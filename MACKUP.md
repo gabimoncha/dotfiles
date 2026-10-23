@@ -41,7 +41,7 @@ are passed to Mackup; use component commands for other options.
 
 ## Mackup settings
 
-Mise installs Mackup. [home/.mackup.cfg](home/.mackup.cfg) is the allowlist and
+Mise installs Mackup. [mackup/mackup.cfg](mackup/mackup.cfg) is the allowlist and
 storage configuration. Use explicit copy-mode backup/restore; do not use link
 mode or add apps whose files this repository already links.
 
@@ -61,7 +61,7 @@ selects a hydrated Synology tree, then iCloud. Mackup has one current tree;
 older copies depend on provider file history. If Mackup conflicts with a
 repo-managed file, keep the repo as owner and remove the conflicting app from
 the allowlist. Optional custom definitions are linked if their source exists
-under `home/.config/mackup/applications/`.
+under `mackup/applications/`.
 
 ## Raycast
 
