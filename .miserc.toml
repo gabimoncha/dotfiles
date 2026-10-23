@@ -8,6 +8,7 @@ ignored_config_paths = [
   "git/mise.toml",
   "github/mise.toml",
   "harness/mise.toml",
+  "home",
   "karabiner/mise.macos.toml",
   "linux/container/mise.container.toml",
   "linux/mise.linux.toml",

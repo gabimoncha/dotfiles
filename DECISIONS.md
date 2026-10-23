@@ -110,6 +110,14 @@ linking or updating the lockfile. Native package support does not yet preserve
 all tap trust, app-presence, sudo, and vendor installer rules. Those scripts
 remain behind mise tasks. Shell startup retains static shims and zsh aliases.
 
+The legacy `home/` tree and `linux/hosts/linux-container.md` keep relative file
+links to the current sources.
+The old update command pulls before it runs the new profile checks. Removing
+these paths would break existing HOME links if setup then stops. File links
+preserve untracked local companions in the old directories. Native declarations
+use only the root app sources, and `.miserc.toml` excludes `home/` from project
+config discovery. Remove the legacy links only after old checkouts migrate.
+
 ### Native Steam installer
 
 Steam is a standalone exception. The Homebrew cask installs an Intel-only

@@ -73,6 +73,8 @@ class DotfilesNative
     if @telemetry
       return %w[.config/telemetry/env.sh bin/dotfiles-telemetry-env Library/LaunchAgents/com.dotfiles.telemetry-env.plist].include?(relative) && (@mac || relative == '.config/telemetry/env.sh')
     end
+    # configure-telemetry must compare the old plist before replacing it.
+    return false if relative == 'Library/LaunchAgents/com.dotfiles.telemetry-env.plist'
     return false if ENV.fetch('DOTFILES_LINK_AGENT_CONFIG', '1') != '1' && (inside?(target, @home + '/.codex') || inside?(target, @home + '/.claude'))
     app = { '.aerospace.toml' => 'AeroSpace', 'Library/Application Support/com.mitchellh.ghostty/config' => 'Ghostty' }[relative]
     return false if app && !File.directory?(File.join(ENV.fetch('DOTFILES_APPLICATIONS_DIR', '/Applications'), app + '.app'))
@@ -158,7 +160,7 @@ class DotfilesNative
 
   def source_snapshot(rows)
     setup = File.join(@root, 'mise/setup')
-    paths = %w[bin/repo-mise bin/link-t3-command bin/lib/dotfiles-profile.sh bin/lib/mise-pin.sh].map { |name| File.join(@root, name) } + @configs
+    paths = %w[bin/repo-mise bin/link-t3-command bin/lib/dotfiles-profile.sh bin/lib/mise-pin.sh bin/lib/standalone.sh].map { |name| File.join(@root, name) } + @configs
     directories = @configs.map { |config| File.dirname(config) }
     rows.each do |row|
       origin = row.fetch('origin')

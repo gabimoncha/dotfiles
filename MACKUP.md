@@ -60,8 +60,7 @@ Successful Synology backups are mirrored to iCloud when available. Restore
 selects a hydrated Synology tree, then iCloud. Mackup has one current tree;
 older copies depend on provider file history. If Mackup conflicts with a
 repo-managed file, keep the repo as owner and remove the conflicting app from
-the allowlist. Optional custom definitions are linked if their source exists
-under `mackup/applications/`.
+the allowlist.
 
 ## Raycast
 

@@ -1,8 +1,17 @@
 #!/usr/bin/env bash
 
+dotfiles_profile_normalize() {
+  case "${1:-}" in
+    linux-container) printf 'linux/container\n' ;;
+    linux-vm) printf 'linux/vm-gcp\n' ;;
+    *) printf '%s\n' "${1:-}" ;;
+  esac
+}
+
 # These functions validate the profile before a caller changes machine state.
 dotfiles_profile_validate() {
   local profile="${1:-}" system="${2:-$(uname -s)}"
+  profile="$(dotfiles_profile_normalize "$profile")" || return
   case "$profile" in
     macos/pro|macos/air)
       [[ "$system" == Darwin ]] || {
@@ -27,10 +36,12 @@ dotfiles_profile_validate() {
 }
 
 dotfiles_profile_env() {
-  case "${1:-}" in
+  local profile
+  profile="$(dotfiles_profile_normalize "${1:-}")" || return
+  case "$profile" in
     macos/pro) printf 'pro\n' ;;
     linux/container) printf 'container\n' ;;
-    *) printf 'dotfiles: no setup environment for profile %s.\n' "${1:-}" >&2; return 2 ;;
+    *) printf 'dotfiles: no setup environment for profile %s.\n' "$profile" >&2; return 2 ;;
   esac
 }
 
@@ -72,6 +83,7 @@ dotfiles_profile() {
       return 2
     fi
   fi
+  profile="$(dotfiles_profile_normalize "$profile")" || return
   dotfiles_profile_validate "$profile" "$system" || return
   printf '%s\n' "$profile"
 }
