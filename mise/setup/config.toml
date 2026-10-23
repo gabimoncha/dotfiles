@@ -1,0 +1,4 @@
+min_version = "2026.10.19"
+
+[dotfiles]
+"~/.config/nvim" = { source = "../../nvim", mode = "symlink" }

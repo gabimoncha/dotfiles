@@ -1,0 +1,2 @@
+[dotfiles]
+"~/.config/tsrs/tsgo" = { source = "tsgo", mode = "symlink" }

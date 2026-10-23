@@ -8,9 +8,8 @@ before changing ownership, bootstrap boundaries, or other design decisions.
 ## Platforms
 
 Every shared file runs on macOS and on Linux (Debian and Ubuntu). Shared files
-are the `home/` files that both systems link, the `bin/` scripts that both
-setups run, and the mise tool list. A change that works only on the Mac breaks
-the Linux hosts.
+include app sources that both systems use, the `bin/` scripts that both setups
+run, and the mise tool list. A change that works only on the Mac breaks Linux.
 
 - Write shell scripts for Bash 3.2 (macOS `/bin/bash`) and for both BSD and
   GNU tools. Where the tools differ (`sed -i`, `stat`, `date`, `shasum` and
@@ -18,11 +17,10 @@ the Linux hosts.
   `bin/lib/standalone.sh` does. Setup's Ruby helpers run on `/usr/bin/ruby`:
   2.6 on macOS and 3.1 on Debian 12.
 - Gate macOS-only behavior: `$OSTYPE == darwin*` in zsh, `uname -s` in Bash,
-  `os = "macos"` on a mise tool, and `macos_only_targets` in
-  `bin/link-dotfiles` for a link.
+  `os = "macos"` on a mise tool, and `mise.macos.toml` for native file entries.
 - Linux hosts have no Homebrew, GUI apps, launchd, or Keychain. A container
   can also lack systemd and the agent sandboxes. Linux system packages go in
-  `linux/mise.toml`. Host-specific files go in `linux/hosts/<profile>.*`.
+  `linux/mise.linux.toml`. Host files go in `linux/<profile>/`.
 
 ## Editing
 
@@ -37,10 +35,14 @@ the Linux hosts.
 - Steam uses `bin/install-steam` for Valve's verified ARM64 bootstrapper.
   Preserve its update channel and quarantine. Keep Rosetta installation manual.
 - Keep Brewfile entries alphabetized within sections unless deliberately grouped.
-- Put managed files under `home/`, wire them through `bin/link-dotfiles`, add
-  them to `[dotfiles]` in `mise/setup.toml`, and update the relevant
-  documentation. Keep local companions under ignored
-  `home/.config/local/`; only examples belong in Git.
+- Put managed sources in root app folders. Declare their targets once in the
+  folder's `mise.toml` or platform environment file. Register modules through
+  `mise/setup/conf.d/` and exclude their files from project discovery in
+  `.miserc.toml`. Keep local companions under ignored `local/`; only examples
+  belong in Git. Use `bin/link-dotfiles` for durable backups and native apply.
+- Keep runtime tools in `mise/global.toml` and setup declarations in modules.
+  `bin/repo-mise --setup` loads those modules from `/`. Preserve profile checks
+  before setup writes. Air and VM profiles remain deferred.
 - Never commit credentials, private identities, backup payloads, or machine-local
   state. See [SECURITY.md](SECURITY.md).
 - Keep test fixtures and diagnostic scratch files in system temporary directories.

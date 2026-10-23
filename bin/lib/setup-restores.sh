@@ -15,12 +15,12 @@ codex_portable_state_exists() {
 setup_real_tool() {
   local tool="$1" candidate
   if [[ -x "${HOME}/.local/bin/mise" ]]; then
-    candidate="$(MISE_AUTO_INSTALL=0 "${HOME}/.local/bin/mise" which "$tool" 2>/dev/null)" || candidate=""
+    candidate="$(MISE_AUTO_INSTALL=0 "$repo_root/bin/repo-mise" "$repo_root/mise/global.toml" which "$tool" 2>/dev/null)" || candidate=""
     case "$candidate" in */shims/*) candidate="" ;; esac
     if [[ -n "$candidate" && -x "$candidate" ]]; then printf '%s\n' "$candidate"; return; fi
   fi
   candidate="$(command -v "$tool" 2>/dev/null)" || return 1
-  case "$candidate" in /*/shims/*|*/home/bin/gh|"$HOME/bin/gh") return 1 ;; esac
+  case "$candidate" in /*/shims/*|*/github/bin/gh|"$HOME/bin/gh") return 1 ;; esac
   [[ "$candidate" == /* && -x "$candidate" ]] || return 1
   printf '%s\n' "$candidate"
 }

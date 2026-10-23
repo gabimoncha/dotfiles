@@ -62,11 +62,16 @@ spotlight_hotkey_enabled() {
   [[ -z "$enabled" || "$enabled" == "true" || "$enabled" == "1" ]]
 }
 
+managed_link_matches() {
+  [[ -L "$1" && -f "$2" ]] || return 1
+  /usr/bin/ruby -e 'exit(File.identical?(ARGV.fetch(0), ARGV.fetch(1)) ? 0 : 1)' "$1" "$2"
+}
+
 check_ghostty() {
-  local source="${repo_root}/home/Library/Application Support/com.mitchellh.ghostty/config"
+  local source="${repo_root}/ghostty/config"
   local target="${HOME}/Library/Application Support/com.mitchellh.ghostty/config"
 
-  if [[ -L "$target" && "$(readlink "$target")" == "$source" ]]; then
+  if managed_link_matches "$target" "$source"; then
     ok "Ghostty config is linked at ~/Library/Application Support/com.mitchellh.ghostty/config"
     return 0
   fi
@@ -80,10 +85,10 @@ check_ghostty() {
 }
 
 check_aerospace() {
-  local source="${repo_root}/home/.aerospace.toml"
+  local source="${repo_root}/aerospace/aerospace.toml"
   local target="${HOME}/.aerospace.toml"
 
-  if [[ -L "$target" && "$(readlink "$target")" == "$source" ]]; then
+  if managed_link_matches "$target" "$source"; then
     ok "AeroSpace config is linked at ~/.aerospace.toml"
     return 0
   fi
@@ -114,7 +119,7 @@ check_tmux() {
     if [[ ! -d "${HOME}/.tmux/plugins/${plugin_name}" ]]; then
       missing+=("$plugin_name")
     fi
-  done < <(sed -n "s/^[[:space:]]*set -g @plugin ['\"]\\([^'\"]*\\)['\"].*/\\1/p" "${repo_root}/home/.tmux.conf")
+  done < <(sed -n "s/^[[:space:]]*set -g @plugin ['\"]\\([^'\"]*\\)['\"].*/\\1/p" "${repo_root}/tmux/tmux.conf")
 
   if [[ ${#missing[@]} -eq 0 ]]; then
     ok "tmux plugins are installed"
@@ -195,12 +200,14 @@ check_background_jobs() {
   fi
 }
 
-check_aerospace
-check_ghostty
 check_tmux
-check_raycast
-check_sudo_touch_id
-check_background_jobs
+if [[ "$(uname -s)" == Darwin ]]; then
+  check_aerospace
+  check_ghostty
+  check_raycast
+  check_sudo_touch_id
+  check_background_jobs
+fi
 
 if [[ $issues -gt 0 ]]; then
   printf '\nFound %s app-state issue(s).\n' "$issues"

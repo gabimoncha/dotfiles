@@ -17,7 +17,7 @@ trap github_bootstrap_cleanup EXIT
 install_gh() {
 mise_path="${HOME}/.local/bin/mise"
 [[ -x "$mise_path" ]] || { printf 'Standalone mise is unavailable\n' >&2; exit 1; }
-if "$repo_root/home/bin/dotfiles-gh-real" --version >/dev/null 2>&1; then
+if "$repo_root/github/bin/dotfiles-gh-real" --version >/dev/null 2>&1; then
   printf 'GitHub CLI is already available (no upgrade)\n'
   return 0
 fi
@@ -48,6 +48,6 @@ if ! env -i HOME="$bootstrap_dir/home" PATH="/usr/bin:/bin:/usr/sbin:/sbin" \
   printf 'Isolated gh acquisition failed; no other tools were requested. Check network/API quota before retrying.\n' >&2
   return 1
 fi
-"$repo_root/home/bin/dotfiles-gh-real" --version
+"$repo_root/github/bin/dotfiles-gh-real" --version
 }
 runtime_with_lock mise install_gh

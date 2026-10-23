@@ -1,0 +1,2 @@
+[dotfiles]
+"~/.codex/config.toml/dotfiles" = { source = "config.toml", merge = true }

@@ -66,7 +66,7 @@ live installs, account changes, personal restores, or macOS defaults.
 
 <!--
 One or two sentences on what could break and on which platforms. A shared
-file (`home/` files that both systems link, `bin/` scripts that both setups
+file (app sources that both systems use, `bin/` scripts that both setups
 run, the mise tool list) runs on macOS and on Linux. Name changes to link
 backups or user state, setup reruns, `mise prune`, the lockfile, and
 anything near credentials (SECURITY.md).

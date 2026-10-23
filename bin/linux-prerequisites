@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Installs what setup itself needs on Debian or Ubuntu, before the setup
 # runtime and mise exist. Setup diagnostics run on /usr/bin/ruby, as they do on
-# macOS. Uses only Bash and apt. Other system packages are in linux/mise.toml.
+# macOS. Uses only Bash and apt. Native Linux modules own other system packages.
 set -euo pipefail
 usage() { printf 'Usage: linux-prerequisites [--dry-run]\n'; }
 dry_run=0

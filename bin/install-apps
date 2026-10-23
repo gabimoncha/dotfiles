@@ -4,6 +4,13 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 manifest="${repo_root}/apps/manifest.tsv"
+if [[ "$(uname -s)" != Darwin ]]; then
+  printf 'The app manifest runs only on macOS.\n' >&2
+  exit 1
+fi
+. "${repo_root}/bin/lib/dotfiles-profile.sh"
+DOTFILES_PROFILE="$(dotfiles_profile)" || exit 1
+export DOTFILES_PROFILE
 . "${repo_root}/bin/lib/setup-runtime.sh"
 for runtime_argument in "$@"; do
   [[ "$runtime_argument" != --dry-run ]] || DOTFILES_RUN_MODE=dry-run
@@ -130,8 +137,8 @@ install_mise_tool() {
 
 install_mise_tool_unlocked() {
   local status=0 refresh_status=0
-  (cd "$repo_root" && mise install "$1") || status=$?
-  (cd "$repo_root" && mise reshim) || refresh_status=$?
+  "${repo_root}/bin/repo-mise" "${repo_root}/mise/global.toml" install "$1" || status=$?
+  "${repo_root}/bin/repo-mise" "${repo_root}/mise/global.toml" reshim || refresh_status=$?
   [[ "$status" -ne 0 ]] || status="$refresh_status"
   return "$status"
 }

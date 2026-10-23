@@ -1,0 +1,9 @@
+[vars]
+dotfiles_profile = "linux/container"
+dotfiles_shared_instructions = "{{ config_root }}/../../codex/AGENTS.md"
+dotfiles_host_instructions = "{{ config_root }}/instructions.md"
+
+[dotfiles]
+"~/.codex/AGENTS.md" = { source = "../../codex/linux-instructions.md.tera", mode = "template" }
+"~/.claude/rules/host.md" = { source = "instructions.md", mode = "symlink" }
+"~/.codex/config.toml/host" = { source = "codex.toml", merge = true }
