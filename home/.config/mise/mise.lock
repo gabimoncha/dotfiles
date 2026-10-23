@@ -2181,12 +2181,12 @@ backend = "npm:@yaakapp/cli"
 specifiers = ["latest"]
 
 [[tools."npm:agent-browser"]]
-version = "0.39.1"
+version = "0.39.2"
 backend = "npm:agent-browser"
 specifiers = ["latest"]
 
 [[tools."npm:agent-device"]]
-version = "0.21.30"
+version = "0.21.31"
 backend = "npm:agent-device"
 specifiers = ["latest"]
 
