@@ -197,16 +197,16 @@ alt-shift-l = ['join-with right', 'mode main']
 # Left hand side of the assignment is the workspace name
 # Right hand side of the assignment is the monitor pattern
 1 = 'LG' # T3 Code
-2 = 'LS24AG30x' # Codex
-3 = 'LG' # Development tools
-4 = 'LG' # iTerm2 and Ghostty
+2 = 'LS24AG30x' # Ghostty
+3 = 'LG' # Codex
+4 = 'LG'
 0 = 'LG' # Cursor
-Q = 'built-in' # obsidian
-W = 'built-in' # chats
-E = 'built-in' # business chats
-A = 'built-in' # browser
+Q = 'built-in' # Obsidian and browsers
+W = 'built-in' # Chats
+E = 'built-in' # Business chats
+A = 'built-in' # Linear
 S = 'built-in' # iOS Simulator and QEMU
-D = 'built-in' # defaults
+D = 'built-in' # Defaults
 
 
 # [[on-window-detected]]
@@ -218,87 +218,108 @@ D = 'built-in' # defaults
 # run = ['layout floating', 'move-node-to-workspace S']  # The callback itself
 
 
-### Cursor
-[[on-window-detected]]
-if.app-id = 'com.todesktop.230313mzl4w4u92'
-run = ['layout floating', 'move-node-to-workspace 0']
-
-### Cursor Agents
-[[on-window-detected]]
-if.window-title-regex-substring = 'Cursor Agents'
-run = ['layout floating', 'move-node-to-workspace 0']
-
-### iTerm2
-[[on-window-detected]]
-if.app-id = 'com.googlecode.iterm2'
-run = ['layout tiling', 'move-node-to-workspace 4']
-
-### Ghostty
-[[on-window-detected]]
-if.app-id = 'com.mitchellh.ghostty'
-run = [
-  # FIX: this is a workaround for https://github.com/nikitabobko/AeroSpace/issues/68
-  # this was also observed in:
-  # - https://github.com/ghostty-org/ghostty/issues/1840
-  # - https://github.com/ghostty-org/ghostty/issues/2006
-  'layout floating',
-  'move-node-to-workspace 4',
-]
-
-### Development simulators
-[[on-window-detected]]
-if.app-id = 'com.apple.iphonesimulator'
-run = ['layout floating', 'move-node-to-workspace S']
-
-### Codex
-[[on-window-detected]]
-if.app-id = 'com.openai.codex'
-run = ['layout floating', 'move-node-to-workspace 2']
-
-### Development emulator
-[[on-window-detected]]
-if.app-name-regex-substring = 'qemu-system-aarch64'
-run = ['layout floating', 'move-node-to-workspace S']
-
+### 1: T3 Code
 [[on-window-detected]]
 if.app-id = 'com.t3tools.t3code'
 run = ['layout floating', 'move-node-to-workspace 1']
 
+### 2: Ghostty
+[[on-window-detected]]
+if.app-id = 'com.mitchellh.ghostty'
+run = [
+  # Workaround for https://github.com/nikitabobko/AeroSpace/issues/68
+  # Also reported in:
+  # - https://github.com/ghostty-org/ghostty/issues/1840
+  # - https://github.com/ghostty-org/ghostty/issues/2006
+  'layout floating',
+  'move-node-to-workspace 2',
+]
+
+### 3: Codex
+[[on-window-detected]]
+if.app-id = 'com.openai.codex'
+run = ['layout floating', 'move-node-to-workspace 3']
+
+### 0: Cursor
+[[on-window-detected]]
+if.app-id = 'com.todesktop.230313mzl4w4u92'
+run = ['layout floating', 'move-node-to-workspace 0']
+
+### 0: Cursor Agents
+[[on-window-detected]]
+if.window-title-regex-substring = 'Cursor Agents'
+run = ['layout floating', 'move-node-to-workspace 0']
+
+### Q: Obsidian and browsers
+
+# Obsidian
 [[on-window-detected]]
 if.app-id = 'md.obsidian'
 run = ['layout floating', 'move-node-to-workspace Q']
 
-### Chats
-[[on-window-detected]]
-if.app-id = 'net.whatsapp.WhatsApp'
-run = ['layout floating', 'move-node-to-workspace W']
-
-[[on-window-detected]]
-if.app-id = 'ru.keepcoder.Telegram'
-run = ['layout floating', 'move-node-to-workspace W']
-
-[[on-window-detected]]
-if.app-id = 'org.whispersystems.signal-desktop'
-run = ['layout floating', 'move-node-to-workspace W']
-
-### Google Chrome browser
+# Google Chrome
 [[on-window-detected]]
 if.app-id = 'com.google.Chrome'
 run = ['layout floating', 'move-node-to-workspace Q']
 
-### Helium browser
+# Helium
 [[on-window-detected]]
 if.app-id = 'net.imput.helium'
 run = ['layout floating', 'move-node-to-workspace Q']
 
-### Business chats
+### W: Chats
+
+# WhatsApp
+[[on-window-detected]]
+if.app-id = 'net.whatsapp.WhatsApp'
+run = ['layout floating', 'move-node-to-workspace W']
+
+# Telegram
+[[on-window-detected]]
+if.app-id = 'ru.keepcoder.Telegram'
+run = ['layout floating', 'move-node-to-workspace W']
+
+# Signal
+[[on-window-detected]]
+if.app-id = 'org.whispersystems.signal-desktop'
+run = ['layout floating', 'move-node-to-workspace W']
+
+### E: Business chats
+
+# Slack
 [[on-window-detected]]
 if.app-id = 'com.tinyspeck.slackmacgap'
 run = ['layout floating', 'move-node-to-workspace E']
 
+# Discord
 [[on-window-detected]]
 if.app-id = 'com.hnc.Discord'
 run = ['layout tiling', 'move-node-to-workspace E']
+
+### A: Linear
+[[on-window-detected]]
+if.app-id = 'com.linear'
+run = ['layout tiling', 'move-node-to-workspace A']
+
+### S: iOS Simulator and QEMU
+
+# iOS Simulator
+[[on-window-detected]]
+if.app-id = 'com.apple.iphonesimulator'
+run = ['layout floating', 'move-node-to-workspace S']
+
+# QEMU
+[[on-window-detected]]
+if.app-name-regex-substring = 'qemu-system-aarch64'
+run = ['layout floating', 'move-node-to-workspace S']
+
+# These rules set layout only. They stay above the workspace D catch-all,
+# which matches every remaining window.
+
+### iTerm2
+[[on-window-detected]]
+if.app-id = 'com.googlecode.iterm2'
+run = 'layout floating'
 
 ### Finder
 [[on-window-detected]]
@@ -340,29 +361,27 @@ run = 'layout floating'
 if.app-id = 'com.superduper.superwhisper'
 run = 'layout floating'
 
-### Typeless status pill
+### Typeless
 [[on-window-detected]]
 if.app-id = 'now.typeless.desktop'
-if.window-title-regex-substring = '^Status$'
 run = 'layout floating'
 
-### Typeless main window
+### Scrawl
 [[on-window-detected]]
-if.app-id = 'now.typeless.desktop'
-run = ['layout floating', 'move-node-to-workspace D']
+if.app-id = 'dev.kitlangton.scrawl'
+run = 'layout floating'
+
+### Vorssaint
+[[on-window-detected]]
+if.app-id = 'com.vorssaint.utils'
+run = 'layout floating'
 
 ### GIPHY
 [[on-window-detected]]
 if.app-id = 'com.fasthatchapps.gifgrabberosx'
 run = 'layout floating'
 
-### Linear
-[[on-window-detected]]
-if.app-id = 'com.linear'
-run = ['layout tiling', 'move-node-to-workspace A']
-
-
-### DEFAULT WINDOWS
+### D: Defaults
 [[on-window-detected]]
 check-further-callbacks = true
 run = ['layout floating', 'move-node-to-workspace D']
