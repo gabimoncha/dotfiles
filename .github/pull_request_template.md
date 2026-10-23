@@ -13,17 +13,26 @@ setup stage that failed.
 ## What changes
 
 <!--
-One picture. Pick the smallest view that makes the point:
-- A Mermaid flowchart when the change adds, removes, or reorders setup
-  steps, for example a stage in the macOS or Linux plan of `bin/setup`.
-  Boxes are steps, arrows mean "then", and diamonds are decisions.
-- A Mermaid state diagram (stateDiagram-v2) when the change adds or changes
-  states, for example the result of a setup stage (passed, failed, blocked,
-  deferred) and the events that move between them.
-- A table for version changes: tool, old version, new version, and the
-  platforms it installs on (macOS, Linux, or both).
-- For other changes: a diff of a file, a link map (source under `home/` to
-  target under HOME), or the command output a user sees.
+One picture, with a Before and an After. Draw two diagrams, Before and
+After, or draw one diagram and mark the changed parts with
+`classDef changed`. For a new thing, write "Before: none."
+
+Pick the diagram with one question: does the next step depend on an input
+from outside, which can come late, come wrong, or not come?
+- Yes: a Mermaid state diagram (stateDiagram-v2). An outside input is a
+  user action, a reply from a service or a device, a webhook, a timer, or
+  a cancel. A state is a place where the thing waits, for example a setup
+  stage at "Waiting for macOS updates", "Waiting for App Store sign-in",
+  or "Waiting for manual approval". End states can be passed, failed,
+  blocked, or deferred. An arrow is the event that moves it on. Draw the
+  arrows for the bad events too (timeout, error, cancel, retry), because
+  the change can go wrong there.
+- No: a Mermaid flowchart. The procedure runs from start to end with the
+  data that it has, for example a run of `bin/link-dotfiles` or a lockfile
+  update. Boxes are steps, arrows mean "then", and diamonds are decisions
+  on that data.
+- No diagram fits (a tool version bump, a rename, a setting value): a
+  table of old and new values, a diff, or pseudocode.
 Add up to three bullets for what the picture misses, including what you
 left out on purpose.
 -->
