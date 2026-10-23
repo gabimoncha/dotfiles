@@ -114,6 +114,9 @@ sandbox, which cannot start on its kernel. Edit the source files, then rerun
 
 `DOTFILES_SKIP_GITHUB_AUTH=1 ./bin/setup` defers the GitHub login. mise then
 installs tools without a GitHub token. Log in later with `./bin/auth-setup`.
+The login asks for the `workflow` scope, so Git can push changes to GitHub
+Actions files. On an existing login, `./bin/auth-setup --api-only` adds a
+missing scope.
 Linux uses Git over HTTPS with the GitHub CLI token, not an SSH key. Agents on
 a headless host start without an SSH agent and cannot unlock a protected key.
 

@@ -271,6 +271,43 @@ ensure_github_public_key_scope() {
   }
 }
 
+# Scopes that every login needs beyond the gh defaults (repo, read:org, gist).
+# Git needs workflow to push changes under .github/workflows.
+github_required_scopes="workflow"
+
+# Prints the scopes of a classic OAuth token, for example "gist, repo".
+# Prints nothing for a token without the header, such as a fine-grained token.
+github_token_scopes() {
+  run_gh api --hostname github.com --include --method HEAD user 2>/dev/null |
+    awk 'tolower($0) ~ /^x-oauth-scopes:/ { sub(/^[^:]*:[ \t]*/, ""); sub(/\r$/, ""); print; exit }'
+}
+
+# A missing scope never gates API readiness; it only blocks some pushes.
+ensure_github_scopes() {
+  local scopes scope missing=""
+
+  if [[ -n "${GH_TOKEN:-}" || -n "${GITHUB_TOKEN:-}" ]]; then
+    return 0
+  fi
+  scopes="$(github_token_scopes)" || scopes=""
+  [[ -n "$scopes" ]] || return 0
+  for scope in ${github_required_scopes//,/ }; do
+    case ", ${scopes}, " in
+      *", ${scope}, "*) ;;
+      *) missing="${missing:+${missing},}${scope}" ;;
+    esac
+  done
+  [[ -n "$missing" ]] || return 0
+
+  if [[ ! -t 0 ]]; then
+    warn "GitHub CLI token lacks the ${missing} scope; rerun ./bin/auth-setup --api-only interactively, or run: gh auth refresh -h github.com -s ${missing}"
+    return 0
+  fi
+  log "Adding GitHub CLI scope: ${missing}"
+  run_gh auth refresh --hostname github.com --scopes "$missing" ||
+    warn "Could not add GitHub CLI scope ${missing}; run: gh auth refresh -h github.com -s ${missing}"
+}
+
 ensure_github_auth() {
   if ! gh_available; then
     warn "A real managed gh executable is unavailable. Run ./bin/setup to acquire it with isolated configuration."
@@ -280,6 +317,7 @@ ensure_github_auth() {
   if run_gh auth status --hostname github.com >/dev/null 2>&1; then
     log "GitHub CLI is authenticated"
     verify_github_api || return 1
+    ensure_github_scopes
     disable_github_telemetry
     return 0
   fi
@@ -290,7 +328,8 @@ ensure_github_auth() {
   fi
 
   log "Authenticating GitHub CLI with ${git_protocol} git protocol"
-  run_gh auth login --hostname github.com --git-protocol "$git_protocol" --skip-ssh-key || return 1
+  run_gh auth login --hostname github.com --git-protocol "$git_protocol" --skip-ssh-key \
+    --scopes "$github_required_scopes" || return 1
   if ! run_gh auth status --hostname github.com >/dev/null 2>&1; then
     warn "GitHub CLI authentication did not persist; rerun: gh auth login -h github.com"
     return 1
