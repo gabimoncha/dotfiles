@@ -48,6 +48,8 @@ the Linux hosts.
 - `nvim/` is a separate repository. Do not edit it unless explicitly requested.
 - Keep macOS changes conservative and reversible. Correct documentation drift
   when found; distinguish current behavior from proposed fixes.
+- Write every PR body from `.github/pull_request_template.md`. Delete the
+  sections that do not apply. `gh pr create --body` skips the template.
 
 ## Setup repairs
 
