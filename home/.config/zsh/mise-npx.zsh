@@ -1,0 +1,1 @@
+../../../zsh/mise-npx.zsh

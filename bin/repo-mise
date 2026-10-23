@@ -4,7 +4,7 @@
 # Legacy: ./bin/repo-mise <config.toml> <mise arguments...>
 set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-. "${repo_root}/bin/lib/mise-pin.sh"
+. "${repo_root}/bin/lib/standalone.sh"
 if [[ $# -lt 2 ]]; then
   printf 'Usage: repo-mise {--setup | <config.toml>} <mise arguments...>\n' >&2
   exit 2
@@ -49,7 +49,7 @@ if [[ "$setup_mode" == 1 ]]; then
   for argument in "$@"; do
     [[ "$argument" == -- ]] && break
     case "$argument" in
-      -E*|--env|--env=*)
+      -E*|-P*|--env|--env=*|--profile|--profile=*)
         printf 'repo-mise: select the setup environment with DOTFILES_PROFILE or mise/setup/miserc.local.toml.\n' >&2
         exit 2
         ;;
@@ -61,16 +61,14 @@ if [[ ! -x "$mise_bin" ]]; then
   printf 'repo-mise: mise is not installed at %s. Run ./bin/install-standalone mise.\n' "$mise_bin" >&2
   exit 127
 fi
+standalone_mise_isolate
 # `mise self-update` can stop below the pin because of minimum_release_age.
 if ! mise_at_pin "$mise_bin"; then
   printf 'repo-mise: %s is older than the pinned mise %s. Run ./bin/install-standalone mise.\n' \
     "$mise_bin" "$pinned_mise_version" >&2
   exit 1
 fi
-# Project discovery inside HOME can load the live global config a second time.
-cd /
 if [[ "$setup_mode" == 1 ]]; then
-  unset MISE_GLOBAL_CONFIG_FILE MISE_CONFIG_FILE MISE_ENV MISE_DOTFILES_ROOT
   if [[ -n "$setup_config" ]]; then
     MISE_CONFIG_DIR="${repo_root}/mise/setup" MISE_GLOBAL_CONFIG_FILE="$setup_config" \
       MISE_AUTO_ENV=1 MISE_ENV="$setup_env" DOTFILES_PROFILE="$setup_profile" \
@@ -79,6 +77,5 @@ if [[ "$setup_mode" == 1 ]]; then
   MISE_CONFIG_DIR="${repo_root}/mise/setup" MISE_AUTO_ENV=1 MISE_ENV="$setup_env" \
     DOTFILES_PROFILE="$setup_profile" MISE_SELF_UPDATE_AUTO=0 exec "$mise_bin" "$@"
 fi
-unset MISE_CONFIG_FILE MISE_ENV MISE_DOTFILES_ROOT
 MISE_GLOBAL_CONFIG_FILE="$config" MISE_ENV= MISE_AUTO_ENV=0 MISE_SELF_UPDATE_AUTO=0 \
   exec "$mise_bin" "$@"

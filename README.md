@@ -24,6 +24,10 @@ Use `DOTFILES_PROFILE` for an explicit selection. The ignored
 `env = ["pro"]`. The profile must match the operating system. VM setup does not
 inherit the container's sandbox exception.
 
+The old `DOTFILES_PROFILE=linux-container` value selects `linux/container`.
+The old `linux-vm` value selects the deferred `linux/vm-gcp` profile and stops
+before changes.
+
 After configuration links are installed, these commands work from any directory:
 
 ```bash
@@ -41,6 +45,33 @@ mise run doctor
 The scripts in `bin/` remain direct recovery commands. For configuration changes
 on an existing machine, preview and apply with `bin/link-dotfiles`; a full setup
 run is not required. Keep backups until the new links and a new shell work.
+
+## Existing checkouts
+
+On a Mac Pro, select the profile before you update the old checkout:
+
+```bash
+export DOTFILES_PROFILE=macos/pro
+git pull --ff-only
+```
+
+For later sessions, save `env = ["pro"]` in the ignored
+`mise/setup/miserc.local.toml`. Do not select Pro for an Air. Air and VM setup
+remain deferred.
+
+When you are ready to migrate configuration, use mise 2026.10.17 or newer and run:
+
+```bash
+./bin/link-dotfiles --dry-run
+./bin/link-dotfiles
+```
+
+This applies configuration without a full setup run. Keep the backups until the
+new links and a new shell work. The legacy `home/` paths and
+`linux/hosts/linux-container.md` contain relative links to the current sources.
+These links keep existing configuration readable after
+a pull, even if setup stops because the profile is missing or deferred. Keep
+local companion files in place until configuration migration is complete.
 
 ## Fresh Mac
 
