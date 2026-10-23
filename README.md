@@ -272,6 +272,7 @@ No script proves a fresh-Mac install. See
 Add packages in this order: Mac App Store, then mise, then Homebrew. Coding agent
 CLIs and mise itself are explicit standalone-installer exceptions. T3 desktop
 uses the nightly Homebrew cask.
+Hex and Scrawl use their vendor taps, `anomalyco/tap` and `kitlangton/tap`.
 Steam uses the verified native installer described below.
 See [DECISIONS.md](DECISIONS.md) for the reasons and constraints.
 

@@ -5,9 +5,11 @@
 
 # Every third-party tap here has been reviewed as part of this machine setup.
 # Persist that approval so later Homebrew commands use the same trust policy.
+tap "anomalyco/tap", trusted: true
 tap "felixkratz/formulae", trusted: true
 tap "grishka/grishka", trusted: true
 tap "homebrew-zathura/zathura", trusted: true
+tap "kitlangton/tap", trusted: true
 tap "nikitabobko/tap", trusted: true
 tap "xykong/tap", trusted: true
 
@@ -59,6 +61,7 @@ cask "font-hack-nerd-font"
 cask "ghostty"
 cask "google-chrome"
 cask "helium-browser"
+cask "anomalyco/tap/hex"
 cask "iina"
 cask "iterm2"
 cask "karabiner-elements"
@@ -72,6 +75,7 @@ cask "obsidian"
 cask "orbstack"
 cask "pgadmin4"
 cask "raycast"
+cask "kitlangton/tap/scrawl"
 cask "signal"
 cask "slack"
 cask "spotify"

@@ -8,6 +8,7 @@ gcc	formula	gcc	-	Homebrew formula because mise ls-remote gcc errors.
 ghostty	cask	ghostty	Ghostty	Homebrew cask.
 google-chrome	cask	google-chrome	Google Chrome	Homebrew cask.
 helium-browser	cask	helium-browser	Helium	Homebrew cask.
+hex	cask	anomalyco/tap/hex	Hex	Vendor Homebrew cask for local dictation.
 iina	cask	iina	IINA	Homebrew cask.
 iterm2	cask	iterm2	iTerm	Homebrew cask.
 linear	cask	linear	Linear	Homebrew cask.
@@ -21,6 +22,7 @@ pgadmin4	cask	pgadmin4	pgAdmin 4	Homebrew cask.
 pinokio	manual	https://pinokio.computer/	Pinokio	No Homebrew cask currently exists; install from vendor.
 postgresql	formula	postgresql@18	-	Homebrew formula because mise ls-remote postgresql errors.
 raycast	cask	raycast	Raycast	Homebrew cask; restore settings with a .rayconfig export.
+scrawl	cask	kitlangton/tap/scrawl	Scrawl	Vendor Homebrew cask for screen and voice captures.
 signal	cask	signal	Signal	Homebrew cask.
 slack	cask	slack	Slack	Homebrew cask.
 spotify	cask	spotify	Spotify	Homebrew cask.
@@ -31,5 +33,6 @@ synology-image-assistant	cask	synology-image-assistant	Synology Image Assistant	
 t3-code	cask	t3-code@nightly	T3 Code (Nightly)	Nightly desktop app.
 tailscale	cask	tailscale-app	Tailscale	Homebrew cask for the menu-bar app and full Mac UX.
 typeless	cask	typeless	Typeless	Homebrew cask.
+vorssaint	cask	vorssaint	Vorssaint	Homebrew cask for the menu bar toolkit.
 yaak	cask	yaak	Yaak	Homebrew cask; GUI companion to @yaakapp/cli in mise.
 zoom	cask	zoom	zoom.us	Homebrew cask.
