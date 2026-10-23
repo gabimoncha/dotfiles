@@ -12,7 +12,9 @@ cargo-binstall = "1.26.0"
 sccache = "latest"
 direnv = "latest"
 bun = "1.4.4"
-git-lfs = "latest"
+# Security exception to the four-day delay: 3.8.1 fixes CVE-2026-105802,
+# CVE-2026-105803, CVE-2026-69260, and CVE-2026-69261.
+git-lfs = "3.8.1"
 uv = "0.13.4"
 fzf = "latest"
 ripgrep = "latest"
