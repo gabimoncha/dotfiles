@@ -189,13 +189,15 @@ and the tools without an opt-out.
 | `--skip-mobile-dev` | Skip Xcode, iOS support, Android Studio, and `apps/mobile.Brewfile`. Mobile tools in the shared mise list still install. |
 
 [bin/setup](bin/setup) lists the steps in order, and they run one at a time.
-The foundation steps are required: preflight, the Command Line Tools, `sudo`,
-Homebrew, mise, the GitHub CLI, the links, and in the first phase the agent
-CLIs. When one of them fails, setup stops and records the later steps as
-blocked. The other steps are marked `--optional`. Each one checks what it
-needs, records its failure, and lets the run go on. For example, the mise
-inventory runs only after the GitHub check passes. The telemetry step runs
-even after a failure.
+The foundation steps are required: preflight, the Command Line Tools, `sudo`
+and its keepalive, Homebrew and its environment, mise, the GitHub CLI, the
+links, and the Brewfile preparation (`brewfiles`). On Linux, the system
+packages are required too. In the first macOS phase, so are the agent CLIs
+and the permission handoff. When a required step fails, setup stops and
+records the later steps as blocked. The other steps are marked `--optional`.
+Each one checks what it needs, records its failure, and lets the run go on.
+For example, the mise inventory runs only after the GitHub check passes. The
+telemetry step runs even after a failure.
 
 ## Set up a Linux host
 
