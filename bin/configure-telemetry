@@ -60,14 +60,26 @@ telemetry_file() {
 }
 
 telemetry_gui_environment() {
-  local launchctl_path old_job="com.dotfiles.telemetry-env" result=0 account_home
-  local old_plist="$HOME/Library/LaunchAgents/com.dotfiles.telemetry-env.plist"
+  local launchctl_path old_job="com.dotfiles.telemetry-env" result=0 account_home folder backup
+  local agents="$HOME/Library/LaunchAgents"
+  local old_plist="$agents/com.dotfiles.telemetry-env.plist" new_plist="$agents/dev.mise.telemetry-env.plist"
   # The job loads into the account's GUI session. A run with a temporary HOME
   # must not replace it.
   account_home="$(dscl . -read "/Users/$(id -un)" NFSHomeDirectory 2>/dev/null | awk '{print $2}')" || account_home=""
   if [[ -z "$account_home" || "$(cd "$account_home" 2>/dev/null && pwd -P)" != "$(cd "$HOME" && pwd -P)" ]]; then
     printf 'Skipped the telemetry login job: HOME is not the home folder of this account.\n'
     return 0
+  fi
+  # mise writes the job file, and it follows links. As for bin/link-dotfiles,
+  # the folder must resolve inside HOME and outside this repository.
+  folder="$agents"
+  while [[ ! -d "$folder" ]]; do folder="$(dirname "$folder")"; done
+  folder="$(cd "$folder" && pwd -P)"
+  if [[ "$folder/" != "$(cd "$HOME" && pwd -P)/"* || "$folder/" == "$(cd "$repo_root" && pwd -P)/"* ||
+    -L "$new_plist" || -L "$old_plist" ]]; then
+    printf 'Could not install the telemetry login job: ~/Library/LaunchAgents must be a folder in HOME, and its job files must not be links.\n' >&2
+    status=1
+    return
   fi
   if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
     printf 'Would install and load the telemetry environment login job\n'
@@ -77,11 +89,19 @@ telemetry_gui_environment() {
   "$repo_root/bin/link-dotfiles" "$HOME/.config/zsh/telemetry.sh" "$HOME/bin/dotfiles-telemetry-env" ||
     { status=1; return; }
   # Setup copied its own job definition before mise managed the job.
-  if [[ -f "$old_plist" && ! -L "$old_plist" ]]; then
+  if [[ -f "$old_plist" ]]; then
     launchctl_path="$(telemetry_tool launchctl)" || { status=1; return; }
+    if [[ -L "$HOME/.dotfiles-backups" ]]; then
+      printf 'Could not back up the old login job: ~/.dotfiles-backups is a link. Replace it with a folder.\n' >&2
+      status=1
+      return
+    fi
+    mkdir -p "$HOME/.dotfiles-backups" && chmod 700 "$HOME/.dotfiles-backups" &&
+      backup="$(mktemp -d "$HOME/.dotfiles-backups/telemetry-$(date +%Y%m%d-%H%M%S)-XXXXXX")" &&
+      mv "$old_plist" "$backup/" ||
+      { printf 'Could not back up the old login job %s.\n' "$old_job" >&2; status=1; return; }
     standalone_probe "$launchctl_path" bootout "gui/$UID/$old_job" >/dev/null 2>&1 || true
-    rm -f "$old_plist"
-    printf 'Removed the old login job %s\n' "$old_job"
+    printf 'Unloaded the old login job %s. Its file is in %s\n' "$old_job" "$backup"
   fi
   # The job runs at the next login. The script runs now for this session.
   standalone_probe "$HOME/bin/dotfiles-telemetry-env" || result=$?
