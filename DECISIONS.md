@@ -143,7 +143,9 @@ cannot fix that either: each pull would overwrite the live file and lose the
 machine's own keys. So the sync has two directions. `bin/link-dotfiles` merges
 the keys of `configs/claude/settings.json` and `configs/codex/config.toml` into
 the live files and keeps every other key. `bin/save-settings` copies the
-settings that `configs/<app>/sync-keys` marks public back into the source. A
+settings that `configs/<app>/sync-keys` marks public back into the source.
+mise 2026.10.18 cannot do this step: `mise dot add` refuses a merged file, and
+`mise dot track` saves whole files, private keys included, to its own history. A
 list of public settings, not a list of private ones, decides what is saved:
 an ordinary key can hold a credential, such as an authorization header, and a
 section can gain new fields, such as exporter headers. So a public rule names
