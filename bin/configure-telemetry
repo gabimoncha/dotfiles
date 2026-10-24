@@ -59,8 +59,25 @@ telemetry_file() {
   fi
 }
 
+telemetry_backup_dir=""
+# Usage: telemetry_backup FILE mv|cp. Keeps FILE in one private folder per run.
+telemetry_backup() {
+  if [[ -z "$telemetry_backup_dir" ]]; then
+    if [[ -L "$HOME/.dotfiles-backups" ]]; then
+      printf '~/.dotfiles-backups is a link. Replace it with a folder.\n' >&2
+      return 1
+    fi
+    mkdir -p "$HOME/.dotfiles-backups" && chmod 700 "$HOME/.dotfiles-backups" &&
+      telemetry_backup_dir="$(mktemp -d "$HOME/.dotfiles-backups/telemetry-$(date +%Y%m%d-%H%M%S)-XXXXXX")" || return
+  fi
+  case "$2" in
+    mv) mv "$1" "$telemetry_backup_dir/" ;;
+    *) cp -p "$1" "$telemetry_backup_dir/" ;;
+  esac
+}
+
 telemetry_gui_environment() {
-  local launchctl_path old_job="com.dotfiles.telemetry-env" result=0 account_home folder backup
+  local launchctl_path old_job="com.dotfiles.telemetry-env" result=0 account_home folder
   local agents="$HOME/Library/LaunchAgents"
   local old_plist="$agents/com.dotfiles.telemetry-env.plist" new_plist="$agents/dev.mise.telemetry-env.plist"
   # The job loads into the account's GUI session. A run with a temporary HOME
@@ -91,17 +108,16 @@ telemetry_gui_environment() {
   # Setup copied its own job definition before mise managed the job.
   if [[ -f "$old_plist" ]]; then
     launchctl_path="$(telemetry_tool launchctl)" || { status=1; return; }
-    if [[ -L "$HOME/.dotfiles-backups" ]]; then
-      printf 'Could not back up the old login job: ~/.dotfiles-backups is a link. Replace it with a folder.\n' >&2
-      status=1
-      return
-    fi
-    mkdir -p "$HOME/.dotfiles-backups" && chmod 700 "$HOME/.dotfiles-backups" &&
-      backup="$(mktemp -d "$HOME/.dotfiles-backups/telemetry-$(date +%Y%m%d-%H%M%S)-XXXXXX")" &&
-      mv "$old_plist" "$backup/" ||
+    telemetry_backup "$old_plist" mv ||
       { printf 'Could not back up the old login job %s.\n' "$old_job" >&2; status=1; return; }
     standalone_probe "$launchctl_path" bootout "gui/$UID/$old_job" >/dev/null 2>&1 || true
-    printf 'Unloaded the old login job %s. Its file is in %s\n' "$old_job" "$backup"
+    printf 'Unloaded the old login job %s. Its file is in %s\n' "$old_job" "$telemetry_backup_dir"
+  fi
+  # mise replaces a job file that differs from its config. Keep a copy first.
+  if [[ -f "$new_plist" ]] && ! "$repo_root/bin/repo-mise" bootstrap macos launchd-agents status --missing >/dev/null 2>&1; then
+    telemetry_backup "$new_plist" cp ||
+      { printf 'Could not back up the current login job file.\n' >&2; status=1; return; }
+    printf 'Copied the current login job file to %s\n' "$telemetry_backup_dir"
   fi
   # The job runs at the next login. The script runs now for this session.
   standalone_probe "$HOME/bin/dotfiles-telemetry-env" || result=$?
