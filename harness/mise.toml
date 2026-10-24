@@ -1,0 +1,2 @@
+[dotfiles]
+"~/bin/harness" = { source = "bin/harness", mode = "symlink" }

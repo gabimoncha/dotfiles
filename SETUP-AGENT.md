@@ -51,12 +51,12 @@ run outside that directory before repeated repair attempts if you need its logs.
 | `configure_git` (Linux) | `./bin/auth-setup --git-only` |
 | `verify_mise_access` | `./bin/auth-setup --verify-mise` |
 | `links_before_packages`, `service_links`, `final_links` | `./bin/link-dotfiles` |
-| `shell` | `./bin/setup --continue` reruns it. Check with `./bin/repo-mise "$PWD/mise/setup.toml" bootstrap repos status`. For a `conflict`, ask the user before you move the path aside. |
+| `shell` | `./bin/setup --continue` reruns it. Check with `./bin/repo-mise --setup bootstrap repos status`. For a `conflict`, ask the user before you move the path aside. |
 | `defaults` | `./macos/defaults.sh` |
 | `manifest_apps` | `./bin/install-apps` |
 | `capabilities` | `./bin/check-mise-tools` |
 | `standalone_agents` | `./bin/install-standalone` (`--first-only` in the first phase) |
-| `system_packages` (Linux) | `./bin/repo-mise "$PWD/linux/mise.toml" bootstrap --only packages,user --yes`; check with `bootstrap packages status` |
+| `system_packages` (Linux) | `./bin/repo-mise --setup bootstrap --only packages,user --yes`; check with `bootstrap packages status` |
 | Linux prerequisites | `./bin/linux-prerequisites` (bin/setup runs it before the runtime starts) |
 | `telemetry_foundations`, `telemetry` | `./bin/configure-telemetry` |
 | `app_settings` | `./bin/configure-app-settings` |

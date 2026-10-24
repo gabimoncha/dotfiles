@@ -1,0 +1,70 @@
+{
+    "profiles": [
+        {
+            "complex_modifications": {
+                "rules": [
+                    {
+                        "description": "fn + left cmd",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "fn",
+                                    "modifiers": { "mandatory": ["left_command"] }
+                                },
+                                "to": [{ "shell_command": "~/scripts/toggle_function_keys.sh" }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Eject key to Toogle Recording in Whisper",
+                        "enabled": false,
+                        "manipulators": [
+                            {
+                                "from": { "consumer_key_code": "eject" },
+                                "to": [{ "shell_command": "if [ $(ps aux | grep -v grep | grep -ci \"Applications/superwhisper.app/Contents/MacOS/superwhisper\") -gt 0 ]; then osascript -e 'activate application id \"com.superduper.superwhisper\"' -e 'tell application \"System Events\" to keystroke \"m\" using {command down, shift down}'; fi" }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Eject to Lock Screen (macOS 10.13+)",
+                        "manipulators": [
+                            {
+                                "from": { "consumer_key_code": "eject" },
+                                "to": [
+                                    {
+                                        "key_code": "q",
+                                        "modifiers": ["left_control", "left_command"]
+                                    }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "devices": [
+                {
+                    "identifiers": {
+                        "is_keyboard": true,
+                        "product_id": 835,
+                        "vendor_id": 1452
+                    },
+                    "ignore": true
+                },
+                {
+                    "identifiers": {
+                        "is_keyboard": true,
+                        "product_id": 5927,
+                        "vendor_id": 2385
+                    },
+                    "ignore": true
+                }
+            ],
+            "name": "Default profile",
+            "selected": true,
+            "virtual_hid_keyboard": { "keyboard_type_v2": "ansi" }
+        }
+    ]
+}

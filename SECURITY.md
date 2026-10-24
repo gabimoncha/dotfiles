@@ -6,7 +6,7 @@ Never commit credentials, private identities, machine-local paths, backup
 payloads, or app state. This includes Raycast exports, Codex archives and
 memories, Mackup contents, caches, histories, and databases.
 
-Keep local shell settings in ignored `home/.config/local/*.zsh` files or
+Keep local shell settings in ignored `local/*.zsh` files or
 `~/.config/local/*.zsh`. Use Keychain-backed tools for secrets. Track only
 sanitized `*.example` files. Before a commit, inspect new config files for
 private values and run `git diff --cached --check`.

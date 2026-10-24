@@ -1,10 +1,5 @@
-# User preferences that macos/defaults.sh applies with
-# `mise bootstrap macos defaults apply`. Each value replaces the whole
-# preference, as `defaults write` does. Check drift with:
-#   ./bin/repo-mise "$PWD/macos/defaults.toml" bootstrap macos defaults status
-# defaults.sh keeps the input sources, the Dock prune, pmset, and app restarts.
-# Do not declare login items here: `defaults apply` applies them too.
-min_version = "2026.10.17"
+# macos/defaults.sh owns the special preference operations.
+min_version = "2026.10.18"
 
 [bootstrap.macos.defaults.NSGlobalDomain]
 AppleLocale = "en_US@currency=RON"

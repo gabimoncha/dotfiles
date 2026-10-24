@@ -21,3 +21,11 @@ home/.cli-proxy-api/*
 
 # Generated diagnostics and local working files.
 /.local/
+
+# Native setup selection and local companions stay on this machine.
+/mise/setup/miserc.local.toml
+/local/*
+!/local/*.example
+/cliproxyapi/*
+!/cliproxyapi/config.yaml
+!/cliproxyapi/mise.macos.toml

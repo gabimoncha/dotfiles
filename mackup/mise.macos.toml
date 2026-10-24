@@ -1,0 +1,2 @@
+[dotfiles]
+"~/.mackup.cfg" = { source = "mackup.cfg", mode = "symlink" }

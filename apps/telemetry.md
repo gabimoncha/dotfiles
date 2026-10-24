@@ -12,7 +12,7 @@ The login job is `~/Library/LaunchAgents/com.dotfiles.telemetry-env.plist`. Setu
 
 ## Automatic controls
 
-The environment values are in [env.sh](../home/.config/telemetry/env.sh). The exact scope and all source links are in [telemetry-audit.json](telemetry-audit.json). These controls do not disable service requests or update checks.
+The environment values are in [env.sh](../telemetry/env.sh). The exact scope and all source links are in [telemetry-audit.json](telemetry-audit.json). These controls do not disable service requests or update checks.
 
 | Tool | Setup action | Evidence |
 | --- | --- | --- |

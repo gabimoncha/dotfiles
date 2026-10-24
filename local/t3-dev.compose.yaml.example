@@ -1,0 +1,72 @@
+# Copy to a private compose.yaml; replace documentation-only address and public key.
+services:
+  dev:
+    image: node:24-bookworm
+    container_name: t3-dev
+    hostname: t3-dev
+    restart: unless-stopped
+    init: true
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    mem_limit: 6g
+    memswap_limit: 6g
+    ports:
+      - "192.0.2.10:2222:22"
+      - "3773:3773"
+    volumes:
+      - dev-home:/home/box
+      - ./workspace:/workspace
+      - ssh-host-keys:/var/lib/t3-ssh
+    working_dir: /workspace
+    command:
+      - /bin/bash
+      - -ec
+      - |
+        export DEBIAN_FRONTEND=noninteractive
+        if ! command -v sshd >/dev/null || ! command -v sudo >/dev/null; then
+          apt-get update
+          apt-get install -y --no-install-recommends openssh-server sudo tmux procps iproute2 bubblewrap libatomic1
+        fi
+        if ! id box >/dev/null 2>&1; then
+          id -u node | grep -qx 1000
+          usermod -l box -d /home/box node
+        fi
+        if getent group node >/dev/null; then
+          groupmod -n box node
+        fi
+        id -u box | grep -qx 1000
+        id -g box | grep -qx 1000
+        if test -L /home/node; then
+          readlink /home/node | grep -qx /home/box
+        else
+          if test -e /home/node; then
+            test ! -e /home/node.image-default
+            mv /home/node /home/node.image-default
+          fi
+          ln -s /home/box /home/node
+        fi
+        mkdir -p /run/sshd /home/box/.ssh /workspace /var/lib/t3-ssh
+        touch /home/box/.ssh/authorized_keys
+        grep -q 'REPLACE_WITH_YOUR_ED25519_PUBLIC_KEY_BASE64' /home/box/.ssh/authorized_keys || echo 'ssh-ed25519 REPLACE_WITH_YOUR_ED25519_PUBLIC_KEY_BASE64 t3-nas-dev' >> /home/box/.ssh/authorized_keys
+        chmod 700 /home/box/.ssh
+        chmod 600 /home/box/.ssh/authorized_keys
+        chown -R box:box /home/box /workspace
+        passwd -d box
+        install -d -m 0755 /etc/sudoers.d
+        printf '%s\n' 'box ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/.90-t3-box.tmp
+        chown root:root /etc/sudoers.d/.90-t3-box.tmp
+        chmod 0440 /etc/sudoers.d/.90-t3-box.tmp
+        visudo -cf /etc/sudoers.d/.90-t3-box.tmp
+        mv -f /etc/sudoers.d/.90-t3-box.tmp /etc/sudoers.d/90-t3-box
+        visudo -c
+        su - box -c 'sudo -n id -u' | grep -qx 0
+        printf '%s\n' 'box passwordless sudo verified'
+        test -f /var/lib/t3-ssh/ssh_host_ed25519_key || ssh-keygen -q -t ed25519 -N '' -f /var/lib/t3-ssh/ssh_host_ed25519_key
+        if test -x /home/box/.local/bin/t3-supervise; then
+          su - box -c /home/box/.local/bin/t3-supervise &
+        fi
+        exec /usr/sbin/sshd -D -e -o HostKey=/var/lib/t3-ssh/ssh_host_ed25519_key -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no -o PermitRootLogin=no -o AllowUsers=box -o PrintMotd=no
+volumes:
+  dev-home:
+  ssh-host-keys:

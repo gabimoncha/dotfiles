@@ -1,0 +1,3 @@
+[dotfiles]
+"~/.claude/CLAUDE.md" = { source = "../codex/AGENTS.md", mode = "symlink" }
+"~/.claude/settings.json/dotfiles" = { source = "settings.json", merge = true }

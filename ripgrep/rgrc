@@ -1,0 +1,8 @@
+--smart-case
+--max-columns=100
+--max-columns-preview
+--glob=!**/*.{min.js,map,heapsnapshot,cpuprofile}
+--glob=!**/*.{package-lock.json,pnpm-lock.json,yarn.lock,bun.lock,Cargo.lock}
+--glob=!**/*.env
+--glob=!**/*.env.*
+--glob=!**/*.git/**

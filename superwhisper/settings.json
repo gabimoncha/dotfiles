@@ -1,0 +1,127 @@
+{
+  "favoriteModelIDs" : [
+    "vad-v2",
+    "emb-v1",
+    "seg-v1",
+    "speakerkit-coreml",
+    "s1-vocab-v2-160MB",
+    "s1-mini",
+    "cohere-transcribe-q4",
+    "canary-1b-v2_474MB",
+    "nvidia_parakeet-v3_494MB",
+    "medium",
+    "medium.en"
+  ],
+  "modeKeys" : [
+    "stt ro",
+    "voice to text"
+  ],
+  "replacements" : [
+    {
+      "id" : "C4C72D75-AF99-4DD6-A6D1-6DA0AAA1357A",
+      "original" : "Ewing",
+      "with" : "EU-INC"
+    },
+    {
+      "id" : "67C625B2-FB55-4886-92AA-C77464FDA44B",
+      "original" : "GPT 5.3 codex spark",
+      "with" : "gpt-5.3-codex-spark"
+    },
+    {
+      "id" : "F6BB8D60-A3BC-40E9-A26C-670E8C54AD15",
+      "original" : "\/find docs",
+      "with" : "\/find-docs"
+    },
+    {
+      "id" : "E4F94554-2263-4303-B65E-AC26A1938238",
+      "original" : "package JSON",
+      "with" : "package.json"
+    },
+    {
+      "id" : "CAC9209B-93B5-43FD-8E74-857E7E52FA3E",
+      "original" : ".files",
+      "with" : "dotfiles"
+    },
+    {
+      "id" : "40412359-ABC1-4855-A76E-F0CEA382B2C8",
+      "original" : "agents.md",
+      "with" : "AGENTS.md"
+    },
+    {
+      "id" : "6F0CAD65-67EF-4A80-8E1B-3384119E20CB",
+      "original" : "yrex",
+      "with" : "wirex"
+    },
+    {
+      "id" : "813EF733-46D0-4CFF-A740-02FF2095AF2B",
+      "original" : "GPT 5.6 Sol",
+      "with" : "gpt-5.6-sol"
+    },
+    {
+      "id" : "56A432A3-C072-42EC-9E31-E3B269C18E86",
+      "original" : "GPT 5.6 Luna",
+      "with" : "gpt-5.6-luna"
+    },
+    {
+      "id" : "FD52B736-BCEB-476D-B619-C3164652D02E",
+      "original" : "YRX",
+      "with" : "Wirex"
+    },
+    {
+      "id" : "1AE979F7-63B4-4A8A-A9A1-4CCE066D57C3",
+      "original" : "poly field",
+      "with" : "polyfill"
+    },
+    {
+      "id" : "FB18424A-BCCB-4E71-9CF6-96CD4EFB9EA0",
+      "original" : "work3",
+      "with" : "worktree"
+    },
+    {
+      "id" : "6AB4A510-8CB6-4354-BC99-03AE96F55D5E",
+      "original" : "work tree",
+      "with" : "worktree"
+    }
+  ],
+  "vocabulary" : [
+    "superwhisper",
+    "React Native",
+    "Expo",
+    "Bun",
+    "JavaScriptCore",
+    "SuperJSON",
+    "Zustand",
+    "TurboModules",
+    "react-native-mmkv",
+    "react-native-skia",
+    "Margelo",
+    "useRef",
+    "useState",
+    "FlashList",
+    "FlatList",
+    "devtools",
+    "Jest",
+    "Hermes",
+    "Detox",
+    "Flexbox",
+    "a11y",
+    "shouldComponentUpdate",
+    "shouldRenderProps",
+    "useEffect",
+    "useLayoutEffect",
+    "componentDidMount",
+    "componentDidUpdate",
+    "componentWillUnmount",
+    "remux",
+    "remuxed",
+    "remix",
+    "remixed",
+    "ios-simulator mcp",
+    "maestro mcp",
+    "mcp",
+    "hierarchy",
+    "testID",
+    "tmux",
+    "gpt-5.3-codex-spark"
+  ]
+}

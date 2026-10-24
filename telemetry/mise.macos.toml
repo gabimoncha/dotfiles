@@ -1,0 +1,3 @@
+[dotfiles]
+"~/bin/dotfiles-telemetry-env" = { source = "bin/dotfiles-telemetry-env", mode = "symlink" }
+"~/Library/LaunchAgents/com.dotfiles.telemetry-env.plist" = { source = "com.dotfiles.telemetry-env.plist", mode = "copy" }

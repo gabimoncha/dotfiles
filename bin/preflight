@@ -3,6 +3,9 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+. "${repo_root}/bin/lib/dotfiles-profile.sh"
+DOTFILES_PROFILE="$(dotfiles_profile)" || exit 1
+export DOTFILES_PROFILE
 failures=0
 
 pass() {
@@ -195,7 +198,7 @@ check_script_syntax() {
     "bin/check-mise-tools"
     "bin/configure-sudo-touch-id"
     "bin/harness"
-    "home/bin/harness"
+    "harness/bin/harness"
     "bin/install-standalone"
     "bin/lib/standalone.sh"
     "bin/linux-prerequisites"
@@ -203,6 +206,7 @@ check_script_syntax() {
     "bin/configure-ssh-host"
     "bin/repo-mise"
     "bin/lib/mise-pin.sh"
+    "bin/lib/dotfiles-profile.sh"
     "bin/install-apps"
     "bin/install-steam"
     "bin/install-mobile-dev"
@@ -225,6 +229,15 @@ check_script_syntax() {
     "bin/raycast-backup"
     "bin/raycast-restore"
     "macos/defaults.sh"
+    "mise/tasks/dot/status"
+    "mise/tasks/dot/diff"
+    "mise/tasks/dot/apply"
+    "mise/tasks/setup"
+    "mise/tasks/update"
+    "mise/tasks/doctor"
+    "mise/tasks/backup"
+    "mise/tasks/restore"
+    "mise/tasks/packages"
   )
 
   for script in "${scripts[@]}"; do
@@ -247,13 +260,13 @@ check_repo_state() {
     fail "not inside a git repo"
   fi
 
-  if [[ -f "${repo_root}/Brewfile" ]]; then
-    pass "Brewfile present"
+  if [[ -f "${repo_root}/apps/Brewfile" ]]; then
+    pass "apps/Brewfile present"
   else
-    fail "Brewfile missing"
+    fail "apps/Brewfile missing"
   fi
 
-  if [[ -f "${repo_root}/home/.config/mise/config.toml" ]]; then
+  if [[ -f "${repo_root}/mise/global.toml" ]]; then
     pass "mise config present"
   else
     fail "mise config missing"

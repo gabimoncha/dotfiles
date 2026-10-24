@@ -1,8 +1,3 @@
-# Linux system packages and the login shell. On Linux, bin/setup applies this
-# file with `bin/repo-mise linux/mise.toml bootstrap --only packages,user`.
-# Install tools with [tools] in home/.config/mise/config.toml. List a package
-# here only when mise cannot install it. bin/linux-prerequisites installs the
-# packages that setup itself needs (Ruby, Git, curl) before mise exists.
 min_version = "2026.10.17"
 
 [bootstrap.packages]

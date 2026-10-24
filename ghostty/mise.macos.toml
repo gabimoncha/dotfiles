@@ -1,0 +1,2 @@
+[dotfiles]
+"~/Library/Application Support/com.mitchellh.ghostty/config" = { source = "config", mode = "symlink" }

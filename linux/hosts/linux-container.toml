@@ -1,4 +1,0 @@
-# Agent settings for this host. bin/link-dotfiles merges them after the shared
-# keys in mise/setup.toml, so these keys win. mise keeps every other key.
-[dotfiles]
-"~/.codex/config.toml/host" = { source = "linux-container.codex.toml", merge = true }

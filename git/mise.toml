@@ -1,0 +1,2 @@
+[dotfiles]
+"~/.gitconfig" = { source = "gitconfig", mode = "symlink" }
