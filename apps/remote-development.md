@@ -176,11 +176,11 @@ DOTFILES_SKIP_GITHUB_AUTH=1 ./bin/setup   # until you log in to GitHub
 ```
 
 Setup installs Ruby, Git, and curl (`bin/linux-prerequisites`), zsh,
-build-essential, and unzip (`linux/mise.linux.toml`), makes zsh the login shell,
+build-essential, and unzip (`mise.linux.toml`), makes zsh the login shell,
 installs the shared mise tools, and installs the tools in
 `apps/standalone.tsv`: mise, Codex, Claude Code, Cursor Agent, OpenCode, Pi,
 and T3. It links the shared dotfiles and skips the Mac-only ones. Agents read
-the box rules from `linux/container/instructions.md`; see the Linux section of
+the box rules from `configs/agents/container.md`; see the Linux section of
 the README.
 
 The apt packages and the login shell live in the container layer. After a
@@ -190,21 +190,21 @@ rest. The home volume keeps mise, the tools, the agent CLIs, and their logins.
 
 Log in to GitHub on the box with `./bin/auth-setup`. It runs the GitHub CLI
 login, and Git then uses that token over HTTPS through the credential helper in
-`git/gitconfig`. The box needs no SSH key. Until the login, mise downloads
+`configs/git/gitconfig`. The box needs no SSH key. Until the login, mise downloads
 tools without a GitHub token.
 
 The Codex CLI sandbox cannot run here: the kernel has no user namespaces and
 the container has no capabilities, so even a setuid `bwrap` fails. The
 container is the boundary, so `bin/link-dotfiles` sets
 `sandbox_mode = "danger-full-access"` in `~/.codex/config.toml` from
-`linux/container/codex.toml`.
+`configs/codex/container.toml`.
 
 `harness update` skips T3, so a `mise install` never restarts the server. An
 update from the app restarts it, and running agent tasks stop.
 
 ## Future GCP VM
 
-The VM does not exist yet. `linux/vm-gcp` is a reserved, deferred profile.
+The VM does not exist yet. `vm` (`mise.vm.toml`) is a reserved, deferred profile.
 VM creation, guest setup, cloud control tasks, and hardening belong to a later
 session. Do not copy the NAS container's sandbox or sudo exceptions into a VM.
 

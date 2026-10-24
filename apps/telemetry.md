@@ -4,23 +4,23 @@ Reviewed on 2026-10-03. Coverage: 186 of 186 tracked entries.
 
 Setup exports the supported environment controls before installers run. It applies saved preferences after foundation installation, and again at the end of continuation after restores. A failed setter makes the stage fail; other installed tools are still configured.
 
-Run `./bin/configure-telemetry --dry-run` to preview the changes. Run it without that option to retry. Existing configuration is merged and backed up. Complex Codex telemetry tables and escaped names are left unchanged and reported for manual repair. The TOML merger handles standard telemetry tables; it does not fully validate unrelated TOML syntax.
+Run `./bin/configure-telemetry --dry-run` to preview the changes. Run it without that option to retry. Existing configuration is merged and backed up. Claude Code and Codex get their saved opt-outs from the settings that `./bin/link-dotfiles` merges: [configs/claude/settings.json](../configs/claude/settings.json) and [configs/codex/config.toml](../configs/codex/config.toml). Cursor's files are JSON with comments, which mise cannot merge, so `./bin/configure-telemetry` sets its two keys.
 
 Start a new shell and reopen apps after setup. A user LaunchAgent applies the managed privacy environment to GUI launches at login. An app already running, or started before the login job, can retain its old environment. Explicit flags, managed policy, local project configuration, remote servers, and extensions can have separate behavior.
 
-The login job is `~/Library/LaunchAgents/com.dotfiles.telemetry-env.plist`. Setup copies it instead of linking it. If the copy differs from the tracked plist, setup backs it up, replaces it, and reloads the job. The job sets only the keys in `env.sh`. To remove it, run `launchctl bootout gui/$(id -u)/com.dotfiles.telemetry-env` and delete the plist. `launchctl unsetenv <variable>` clears one variable for the current session. For GUI apps, `AZ_CRS_ARGUMENTS` keeps only the properties already in the launchd environment, not those of the shell that runs setup.
+The login job is `~/Library/LaunchAgents/com.dotfiles.telemetry-env.plist`. Setup copies it instead of linking it. If the copy differs from the tracked plist, setup backs it up, replaces it, and reloads the job. The job sets only the keys in `telemetry.sh`. To remove it, run `launchctl bootout gui/$(id -u)/com.dotfiles.telemetry-env` and delete the plist. `launchctl unsetenv <variable>` clears one variable for the current session. For GUI apps, `AZ_CRS_ARGUMENTS` keeps only the properties already in the launchd environment, not those of the shell that runs setup.
 
 ## Automatic controls
 
-The environment values are in [env.sh](../telemetry/env.sh). The exact scope and all source links are in [telemetry-audit.json](telemetry-audit.json). These controls do not disable service requests or update checks.
+The environment values are in [telemetry.sh](../configs/zsh/telemetry.sh). The exact scope and all source links are in [telemetry-audit.json](telemetry-audit.json). These controls do not disable service requests or update checks.
 
 | Tool | Setup action | Evidence |
 | --- | --- | --- |
 | bun | `DO_NOT_TRACK=1` | [Official source](https://bun.sh/docs/runtime/environment-variables) |
 | cargo-binstall | `BINSTALL_DISABLE_TELEMETRY=true` | [Official source](https://github.com/cargo-bins/cargo-binstall/blob/main/README.md) |
-| claude-code | `DISABLE_TELEMETRY=1`, `DISABLE_ERROR_REPORTING=1`, `CLAUDE_CODE_ENABLE_TELEMETRY=0`, `CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=1`; Merge telemetry environment values into $CLAUDE_CONFIG_DIR/settings.json (default ~/.claude/settings.json). | [Official source](https://code.claude.com/docs/en/data-usage#telemetry-services) |
+| claude-code | `DISABLE_TELEMETRY=1`, `DISABLE_ERROR_REPORTING=1`, `CLAUDE_CODE_ENABLE_TELEMETRY=0`, `CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=1`; The same values in the `env` key of ~/.claude/settings.json, merged from configs/claude/settings.json. | [Official source](https://code.claude.com/docs/en/data-usage#telemetry-services) |
 | cocoapods | `COCOAPODS_DISABLE_STATS=true` | [Official source](https://blog.cocoapods.org/Stats/) |
-| codex | analytics.enabled=false; OTel exporter, metrics_exporter and trace_exporter=none; log_user_prompt=false in $CODEX_HOME/config.toml. Standard tables are merged; ambiguous inline/dotted forms fail without changes. | [Official source](https://learn.chatgpt.com/docs/config-file/config-advanced#metrics) |
+| codex | analytics.enabled=false; OTel exporter, metrics_exporter and trace_exporter=none; log_user_prompt=false in ~/.codex/config.toml, merged from configs/codex/config.toml. | [Official source](https://learn.chatgpt.com/docs/config-file/config-advanced#metrics) |
 | cursor | telemetry.telemetryLevel=off in Cursor User/settings.json; enable-crash-reporter=false in ~/.cursor/argv.json. Merge only these inherited controls, preserving JSONC comments and unrelated values. Cursor-specific telemetry is not established as fully disabled. | [Official source](https://forum.cursor.com/t/critical-terminal-sandbox-fails-on-orbstack-vms-breaking-agent-and-remote-ssh-workflow/167586/13) |
 | docker-cli | Unset `DOCKER_CLI_OTEL_EXPORTER_OTLP_ENDPOINT` | [Official source](https://docs.docker.com/engine/cli/otel/) |
 | flyctl | `FLY_SEND_METRICS=false`; Saved preference: `flyctl settings analytics disable` | [Official source](https://fly.io/docs/flyctl/settings-analytics-disable/) |

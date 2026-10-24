@@ -188,7 +188,7 @@ resolve_mas_cli() {
   local candidate
   candidate="$(command -v mas 2>/dev/null || true)"
   case "$candidate" in
-    *'/shims/'*) candidate="$("$repo_root/bin/repo-mise" "$repo_root/mise/global.toml" which mas 2>/dev/null)" || return 1 ;;
+    *'/shims/'*) candidate="$("$repo_root/bin/repo-mise" --global which mas 2>/dev/null)" || return 1 ;;
   esac
   [[ -n "$candidate" && -x "$candidate" ]] || return 1
   "$candidate" version >/dev/null 2>&1 || "$candidate" --version >/dev/null 2>&1 || return 1
@@ -436,7 +436,7 @@ prepare_brewfiles() {
   : > "$xcode_brewfile"
   : > "$mas_brewfile"
   : > "$cursor_extensions_brewfile"
-  filter_brewfile_for_existing_apps "${repo_root}/apps/Brewfile" "$temp_brewfile" "$xcode_brewfile" "$mas_brewfile" "$cursor_extensions_brewfile"
+  filter_brewfile_for_existing_apps "${repo_root}/Brewfile" "$temp_brewfile" "$xcode_brewfile" "$mas_brewfile" "$cursor_extensions_brewfile"
 }
 
 install_brewfile() {
@@ -459,9 +459,9 @@ initialize_submodules() {
 
 install_mise_tools_unlocked() {
   local status=0 refresh_status=0
-  "${repo_root}/bin/repo-mise" "${repo_root}/mise/global.toml" install || status=$?
+  "${repo_root}/bin/repo-mise" --global install || status=$?
   # Successful downloads must remain usable even if another backend failed.
-  "${repo_root}/bin/repo-mise" "${repo_root}/mise/global.toml" reshim || refresh_status=$?
+  "${repo_root}/bin/repo-mise" --global reshim || refresh_status=$?
   [[ "$status" -ne 0 ]] || status="$refresh_status"
   return "$status"
 }
@@ -483,7 +483,7 @@ install_and_check_mise_tools() {
 # Update only missing checkouts. Native repos apply stops at the first conflict.
 install_shell_framework() {
   local status_json missing_list path missing=()
-  status_json="$("${repo_root}/bin/repo-mise" --setup bootstrap repos status --json)" || return
+  status_json="$("${repo_root}/bin/repo-mise" bootstrap repos status --json)" || return
   missing_list="$(/usr/bin/ruby -rjson -e '
     JSON.parse(STDIN.read).fetch("repos").each do |repo|
       case repo["state"]
@@ -501,12 +501,12 @@ install_shell_framework() {
     return 0
   fi
   log "Cloning shell framework repositories: ${missing[*]}"
-  "${repo_root}/bin/repo-mise" --setup bootstrap repos update --yes "${missing[@]}"
+  "${repo_root}/bin/repo-mise" bootstrap repos update --yes "${missing[@]}"
 }
 
 apply_macos_defaults_once() {
   local defaults_script="${repo_root}/macos/defaults.sh"
-  local defaults_config="${repo_root}/macos/mise.macos.toml"
+  local defaults_config="${repo_root}/mise.macos.toml"
   local status=0
 
   runtime_acquire_lock "macos-defaults" "macOS defaults" || return 1

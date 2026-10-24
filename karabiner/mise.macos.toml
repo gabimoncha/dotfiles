@@ -1,3 +1,0 @@
-[dotfiles]
-"~/.config/karabiner/karabiner.json" = { source = "karabiner.json", mode = "symlink" }
-"~/scripts/toggle_function_keys.sh" = { source = "toggle_function_keys.sh", mode = "symlink" }

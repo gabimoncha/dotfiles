@@ -1,0 +1,14 @@
+# Codex memories stay off. Existing memory files remain; start new sessions
+# after a change.
+[features]
+memories = false
+
+# Telemetry opt-outs. See apps/telemetry.md.
+[analytics]
+enabled = false
+
+[otel]
+exporter = "none"
+metrics_exporter = "none"
+trace_exporter = "none"
+log_user_prompt = false

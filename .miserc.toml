@@ -1,30 +1,5 @@
-ignored_config_paths = [
-  "aerospace/mise.macos.toml",
-  "claude/mise.toml",
-  "cliproxyapi/mise.macos.toml",
-  "codex/mise.macos.toml",
-  "codex/mise.toml",
-  "ghostty/mise.macos.toml",
-  "git/mise.toml",
-  "github/mise.toml",
-  "harness/mise.toml",
-  "home",
-  "karabiner/mise.macos.toml",
-  "linux/container/mise.container.toml",
-  "linux/mise.linux.toml",
-  "linux/vm-gcp/mise.vm-gcp.toml",
-  "linux/vm/mise.vm.toml",
-  "mackup/mise.macos.toml",
-  "macos/air/mise.air.toml",
-  "macos/mise.macos.toml",
-  "macos/pro/mise.pro.toml",
-  "mise/mise.toml",
-  "mise/setup/config.toml",
-  "ripgrep/mise.toml",
-  "superwhisper/mise.macos.toml",
-  "telemetry/mise.macos.toml",
-  "telemetry/mise.toml",
-  "tmux/mise.toml",
-  "tsrs/mise.toml",
-  "zsh/mise.toml"
-]
+# mise reads this file before any config file in this repository.
+# auto_env loads mise.macos.toml on a Mac and mise.linux.toml on Linux.
+# Select this machine's profile in the ignored .miserc.local.toml, for example:
+# env = ["pro"]
+auto_env = true

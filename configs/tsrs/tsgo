@@ -1,0 +1,13 @@
+#!/bin/sh
+# The TypeScript 7 extension searches for an executable named tsgo or tsc.
+# The tsrs command from npm is a Node.js launcher that adds about 100 ms to
+# each start, so run the native binary from the platform package. Bun installs
+# only the packages for this CPU; on Linux, the GNU package sorts before musl.
+# In Cursor, a project sets js/ts.tsdk.path to its own launcher. For other
+# projects, set it to the absolute path of ~/.config/tsrs in the user settings.
+mise="$HOME/.local/bin/mise"
+dir=$("$mise" where npm:tsrs 2>/dev/null)
+for exe in "$dir"/node_modules/@tsrs/*/tsrs; do
+  [ -x "$exe" ] && exec "$exe" "$@"
+done
+exec "$mise" exec -- tsrs "$@"

@@ -185,98 +185,86 @@ check_submodule_url() {
   esac
 }
 
+# Check every tracked shell script: the ones with a sh, bash, or zsh shebang,
+# and the zsh startup files.
 check_script_syntax() {
-  local script
-  local scripts=(
-    "bin/bootstrap"
-    "bin/check-macos-updates"
-    "bin/setup"
-    "bin/lib/setup-runtime.sh"
-    "bin/link-dotfiles"
-    "bin/preflight"
-    "bin/auth-setup"
-    "bin/check-mise-tools"
-    "bin/configure-sudo-touch-id"
-    "bin/harness"
-    "harness/bin/harness"
-    "bin/install-standalone"
-    "bin/lib/standalone.sh"
-    "bin/linux-prerequisites"
-    "bin/t3-dev-supervise"
-    "bin/configure-ssh-host"
-    "bin/repo-mise"
-    "bin/lib/mise-pin.sh"
-    "bin/lib/dotfiles-profile.sh"
-    "bin/install-apps"
-    "bin/install-steam"
-    "bin/install-mobile-dev"
-    "bin/check-mobile-ready"
-    "bin/lib/mobile-state.sh"
-    "bin/sudo-grant"
-    "bin/link-t3-command"
-    "bin/configure-background-jobs"
-    "bin/finder-sidebar-favorites"
-    "bin/setup-tmux"
-    "bin/app-state-doctor"
-    "bin/dotfiles-update"
-    "bin/prepare-sync"
-    "bin/file-backup"
-    "bin/file-restore"
-    "bin/codex-backup"
-    "bin/codex-restore"
-    "bin/mackup-backup"
-    "bin/mackup-restore"
-    "bin/raycast-backup"
-    "bin/raycast-restore"
-    "macos/defaults.sh"
-    "mise/tasks/dot/status"
-    "mise/tasks/dot/diff"
-    "mise/tasks/dot/apply"
-    "mise/tasks/setup"
-    "mise/tasks/update"
-    "mise/tasks/doctor"
-    "mise/tasks/backup"
-    "mise/tasks/restore"
-    "mise/tasks/packages"
-  )
-
-  for script in "${scripts[@]}"; do
-    if [[ -f "${repo_root}/${script}" ]]; then
-      if bash -n "${repo_root}/${script}"; then
-        pass "syntax: ${script}"
-      else
-        fail "syntax error: ${script}"
-      fi
-    else
-      fail "missing script: ${script}"
+  local script first shell
+  while IFS= read -r script; do
+    [[ -f "${repo_root}/${script}" && ! -L "${repo_root}/${script}" ]] || continue
+    IFS= read -r first < "${repo_root}/${script}" || first=""
+    case "$first" in
+      '#!'*zsh*) shell=zsh ;;
+      '#!'*bash*) shell=bash ;;
+      '#!'*/sh) shell=sh ;;
+      *)
+        case "$script" in
+          configs/zsh/*.zsh|configs/zsh/zshrc|configs/zsh/zshenv|configs/zsh/zprofile) shell=zsh ;;
+          *.sh) shell=bash ;;
+          *) continue ;;
+        esac
+        ;;
+    esac
+    if [[ "$shell" == zsh ]] && ! command -v zsh >/dev/null 2>&1; then
+      warn "zsh is not installed; skipped ${script}"
+      continue
     fi
-  done
+    if "$shell" -n "${repo_root}/${script}"; then
+      pass "syntax: ${script}"
+    else
+      fail "syntax error: ${script}"
+    fi
+  done < <(git -C "$repo_root" ls-files -- bin macos configs)
+}
+
+# Each `source` in the root mise files names a file that exists, and each file
+# in configs/ is a source or sits in a source folder. The Cursor telemetry
+# files are the exception: bin/configure-telemetry applies them.
+check_layout() {
+  local sources source file used missing=0 unused=0
+  sources="$(sed -n 's/.*source = "\([^"]*\)".*/\1/p' "$repo_root"/mise.toml "$repo_root"/mise.*.toml | sort -u)"
+  while IFS= read -r source; do
+    [[ -n "$source" ]] || continue
+    if [[ ! -e "${repo_root}/${source}" ]]; then
+      fail "a mise file names a missing source: ${source}"
+      missing=1
+    fi
+  done <<< "$sources"
+  [[ "$missing" == 1 ]] || pass "every source in the mise files exists"
+  while IFS= read -r file; do
+    used=0
+    while IFS= read -r source; do
+      [[ -n "$source" ]] || continue
+      if [[ "$file" == "$source" || "$file" == "$source/"* ]]; then used=1; break; fi
+    done <<< "$sources"
+    case "$file" in configs/cursor/telemetry-*.json) used=1 ;; esac
+    [[ "$used" == 1 ]] && continue
+    fail "no mise file uses ${file}"
+    unused=1
+  done < <(git -C "$repo_root" ls-files -- configs)
+  [[ "$unused" == 1 ]] || pass "every file in configs/ is used"
+  # An AGENTS.md or CLAUDE.md in a subfolder would give agents wrong rules.
+  file="$(git -C "$repo_root" ls-files | grep -E '(^|/)(AGENTS|CLAUDE)\.md$' | grep -vx 'AGENTS.md' || true)"
+  if [[ -z "$file" ]]; then
+    pass "AGENTS.md exists only at the repository root"
+  else
+    fail "rename these agent instruction files: ${file//$'\n'/ }"
+  fi
 }
 
 check_repo_state() {
+  local file
   if git -C "$repo_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     pass "dotfiles git repo detected"
   else
     fail "not inside a git repo"
   fi
-
-  if [[ -f "${repo_root}/apps/Brewfile" ]]; then
-    pass "apps/Brewfile present"
-  else
-    fail "apps/Brewfile missing"
-  fi
-
-  if [[ -f "${repo_root}/mise/global.toml" ]]; then
-    pass "mise config present"
-  else
-    fail "mise config missing"
-  fi
-
-  if [[ -f "${repo_root}/apps/manifest.tsv" ]]; then
-    pass "app manifest present"
-  else
-    fail "app manifest missing"
-  fi
+  for file in Brewfile mise.toml configs/mise/global.toml apps/manifest.tsv; do
+    if [[ -f "${repo_root}/${file}" ]]; then
+      pass "${file} present"
+    else
+      fail "${file} missing"
+    fi
+  done
 }
 
 check_sudo_grant() {
@@ -313,6 +301,7 @@ esac
 # API and SSH checks belong to the explicit authentication stages.
 check_submodule_url
 check_repo_state
+check_layout
 check_app_manifest
 check_standalone_manifest
 # The temporary sudoers grant is part of the macOS plan only.

@@ -1,3 +1,0 @@
-[dotfiles]
-"~/bin/gh" = { source = "bin/gh", mode = "symlink" }
-"~/bin/dotfiles-gh-real" = { source = "bin/dotfiles-gh-real", mode = "symlink" }

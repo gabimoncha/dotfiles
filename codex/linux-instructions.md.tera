@@ -1,4 +1,0 @@
-<!-- Generated from codex/AGENTS.md and linux/container/instructions.md. Edit those sources, then rerun ./bin/link-dotfiles. -->
-
-{{ read_file(path=vars.dotfiles_shared_instructions) }}
-{{ read_file(path=vars.dotfiles_host_instructions) }}

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# The standalone mise release that setup installs. mise/setup/config.toml and
-# macos/mise.macos.toml set the same min_version. Bash 3.2 compatible.
+# The standalone mise release that setup installs. mise.toml sets the same
+# version as a soft min_version. Bash 3.2 compatible.
 #
 # Change the version and the installer digest together. The digest is the
 # release's install.sh digest in GitHub's release metadata. Pick a release that

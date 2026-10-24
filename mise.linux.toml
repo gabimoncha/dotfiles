@@ -1,0 +1,13 @@
+# Linux only. mise loads this file on every Linux host.
+
+[bootstrap.packages]
+# mise has no zsh. The login shell needs a fixed path in /etc/shells.
+"apt:zsh" = "latest"
+# C compiler and make: Rust crates, Neovim parsers, and node-gyp builds.
+"apt:build-essential" = "latest"
+# Neovim plugin installers unpack zip archives.
+"apt:unzip" = "latest"
+
+[bootstrap.user]
+# A full path: a bare name would take the first zsh on PATH.
+login_shell = "/usr/bin/zsh"

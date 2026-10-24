@@ -2,12 +2,10 @@
 # Apply documented local preferences to installed tools. Never install a tool.
 set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-agents_only=0
 for argument in "$@"; do
   case "$argument" in
     --dry-run) export DOTFILES_RUN_MODE=dry-run ;;
-    --agents-only) agents_only=1 ;;
-    -h|--help) printf 'Usage: configure-telemetry [--dry-run] [--agents-only]\n'; exit 0 ;;
+    -h|--help) printf 'Usage: configure-telemetry [--dry-run]\n'; exit 0 ;;
     *) printf 'Unknown argument: %s\n' "$argument" >&2; exit 2 ;;
   esac
 done
@@ -20,7 +18,7 @@ runtime_acquire_lock telemetry 'telemetry configuration' || exit 1
 telemetry_tool() {
   local name="$1" candidate=""
   if [[ -x "$HOME/.local/bin/mise" ]]; then
-    candidate="$(MISE_AUTO_INSTALL=0 MISE_OFFLINE=1 standalone_probe "$repo_root/bin/repo-mise" "$repo_root/mise/global.toml" which "$name" 2>/dev/null)" || candidate=""
+    candidate="$(MISE_AUTO_INSTALL=0 MISE_OFFLINE=1 standalone_probe "$repo_root/bin/repo-mise" --global which "$name" 2>/dev/null)" || candidate=""
   fi
   case "$candidate" in */shims/*) candidate="" ;; esac
   if [[ -n "$candidate" && -x "$candidate" ]]; then printf '%s\n' "$candidate"; return 0; fi
@@ -46,13 +44,14 @@ telemetry_command() {
   else printf 'Configured %s telemetry\n' "$name"; fi
 }
 
+# Cursor's files are JSON with comments, which mise cannot merge.
 telemetry_file() {
-  local name="$1" kind="$2" target="$3" source="${4:-}"
+  local name="$1" target="$2" source="$3"
   if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
     printf 'Would configure %s telemetry in %s\n' "$name" "$target"
     return 0
   fi
-  if /usr/bin/ruby "$repo_root/bin/lib/telemetry-config.rb" "$kind" "$target" "$source"; then
+  if /usr/bin/ruby "$repo_root/bin/lib/telemetry-config.rb" jsonc "$target" "$source"; then
     printf 'Configured %s telemetry\n' "$name"
   else
     printf 'Could not configure %s telemetry; existing settings were preserved.\n' "$name" >&2
@@ -62,14 +61,22 @@ telemetry_file() {
 
 telemetry_gui_environment() {
   local launchctl_path domain="gui/$UID" job="com.dotfiles.telemetry-env" result=0 changed=0 loaded=0
-  local plist="$HOME/Library/LaunchAgents/com.dotfiles.telemetry-env.plist"
+  local plist="$HOME/Library/LaunchAgents/com.dotfiles.telemetry-env.plist" account_home
+  # The job loads into the account's GUI session. A run with a temporary HOME
+  # must not replace it.
+  account_home="$(dscl . -read "/Users/$(id -un)" NFSHomeDirectory 2>/dev/null | awk '{print $2}')" || account_home=""
+  if [[ -z "$account_home" || "$(cd "$account_home" 2>/dev/null && pwd -P)" != "$(cd "$HOME" && pwd -P)" ]]; then
+    printf 'Skipped the telemetry login job: HOME is not the home folder of this account.\n'
+    return 0
+  fi
   if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
     printf 'Would install and load the telemetry environment login job\n'
     return 0
   fi
-  [[ -f "$plist" && ! -L "$plist" ]] && cmp -s "$repo_root/telemetry/$job.plist" "$plist" || changed=1
-  # Reuse backup-before-replace behavior without applying other personal settings.
-  "$repo_root/bin/link-dotfiles" --telemetry-only || { status=1; return; }
+  [[ -f "$plist" && ! -L "$plist" ]] && cmp -s "$repo_root/macos/$job.plist" "$plist" || changed=1
+  # Apply only the login job files, with the usual backups.
+  "$repo_root/bin/link-dotfiles" "$HOME/.config/zsh/telemetry.sh" "$HOME/bin/dotfiles-telemetry-env" "$plist" ||
+    { status=1; return; }
   launchctl_path="$(telemetry_tool launchctl)" || { status=1; return; }
   standalone_probe "$HOME/bin/dotfiles-telemetry-env" || result=$?
   if [[ "$changed" == 1 ]]; then
@@ -89,26 +96,44 @@ telemetry_gui_environment() {
   else printf 'Configured the GUI telemetry environment; reopen apps to use the new values.\n'; fi
 }
 
-if standalone_installed codex; then
-  telemetry_file 'Codex local runtime' codex "${CODEX_HOME:-$HOME/.codex}/config.toml"
+# Claude Code and Codex read their opt-outs from their settings files.
+# bin/link-dotfiles merges the keys of configs/claude/settings.json and
+# configs/codex/config.toml into them.
+telemetry_agent_settings() {
+  local name settings
+  for name in claude codex; do
+    standalone_installed "$name" || continue
+    case "$name" in
+      claude) settings="$HOME/.claude/settings.json" ;;
+      codex) settings="$HOME/.codex/config.toml" ;;
+    esac
+    if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
+      printf 'Would merge the %s telemetry settings into %s\n' "$name" "$settings"
+      continue
+    fi
+    # One call for each agent, so a broken file of one does not block the other.
+    if "$repo_root/bin/link-dotfiles" "$settings"; then
+      printf 'Configured %s telemetry\n' "$name"
+    else
+      printf 'Could not merge the %s telemetry settings; rerun ./bin/link-dotfiles.\n' "$name" >&2
+      status=1
+    fi
+  done
+}
+
+telemetry_agent_settings
+telemetry_command brew analytics off
+telemetry_command vercel telemetry disable
+telemetry_command gcloud config set core/disable_usage_reporting true
+telemetry_command eas analytics off
+telemetry_command wrangler telemetry disable
+telemetry_command flyctl settings analytics disable
+telemetry_command turbo telemetry disable
+if [[ -d "${DOTFILES_APPLICATIONS_DIR:-/Applications}/Cursor.app" ]]; then
+  telemetry_file cursor "$HOME/Library/Application Support/Cursor/User/settings.json" "$repo_root/configs/cursor/telemetry-settings.json"
+  telemetry_file cursor "$HOME/.cursor/argv.json" "$repo_root/configs/cursor/telemetry-argv.json"
 fi
-if standalone_installed claude; then
-  telemetry_file claude json "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json" "$repo_root/telemetry/claude.json"
-fi
-if [[ "$agents_only" == 0 ]]; then
-  telemetry_command brew analytics off
-  telemetry_command vercel telemetry disable
-  telemetry_command gcloud config set core/disable_usage_reporting true
-  telemetry_command eas analytics off
-  telemetry_command wrangler telemetry disable
-  telemetry_command flyctl settings analytics disable
-  telemetry_command turbo telemetry disable
-  if [[ -d "${DOTFILES_APPLICATIONS_DIR:-/Applications}/Cursor.app" ]]; then
-    telemetry_file cursor jsonc "$HOME/Library/Application Support/Cursor/User/settings.json" "$repo_root/telemetry/cursor-settings.json"
-    telemetry_file cursor jsonc "$HOME/.cursor/argv.json" "$repo_root/telemetry/cursor-argv.json"
-  fi
-  # The login job sets the GUI app environment, which exists only on macOS.
-  [[ "$(uname -s)" != Darwin ]] || telemetry_gui_environment
-  printf 'Manual settings and unavailable controls: see %s/apps/telemetry.md\n' "$repo_root"
-fi
+# The login job sets the GUI app environment, which exists only on macOS.
+[[ "$(uname -s)" != Darwin ]] || telemetry_gui_environment
+printf 'Manual settings and unavailable controls: see %s/apps/telemetry.md\n' "$repo_root"
 exit "$status"

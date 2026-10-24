@@ -1,2 +1,0 @@
-[dotfiles]
-"~/Documents/superwhisper/settings/settings.json" = { source = "settings.json", mode = "symlink" }

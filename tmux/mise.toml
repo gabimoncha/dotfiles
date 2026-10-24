@@ -1,5 +1,0 @@
-[dotfiles]
-"~/.tmux.conf" = { source = "tmux.conf", mode = "symlink" }
-
-[bootstrap.repos]
-"~/.tmux/plugins/tpm" = { url = "https://github.com/tmux-plugins/tpm", depth = 1 }

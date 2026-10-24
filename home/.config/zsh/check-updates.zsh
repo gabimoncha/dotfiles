@@ -1,1 +1,0 @@
-../../../zsh/check-updates.zsh

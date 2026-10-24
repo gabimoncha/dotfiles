@@ -1,60 +1,36 @@
 #!/usr/bin/env bash
-# Run the standalone mise with one repo-owned config as its only global config.
-# Usage: ./bin/repo-mise --setup <mise arguments...>
-# Legacy: ./bin/repo-mise <config.toml> <mise arguments...>
+# Run the pinned standalone mise on this repository's config only.
+#
+#   ./bin/repo-mise <mise arguments...>
+#     Loads mise.toml, mise.macos.toml or mise.linux.toml, and the profile's
+#     mise.<profile>.toml from the repository root. Example: dot status
+#   ./bin/repo-mise --global <mise arguments...>
+#     Loads only the runtime tool list, configs/mise/global.toml.
+#     Example: --global install
 set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 . "${repo_root}/bin/lib/standalone.sh"
-if [[ $# -lt 2 ]]; then
-  printf 'Usage: repo-mise {--setup | <config.toml>} <mise arguments...>\n' >&2
+scope=project
+if [[ "${1:-}" == --global ]]; then
+  scope=global
+  shift
+fi
+if [[ $# -lt 1 ]]; then
+  printf 'Usage: repo-mise [--global] <mise arguments...>\n' >&2
   exit 2
 fi
-setup_mode=0
-setup_config=""
-if [[ "$1" == --setup || "$1" == --setup-config ]]; then
-  setup_mode=1
-  . "${repo_root}/bin/lib/dotfiles-profile.sh"
-  setup_profile="$(dotfiles_profile "$repo_root")" || exit
-  setup_env="$(dotfiles_profile_env "$setup_profile")" || exit
-  if [[ "$1" == --setup-config ]]; then
-    setup_config="$2"
-    case "$setup_config" in
-      "${repo_root}/mise/setup/"*) ;;
-      *) printf 'repo-mise: ownership inspection requires a setup configuration.\n' >&2; exit 2 ;;
-    esac
-    if [[ ! -f "$setup_config" ]]; then
-      printf 'repo-mise: the setup configuration is missing.\n' >&2
-      exit 2
-    fi
-    shift
-  fi
-else
-  config="$1"
-  [[ "$config" == /* ]] || config="${PWD}/${config}"
-  if [[ ! -f "$config" ]]; then
-    printf 'repo-mise: config not found: %s\n' "$config" >&2
-    exit 2
-  fi
-fi
-shift
-if [[ -n "$setup_config" ]]; then
-  # A single config retains the selected profile only for ownership reads.
-  if ! { [[ $# == 2 && "$1" == config && "$2" == --json ]] ||
-         [[ $# == 3 && "$1" == dot && "$2" == status && "$3" == --json ]]; }; then
-    printf 'repo-mise: ownership inspection supports only config --json or dot status --json.\n' >&2
-    exit 2
-  fi
-fi
-if [[ "$setup_mode" == 1 ]]; then
+if [[ "$scope" == project ]]; then
   for argument in "$@"; do
     [[ "$argument" == -- ]] && break
     case "$argument" in
       -E*|-P*|--env|--env=*|--profile|--profile=*)
-        printf 'repo-mise: select the setup environment with DOTFILES_PROFILE or mise/setup/miserc.local.toml.\n' >&2
+        printf 'repo-mise: select the profile in .miserc.local.toml or with DOTFILES_PROFILE.\n' >&2
         exit 2
         ;;
     esac
   done
+  . "${repo_root}/bin/lib/dotfiles-profile.sh"
+  profile="$(dotfiles_profile "$repo_root")" || exit
 fi
 mise_bin="${MISE_INSTALL_PATH:-${HOME}/.local/bin/mise}"
 if [[ ! -x "$mise_bin" ]]; then
@@ -68,14 +44,13 @@ if ! mise_at_pin "$mise_bin"; then
     "$mise_bin" "$pinned_mise_version" >&2
   exit 1
 fi
-if [[ "$setup_mode" == 1 ]]; then
-  if [[ -n "$setup_config" ]]; then
-    MISE_CONFIG_DIR="${repo_root}/mise/setup" MISE_GLOBAL_CONFIG_FILE="$setup_config" \
-      MISE_AUTO_ENV=1 MISE_ENV="$setup_env" DOTFILES_PROFILE="$setup_profile" \
-      MISE_SELF_UPDATE_AUTO=0 exec "$mise_bin" "$@"
-  fi
-  MISE_CONFIG_DIR="${repo_root}/mise/setup" MISE_AUTO_ENV=1 MISE_ENV="$setup_env" \
-    DOTFILES_PROFILE="$setup_profile" MISE_SELF_UPDATE_AUTO=0 exec "$mise_bin" "$@"
+if [[ "$scope" == global ]]; then
+  MISE_GLOBAL_CONFIG_FILE="${repo_root}/configs/mise/global.toml" MISE_ENV= MISE_AUTO_ENV=0 \
+    exec "$mise_bin" "$@"
 fi
-MISE_GLOBAL_CONFIG_FILE="$config" MISE_ENV= MISE_AUTO_ENV=0 MISE_SELF_UPDATE_AUTO=0 \
-  exec "$mise_bin" "$@"
+cd "$repo_root"
+# The ceiling stops mise from loading a config file in a parent folder. mise
+# reads ~/.config/mise/config.toml again after it links it, so trust it too.
+MISE_GLOBAL_CONFIG_FILE="${MISE_CONFIG_DIR}/config.toml" MISE_CEILING_PATHS="$(dirname "$repo_root")" \
+  MISE_TRUSTED_CONFIG_PATHS="${repo_root}:${repo_root}/configs/mise:${HOME}/.config/mise" MISE_AUTO_ENV=1 MISE_ENV="$profile" \
+  DOTFILES_PROFILE="$profile" exec "$mise_bin" "$@"

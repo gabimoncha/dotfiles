@@ -1,1 +1,0 @@
-../../../telemetry/env.sh

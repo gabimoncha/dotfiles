@@ -1,9 +1,42 @@
 # Repository rules
 
 This repository owns setup, tool inventories, and selected app settings for
-the owner's Mac and for Linux hosts: Docker containers and VMs. Read
+the owner's Macs and for Linux hosts: Docker containers and VMs. Read
 [README.md](README.md) for the workflow and [DECISIONS.md](DECISIONS.md)
 before changing ownership, bootstrap boundaries, or other design decisions.
+
+## Where things live
+
+| To change | Edit |
+| --- | --- |
+| An app's settings file | `configs/<app>/` |
+| Where a file goes in HOME | the `[dotfiles]` entry in a root mise file |
+| Entries for every host | `mise.toml` |
+| Entries for one platform | `mise.macos.toml` or `mise.linux.toml` |
+| Entries for one machine | the profile file: `mise.pro.toml`, `mise.air.toml`, `mise.container.toml`, or `mise.vm.toml` |
+| Agent rules for every host | `configs/agents/instructions.md` |
+| Agent rules for one host | `configs/agents/<profile>.md` |
+| Runtime tools and mise tasks | `configs/mise/global.toml` |
+| Homebrew formulae, casks, and App Store apps | `Brewfile` |
+| Apt packages | `mise.linux.toml` or the profile file |
+| macOS preferences | `[bootstrap.macos]` in `mise.macos.toml`, and `macos/defaults.sh` |
+| Agent CLIs, mise, and other vendor-installed tools | `apps/standalone.tsv` |
+| Setup steps | `bin/` |
+
+Apply file changes with `./bin/link-dotfiles`. Preview them first with
+`./bin/link-dotfiles --dry-run`. Run other mise commands for this repository
+through `./bin/repo-mise`, which loads the selected profile and the pinned mise.
+
+## Add a config file
+
+1. Put the file in `configs/<app>/`. Use the app's short name for the folder.
+2. Add a `[dotfiles]` entry to the root mise file for the hosts that need it.
+   Use `mode = "symlink"` when the app only reads the file. Use `merge = true`
+   when the app also writes the file, and put only the keys you own in the
+   source. Agent settings are merges, because the agents write private paths
+   into them.
+3. Run `./bin/link-dotfiles --dry-run`, then `./bin/link-dotfiles`.
+4. Run `./bin/preflight`. It fails when a file in `configs/` has no entry.
 
 ## Platforms
 
@@ -17,10 +50,9 @@ run, and the mise tool list. A change that works only on the Mac breaks Linux.
   `bin/lib/standalone.sh` does. Setup's Ruby helpers run on `/usr/bin/ruby`:
   2.6 on macOS and 3.1 on Debian 12.
 - Gate macOS-only behavior: `$OSTYPE == darwin*` in zsh, `uname -s` in Bash,
-  `os = "macos"` on a mise tool, and `mise.macos.toml` for native file entries.
+  `os = "macos"` on a mise tool, and `mise.macos.toml` for file entries.
 - Linux hosts have no Homebrew, GUI apps, launchd, or Keychain. A container
-  can also lack systemd and the agent sandboxes. Linux system packages go in
-  `linux/mise.linux.toml`. Host files go in `linux/<profile>/`.
+  can also lack systemd and the agent sandboxes.
 
 ## Editing
 
@@ -35,14 +67,9 @@ run, and the mise tool list. A change that works only on the Mac breaks Linux.
 - Steam uses `bin/install-steam` for Valve's verified ARM64 bootstrapper.
   Preserve its update channel and quarantine. Keep Rosetta installation manual.
 - Keep Brewfile entries alphabetized within sections unless deliberately grouped.
-- Put managed sources in root app folders. Declare their targets once in the
-  folder's `mise.toml` or platform environment file. Register modules through
-  `mise/setup/conf.d/` and exclude their files from project discovery in
-  `.miserc.toml`. Keep local companions under ignored `local/`; only examples
-  belong in Git. Use `bin/link-dotfiles` for durable backups and native apply.
-- Keep runtime tools in `mise/global.toml` and setup declarations in modules.
-  `bin/repo-mise --setup` loads those modules from `/`. Preserve profile checks
-  before setup writes. Air and VM profiles remain deferred.
+- Keep local companions under ignored `local/`; only examples belong in Git.
+- Keep the profile checks in `bin/lib/dotfiles-profile.sh` before setup writes.
+  The Air and VM profiles stay deferred.
 - Never commit credentials, private identities, backup payloads, or machine-local
   state. See [SECURITY.md](SECURITY.md).
 - Keep test fixtures and diagnostic scratch files in system temporary directories.

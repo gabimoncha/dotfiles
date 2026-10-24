@@ -68,7 +68,7 @@ managed_link_matches() {
 }
 
 check_ghostty() {
-  local source="${repo_root}/ghostty/config"
+  local source="${repo_root}/configs/ghostty/config"
   local target="${HOME}/Library/Application Support/com.mitchellh.ghostty/config"
 
   if managed_link_matches "$target" "$source"; then
@@ -81,11 +81,11 @@ check_ghostty() {
   else
     warn "Ghostty config is missing at ~/Library/Application Support/com.mitchellh.ghostty/config"
   fi
-  info "Run ./bin/link-dotfiles after Ghostty is installed."
+  info "Run ./bin/link-dotfiles."
 }
 
 check_aerospace() {
-  local source="${repo_root}/aerospace/aerospace.toml"
+  local source="${repo_root}/configs/aerospace/aerospace.toml"
   local target="${HOME}/.aerospace.toml"
 
   if managed_link_matches "$target" "$source"; then
@@ -98,7 +98,7 @@ check_aerospace() {
   else
     warn "AeroSpace config is missing at ~/.aerospace.toml"
   fi
-  info "Run ./bin/link-dotfiles after AeroSpace is installed."
+  info "Run ./bin/link-dotfiles."
 }
 
 check_tmux() {
@@ -119,7 +119,7 @@ check_tmux() {
     if [[ ! -d "${HOME}/.tmux/plugins/${plugin_name}" ]]; then
       missing+=("$plugin_name")
     fi
-  done < <(sed -n "s/^[[:space:]]*set -g @plugin ['\"]\\([^'\"]*\\)['\"].*/\\1/p" "${repo_root}/tmux/tmux.conf")
+  done < <(sed -n "s/^[[:space:]]*set -g @plugin ['\"]\\([^'\"]*\\)['\"].*/\\1/p" "${repo_root}/configs/tmux/tmux.conf")
 
   if [[ ${#missing[@]} -eq 0 ]]; then
     ok "tmux plugins are installed"

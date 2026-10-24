@@ -1,2 +1,0 @@
-[dotfiles]
-"~/.aerospace.toml" = { source = "aerospace.toml", mode = "symlink" }

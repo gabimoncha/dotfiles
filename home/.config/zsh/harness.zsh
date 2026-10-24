@@ -1,1 +1,0 @@
-../../../zsh/harness.zsh

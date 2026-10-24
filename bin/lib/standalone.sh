@@ -7,14 +7,16 @@ standalone_manifest="${repo_root}/apps/standalone.tsv"
 
 # Keep inherited discovery settings from adding or omitting repository configs.
 # Preserve cache, state, data, and authentication settings for the caller.
+# The config folder does not exist, so mise finds no global or system config
+# there. Callers name the config files they want.
 standalone_mise_isolate() {
   cd / || return
   unset MISE_CONFIG_FILE MISE_GLOBAL_CONFIG_FILE MISE_SYSTEM_CONFIG_FILE MISE_ENV MISE_DOTFILES_ROOT MISE_ENV_FILE MISE_CD
-  export MISE_CONFIG_DIR="${repo_root}/mise/setup"
+  export MISE_CONFIG_DIR="${repo_root}/.local/no-mise-config"
   # A character device cannot contain system config or miserc files.
   export MISE_SYSTEM_CONFIG_DIR=/dev/null
   export MISE_GLOBAL_CONFIG_ROOT="$HOME" MISE_CEILING_PATHS=/
-  export MISE_NO_CONFIG=0 MISE_USE_TOML=1 MISE_ENV_CONF_D=1 MISE_IGNORED_CONFIG_PATHS= MISE_OVERRIDE_CONFIG_FILENAMES=
+  export MISE_NO_CONFIG=0 MISE_USE_TOML=1 MISE_IGNORED_CONFIG_PATHS= MISE_OVERRIDE_CONFIG_FILENAMES=
   export MISE_DEFAULT_CONFIG_FILENAME=mise.toml MISE_OVERRIDE_TOOL_VERSIONS_FILENAMES=none
   export MISE_SELF_UPDATE_AUTO=0
 }
@@ -111,7 +113,7 @@ standalone_installed() {
 # Node, so resolve an installed Node before removing shims from PATH.
 standalone_installed_node() {
   local node_path mise_bin version
-  node_path="$(MISE_AUTO_INSTALL=0 MISE_OFFLINE=1 "$repo_root/bin/repo-mise" "$repo_root/mise/global.toml" which node 2>/dev/null)" || {
+  node_path="$(MISE_AUTO_INSTALL=0 MISE_OFFLINE=1 "$repo_root/bin/repo-mise" --global which node 2>/dev/null)" || {
     # PATH is prepared before the installer can bring mise up to the pin.
     # This exception permits only an offline lookup with the runtime config.
     mise_bin="$(standalone_field mise command)" || return 1
@@ -122,7 +124,7 @@ standalone_installed_node() {
     version="$(mise_installed_version "$mise_bin")" || return 1
     if mise_version_at_least "$version" "$pinned_mise_version"; then return 1; fi
     node_path="$(
-      MISE_GLOBAL_CONFIG_FILE="$repo_root/mise/global.toml" MISE_ENV= MISE_AUTO_ENV=0 \
+      MISE_GLOBAL_CONFIG_FILE="$repo_root/configs/mise/global.toml" MISE_ENV= MISE_AUTO_ENV=0 \
         MISE_AUTO_INSTALL=0 MISE_OFFLINE=1 "$mise_bin" which node 2>/dev/null
     )" || return 1
   }

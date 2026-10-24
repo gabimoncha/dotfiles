@@ -41,7 +41,7 @@ are passed to Mackup; use component commands for other options.
 
 ## Mackup settings
 
-Mise installs Mackup. [mackup/mackup.cfg](mackup/mackup.cfg) is the allowlist and
+Mise installs Mackup. [configs/mackup/mackup.cfg](configs/mackup/mackup.cfg) is the allowlist and
 storage configuration. Use explicit copy-mode backup/restore; do not use link
 mode or add apps whose files this repository already links.
 

@@ -15,7 +15,7 @@
     "sfw Free cannot disable telemetry; cloudflared has no documented automatic error-reporting opt-out.",
     "Wrangler deployment dependency metadata needs a project configuration opt-out.",
     "Turborepo experimental OTLP settings need a project that enables the experimentalObservability future flag; no global experimental variable is added.",
-    "The Codex TOML merge supports standard scalar telemetry tables and preserves arrays/strings. Escaped names and ambiguous telemetry forms fail unchanged. It is not a complete validator for unrelated TOML syntax."
+    "bin/link-dotfiles merges the Codex and Claude Code opt-outs from configs/codex/config.toml and configs/claude/settings.json with mise. bin/configure-telemetry sets the Cursor keys, because mise cannot merge JSON with comments."
   ],
   "tools": [
     {
@@ -3115,7 +3115,7 @@
         "checked_date": "2026-10-03"
       },
       "setup_actions": {
-        "file_merge": "analytics.enabled=false; OTel exporter, metrics_exporter and trace_exporter=none; log_user_prompt=false in $CODEX_HOME/config.toml. Standard tables are merged; ambiguous inline/dotted forms fail without changes."
+        "file_merge": "analytics.enabled=false; OTel exporter, metrics_exporter and trace_exporter=none; log_user_prompt=false in ~/.codex/config.toml, merged from configs/codex/config.toml."
       }
     },
     {
@@ -3173,7 +3173,7 @@
           "CLAUDE_CODE_ENABLE_TELEMETRY": "0",
           "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1"
         },
-        "file_merge": "Merge telemetry environment values into $CLAUDE_CONFIG_DIR/settings.json (default ~/.claude/settings.json).",
+        "file_merge": "The same values in the env key of ~/.claude/settings.json, merged from configs/claude/settings.json.",
         "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },

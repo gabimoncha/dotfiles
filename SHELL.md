@@ -1,6 +1,6 @@
 # Shell usage
 
-Zsh entrypoints load modules from `zsh/`: environment for every
+Zsh entrypoints load modules from `configs/zsh/`: environment for every
 shell, profile/PATH for login shells, and interactive tools, aliases and
 functions for interactive shells. Optional integrations use installed
 executables; prompt startup does not provision tools or fetch credentials.
@@ -31,8 +31,8 @@ bypass routing. Git push/pull use SSH configuration independently.
 
 Run `use-my-mac` (or `help`) for the searchable command menu. It copies commands
 and can execute the selected entry after confirmation. Implementations are in
-[functions.zsh](zsh/functions.zsh) and
-[aliases.zsh](zsh/aliases.zsh).
+[functions.zsh](configs/zsh/functions.zsh) and
+[aliases.zsh](configs/zsh/aliases.zsh).
 
 `commit-ai` / `gcai` asks Codex for a Conventional Commit subject from the staged
 patch, then opens it in Neovim before Git hooks run. Save with `:wq` to commit

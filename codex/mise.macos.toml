@@ -1,2 +1,0 @@
-[dotfiles]
-"~/.codex/AGENTS.md" = { source = "AGENTS.md", mode = "symlink" }

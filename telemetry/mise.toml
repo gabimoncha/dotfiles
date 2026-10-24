@@ -1,2 +1,0 @@
-[dotfiles]
-"~/.config/telemetry/env.sh" = { source = "env.sh", mode = "symlink" }

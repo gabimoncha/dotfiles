@@ -54,7 +54,7 @@ install_plugins() {
     if [[ ! -d "${plugin_root}/${plugin_name}" ]]; then
       missing_plugins+=("$plugin_name")
     fi
-  done < <(sed -n "s/^[[:space:]]*set -g @plugin ['\"]\\([^'\"]*\\)['\"].*/\\1/p" "${repo_root}/tmux/tmux.conf")
+  done < <(sed -n "s/^[[:space:]]*set -g @plugin ['\"]\\([^'\"]*\\)['\"].*/\\1/p" "${repo_root}/configs/tmux/tmux.conf")
 
   if [[ ${#missing_plugins[@]} -eq 0 ]]; then
     log "tmux plugins are already installed"

@@ -1,0 +1,3 @@
+# Fastlane installs gems through this file. Skipping the documentation avoids an
+# RDoc failure with Ruby 3.4.11.
+install: --no-document

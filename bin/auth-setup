@@ -18,11 +18,11 @@ warn() {
 }
 
 run_gh() {
-  "$repo_root/github/bin/dotfiles-gh-real" "$@"
+  "$repo_root/configs/gh/dotfiles-gh-real" "$@"
 }
 
 run_mise() {
-  "$repo_root/bin/repo-mise" "$repo_root/mise/global.toml" "$@"
+  "$repo_root/bin/repo-mise" --global "$@"
 }
 
 gh_available() {

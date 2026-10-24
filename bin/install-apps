@@ -137,8 +137,8 @@ install_mise_tool() {
 
 install_mise_tool_unlocked() {
   local status=0 refresh_status=0
-  "${repo_root}/bin/repo-mise" "${repo_root}/mise/global.toml" install "$1" || status=$?
-  "${repo_root}/bin/repo-mise" "${repo_root}/mise/global.toml" reshim || refresh_status=$?
+  "${repo_root}/bin/repo-mise" --global install "$1" || status=$?
+  "${repo_root}/bin/repo-mise" --global reshim || refresh_status=$?
   [[ "$status" -ne 0 ]] || status="$refresh_status"
   return "$status"
 }

@@ -1,85 +1,77 @@
 #!/usr/bin/env bash
+# The machine profile selects one mise.<profile>.toml file at the repository
+# root: pro and air on macOS, container and vm on Linux. Bash 3.2 compatible.
 
+# Accept the profile names that older versions of this repository used.
 dotfiles_profile_normalize() {
   case "${1:-}" in
-    linux-container) printf 'linux/container\n' ;;
-    linux-vm) printf 'linux/vm-gcp\n' ;;
+    macos/pro) printf 'pro\n' ;;
+    macos/air) printf 'air\n' ;;
+    linux/container|linux-container) printf 'container\n' ;;
+    linux/vm-gcp|linux-vm|vm-gcp) printf 'vm\n' ;;
     *) printf '%s\n' "${1:-}" ;;
   esac
 }
 
-# These functions validate the profile before a caller changes machine state.
+# Callers run this check before they change machine state.
 dotfiles_profile_validate() {
   local profile="${1:-}" system="${2:-$(uname -s)}"
-  profile="$(dotfiles_profile_normalize "$profile")" || return
   case "$profile" in
-    macos/pro|macos/air)
+    pro|air)
       [[ "$system" == Darwin ]] || {
         printf 'dotfiles: profile %s requires macOS.\n' "$profile" >&2
         return 2
       }
       ;;
-    linux/container|linux/vm-gcp)
+    container|vm)
       [[ "$system" == Linux ]] || {
         printf 'dotfiles: profile %s requires Linux.\n' "$profile" >&2
         return 2
       }
       ;;
-    *) printf 'dotfiles: unsupported profile: %s\n' "$profile" >&2; return 2 ;;
+    *) printf 'dotfiles: unsupported profile: %s. Use pro, air, container, or vm.\n' "$profile" >&2; return 2 ;;
   esac
   case "$profile" in
-    macos/air|linux/vm-gcp)
-      printf 'dotfiles: profile %s is deferred. No changes were made.\n' "$profile" >&2
+    air|vm)
+      printf 'dotfiles: profile %s is not set up yet. No changes were made.\n' "$profile" >&2
       return 2
       ;;
   esac
 }
 
-dotfiles_profile_env() {
-  local profile
-  profile="$(dotfiles_profile_normalize "${1:-}")" || return
-  case "$profile" in
-    macos/pro) printf 'pro\n' ;;
-    linux/container) printf 'container\n' ;;
-    *) printf 'dotfiles: no setup environment for profile %s.\n' "$profile" >&2; return 2 ;;
-  esac
-}
-
+# Prints the profile. DOTFILES_PROFILE wins, then env = ["<profile>"] in the
+# ignored .miserc.local.toml. A Linux container without either uses container.
 dotfiles_profile() {
-  local root="${1:-}" profile="${DOTFILES_PROFILE:-}" selected="" system
+  local root="${1:-}" profile="${DOTFILES_PROFILE:-}" saved line system
+  local pattern='^[[:space:]]*env[[:space:]]*=[[:space:]]*\[[[:space:]]*"([a-z/-]+)"[[:space:]]*,?[[:space:]]*\][[:space:]]*$'
   if [[ -z "$root" ]]; then
     root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)" || return
   fi
   system="$(uname -s)" || return
-  if [[ -z "$profile" && -e "$root/mise/setup/miserc.local.toml" ]]; then
-    local saved_line saved_selection=""
-    local selector_pattern='^[[:space:]]*env[[:space:]]*=[[:space:]]*\[[[:space:]]*"(pro|air|container|vm-gcp)"[[:space:]]*,?[[:space:]]*\][[:space:]]*$'
-    [[ -r "$root/mise/setup/miserc.local.toml" ]] || {
-      printf 'dotfiles: cannot read the saved setup profile.\n' >&2
+  saved="$root/.miserc.local.toml"
+  # The old layout kept the selection here. bin/link-dotfiles moves it.
+  [[ -e "$saved" || ! -e "$root/mise/setup/miserc.local.toml" ]] || saved="$root/mise/setup/miserc.local.toml"
+  if [[ -z "$profile" && -e "$saved" ]]; then
+    [[ -r "$saved" ]] || {
+      printf 'dotfiles: cannot read %s.\n' "$saved" >&2
       return 2
     }
-    while IFS= read -r saved_line || [[ -n "$saved_line" ]]; do
-      saved_selection+=" ${saved_line%%#*}"
-    done < "$root/mise/setup/miserc.local.toml"
-    if [[ "$saved_selection" =~ $selector_pattern ]]; then
-      selected="${BASH_REMATCH[1]}"
-    else
-      printf 'dotfiles: invalid saved setup profile. Use env = ["pro"] or env = ["container"].\n' >&2
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      line="${line%%#*}"
+      if [[ "$line" =~ $pattern ]]; then
+        profile="${BASH_REMATCH[1]}"
+      fi
+    done < "$saved"
+    [[ -n "$profile" ]] || {
+      printf 'dotfiles: .miserc.local.toml has no profile. Add a line such as env = ["pro"].\n' >&2
       return 2
-    fi
-    case "$selected" in
-      pro|air) profile="macos/$selected" ;;
-      container|vm-gcp) profile="linux/$selected" ;;
-    esac
+    }
   fi
   if [[ -z "$profile" ]]; then
     if [[ "$system" == Linux && ( -f /.dockerenv || -f /run/.containerenv ) ]]; then
-      profile=linux/container
-    elif [[ "$system" == Linux ]]; then
-      printf 'dotfiles: Linux VM setup is deferred. Select a supported profile explicitly.\n' >&2
-      return 2
+      profile=container
     else
-      printf 'dotfiles: select DOTFILES_PROFILE=macos/pro or save env = ["pro"] in mise/setup/miserc.local.toml.\n' >&2
+      printf 'dotfiles: select a profile. Save env = ["pro"] in %s, or set DOTFILES_PROFILE.\n' "$saved" >&2
       return 2
     fi
   fi
