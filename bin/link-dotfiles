@@ -101,7 +101,7 @@ fi
 
 dry_run=0
 if [[ "$mode" == apply ]]; then
-  # Setup runs stages at the same time. The lock keeps link runs apart.
+  # The lock keeps two link runs apart, such as setup and a manual run.
   . "$repo_root/bin/lib/setup-runtime.sh"
   runtime_init link-dotfiles
   trap 'runtime_on_exit "$?"' EXIT

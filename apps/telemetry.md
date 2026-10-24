@@ -2,7 +2,7 @@
 
 Reviewed on 2026-10-03. Coverage: 186 of 186 tracked entries.
 
-Setup exports the supported environment controls before installers run. It applies saved preferences after foundation installation, and again at the end of continuation after restores. A failed setter makes the stage fail; other installed tools are still configured.
+Setup exports the supported environment controls before installers run. It applies saved preferences after foundation installation, and again at the end of continuation after restores. A failed setter makes the step fail; other installed tools are still configured.
 
 Run `./bin/configure-telemetry --dry-run` to preview the changes. Run it without that option to retry. Existing configuration is merged and backed up. Claude Code and Codex get their saved opt-outs from the settings that `./bin/link-dotfiles` merges: [configs/claude/settings.json](../configs/claude/settings.json) and [configs/codex/config.toml](../configs/codex/config.toml). Cursor's files are JSON with comments, which mise cannot merge, so `./bin/configure-telemetry` sets its two keys.
 

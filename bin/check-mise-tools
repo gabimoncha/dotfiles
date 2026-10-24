@@ -90,7 +90,7 @@ bounded_check() {
 }
 
 if ! command -v mise >/dev/null 2>&1; then
-  warn "mise is not available; run ./bin/setup or ./bin/bootstrap first."
+  warn "mise is not available; run ./bin/setup first."
   exit 1
 fi
 

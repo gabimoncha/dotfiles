@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Logs, result records, locks, and background jobs for bin/setup and its
+# helpers. Each run writes one folder in .local/setup-runs/: setup.log holds the
+# sanitized output, and summary.txt holds one result line for each step.
 # Bash 3.2 compatible. Never enable xtrace here: credentials may be in memory.
 # Apply opt-outs before installers and health probes can run managed tools.
 if [[ -n "${repo_root:-}" && -r "$repo_root/configs/zsh/telemetry.sh" ]]; then
@@ -17,32 +20,17 @@ runtime_sanitize() {
     end
   '
 }
+# Shows each line with the job name and appends it to the run log.
 runtime_stream_output() {
   local line
   # Shell printf writes each line immediately, including an unterminated tail.
   while IFS= read -r line || [[ -n "$line" ]]; do
-    printf '%s\n' "$line" >&3
+    printf '[%s] %s\n' "$2" "$line" >&3
     printf '[%s] %s\n' "$2" "$line"
-  done 3> "$1"
+  done 3>> "$1"
 }
-runtime_json() {
-  runtime_sanitize | /usr/bin/ruby -rjson -e 'print JSON.generate(STDIN.read.scrub)[1...-1]'
-}
-runtime_sanitize_name() { printf '%s' "$1" | tr -c '[:alnum:]._' '-'; }
 runtime_log() { printf '==> %s\n' "$1"; }
 runtime_warn() { printf '!! %s\n' "$1" >&2; }
-runtime_event() {
-  local event="$1" id="${2:-${DOTFILES_STAGE_ID:-setup}}" parent="${3-setup}" outcome="${4:-}" status="${5:-0}" detail="${6:-}" prerequisites="${7:-}" duration="${8:-0}" stack="${9:-}"
-  local stream="${DOTFILES_SETUP_LOG_DIR}/streams/${DOTFILES_RUNTIME_PID:-$$}.${DOTFILES_RUNTIME_STREAM_ID}.jsonl" record
-  record="$(printf '{"timestamp":"%s","mode":"%s","event":"%s","stage_id":"%s","parent_stage_id":"%s","prerequisites":"%s","outcome":"%s","exit_status":%s,"duration_seconds":%s,"detail":"%s","stack":"%s"}' \
-    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$DOTFILES_RUN_MODE" "$event" "$(printf '%s' "$id" | runtime_json)" "$(printf '%s' "$parent" | runtime_json)" "$(printf '%s' "$prerequisites" | runtime_json)" "$outcome" "$status" "$duration" "$(printf '%s' "$detail" | runtime_json)" "$(printf '%s' "$stack" | runtime_json)")"
-  printf '%s\n' "$record" >> "$stream"
-}
-runtime_merge_trace() {
-  local temporary="${DOTFILES_SETUP_LOG_DIR}/events.${DOTFILES_RUNTIME_PID:-$$}.${RANDOM}.tmp"
-  cat "$DOTFILES_SETUP_LOG_DIR"/streams/*.jsonl > "$temporary"
-  mv "$temporary" "$DOTFILES_SETUP_LOG_DIR/events.jsonl"
-}
 runtime_prune_logs() {
   /usr/bin/ruby -rfileutils - "$1" <<'RUBY'
 root = File.expand_path(ARGV.fetch(0))
@@ -53,10 +41,8 @@ File.open(File.join(root, '.retention.lock'), File::RDWR | File::CREAT | File::N
     path = File.join(root, name)
     stat = File.lstat(path)
     next unless stat.directory? && stat.uid == Process.uid
-    next unless %w[summary.txt events.jsonl streams].all? do |entry|
-      child = File.join(path, entry)
-      !File.symlink?(child) && (entry == 'streams' ? File.directory?(child) : File.file?(child))
-    end
+    summary = File.join(path, 'summary.txt')
+    next unless File.file?(summary) && !File.symlink?(summary)
     # Linux Ruby has no birthtime. Run names start with their UTC start time,
     # which sorts in the same order.
     created = begin
@@ -94,38 +80,39 @@ runtime_init() {
   [[ "${DOTFILES_RUNTIME_INITIALIZED:-0}" == 1 ]] && return 0
   DOTFILES_RUNTIME_INITIALIZED=1
   DOTFILES_RUNTIME_PID="$(exec sh -c 'echo "$PPID"')"
-  DOTFILES_RUNTIME_SCRIPT="${1:-setup}"
   DOTFILES_RUN_MODE="${2:-${DOTFILES_RUN_MODE:-normal}}"
-  DOTFILES_RUNTIME_STREAM_ID="${RANDOM}.${RANDOM}"
-  DOTFILES_RUNTIME_OWNS_SUMMARY=0
   DOTFILES_RUNTIME_OWNS_LOG_DIR=0
   DOTFILES_RUNTIME_CANCELLED=0
   DOTFILES_RUNTIME_CLEANED=0
   DOTFILES_RUNTIME_LOCK_ROOT="${DOTFILES_RUNTIME_LOCK_ROOT:-${TMPDIR:-/tmp}/dotfiles-locks-${UID}}"
   DOTFILES_RUNTIME_HELD_LOCKS=()
-  DOTFILES_JOB_PIDS=(); DOTFILES_JOB_NAMES=(); DOTFILES_JOB_SEVERITIES=(); DOTFILES_JOB_FIXES=(); DOTFILES_JOB_LOGS=(); DOTFILES_JOB_STARTS=(); DOTFILES_JOB_IDS=(); DOTFILES_JOB_PARENTS=(); DOTFILES_JOB_PREREQS=(); DOTFILES_JOB_FAILED=0
+  DOTFILES_JOB_PIDS=(); DOTFILES_JOB_NAMES=(); DOTFILES_JOB_SEVERITIES=(); DOTFILES_JOB_FIXES=(); DOTFILES_JOB_STARTS=(); DOTFILES_JOB_FAILED=0
   umask 077
+  # A helper that setup runs writes into the folder of that setup run.
   if [[ -z "${DOTFILES_SETUP_LOG_DIR:-}" ]]; then
     local root="${DOTFILES_SETUP_RUN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/.local/setup-runs}"
     mkdir -p "$root"
     DOTFILES_SETUP_LOG_DIR="$(mktemp -d "$root/$(date -u +%Y%m%dT%H%M%SZ)-XXXXXX")"
     printf '%s\n' "$DOTFILES_RUNTIME_PID" > "$DOTFILES_SETUP_LOG_DIR/.owner-pid"
     DOTFILES_RUNTIME_OWNS_LOG_DIR=1
-    DOTFILES_RUNTIME_OWNS_SUMMARY=1
+    DOTFILES_SETUP_SUMMARY_FILE="$DOTFILES_SETUP_LOG_DIR/summary.txt"
+    DOTFILES_SETUP_LOG="$DOTFILES_SETUP_LOG_DIR/setup.log"
   fi
-  mkdir -p "$DOTFILES_SETUP_LOG_DIR/streams"
-  chmod 700 "$DOTFILES_SETUP_LOG_DIR" "$DOTFILES_SETUP_LOG_DIR/streams"
+  chmod 700 "$DOTFILES_SETUP_LOG_DIR"
   DOTFILES_SETUP_SUMMARY_FILE="${DOTFILES_SETUP_SUMMARY_FILE:-$DOTFILES_SETUP_LOG_DIR/summary.txt}"
-  touch "$DOTFILES_SETUP_SUMMARY_FILE" "$DOTFILES_SETUP_LOG_DIR/events.jsonl"
-  chmod 600 "$DOTFILES_SETUP_SUMMARY_FILE" "$DOTFILES_SETUP_LOG_DIR/events.jsonl"
-  export DOTFILES_SETUP_LOG_DIR DOTFILES_SETUP_SUMMARY_FILE DOTFILES_RUN_MODE
+  DOTFILES_SETUP_LOG="${DOTFILES_SETUP_LOG:-$DOTFILES_SETUP_LOG_DIR/setup.log}"
+  touch "$DOTFILES_SETUP_SUMMARY_FILE" "$DOTFILES_SETUP_LOG"
+  chmod 600 "$DOTFILES_SETUP_SUMMARY_FILE" "$DOTFILES_SETUP_LOG"
+  export DOTFILES_SETUP_LOG_DIR DOTFILES_SETUP_SUMMARY_FILE DOTFILES_SETUP_LOG DOTFILES_RUN_MODE
   runtime_log "Diagnostic logs: $DOTFILES_SETUP_LOG_DIR"
-  local commit dirty metadata_root
-  metadata_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-  commit="$(git -C "$metadata_root" rev-parse HEAD 2>/dev/null || printf unknown)"
-  dirty="$( (git -C "$metadata_root" status --porcelain --untracked-files=normal 2>/dev/null || true) | wc -l | tr -d ' ')"
-  runtime_event run_start "$DOTFILES_RUNTIME_SCRIPT" "" "" 0 "commit=$commit dirty_count=$dirty"
-  runtime_merge_trace
+  if [[ "$DOTFILES_RUNTIME_OWNS_LOG_DIR" == 1 ]]; then
+    local metadata_root commit dirty
+    metadata_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+    commit="$(git -C "$metadata_root" rev-parse HEAD 2>/dev/null || printf unknown)"
+    dirty="$( (git -C "$metadata_root" status --porcelain --untracked-files=normal 2>/dev/null || true) | wc -l | tr -d ' ')"
+    printf '%s started %s in %s mode, commit %s, %s changed files\n' \
+      "${1:-setup}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$DOTFILES_RUN_MODE" "$commit" "$dirty" >> "$DOTFILES_SETUP_LOG"
+  fi
   trap 'runtime_signal INT 130' INT
   trap 'runtime_signal TERM 143' TERM
   trap 'runtime_on_exit $?' EXIT
@@ -133,32 +120,13 @@ runtime_init() {
     runtime_prune_logs "$(dirname "$DOTFILES_SETUP_LOG_DIR")" || runtime_warn "Could not remove old setup logs."
   fi
 }
-runtime_stack() {
-  local i
-  for ((i=1; i<${#FUNCNAME[@]}; i++)); do
-    printf '%s:%s:%s\n' "${BASH_SOURCE[$i]:-unknown}" "${BASH_LINENO[$((i-1))]:-0}" "${FUNCNAME[$i]:-main}"
-  done
-}
-runtime_stage_begin() {
-  DOTFILES_STAGE_ID="$1"; DOTFILES_STAGE_PARENT="${2-setup}"; DOTFILES_STAGE_PREREQUISITES="${3:-}"; DOTFILES_STAGE_STARTED=$SECONDS
-  runtime_event stage_start "$DOTFILES_STAGE_ID" "$DOTFILES_STAGE_PARENT" "" 0 "" "$DOTFILES_STAGE_PREREQUISITES"
-}
-runtime_stage_end() {
-  local stack=""
-  [[ "$2" == failed ]] && stack="$(runtime_stack)"
-  printf '%s\t%s\t%s\t\t\n' "$2" "$1" "${4:-exit status ${3:-0}}" | runtime_sanitize >> "$DOTFILES_SETUP_SUMMARY_FILE"
-  runtime_event stage_end "$1" "${DOTFILES_STAGE_PARENT-setup}" "$2" "${3:-0}" "${4:-}" "${DOTFILES_STAGE_PREREQUISITES:-}" "$((SECONDS-${DOTFILES_STAGE_STARTED:-SECONDS}))" "$stack"
-}
+# Usage: runtime_record KIND NAME [REASON] [LOG] [FIX]. KIND is completed,
+# planned, deferred, blocked, recoverable, failed, critical, or cancelled.
 runtime_record() {
-  local kind="$1" name="$2" reason="${3:-}" log_file="${4:-}" fix="${5:-}" outcome="$1" status=0 stack=""
-  case "$kind" in critical|recoverable|failed) outcome=failed; status=1; stack="$(runtime_stack)";; blocked) status=1;; cancelled) status="${DOTFILES_RUNTIME_CANCELLED:-130}";; esac
-  printf '%s\t%s\t%s\t%s\t%s\n' "$kind" "$name" "$reason" "$log_file" "$fix" | runtime_sanitize >> "$DOTFILES_SETUP_SUMMARY_FILE"
-  runtime_event result "${DOTFILES_STAGE_ID:-$(runtime_sanitize_name "$name")}" "${DOTFILES_STAGE_PARENT:-setup}" "$outcome" "$status" "$name: $reason" "${DOTFILES_STAGE_PREREQUISITES:-}" 0 "$stack"
+  printf '%s\t%s\t%s\t%s\t%s\n' "$1" "$2" "${3:-}" "${4:-}" "${5:-}" | runtime_sanitize >> "$DOTFILES_SETUP_SUMMARY_FILE"
 }
 runtime_record_completed() { runtime_record completed "$1" "${2:-completed}"; }
 runtime_record_deferred() { runtime_record deferred "$1" "${2:-deferred}" "" "${3:-}"; }
-runtime_record_planned() { runtime_record planned "$1" "${2:-simulated; no provisioning executed}"; }
-runtime_record_blocked() { runtime_record blocked "$1" "${2:-prerequisite unavailable}"; }
 runtime_record_failure() { runtime_record "$1" "$2" "$3" "${4:-}" "${5:-}"; }
 runtime_acquire_lock() {
   local lock_name="$1" lock_dir="${DOTFILES_RUNTIME_LOCK_ROOT}/$1.lock" pid=""
@@ -197,7 +165,6 @@ runtime_acquire_global_lock() {
   [[ "${DOTFILES_SETUP_GLOBAL_LOCK_HELD:-0}" == 1 ]] && return 0
   runtime_acquire_lock setup-bootstrap "setup lock" || return 1
   export DOTFILES_SETUP_GLOBAL_LOCK_HELD=1
-  DOTFILES_RUNTIME_OWNS_GLOBAL_LOCK=1
 }
 # Snapshot and stop the complete descendant tree before terminating it, so children
 # cannot escape by being reparented while their parents are being killed.
@@ -237,8 +204,8 @@ runtime_signal() {
   local signal="$1" status="$2"
   trap '' INT TERM
   DOTFILES_RUNTIME_CANCELLED="$status"
-  runtime_event cancellation "${DOTFILES_STAGE_ID:-setup}" setup cancelled "$status" "received SIG$signal"
-  runtime_record cancelled "Setup" "received SIG$signal"
+  # The parent records the cancellation once. A job only stops its own children.
+  [[ "${DOTFILES_RUNTIME_CHILD:-0}" == 1 ]] || runtime_record cancelled "Setup" "received SIG$signal"
   runtime_cleanup
   exit "$status"
 }
@@ -247,13 +214,8 @@ runtime_cleanup() {
   DOTFILES_RUNTIME_CLEANED=1
   runtime_cleanup_jobs
   runtime_release_locks
-  runtime_merge_trace
 }
 runtime_on_exit() {
-  local status="$1"
-  if [[ "$status" != 0 && "$status" != 20 && "${DOTFILES_RUNTIME_CANCELLED:-0}" == 0 ]]; then
-    runtime_event failure "${DOTFILES_STAGE_ID:-setup}" setup failed "$status" "process exited" "" 0 "$(runtime_stack)"
-  fi
   runtime_cleanup
   if [[ "${DOTFILES_RUNTIME_OWNS_LOG_DIR:-0}" == 1 && -f "$DOTFILES_SETUP_LOG_DIR/.owner-pid" ]]; then
     local owner
@@ -263,19 +225,16 @@ runtime_on_exit() {
     fi
   fi
 }
+# Usage: runtime_run_job NAME SEVERITY FIX COMMAND... Starts COMMAND in the
+# background. Its output is shown and added to the run log. A positive
+# DOTFILES_JOB_IDLE_TIMEOUT_SECONDS stops a job that prints nothing for that long.
 runtime_run_job() {
-  local name="$1" severity="$2" fix="$3" index="${#DOTFILES_JOB_PIDS[@]}" log_file id
+  local name="$1" severity="$2" fix="$3" log_file="$DOTFILES_SETUP_LOG"
   shift 3
   [[ "${DOTFILES_RUNTIME_CANCELLED:-0}" == 0 ]] || return "$DOTFILES_RUNTIME_CANCELLED"
-  id="${DOTFILES_NEXT_STAGE_ID:-$(runtime_sanitize_name "$name")-${DOTFILES_RUNTIME_STREAM_ID}-$index}"
-  local parent="${DOTFILES_NEXT_PARENT_ID:-${DOTFILES_STAGE_ID:-setup}}" prerequisites="${DOTFILES_NEXT_PREREQUISITES:-${DOTFILES_STAGE_PREREQUISITES:-}}"
-  log_file="$DOTFILES_SETUP_LOG_DIR/$id.log"
-  runtime_log "Starting $name (elapsed 0s; log: $log_file)"
-  runtime_event stage_start "$id" "$parent" "" 0 "$name" "$prerequisites"
+  runtime_log "Starting $name (log: $log_file)"
   (
-    DOTFILES_RUNTIME_HELD_LOCKS=(); DOTFILES_JOB_PIDS=(); DOTFILES_RUNTIME_CLEANED=0
-    DOTFILES_RUNTIME_STREAM_ID="$RANDOM.$RANDOM"
-    export DOTFILES_STAGE_ID="$id" DOTFILES_STAGE_PARENT="$parent" DOTFILES_STAGE_PREREQUISITES="$prerequisites"
+    DOTFILES_RUNTIME_HELD_LOCKS=(); DOTFILES_JOB_PIDS=(); DOTFILES_RUNTIME_CLEANED=0; export DOTFILES_RUNTIME_CHILD=1
     DOTFILES_RUNTIME_PID="$(exec sh -c 'echo "$PPID"')"
     trap 'runtime_signal INT 130' INT; trap 'runtime_signal TERM 143' TERM
     trap 'runtime_on_exit $?' EXIT
@@ -283,40 +242,45 @@ runtime_run_job() {
     if [[ "${DOTFILES_JOB_IDLE_TIMEOUT_SECONDS:-0}" == 0 ]]; then
       "$@" 2>&1 | runtime_sanitize | runtime_stream_output "$log_file" "$name"
     else
-      # Monitor each job here, even while the parent waits for another job.
-      # The job owns this pipeline and its package-writer locks.
-      : > "$log_file"
-      "$@" 2>&1 | runtime_sanitize | runtime_stream_output "$log_file" "$name" &
-      local pipeline_pid=$! last_output=$SECONDS previous_size=0 size
+      # Each job watches its own output, even while the parent waits for
+      # another job. Other jobs write to the shared log, so the job counts its
+      # output in a file of its own.
+      local activity pipeline_pid last_output=$SECONDS previous_size=0 size status=0
+      activity="$(mktemp "$DOTFILES_SETUP_LOG_DIR/.activity.XXXXXX")"
+      "$@" 2>&1 | runtime_sanitize | tee -a "$activity" | runtime_stream_output "$log_file" "$name" &
+      pipeline_pid=$!
       while kill -0 "$pipeline_pid" 2>/dev/null; do
-        size="$(wc -c < "$log_file")"
+        size="$(wc -c < "$activity")"
         if [[ "$size" -ne "$previous_size" ]]; then
           last_output=$SECONDS
           previous_size="$size"
         fi
         if (( SECONDS-last_output >= DOTFILES_JOB_IDLE_TIMEOUT_SECONDS )); then
           runtime_warn "$name timed out after ${DOTFILES_JOB_IDLE_TIMEOUT_SECONDS}s without output; stopping update (log: $log_file)"
+          rm -f "$activity"
           runtime_cleanup_jobs
           exit 124
         fi
         sleep 0.2
       done
-      wait "$pipeline_pid"
+      wait "$pipeline_pid" || status=$?
+      rm -f "$activity"
+      exit "$status"
     fi
   ) &
-  DOTFILES_JOB_PIDS+=("$!"); DOTFILES_JOB_NAMES+=("$name"); DOTFILES_JOB_SEVERITIES+=("$severity"); DOTFILES_JOB_FIXES+=("$fix"); DOTFILES_JOB_LOGS+=("$log_file"); DOTFILES_JOB_STARTS+=("$SECONDS"); DOTFILES_JOB_IDS+=("$id"); DOTFILES_JOB_PARENTS+=("$parent"); DOTFILES_JOB_PREREQS+=("$prerequisites")
-  if [[ "${DOTFILES_SETUP_SERIAL:-0}" == 1 ]]; then runtime_wait_job "$index" || DOTFILES_JOB_FAILED=1; fi
+  DOTFILES_JOB_PIDS+=("$!"); DOTFILES_JOB_NAMES+=("$name"); DOTFILES_JOB_SEVERITIES+=("$severity"); DOTFILES_JOB_FIXES+=("$fix"); DOTFILES_JOB_STARTS+=("$SECONDS")
   return 0
 }
+# Waits for job INDEX and records its result.
 runtime_wait_job() {
   local i="$1" status=0 pid="${DOTFILES_JOB_PIDS[$1]}" elapsed=0 next="${DOTFILES_PROGRESS_INTERVAL:-15}" size=0 previous_size=0
   [[ -n "$pid" ]] || return 0
   while kill -0 "$pid" 2>/dev/null; do
     elapsed=$((SECONDS-${DOTFILES_JOB_STARTS[$i]}))
     if (( elapsed >= next )); then
-      size="$(wc -c < "${DOTFILES_JOB_LOGS[$i]}" 2>/dev/null || printf 0)"
+      size="$(wc -c < "$DOTFILES_SETUP_LOG" 2>/dev/null || printf 0)"
       if [[ "$size" -eq "$previous_size" ]]; then
-        runtime_log "${DOTFILES_JOB_NAMES[$i]} still running (${elapsed}s; no new output; log: ${DOTFILES_JOB_LOGS[$i]})"
+        runtime_log "${DOTFILES_JOB_NAMES[$i]} still running (${elapsed}s; no new output; log: $DOTFILES_SETUP_LOG)"
       fi
       previous_size="$size"
       next=$((elapsed+${DOTFILES_PROGRESS_INTERVAL:-15}))
@@ -325,57 +289,81 @@ runtime_wait_job() {
   done
   wait "$pid" || status=$?
   DOTFILES_JOB_PIDS[$i]=""
-  local previous_id="${DOTFILES_STAGE_ID:-setup}" previous_parent="${DOTFILES_STAGE_PARENT-setup}" previous_prereqs="${DOTFILES_STAGE_PREREQUISITES:-}"
-  DOTFILES_STAGE_ID="${DOTFILES_JOB_IDS[$i]}"
-  DOTFILES_STAGE_PARENT="${DOTFILES_JOB_PARENTS[$i]}"
-  DOTFILES_STAGE_PREREQUISITES="${DOTFILES_JOB_PREREQS[$i]}"
-  if [[ "$status" == 20 ]]; then runtime_record_deferred "${DOTFILES_JOB_NAMES[$i]}"
-  elif [[ "$status" == 0 ]]; then runtime_record_completed "${DOTFILES_JOB_NAMES[$i]}"
+  local outcome=completed
+  if [[ "$status" == 20 ]]; then
+    outcome=deferred
+    runtime_record_deferred "${DOTFILES_JOB_NAMES[$i]}"
+  elif [[ "$status" == 0 ]]; then
+    runtime_record_completed "${DOTFILES_JOB_NAMES[$i]}"
   else
+    outcome=failed
     local reason="exited with status $status"
     if [[ "$status" == 124 && "${DOTFILES_JOB_IDLE_TIMEOUT_SECONDS:-0}" != 0 ]]; then
       reason="timed out after ${DOTFILES_JOB_IDLE_TIMEOUT_SECONDS}s without output; update stopped"
     fi
-    runtime_record_failure "${DOTFILES_JOB_SEVERITIES[$i]}" "${DOTFILES_JOB_NAMES[$i]}" "$reason" "${DOTFILES_JOB_LOGS[$i]}" "${DOTFILES_JOB_FIXES[$i]}"
+    runtime_record_failure "${DOTFILES_JOB_SEVERITIES[$i]}" "${DOTFILES_JOB_NAMES[$i]}" "$reason" "$DOTFILES_SETUP_LOG" "${DOTFILES_JOB_FIXES[$i]}"
   fi
-  local outcome=completed stack=""
-  if [[ "$status" == 20 ]]; then outcome=deferred
-  elif [[ "$status" != 0 ]]; then outcome=failed; stack="$(runtime_stack)"; fi
   runtime_log "${DOTFILES_JOB_NAMES[$i]}: $outcome ($((SECONDS-${DOTFILES_JOB_STARTS[$i]}))s; exit $status)"
-  runtime_event stage_end "${DOTFILES_JOB_IDS[$i]}" "${DOTFILES_JOB_PARENTS[$i]}" "$outcome" "$status" "${DOTFILES_JOB_NAMES[$i]}" "${DOTFILES_JOB_PREREQS[$i]}" "$((SECONDS-${DOTFILES_JOB_STARTS[$i]}))" "$stack"
-  runtime_merge_trace
-  DOTFILES_STAGE_ID="$previous_id"; DOTFILES_STAGE_PARENT="$previous_parent"; DOTFILES_STAGE_PREREQUISITES="$previous_prereqs"
   return "$status"
 }
 runtime_wait_jobs() {
   local i failed="$DOTFILES_JOB_FAILED"
   for ((i=0; i<${#DOTFILES_JOB_PIDS[@]}; i++)); do runtime_wait_job "$i" || failed=1; done
-  DOTFILES_JOB_PIDS=(); DOTFILES_JOB_NAMES=(); DOTFILES_JOB_SEVERITIES=(); DOTFILES_JOB_FIXES=(); DOTFILES_JOB_LOGS=(); DOTFILES_JOB_STARTS=(); DOTFILES_JOB_IDS=(); DOTFILES_JOB_PARENTS=(); DOTFILES_JOB_PREREQS=(); DOTFILES_JOB_FAILED=0
+  DOTFILES_JOB_PIDS=(); DOTFILES_JOB_NAMES=(); DOTFILES_JOB_SEVERITIES=(); DOTFILES_JOB_FIXES=(); DOTFILES_JOB_STARTS=(); DOTFILES_JOB_FAILED=0
   return "$failed"
 }
-runtime_run_step() { DOTFILES_SETUP_SERIAL=1 runtime_run_job "$@"; }
-# Authentication output is intentionally not captured: prompts stay on the TTY.
-runtime_run_foreground() {
-  local name="$1"
-  shift
-  runtime_execute_stage "$(runtime_sanitize_name "$name")" "${DOTFILES_STAGE_ID:-setup}" "" sensitive "$@"
+# Usage: runtime_execute_stage ID MODE COMMAND... and records the result.
+# MODE probe or capture shows the output and adds it to the run log. MODE local
+# runs in this shell, so the command can change its variables. MODE sensitive
+# keeps the terminal for prompts and logs no output.
+runtime_execute_stage() {
+  local id="$1" mode="$2" status=0 index fix="Repair the cause, then rerun ${DOTFILES_SETUP_RERUN:-./bin/setup}."
+  shift 2
+  case "$mode" in
+    probe|capture)
+      index="${#DOTFILES_JOB_PIDS[@]}"
+      runtime_run_job "$id" recoverable "$fix" "$@"
+      # runtime_wait_job records the result.
+      runtime_wait_job "$index" || status=$?
+      return "$status"
+      ;;
+    local) "$@" || status=$? ;;
+    sensitive)
+      runtime_log "Running $id (output is not logged)"
+      # Explicit stdin keeps prompts working. wait returns on a signal, while a
+      # foreground command would delay the signal trap until it ends.
+      (
+        DOTFILES_RUNTIME_PID="$(exec sh -c 'echo "$PPID"')"
+        DOTFILES_RUNTIME_HELD_LOCKS=(); DOTFILES_JOB_PIDS=(); DOTFILES_RUNTIME_CLEANED=0; export DOTFILES_RUNTIME_CHILD=1
+        trap 'runtime_signal INT 130' INT; trap 'runtime_signal TERM 143' TERM
+        trap 'runtime_on_exit $?' EXIT
+        "$@"
+      ) <&0 &
+      wait "$!" || status=$?
+      runtime_log "$id finished (exit $status)"
+      ;;
+    *) runtime_warn "Unknown step mode $mode for $id"; return 2 ;;
+  esac
+  if [[ "$status" == 20 ]]; then runtime_record_deferred "$id"
+  elif [[ "$status" == 0 ]]; then runtime_record_completed "$id"
+  else runtime_record_failure recoverable "$id" "exited with status $status" "" "$fix"; fi
+  return "$status"
 }
+# Usage: runtime_print_section "KIND..." TITLE
 runtime_print_section() {
-  local kind="$1" title="$2" found=0 record_kind name reason log_file fix
+  local kinds=" $1 " title="$2" found=0 record_kind name reason log_file fix
   printf '\n%s\n' "$title"
   while IFS=$'\t' read -r record_kind name reason log_file fix || [[ -n "${record_kind:-}" ]]; do
-    [[ "$record_kind" == "$kind" ]] || continue
+    [[ "$kinds" == *" ${record_kind:-none} "* ]] || continue
     found=1; printf -- '- %s: %s\n' "$name" "$reason"
   done < "$DOTFILES_SETUP_SUMMARY_FILE"
   [[ "$found" == 1 ]] || printf -- '- none\n'
 }
 runtime_print_summary() {
-  runtime_merge_trace
-  printf '\nSetup result summary — diagnostics: %s\n' "$DOTFILES_SETUP_LOG_DIR"
+  printf '\nSetup result summary. Logs: %s\n' "$DOTFILES_SETUP_LOG_DIR"
   runtime_print_section completed Completed
   runtime_print_section planned Planned
-  runtime_print_section recoverable Failed
-  runtime_print_section failed Failed
+  runtime_print_section "recoverable failed" Failed
   runtime_print_section blocked Blocked
   runtime_print_section deferred Deferred/manual
   runtime_print_section cancelled Cancelled
@@ -418,39 +406,5 @@ runtime_with_lock() {
   "$@" || status=$?
   unset "$variable"
   runtime_release_lock "$resource"
-  return "$status"
-}
-runtime_execute_stage() {
-  local id="$1" parent="$2" prerequisites="$3" capture="$4" status=0 previous="${DOTFILES_STAGE_ID:-setup}"
-  shift 4
-  runtime_stage_begin "$id" "$parent" "$prerequisites"
-  if [[ "$capture" == probe ]]; then runtime_event probe "$id" "$parent" "" 0 "executing external read-only checks" "$prerequisites"; fi
-  if [[ "$capture" == local ]]; then
-    "$@" || status=$?
-  elif [[ "$capture" == sensitive ]]; then
-    runtime_log "Running $id (elapsed 0s; diagnostics: $DOTFILES_SETUP_LOG_DIR; sensitive output omitted)"
-    # Explicit stdin preserves interactive prompts; wait is interruptible even
-    # when a foreground external command would defer the shell's signal trap.
-    (
-      DOTFILES_RUNTIME_PID="$(exec sh -c 'echo "$PPID"')"
-      DOTFILES_RUNTIME_HELD_LOCKS=(); DOTFILES_JOB_PIDS=(); DOTFILES_RUNTIME_CLEANED=0
-      DOTFILES_RUNTIME_STREAM_ID="$RANDOM.$RANDOM"
-      export DOTFILES_STAGE_ID DOTFILES_STAGE_PARENT DOTFILES_STAGE_PREREQUISITES
-      trap 'runtime_signal INT 130' INT; trap 'runtime_signal TERM 143' TERM
-      trap 'runtime_on_exit $?' EXIT
-      "$@"
-    ) <&0 &
-    local foreground_pid=$!
-    wait "$foreground_pid" || status=$?
-    runtime_log "$id finished (exit $status)"
-  else
-    local index="${#DOTFILES_JOB_PIDS[@]}"
-    DOTFILES_SETUP_SERIAL=0 runtime_run_job "$id" recoverable "Inspect stage diagnostics and rerun setup." "$@"
-    runtime_wait_job "$index" || status=$?
-  fi
-  if [[ "$status" == 20 ]]; then runtime_stage_end "$id" deferred 20
-  elif [[ "$status" == 0 ]]; then runtime_stage_end "$id" completed 0
-  else runtime_stage_end "$id" failed "$status"; fi
-  DOTFILES_STAGE_ID="$previous"
   return "$status"
 }

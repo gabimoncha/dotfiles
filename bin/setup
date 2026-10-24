@@ -1,19 +1,36 @@
 #!/usr/bin/env bash
+# Sets up this machine. The steps run in order, and a rerun skips finished work.
+#
+# macOS has two phases. ./bin/setup installs the foundations, then stops for the
+# App Store sign-in, the App Management permission, and a terminal restart.
+# ./bin/setup --continue installs the rest. Linux runs every step in one run.
 set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+usage() {
+  printf 'Usage: ./bin/setup [--continue] [--dry-run] [--skip-mobile-dev]\n'
+  printf 'Default: prepare foundation tools, then stop for permissions and terminal restart.\n'
+  printf -- '--continue: run remaining setup after reviewing permissions and restarting the terminal.\n'
+  printf 'Linux runs every step in one run; --continue has no effect there.\n'
+}
 DOTFILES_RUN_MODE=normal
 DOTFILES_SETUP_PHASE=prepare
 for argument in "$@"; do
   case "$argument" in
     --dry-run) DOTFILES_RUN_MODE=dry-run ;;
-    --serial) export DOTFILES_SETUP_SERIAL=1 ;;
     --skip-mobile-dev) export DOTFILES_SKIP_MOBILE_DEV=1 ;;
     --continue) DOTFILES_SETUP_PHASE=continue ;;
-    -h|--help) printf 'Usage: ./bin/setup [--continue] [--dry-run] [--serial] [--skip-mobile-dev]\nDefault: prepare foundation tools, then stop for permissions and terminal restart.\n--continue: run remaining setup after reviewing permissions and restarting the terminal.\nLinux runs every stage in one run; --continue has no effect there.\n'; exit 0 ;;
+    -h|--help) usage; exit 0 ;;
     *) printf 'Unknown setup argument: %s\n' "$argument" >&2; exit 1 ;;
   esac
 done
-export DOTFILES_RUN_MODE DOTFILES_SETUP_PHASE
+DOTFILES_SETUP_RERUN='./bin/setup --continue'
+if [[ "$(uname -s)" != Darwin ]]; then
+  DOTFILES_SETUP_PHASE=continue
+  DOTFILES_SETUP_RERUN='./bin/setup'
+elif [[ "$DOTFILES_SETUP_PHASE" == prepare ]]; then
+  DOTFILES_SETUP_RERUN='./bin/setup'
+fi
+export DOTFILES_RUN_MODE DOTFILES_SETUP_PHASE DOTFILES_SETUP_RERUN
 . "${repo_root}/bin/lib/dotfiles-profile.sh"
 DOTFILES_PROFILE="$(dotfiles_profile)" || exit 1
 export DOTFILES_PROFILE
@@ -31,13 +48,8 @@ if [[ "$(uname -s)" == Linux ]]; then
 fi
 . "${repo_root}/bin/lib/setup-runtime.sh"
 runtime_init setup "$DOTFILES_RUN_MODE"
-# Source the existing package functions without running the legacy bootstrap.
-DOTFILES_BOOTSTRAP_LIBRARY=1
-. "${repo_root}/bin/bootstrap"
-unset DOTFILES_BOOTSTRAP_LIBRARY
+. "${repo_root}/bin/lib/setup-steps.sh"
 . "${repo_root}/bin/lib/setup-restores.sh"
-. "${repo_root}/bin/lib/setup-actions.sh"
-. "${repo_root}/bin/lib/setup-plan.sh"
 
 setup_release_sudo_grant() {
   # Keep a grant that another run or the user installed.
@@ -48,28 +60,177 @@ setup_release_sudo_grant() {
 # Signals exit through runtime_signal, so this also covers cancellation.
 trap 'setup_exit_status=$?; setup_release_sudo_grant; runtime_on_exit "$setup_exit_status"' EXIT
 
+setup_stopped=0
+setup_status=0
+step_status=0
+# Usage: step [--optional] [--always] ID MODE FUNCTION. MODE is probe, capture,
+# local, or sensitive; see runtime_execute_stage. When a step fails, the run
+# stops: the later steps are recorded as blocked. An --optional step records
+# its failure and the run goes on. An --always step runs after a failure too.
+# A dry run runs only the probe steps.
+step() {
+  local optional=0 always=0 id mode
+  while :; do
+    case "$1" in
+      --optional) optional=1 ;;
+      --always) always=1 ;;
+      *) break ;;
+    esac
+    shift
+  done
+  id="$1"; mode="$2"; shift 2
+  step_status=0
+  if [[ "$setup_stopped" == 1 && "$always" == 0 ]]; then
+    runtime_record blocked "$id" 'an earlier step failed'
+    step_status=1
+    return 0
+  fi
+  if [[ "$DOTFILES_RUN_MODE" == dry-run && "$mode" != probe ]]; then
+    runtime_record planned "$id" 'dry run; nothing changed'
+    return 0
+  fi
+  runtime_execute_stage "$id" "$mode" "$@" || step_status=$?
+  [[ "$step_status" != 0 ]] || return 0
+  setup_status=1
+  # 20 means deferred: the step needs a manual action, and later steps can run.
+  [[ "$step_status" == 20 || "$optional" == 1 ]] || setup_stopped=1
+  return 0
+}
+# Records a step that the user turned off. It does not fail the run.
+skip_step() { runtime_record deferred "$1" "skipped: $2"; }
+
+setup_sudo_steps() {
+  if [[ "${DOTFILES_SKIP_SUDO_TOUCH_ID:-0}" == 1 ]]; then
+    skip_step touch_id DOTFILES_SKIP_SUDO_TOUCH_ID=1
+  else
+    step --optional touch_id sensitive setup_touch_id
+  fi
+  step sudo sensitive setup_sudo
+  if [[ "${DOTFILES_SKIP_SUDO_GRANT:-0}" == 1 ]]; then
+    skip_step sudo_grant DOTFILES_SKIP_SUDO_GRANT=1
+  else
+    step --optional sudo_grant sensitive setup_sudo_grant
+  fi
+  step sudo_keepalive local setup_keepalive
+}
+
+# The first macOS phase installs the tools that need no App Store sign-in and
+# no new terminal permission.
+setup_macos_prepare() {
+  step preflight probe setup_preflight
+  step clt capture setup_clt
+  setup_sudo_steps
+  step homebrew capture setup_homebrew
+  step mise capture setup_mise
+  step install_gh capture setup_install_gh
+  step brew_environment local setup_brew_environment
+  step standalone_agents capture setup_standalone_agents
+  step --optional --always telemetry capture setup_telemetry
+  step permission_handoff capture setup_permission_handoff
+}
+
+setup_macos_continue() {
+  step preflight probe setup_preflight
+  step clt capture setup_clt
+  setup_sudo_steps
+  step homebrew capture setup_homebrew
+  step mise capture setup_mise
+  step install_gh capture setup_install_gh
+  step brew_environment local setup_brew_environment
+  # The mise config links must exist before setup checks mise's GitHub access.
+  step links capture setup_links
+  step authenticate_api sensitive setup_api
+  # SSH is separate from the API login. Git and mise can work without it.
+  step --optional authenticate_ssh sensitive setup_ssh
+  step verify_mise_access sensitive setup_verify_auth
+  [[ "$step_status" != 0 ]] || export DOTFILES_SETUP_API_READY=1
+  step brewfiles local setup_brewfiles
+  step --optional homebrew_inventory capture setup_brew_inventory
+  step mise_inventory capture setup_mise_inventory
+  step --optional submodules capture setup_submodules
+  step --optional manifest_apps capture setup_manifest_apps
+  step --optional applications capture setup_verify_apps
+  step --optional editor_extensions capture setup_editor_extensions
+  # mas is a mise tool.
+  step --optional app_store capture setup_app_store
+  step --optional shell capture setup_shell
+  # Pi needs Node from the mise inventory.
+  step standalone_agents capture setup_standalone_agents
+  if [[ -z "${DOTFILES_REVIEWED_SKILLS_REF:-}" ]]; then
+    skip_step skills 'set DOTFILES_REVIEWED_SKILLS_REF to a reviewed commit of the skills repository'
+  else
+    step --optional skills sensitive setup_skills
+  fi
+  step --optional restores sensitive setup_restores
+  step --optional final_links capture setup_final_links
+  # macos/defaults.sh applies mise.macos.toml with the standalone mise.
+  step --optional defaults sensitive setup_defaults
+  step --optional screenshots capture setup_screenshots
+  step --optional app_settings sensitive setup_app_settings
+  step --optional finder sensitive setup_finder
+  # After every interactive step, so the long Xcode download runs unattended.
+  # Before telemetry, so its opt-outs cover the installed mobile tools.
+  if [[ "${DOTFILES_SKIP_MOBILE_DEV:-0}" == 1 ]]; then
+    skip_step mobile_setup --skip-mobile-dev
+  else
+    step --optional mobile_setup capture setup_mobile
+  fi
+  step --optional --always telemetry capture setup_telemetry
+}
+
+# Linux has one phase: it has no App Store, permission, or restart checkpoint.
+# DOTFILES_SKIP_GITHUB_AUTH=1 skips the GitHub login, so mise installs tools
+# without a GitHub token. Run ./bin/auth-setup later to log in.
+setup_linux() {
+  step preflight probe setup_preflight
+  step sudo sensitive setup_linux_sudo
+  step sudo_keepalive local setup_keepalive
+  step mise capture setup_mise
+  step system_packages capture setup_linux_system
+  step install_gh capture setup_install_gh
+  step links capture setup_links
+  step --optional submodules capture setup_submodules
+  if [[ "${DOTFILES_SKIP_GITHUB_AUTH:-0}" == 1 ]]; then
+    skip_step authenticate_api 'DOTFILES_SKIP_GITHUB_AUTH=1; run ./bin/auth-setup later'
+  else
+    step authenticate_api sensitive setup_api
+    # Linux uses Git over HTTPS with the GitHub CLI token. See bin/auth-setup.
+    step configure_git sensitive setup_git_https
+    step verify_mise_access sensitive setup_verify_auth
+    [[ "$step_status" != 0 ]] || export DOTFILES_SETUP_API_READY=1
+  fi
+  step mise_inventory capture setup_mise_inventory
+  step --optional shell capture setup_shell
+  # Pi needs Node from the mise inventory.
+  step standalone_agents capture setup_standalone_agents
+  step --optional final_links capture setup_final_links
+  step --optional --always telemetry capture setup_telemetry
+}
+
 ensure_not_root
 runtime_acquire_global_lock || exit 1
 export PATH="${HOME}/.local/bin:${HOME}/.local/share/mise/shims:$PATH"
 export MISE_AUTO_INSTALL=0
-# A mise self-update during setup would replace the binary that later stages use.
+# A mise self-update during setup would replace the binary that later steps use.
 export MISE_SELF_UPDATE_AUTO=0
 export MISE_HTTP_TIMEOUT="${MISE_HTTP_TIMEOUT:-60}" MISE_HTTP_RETRIES="${MISE_HTTP_RETRIES:-0}"
 export GIT_HTTP_LOW_SPEED_LIMIT="${GIT_HTTP_LOW_SPEED_LIMIT:-1024}" GIT_HTTP_LOW_SPEED_TIME="${GIT_HTTP_LOW_SPEED_TIME:-60}"
+export DOTFILES_SETUP_API_READY=0
 # Keep the system awake only for this process's lifetime; preserve display lock.
 if [[ "$DOTFILES_RUN_MODE" == normal ]] && command -v caffeinate >/dev/null 2>&1; then
   caffeinate -i -w "$$" >/dev/null 2>&1 &
 fi
-status=0
-# The cloud backups and their restores exist only for a Mac.
 if [[ "$(uname -s)" == Darwin ]]; then
+  # The cloud backups and their restores exist only for a Mac.
   . "${repo_root}/bin/lib/setup-backup-checklist.sh"
   setup_backup_checklist
+  if [[ "$DOTFILES_SETUP_PHASE" == prepare ]]; then setup_macos_prepare; else setup_macos_continue; fi
+else
+  setup_linux
 fi
-setup_plan || status=$?
 runtime_print_summary
-runtime_exit_status || status=1
-if [[ "$DOTFILES_SETUP_PHASE" == continue || "$(uname -s)" == Linux ]]; then
+runtime_exit_status || setup_status=1
+if [[ "$DOTFILES_SETUP_PHASE" == continue ]]; then
   printf '\nOpen a new terminal to use the available tools.\n'
 fi
-exit "$status"
+exit "$setup_status"

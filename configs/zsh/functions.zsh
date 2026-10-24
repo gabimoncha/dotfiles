@@ -569,8 +569,7 @@ dotfiles                         - cd to the dotfiles repo
 dotfiles-update                  - pull dotfiles and reapply setup; not a full package upgrade
 ./bin/setup                      - prepare foundation tools, then stop for terminal restart
 ./bin/setup --continue           - continue with authentication, packages and restore offers
-./bin/setup --continue --dry-run - run preflight and log the remaining plan without provisioning
-./bin/bootstrap                  - compatibility entrypoint for setup
+./bin/setup --continue --dry-run - run preflight and list the remaining steps without changes
 ./bin/preflight                  - check macOS updates, prerequisites and repository files
 ./bin/link-dotfiles              - link managed files, backing up replaced targets
 ./bin/auth-setup                 - configure Git identity, GitHub SSH and API access

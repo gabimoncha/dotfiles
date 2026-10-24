@@ -7,7 +7,7 @@ Delete any section that does not apply.
 
 <!--
 One or two sentences. Name the problem, the advisory (CVE or GHSA), or the
-setup stage that failed.
+setup step that failed.
 -->
 
 ## What changes
@@ -22,7 +22,7 @@ from outside, which can come late, come wrong, or not come?
 - Yes: a Mermaid state diagram (stateDiagram-v2). An outside input is a
   user action, a reply from a service or a device, a webhook, a timer, or
   a cancel. A state is a place where the thing waits, for example a setup
-  stage at "Waiting for macOS updates", "Waiting for App Store sign-in",
+  step at "Waiting for macOS updates", "Waiting for App Store sign-in",
   or "Waiting for manual approval". End states can be passed, failed,
   blocked, or deferred. An arrow is the event that moves it on. Draw the
   arrows for the bad events too (timeout, error, cancel, retry), because

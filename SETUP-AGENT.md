@@ -1,8 +1,8 @@
 # Setup repair guide
 
 Scripts do the setup. Use this guide when `./bin/setup` reports a failed,
-blocked, or deferred stage, or when the user asks you to repair one. A repair
-is done when the stage's script exits 0 and a rerun of setup reports the stage
+blocked, or deferred step, or when the user asks you to repair one. A repair
+is done when the step's script exits 0 and a rerun of setup reports the step
 as completed.
 
 ## Rules for every repair
@@ -24,22 +24,25 @@ as completed.
 - If a step fails twice with the same error, stop. Report the command, the
   error, and your best guess at the cause.
 
-## Find the failed stage
+## Find the failed step
 
 Setup keeps the latest three runs under `.local/setup-runs/`. Copy the failed
 run outside that directory before repeated repair attempts if you need its logs.
 
 1. Open `summary.txt` in the newest `.local/setup-runs/<run-id>/` directory.
-   Each line has the outcome, the stage, the reason, the log file, and the
+   Each line has the outcome, the step, the reason, the log file, and the
    repair hint.
-2. Repair the first failed stage first. A later stage can be blocked only
-   because an earlier stage failed.
-3. Read the stage log. Find the script for the stage in the table below, and
-   rerun that script.
-4. When the scripts for all failed stages exit 0, run
+2. Repair the first failed step. Setup stopped there, and it recorded the
+   later steps as blocked. A step marked `--optional` in `bin/setup` records
+   its failure without stopping the run.
+3. Read the step's output in `setup.log` in the same folder. Each line starts
+   with the step name in brackets. A step that asks for a password or a login
+   prints to the terminal only. Find the script for the step in the table
+   below, and rerun that script.
+4. When the scripts for all failed steps exit 0, run
    `./bin/setup --continue`. The setup reuses finished work.
 
-| Stage | Script |
+| Step | Script |
 | --- | --- |
 | `preflight` | `./bin/preflight` |
 | `touch_id` | `./bin/configure-sudo-touch-id --enable` |
@@ -50,26 +53,26 @@ run outside that directory before repeated repair attempts if you need its logs.
 | `authenticate_ssh` | `./bin/auth-setup --ssh-only` |
 | `configure_git` (Linux) | `./bin/auth-setup --git-only` |
 | `verify_mise_access` | `./bin/auth-setup --verify-mise` |
-| `links_before_packages`, `service_links`, `final_links` | `./bin/link-dotfiles` |
+| `links`, `final_links` | `./bin/link-dotfiles` |
 | `shell` | `./bin/setup --continue` reruns it. Check with `./bin/repo-mise bootstrap repos status`. For a `conflict`, ask the user before you move the path aside. |
 | `defaults` | `./macos/defaults.sh` |
 | `manifest_apps` | `./bin/install-apps` |
-| `capabilities` | `./bin/check-mise-tools` |
+| `mise_inventory` | `./bin/repo-mise --global install`, then `./bin/check-mise-tools` |
 | `standalone_agents` | `./bin/install-standalone` (`--first-only` in the first phase) |
 | `system_packages` (Linux) | `./bin/repo-mise bootstrap --only packages,user --yes`; check with `bootstrap packages status` |
 | Linux prerequisites | `./bin/linux-prerequisites` (bin/setup runs it before the runtime starts) |
-| `telemetry_foundations`, `telemetry` | `./bin/configure-telemetry` |
+| `telemetry` | `./bin/configure-telemetry` |
 | `app_settings` | `./bin/configure-app-settings` |
 | `screenshots` | `./bin/configure-screenshots` |
 | `finder` | `./bin/finder-sidebar-favorites` |
 | `mobile_setup` | `./bin/install-mobile-dev` |
 
-The other stages run functions in `bin/bootstrap`. To retry one of them, repair
-the cause from its log, then run `./bin/setup --continue`.
+The other steps run functions in `bin/lib/setup-steps.sh`. To retry one of
+them, repair the cause from its output, then run `./bin/setup --continue`.
 
 ## Mobile development
 
-The stage is `mobile_setup`. The repair is done when
+The step is `mobile_setup`. The repair is done when
 `./bin/check-mobile-ready` exits 0.
 
 Run `./bin/install-mobile-dev`. It skips finished steps. Then use the first
