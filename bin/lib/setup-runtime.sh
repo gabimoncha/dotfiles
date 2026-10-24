@@ -80,6 +80,7 @@ runtime_init() {
   [[ "${DOTFILES_RUNTIME_INITIALIZED:-0}" == 1 ]] && return 0
   DOTFILES_RUNTIME_INITIALIZED=1
   DOTFILES_RUNTIME_PID="$(exec sh -c 'echo "$PPID"')"
+  DOTFILES_RUNTIME_SCRIPT="${1:-setup}"
   DOTFILES_RUN_MODE="${2:-${DOTFILES_RUN_MODE:-normal}}"
   DOTFILES_RUNTIME_OWNS_LOG_DIR=0
   DOTFILES_RUNTIME_CANCELLED=0
@@ -111,7 +112,7 @@ runtime_init() {
     commit="$(git -C "$metadata_root" rev-parse HEAD 2>/dev/null || printf unknown)"
     dirty="$( (git -C "$metadata_root" status --porcelain --untracked-files=normal 2>/dev/null || true) | wc -l | tr -d ' ')"
     printf '%s started %s in %s mode, commit %s, %s changed files\n' \
-      "${1:-setup}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$DOTFILES_RUN_MODE" "$commit" "$dirty" >> "$DOTFILES_SETUP_LOG"
+      "$DOTFILES_RUNTIME_SCRIPT" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$DOTFILES_RUN_MODE" "$commit" "$dirty" >> "$DOTFILES_SETUP_LOG"
   fi
   trap 'runtime_signal INT 130' INT
   trap 'runtime_signal TERM 143' TERM
@@ -216,6 +217,14 @@ runtime_cleanup() {
   runtime_release_locks
 }
 runtime_on_exit() {
+  local status="${1:-0}"
+  # A helper that fails without a record leaves one, so its saved logs show the
+  # failure. Setup records each step, and a job reports to its parent.
+  if [[ "$status" != 0 && "$status" != 20 && "${DOTFILES_RUNTIME_CANCELLED:-0}" == 0 &&
+    "${DOTFILES_RUNTIME_OWNS_LOG_DIR:-0}" == 1 && "${DOTFILES_RUNTIME_CHILD:-0}" != 1 &&
+    "${DOTFILES_RUNTIME_SCRIPT:-setup}" != setup ]] && ! runtime_has_failures; then
+    runtime_record failed "$DOTFILES_RUNTIME_SCRIPT" "exited with status $status"
+  fi
   runtime_cleanup
   if [[ "${DOTFILES_RUNTIME_OWNS_LOG_DIR:-0}" == 1 && -f "$DOTFILES_SETUP_LOG_DIR/.owner-pid" ]]; then
     local owner
