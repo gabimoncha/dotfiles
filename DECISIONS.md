@@ -58,14 +58,14 @@ small cases in that script:
 
 The global mise config disables the old Codex tool names so that a stale
 request cannot reinstall them. `harness update` updates the agent CLIs in
-parallel and reports every failure. The mise postinstall hook runs it, and a
-zsh helper covers no-op `mise up` runs, where mise fires no hook. After
-`mise up`, or `mise install` without tool names, the helper first runs
+parallel and reports every failure. Setup installs missing or broken agents.
+The interactive zsh `mise` helper also updates installed agents. The helper runs the
+updater after a successful install or upgrade, including when no mise tools
+change. After `mise up`, or `mise install` without tool names, the helper first runs
 `mise prune --tools` for the tools in the global config. A full prune would
 also delete project tools whose untrusted configs mise does not track. mise's own upgrade prune waits 24 hours, so a broken version can
 go back, and it skips pin changes. Here the old version goes at once; going
-back means a new install. The hook never prunes: it also fires when
-`mise exec TOOL@VERSION` installs a tool, and prune would delete that version.
+back means a new install.
 
 mise owns pnpm before Node, so Corepack wrappers do not shadow it.
 
@@ -73,8 +73,8 @@ mise owns pnpm before Node, so Corepack wrappers do not shadow it.
 
 `~/.config/mise/config.toml` links to `mise/global.toml`. The distinct filename
 prevents mise from loading the runtime source as project configuration when a
-command runs inside this repository. Runtime tools, lockfiles, and explicit
-update hooks stay separate from setup declarations. The installer pin remains
+command runs inside this repository. Runtime tools, lockfiles, and the shell
+update helper stay separate from setup declarations. The installer pin remains
 in `bin/lib/mise-pin.sh`.
 
 `bin/repo-mise --setup` runs from `/` with `MISE_CONFIG_DIR` set to

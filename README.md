@@ -441,14 +441,15 @@ server, so `update` skips T3. Each update stops after 30 seconds
 without new output. Set `DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS` to allow a
 longer idle period.
 
-The global mise `postinstall` hook runs `harness update --installed-only`. The
-zsh `mise` helper also runs it after a no-op `mise install` or `mise up`, where
-mise fires no hook. After `mise up`, or `mise install` without tool names, the
-helper first runs `mise prune --tools` for the tools in the global config. It
+Setup installs missing or broken agents. `harness update` and the interactive
+zsh `mise` helper update installed agents. The helper runs
+`harness update --installed-only` after a
+successful `mise install` or `mise up`, including when no mise tools change.
+After `mise up`, or `mise install` without tool names, the helper first runs
+`mise prune --tools` for the tools in the global config. It
 deletes their versions that no tracked config selects, such as the old Bun
 after a pin change. Tools that only projects use stay, also when mise does not
-track the project's config (for example an untrusted one). The hook never
-prunes, because it also fires when `mise exec TOOL@VERSION` installs a tool.
+track the project's config (for example an untrusted one).
 The global mise config disables the old Codex CLI tool names, so a stale request cannot reinstall them. The `codex-acp` adapter stays
 enabled and still pulls its own npm `@openai/codex` dependency.
 

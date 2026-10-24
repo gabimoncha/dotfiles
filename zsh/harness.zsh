@@ -1,5 +1,4 @@
-# Native postinstall hooks cover direct mise installs and upgrades with changes.
-# This helper also covers upgrades that have no new mise versions to install.
+# Interactive mise installs and upgrades update installed vendor-owned agents.
 # After a full install or an upgrade, the helper also deletes unused versions.
 # It prunes only the tools in the global config, such as the old Bun after a pin
 # change. A project whose mise.toml mise does not track (for example an
@@ -24,7 +23,7 @@ mise() {
             ;;
         esac
       done
-      DOTFILES_HARNESS_SKIP_HOOK=1 command mise "$@" || return $?
+      command mise "$@" || return $?
       # `mise install TOOL@VERSION` keeps its version: no config selects it
       # yet, so prune would delete it.
       if [[ "$subcommand" == install || "$subcommand" == i ]]; then

@@ -107,7 +107,7 @@ standalone_installed() {
   [[ "$real" == "$root/"* ]]
 }
 
-# The hook's PATH can put mise shims ahead of vendor commands. Pi still needs
+# The caller's PATH can put mise shims ahead of vendor commands. Pi still needs
 # Node, so resolve an installed Node before removing shims from PATH.
 standalone_installed_node() {
   local node_path mise_bin version

@@ -92,10 +92,10 @@ updates itself and its `t3` command. On Linux, the T3 app updates the T3
 server. A failure does not stop other
 updates, and the command returns nonzero when any update fails.
 
-The mise postinstall hook runs the updater for installed agents. The zsh `mise`
-helper makes `mise install`, `mise up`, and `mise up --local` run it once after
-success, including when no mise tools change. After `mise up`, or
+In interactive zsh, the `mise` helper runs the updater for installed agents
+after a successful `mise install`, `mise up`, or `mise up --local`.
+It also runs when no mise tools change. After `mise up`, or
 `mise install` without tool names, the helper first deletes the unused
 versions of the tools in the global config (`mise prune --tools TOOL...`). Help and dry-run commands do not
-update agents. `command mise` bypasses the shell helper and uses mise's native
-hook behavior.
+update agents. `command mise` bypasses the shell helper and does not update
+agents. Package resolution, `mise exec`, and shim calls do not start agent updates.
