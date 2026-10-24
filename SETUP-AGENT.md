@@ -32,9 +32,9 @@ run outside that directory before repeated repair attempts if you need its logs.
 1. Open `summary.txt` in the newest `.local/setup-runs/<run-id>/` directory.
    Each line has the outcome, the step, the reason, the log file, and the
    repair hint.
-2. Repair the first failed step. Setup stopped there, and it recorded the
-   later steps as blocked. A step marked `--optional` in `bin/setup` records
-   its failure without stopping the run.
+2. Repair the first failed step. A required step stops the run, and setup
+   records the later steps as blocked. A step marked `--optional` in
+   `bin/setup` records its failure without stopping the run.
 3. Read the step's output in `setup.log` in the same folder. Each line starts
    with the step name in brackets. A step that asks for a password or a login
    prints to the terminal only. Find the script for the step in the table

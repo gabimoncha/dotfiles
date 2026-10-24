@@ -62,7 +62,7 @@ run, and the mise tool list. A change that works only on the Mac breaks Linux.
 - Keep setup rerunnable. Preserve link backups and existing user state.
 - `bin/setup` lists the setup steps in order: two phases on macOS, one on
   Linux. The step functions are in `bin/lib/setup-steps.sh`. Mark a step
-  `--optional` only when no later step needs it.
+  `--optional` when the later steps can run without it.
 - Add GUI apps through mas when available, then use mise for supported tools,
   then Homebrew. Coding agent CLIs, mise, and the Linux T3 server are
   standalone exceptions, listed in `apps/standalone.tsv`.

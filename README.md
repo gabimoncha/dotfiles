@@ -189,9 +189,12 @@ and the tools without an opt-out.
 | `--skip-mobile-dev` | Skip Xcode, iOS support, Android Studio, and `apps/mobile.Brewfile`. Mobile tools in the shared mise list still install. |
 
 [bin/setup](bin/setup) lists the steps in order, and they run one at a time.
-When a step fails, setup stops and records the later steps as blocked. Two
-kinds of steps are exceptions. A step marked `--optional`, such as the App
-Store apps, records its failure, and the run goes on. The telemetry step runs
+The foundation steps are required: preflight, the Command Line Tools, `sudo`,
+Homebrew, mise, the GitHub CLI, the links, and in the first phase the agent
+CLIs. When one of them fails, setup stops and records the later steps as
+blocked. The other steps are marked `--optional`. Each one checks what it
+needs, records its failure, and lets the run go on. For example, the mise
+inventory runs only after the GitHub check passes. The telemetry step runs
 even after a failure.
 
 ## Set up a Linux host
@@ -275,9 +278,11 @@ run.
 
 Each run prints its private `.local/setup-runs/<run-id>/` folder:
 
-- `summary.txt`: one result line for each step, with a repair hint.
+- `summary.txt`: one result line for each step, with a repair hint. Helpers
+  add their own lines, such as one for each restore.
 - `setup.log`: the output of the steps, with tokens removed. Steps that ask for
-  a password or a login print to the terminal only.
+  a password or a login print to the terminal only. So do the steps that run
+  in the setup shell, such as `brewfiles`.
 
 Git ignores the whole `.local/` folder. Each new run keeps the latest three
 run folders and removes older ones. A run that is still active stays until a

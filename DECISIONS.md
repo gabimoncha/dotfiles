@@ -20,12 +20,13 @@ before installers run and reapplies them after packages and restores, also when
 another step fails. mise installs the login job that sets them for GUI apps,
 from `[bootstrap.macos.launchd.agents]` in `mise.macos.toml`.
 
-The first failed step stops the run, and setup records the later steps as
-blocked. An earlier planner tracked dependencies, ran unrelated stages after a
-failure, and ran Homebrew and mise at the same time. One list in order is
-easier to read and to repair, and a rerun skips finished work. A first install
-is slower. A step marked `--optional` records its failure and the run goes on,
-because no later step needs it. Resource locks still serialize writes to each
+An earlier planner tracked dependencies and ran Homebrew and mise at the same
+time. One list in order is easier to read and to repair, and a rerun skips
+finished work. A first install is slower. The foundation steps are required:
+when one fails, setup stops and records the later steps as blocked. The other
+steps are optional, because each one checks what it needs. So a failed GitHub
+check stops the mise install, which needs the API access, but not the Homebrew
+inventory or the restores. Resource locks still serialize writes to each
 package manager across nested helpers. A failed, blocked, or deferred step
 makes setup return nonzero. Missing optional restore inputs and the steps that
 the user turns off do not.

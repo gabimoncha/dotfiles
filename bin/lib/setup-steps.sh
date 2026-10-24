@@ -586,7 +586,14 @@ setup_brewfiles() {
   prepare_brewfiles
 }
 setup_brew_inventory() { install_brewfile; }
-setup_mise_inventory() { install_and_check_mise_tools; }
+setup_mise_inventory() {
+  # The large mise install needs verified GitHub API access. See DECISIONS.md.
+  if [[ "${DOTFILES_SETUP_API_READY:-0}" != 1 && "${DOTFILES_SKIP_GITHUB_AUTH:-0}" != 1 ]]; then
+    warn "Skipped the mise install: GitHub API access is not verified. Run ./bin/auth-setup --api-only, then rerun setup."
+    return 1
+  fi
+  install_and_check_mise_tools
+}
 setup_manifest_apps() { "${repo_root}/bin/install-apps"; }
 setup_app_store() { install_mas_apps; }
 setup_editor_extensions() { install_cursor_extensions; }

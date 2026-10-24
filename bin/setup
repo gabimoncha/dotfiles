@@ -66,8 +66,9 @@ step_status=0
 # Usage: step [--optional] [--always] ID MODE FUNCTION. MODE is probe, capture,
 # local, or sensitive; see runtime_execute_stage. When a step fails, the run
 # stops: the later steps are recorded as blocked. An --optional step records
-# its failure and the run goes on. An --always step runs after a failure too.
-# A dry run runs only the probe steps.
+# its failure and the run goes on; mark a step optional when the later steps
+# can run without it. An --always step runs after a failure too. A dry run runs
+# only the probe steps.
 step() {
   local optional=0 always=0 id mode
   while :; do
@@ -139,14 +140,15 @@ setup_macos_continue() {
   step brew_environment local setup_brew_environment
   # The mise config links must exist before setup checks mise's GitHub access.
   step links capture setup_links
-  step authenticate_api sensitive setup_api
-  # SSH is separate from the API login. Git and mise can work without it.
+  # The GitHub steps are optional: setup_mise_inventory and bin/install-apps
+  # check the API access themselves, and the other steps do not need it.
+  step --optional authenticate_api sensitive setup_api
   step --optional authenticate_ssh sensitive setup_ssh
-  step verify_mise_access sensitive setup_verify_auth
+  step --optional verify_mise_access sensitive setup_verify_auth
   [[ "$step_status" != 0 ]] || export DOTFILES_SETUP_API_READY=1
   step brewfiles local setup_brewfiles
   step --optional homebrew_inventory capture setup_brew_inventory
-  step mise_inventory capture setup_mise_inventory
+  step --optional mise_inventory capture setup_mise_inventory
   step --optional submodules capture setup_submodules
   step --optional manifest_apps capture setup_manifest_apps
   step --optional applications capture setup_verify_apps
@@ -155,7 +157,7 @@ setup_macos_continue() {
   step --optional app_store capture setup_app_store
   step --optional shell capture setup_shell
   # Pi needs Node from the mise inventory.
-  step standalone_agents capture setup_standalone_agents
+  step --optional standalone_agents capture setup_standalone_agents
   if [[ -z "${DOTFILES_REVIEWED_SKILLS_REF:-}" ]]; then
     skip_step skills 'set DOTFILES_REVIEWED_SKILLS_REF to a reviewed commit of the skills repository'
   else
@@ -193,16 +195,16 @@ setup_linux() {
   if [[ "${DOTFILES_SKIP_GITHUB_AUTH:-0}" == 1 ]]; then
     skip_step authenticate_api 'DOTFILES_SKIP_GITHUB_AUTH=1; run ./bin/auth-setup later'
   else
-    step authenticate_api sensitive setup_api
+    step --optional authenticate_api sensitive setup_api
     # Linux uses Git over HTTPS with the GitHub CLI token. See bin/auth-setup.
-    step configure_git sensitive setup_git_https
-    step verify_mise_access sensitive setup_verify_auth
+    step --optional configure_git sensitive setup_git_https
+    step --optional verify_mise_access sensitive setup_verify_auth
     [[ "$step_status" != 0 ]] || export DOTFILES_SETUP_API_READY=1
   fi
-  step mise_inventory capture setup_mise_inventory
+  step --optional mise_inventory capture setup_mise_inventory
   step --optional shell capture setup_shell
   # Pi needs Node from the mise inventory.
-  step standalone_agents capture setup_standalone_agents
+  step --optional standalone_agents capture setup_standalone_agents
   step --optional final_links capture setup_final_links
   step --optional --always telemetry capture setup_telemetry
 }
