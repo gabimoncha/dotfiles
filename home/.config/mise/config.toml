@@ -15,7 +15,9 @@ bun = "1.4.4"
 # Security exception to the four-day delay: 3.8.1 fixes CVE-2026-105802,
 # CVE-2026-105803, CVE-2026-69260, and CVE-2026-69261.
 git-lfs = "3.8.1"
-uv = "0.13.4"
+# Security exception to the four-day delay: 0.13.5, published 2026-10-22,
+# bundles rustls-webpki 0.103.16 for CVE-2026-111943 / RUSTSEC-2026-0382.
+uv = "0.13.5"
 fzf = "latest"
 ripgrep = "latest"
 fd = "latest"
@@ -30,7 +32,10 @@ neovim = "latest"
 "npm:sfw" = "latest"
 "npm:tree-sitter-cli" = "latest"
 python = "3.15.1"
-ruby = "3.4.11"
+# Security exception to the four-day delay: 3.4.12, published 2026-10-23,
+# fixes the Ruby bugs behind GitLab CVE-2026-89078, CVE-2026-93577,
+# CVE-2026-97229, and CVE-2026-110264. See SECURITY.md.
+ruby = "3.4.12"
 age = "latest"
 "github:entireio/cli" = "latest"
 ast-grep = "latest"
@@ -118,7 +123,7 @@ minimum_release_age_excludes = ["npm:agent-browser", "npm:agent-device", "npm:ea
 [settings.npm]
 package_manager = "bun"
 
-# The precompiled Ruby 3.4.11 still bundles OpenSSL 3.5.5.
+# Compilation was enabled because precompiled Ruby 3.4.11 bundled OpenSSL 3.5.5.
 [settings.ruby]
 compile = true
 # configure otherwise runs the first `ruby` on PATH. The mise shim then waits
