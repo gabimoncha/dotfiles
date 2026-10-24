@@ -39,7 +39,6 @@ export DOTFILES_PROFILE
 
 repo_mise() { "$repo_root/bin/repo-mise" "$@"; }
 home_name() { printf '~/%s' "${1#"$HOME"/}"; }
-telemetry_plist="$HOME/Library/LaunchAgents/com.dotfiles.telemetry-env.plist"
 
 # One line per target: state, mode ("merge" for merged keys), and path. Two
 # merges into one file give one line, with the state that needs the most work.
@@ -73,9 +72,6 @@ selected() {
     done
     return 1
   fi
-  # bin/configure-telemetry compares the job definition before it replaces
-  # it, so that it knows when to reload the job.
-  [[ "$target" != "$telemetry_plist" ]] || return 1
   if [[ "$skip_agents" == 1 ]]; then
     case "$target" in "$HOME/.claude/"*|"$HOME/.codex/"*) return 1 ;; esac
   fi

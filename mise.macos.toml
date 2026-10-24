@@ -10,10 +10,15 @@
 "~/Documents/superwhisper/settings/settings.json" = { source = "configs/superwhisper/settings.json", mode = "symlink" }
 "~/.cli-proxy-api/config.yaml" = { source = "configs/cliproxyapi/config.yaml", mode = "symlink" }
 "~/.mackup.cfg" = { source = "configs/mackup/mackup.cfg", mode = "symlink" }
-# The login job that gives GUI apps the telemetry opt-outs. launchd needs a real
-# file, so the job definition is a copy. bin/configure-telemetry reloads it.
+# The login script that gives GUI apps the telemetry opt-outs.
 "~/bin/dotfiles-telemetry-env" = { source = "macos/dotfiles-telemetry-env", mode = "symlink" }
-"~/Library/LaunchAgents/com.dotfiles.telemetry-env.plist" = { source = "macos/com.dotfiles.telemetry-env.plist", mode = "copy" }
+
+# The login job runs that script. launchd does not expand ~ or $HOME in a
+# program path, so /bin/sh finds the script. bin/configure-telemetry applies it.
+[bootstrap.macos.launchd.agents.telemetry-env]
+program = "/bin/sh"
+args = ["-c", 'exec "$HOME/bin/dotfiles-telemetry-env"']
+run_at_load = true
 
 [bootstrap.macos.defaults.NSGlobalDomain]
 AppleLocale = "en_US@currency=RON"

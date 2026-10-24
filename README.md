@@ -15,7 +15,7 @@ configs/<app>/        the settings files, one folder per app
 Brewfile              Homebrew formulae, casks, taps, and App Store apps
 apps/                 the app manifest, vendor-installed tools, login items
 bin/                  setup and repair scripts
-macos/                the macOS defaults script and the telemetry login job
+macos/                the macOS defaults script and the telemetry login script
 local/                ignored local files; only the examples are tracked
 nvim/                 the Neovim config, a separate repository
 ```
@@ -58,10 +58,9 @@ file, then preview and apply:
 
 `bin/link-dotfiles` saves each file that it replaces in
 `~/.dotfiles-backups/links-<time>-*/`. `--status` exits with 1 when an entry is
-missing or differs. Two entries wait for other steps: `~/.config/nvim` until
-the `nvim/` submodule is checked out, and the telemetry login job until
-`./bin/configure-telemetry` installs it. `--diff` does not show the content of
-merged settings, because those files can hold tokens.
+missing or differs. `~/.config/nvim` waits until the `nvim/` submodule is
+checked out. `--diff` does not show the content of merged settings, because
+those files can hold tokens.
 
 These mise tasks run the same scripts from any folder, for the checkout in
 `$DOTFILES_ROOT` or `~/development/dotfiles`: `dot:status`, `dot:diff`,
@@ -177,8 +176,9 @@ interactive stage and before telemetry. It installs Xcode from the App Store
 without an Apple ID prompt.
 
 Setup exports the telemetry opt-outs in
-[telemetry.sh](configs/zsh/telemetry.sh) before installers run, and a login
-job sets the same values for GUI apps. Reopen apps after setup.
+[telemetry.sh](configs/zsh/telemetry.sh) before installers run. A login job,
+which mise installs from `mise.macos.toml`, sets the same values for GUI apps.
+Reopen apps after setup.
 `./bin/configure-telemetry [--dry-run]` applies them again. The
 [telemetry guide](apps/telemetry.md) lists every control, the manual settings,
 and the tools without an opt-out.

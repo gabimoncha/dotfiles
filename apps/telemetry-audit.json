@@ -149,7 +149,7 @@
         "environment": {
           "BINSTALL_DISABLE_TELEMETRY": "true"
         },
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -208,7 +208,7 @@
         "environment": {
           "COCOAPODS_DISABLE_STATS": "true"
         },
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -268,7 +268,7 @@
         "environment": {
           "DO_NOT_TRACK": "1"
         },
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -364,7 +364,7 @@
         "environment": {
           "ENTIRE_TELEMETRY_OPTOUT": "1"
         },
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -545,7 +545,7 @@
         },
         "command": "gh config set telemetry disabled",
         "command_timing": "After successful login and API checks in auth-setup.",
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -570,7 +570,7 @@
           "CLOUDSDK_CORE_DISABLE_USAGE_REPORTING": "true"
         },
         "command": "gcloud config set core/disable_usage_reporting true",
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -598,7 +598,7 @@
           "FLY_SEND_METRICS": "false"
         },
         "command": "flyctl settings analytics disable",
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -905,7 +905,7 @@
         "unset_environment": [
           "DOCKER_CLI_OTEL_EXPORTER_OTLP_ENDPOINT"
         ],
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -1009,7 +1009,7 @@
           "VERCEL_TELEMETRY_DISABLED": "1"
         },
         "command": "vercel telemetry disable",
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -1036,7 +1036,7 @@
         },
         "command": "turbo telemetry disable",
         "scope": "Anonymous analytics. Experimental OTLP opt-out is per enabled project: setting TURBO_EXPERIMENTAL_OTEL_ENABLED globally can require the experimentalObservability future flag. It is not exported by dotfiles.",
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -1095,7 +1095,7 @@
         "environment": {
           "CTX7_TELEMETRY_DISABLED": "1"
         },
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -1125,7 +1125,7 @@
           "DISABLE_EAS_ANALYTICS": "1"
         },
         "command": "eas analytics off",
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -1335,7 +1335,7 @@
         "environment": {
           "FASTLANE_OPT_OUT_USAGE": "YES"
         },
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -1609,7 +1609,7 @@
           "CF_SEND_TELEMETRY": "false",
           "DO_NOT_TRACK": "1"
         },
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -1649,7 +1649,7 @@
         },
         "command": "wrangler telemetry disable",
         "scope": "CLI usage and error reports. Deployment dependency metadata needs dependencies_instrumentation.enabled=false in each project; dotfiles does not own those files.",
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -1693,7 +1693,7 @@
           "DO_NOT_TRACK": "1"
         },
         "scope": "Installer aggregate release reporting only; CLI collection remains unverified.",
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -2863,7 +2863,7 @@
           "T3CODE_TELEMETRY_ENABLED": "false",
           "T3CODE_OTEL_SDK_DISABLED": "true"
         },
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -2963,7 +2963,7 @@
           "AZ_CRS_ARGUMENTS": "enable=false"
         },
         "scope": "Merge the enable=false property into existing comma-separated AZ_CRS_ARGUMENTS, preserving other properties. Built-in Connected Runtime Service only; explicit JVM mode flags override it. Newer Zulu PSU builds omit CRS; this does not cover a separately installed Intelligence Cloud Agent.",
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -2991,7 +2991,7 @@
           "MISE_OTEL_LOGS": "false"
         },
         "file_merge": "use_versions_host_track=false in tracked global mise configuration.",
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -3016,7 +3016,7 @@
           "HOMEBREW_NO_ANALYTICS": "1"
         },
         "command": "brew analytics off",
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -3174,7 +3174,7 @@
           "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1"
         },
         "file_merge": "The same values in the env key of ~/.claude/settings.json, merged from configs/claude/settings.json.",
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -3217,7 +3217,7 @@
         "environment": {
           "PI_TELEMETRY": "0"
         },
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -3241,7 +3241,7 @@
           "T3CODE_TELEMETRY_ENABLED": "false",
           "T3CODE_OTEL_SDK_DISABLED": "true"
         },
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {
@@ -3285,7 +3285,7 @@
           "DISABLE_TELEMETRY": "1",
           "DO_NOT_TRACK": "1"
         },
-        "gui_environment": "One-shot user LaunchAgent com.dotfiles.telemetry-env applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
     {

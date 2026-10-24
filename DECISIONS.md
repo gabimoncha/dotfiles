@@ -17,7 +17,8 @@ probe can verify consent or a restart.
 
 Telemetry opt-outs are the one exception to that boundary. Setup exports them
 before installers run and reapplies them after packages and restores, also when
-an unrelated stage fails.
+an unrelated stage fails. mise installs the login job that sets them for GUI
+apps, from `[bootstrap.macos.launchd.agents]` in `mise.macos.toml`.
 
 Homebrew and mise can run at the same time. Resource locks serialize writes to
 each package manager across nested helpers. A failed prerequisite blocks only
@@ -126,8 +127,6 @@ link where a real file is, and one refused entry stops the whole apply.
 - Before it replaces `~/.gitconfig`, it copies the Git identity to
   `~/.gitconfig.local`, which the tracked file includes.
 - It skips `~/.config/nvim` while the `nvim/` submodule is empty.
-- It leaves the telemetry job definition to `bin/configure-telemetry`, which
-  compares it first to decide whether to reload the job.
 - It removes links that older versions made, only while they point into this
   repository. It moves local files from the old layout, such as
   `mise/setup/miserc.local.toml`, to their new place.

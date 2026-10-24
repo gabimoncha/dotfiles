@@ -60,8 +60,8 @@ telemetry_file() {
 }
 
 telemetry_gui_environment() {
-  local launchctl_path domain="gui/$UID" job="com.dotfiles.telemetry-env" result=0 changed=0 loaded=0
-  local plist="$HOME/Library/LaunchAgents/com.dotfiles.telemetry-env.plist" account_home
+  local launchctl_path old_job="com.dotfiles.telemetry-env" result=0 account_home
+  local old_plist="$HOME/Library/LaunchAgents/com.dotfiles.telemetry-env.plist"
   # The job loads into the account's GUI session. A run with a temporary HOME
   # must not replace it.
   account_home="$(dscl . -read "/Users/$(id -un)" NFSHomeDirectory 2>/dev/null | awk '{print $2}')" || account_home=""
@@ -73,23 +73,19 @@ telemetry_gui_environment() {
     printf 'Would install and load the telemetry environment login job\n'
     return 0
   fi
-  [[ -f "$plist" && ! -L "$plist" ]] && cmp -s "$repo_root/macos/$job.plist" "$plist" || changed=1
-  # Apply only the login job files, with the usual backups.
-  "$repo_root/bin/link-dotfiles" "$HOME/.config/zsh/telemetry.sh" "$HOME/bin/dotfiles-telemetry-env" "$plist" ||
+  # Apply only the files of the login script, with the usual backups.
+  "$repo_root/bin/link-dotfiles" "$HOME/.config/zsh/telemetry.sh" "$HOME/bin/dotfiles-telemetry-env" ||
     { status=1; return; }
-  launchctl_path="$(telemetry_tool launchctl)" || { status=1; return; }
+  # Setup copied its own job definition before mise managed the job.
+  if [[ -f "$old_plist" && ! -L "$old_plist" ]]; then
+    launchctl_path="$(telemetry_tool launchctl)" || { status=1; return; }
+    standalone_probe "$launchctl_path" bootout "gui/$UID/$old_job" >/dev/null 2>&1 || true
+    rm -f "$old_plist"
+    printf 'Removed the old login job %s\n' "$old_job"
+  fi
+  # The job runs at the next login. The script runs now for this session.
   standalone_probe "$HOME/bin/dotfiles-telemetry-env" || result=$?
-  if [[ "$changed" == 1 ]]; then
-    # Unload a changed definition; the old job can be absent.
-    standalone_probe "$launchctl_path" bootout "$domain/$job" >/dev/null 2>&1 || true
-  elif standalone_probe "$launchctl_path" print "$domain/$job" >/dev/null 2>&1; then
-    loaded=1
-  fi
-  if [[ "$loaded" == 0 ]]; then
-    # bootstrap can fail briefly right after bootout; retry once.
-    standalone_probe "$launchctl_path" bootstrap "$domain" "$plist" ||
-      { sleep 1; standalone_probe "$launchctl_path" bootstrap "$domain" "$plist"; } || result=$?
-  fi
+  "$repo_root/bin/repo-mise" bootstrap macos launchd-agents apply --yes || result=$?
   if [[ "$result" != 0 ]]; then
     printf 'Could not load the telemetry environment login job; rerun in your macOS GUI session.\n' >&2
     status=1
