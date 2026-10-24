@@ -217,9 +217,10 @@ check_script_syntax() {
 }
 
 # Each `source` in the root mise files names a file that exists, and each file
-# in configs/ is a source or sits in a source folder. Two exceptions: the
-# Cursor telemetry files, which bin/configure-telemetry applies, and the pipx
-# lock sidecars, which configs/mise/mise.lock names.
+# in configs/ is a source or sits in a source folder. The exceptions: the
+# Cursor telemetry files, which bin/configure-telemetry applies, the pipx lock
+# sidecars, which configs/mise/mise.lock names, and the sync-keys lists of
+# bin/save-settings.
 check_layout() {
   local sources source file used missing=0 unused=0
   sources="$(sed -n 's/.*source = "\([^"]*\)".*/\1/p' "$repo_root"/mise.toml "$repo_root"/mise.*.toml | sort -u)"
@@ -237,7 +238,7 @@ check_layout() {
       [[ -n "$source" ]] || continue
       if [[ "$file" == "$source" || "$file" == "$source/"* ]]; then used=1; break; fi
     done <<< "$sources"
-    case "$file" in configs/cursor/telemetry-*.json|configs/mise/.mise/locks/*) used=1 ;; esac
+    case "$file" in configs/cursor/telemetry-*.json|configs/mise/.mise/locks/*|configs/*/sync-keys) used=1 ;; esac
     [[ "$used" == 1 ]] && continue
     fail "no mise file uses ${file}"
     unused=1

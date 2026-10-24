@@ -23,10 +23,10 @@ nvim/                 the Neovim config, a separate repository
 Most files in `configs/` are links in HOME, so an app's change to its file is a
 change in this repository. Commit it to share it with your other machines.
 Agent settings are the exception. The agents write private paths into
-`~/.claude/settings.json` and `~/.codex/config.toml`, so mise merges only the
-keys in `configs/claude/settings.json` and `configs/codex/config.toml`. Those
-keys turn off Codex memories and Claude auto memory, and set the telemetry
-opt-outs.
+`~/.claude/settings.json` and `~/.codex/config.toml`, so mise merges the keys
+of `configs/claude/settings.json` and `configs/codex/config.toml` into them.
+`./bin/save-settings` copies your changes back without the private keys. See
+[Agent settings](#agent-settings).
 
 ## Profiles
 
@@ -61,11 +61,45 @@ file, then preview and apply:
 missing or differs. Two entries wait for other steps: `~/.config/nvim` until
 the `nvim/` submodule is checked out, and the telemetry login job until
 `./bin/configure-telemetry` installs it. `--diff` does not show the content of
-merged settings, because those files can hold tokens. These mise tasks run the same scripts
-from any folder, for the checkout in `$DOTFILES_ROOT` or
-`~/development/dotfiles`: `dot:status`, `dot:diff`, `dot:apply`, `setup`, `update`,
-`packages`, `backup`, `restore`, and `doctor`. For example, run
-`mise run dot:apply -- --dry-run`.
+merged settings, because those files can hold tokens.
+
+These mise tasks run the same scripts from any folder, for the checkout in
+`$DOTFILES_ROOT` or `~/development/dotfiles`: `dot:status`, `dot:diff`,
+`dot:apply`, `dot:save`, `setup`, `update`, `packages`, `backup`, `restore`,
+and `doctor`. For example, run `mise run dot:apply -- --dry-run`.
+
+### Agent settings
+
+Claude Code and Codex write private data into `~/.claude/settings.json` and
+`~/.codex/config.toml`: project paths, hook state, and MCP server details. So
+these files are merges, not links. After you change a setting in one of
+these apps, save it into the repository and review the result:
+
+```bash
+./bin/save-settings --dry-run
+./bin/save-settings
+git diff configs/claude configs/codex
+```
+
+`configs/<app>/sync-keys` marks settings `public` or `private`. A public rule
+names one setting, such as `.theme`. A private rule can name a whole section,
+such as `.projects`. Each key in the repository file needs a public rule, so
+add one when you add a key to `configs/claude/settings.json` or
+`configs/codex/config.toml`. `bin/save-settings` saves only the public
+settings. It counts the settings that are on neither list and does not save
+them. Run `./bin/save-settings --show-new` to list them, add each one to the
+list, then save again.
+
+`bin/save-settings` leaves a file unchanged when one of its keys has no public
+rule, or when a public setting has become a section or holds a local path, a
+credential, or an email address. Its messages never show a value.
+
+On the other machines, `./bin/link-dotfiles` merges the saved keys and keeps
+their own private keys. The last save replaces the saved values, so merge
+before you change a setting: `bin/save-settings` refuses to save until this
+machine has merged the current repository file. A merge never removes a key.
+A key that you delete in an app stays on the other machines, and a later save
+from one of them puts it back. Delete it on every machine, or mark it private.
 
 ## Update a machine
 

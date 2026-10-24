@@ -137,11 +137,28 @@ link where a real file is, and one refused entry stops the whole apply.
   folder, so a test with a temporary HOME cannot change them.
 
 Agent settings remain regular files because the agents rewrite them, and they
-write private data into them: project paths, hook paths, and plugin state. A
-link would publish that data with the next commit. mise sets only the keys in
-`configs/claude/settings.json` and `configs/codex/config.toml`, including the
-telemetry opt-outs. The container adds its sandbox key in a second merge. The
-Codex target remains `~/.codex/config.toml`, independent of `CODEX_HOME`.
+write private data into them: project paths, hook state, and MCP server
+details. A link would publish that data with the next commit. A Git filter
+cannot fix that either: each pull would overwrite the live file and lose the
+machine's own keys. So the sync has two directions. `bin/link-dotfiles` merges
+the keys of `configs/claude/settings.json` and `configs/codex/config.toml` into
+the live files and keeps every other key. `bin/save-settings` copies the
+settings that `configs/<app>/sync-keys` marks public back into the source. A
+list of public settings, not a list of private ones, decides what is saved:
+an ordinary key can hold a credential, such as an authorization header, and a
+section can gain new fields, such as exporter headers. So a public rule names
+one setting, and a setting on neither list is counted until you mark it. Each
+key in the source needs a public rule, so that a save cannot delete a key that
+nobody listed. The messages of `bin/save-settings` name only paths from the
+list and the source, because a key name can be private too. The save converts
+the file to JSON, which drops comments. It stops when a public setting has
+become a section or holds a local path, a credential, or an email address. It
+also stops until this machine has merged the current source, so an older live
+value cannot replace a newer save from another machine. A merge never removes
+a key, so a key deleted in an app stays on the
+other machines. The container adds its sandbox key in a second merge, and the
+Codex list keeps that key private. The Codex target remains
+`~/.codex/config.toml`, independent of `CODEX_HOME`.
 
 The shell checkout declarations are in `mise.toml`. The existing missing-path
 filter remains because a conflicting checkout stops native repository apply.

@@ -155,6 +155,10 @@ description = "Apply managed files, with backups"
 run = '"${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/link-dotfiles"'
 raw = true
 
+[tasks."dot:save"]
+description = "Save agent settings into the repository, without private keys"
+run = '"${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/save-settings"'
+
 [tasks.setup]
 description = "Run setup"
 run = '"${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/setup"'

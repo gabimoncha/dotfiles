@@ -14,6 +14,8 @@ before changing ownership, bootstrap boundaries, or other design decisions.
 | Entries for every host | `mise.toml` |
 | Entries for one platform | `mise.macos.toml` or `mise.linux.toml` |
 | Entries for one machine | the profile file: `mise.pro.toml`, `mise.air.toml`, `mise.container.toml`, or `mise.vm.toml` |
+| Agent settings that sync between machines | the merge sources in `configs/claude/` and `configs/codex/`; save them with `./bin/save-settings` |
+| Which agent settings sync | `configs/<app>/sync-keys`: one `public` rule per setting, including each key of the merge source, and `private` rules for sections |
 | Agent rules for every host | `configs/agents/instructions.md` |
 | Agent rules for one host | `configs/agents/<profile>.md` |
 | Runtime tools and mise tasks | `configs/mise/global.toml` |
@@ -32,9 +34,9 @@ through `./bin/repo-mise`, which loads the selected profile and the pinned mise.
 1. Put the file in `configs/<app>/`. Use the app's short name for the folder.
 2. Add a `[dotfiles]` entry to the root mise file for the hosts that need it.
    Use `mode = "symlink"` when the app only reads the file. Use `merge = true`
-   when the app also writes the file, and put only the keys you own in the
+   when the app also writes the file, and add a `sync-keys` list next to the
    source. Agent settings are merges, because the agents write private paths
-   into them.
+   into them. `./bin/save-settings` copies only the public keys back.
 3. Run `./bin/link-dotfiles --dry-run`, then `./bin/link-dotfiles`.
 4. Run `./bin/preflight`. It fails when a file in `configs/` has no entry.
 

@@ -1,0 +1,151 @@
+#!/usr/bin/env bash
+# Copy the public keys of agent settings from HOME back into this repository.
+# bin/link-dotfiles merges these files into the live settings. This script
+# runs the other way, so a setting that you change in an app can reach your
+# other machines. Review the diff before you commit it.
+#
+# Usage: save-settings [--dry-run] [--show-new]
+#        save-settings --record TARGET...   (bin/link-dotfiles runs this)
+#
+# configs/<app>/sync-keys marks each setting public or private. Only public
+# settings are saved, and each key in the repository file needs a public rule.
+# Settings on neither list are counted, not saved; --show-new lists their
+# paths. A saved value must not hold a local path, a credential, or an email
+# address.
+#
+# The repository can hold settings that another machine saved. So this script
+# saves only after this machine merged the current repository file:
+# bin/link-dotfiles records each merge in .local/settings-sync/.
+set -euo pipefail
+# mise reports resolved paths, so the root must be resolved too.
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+usage() { printf 'Usage: save-settings [--dry-run] [--show-new]\n'; }
+dry_run=0
+show_new=""
+record_only=0
+record_targets=()
+for argument in "$@"; do
+  case "$argument" in
+    --dry-run) dry_run=1 ;;
+    --show-new) show_new=--show-new; dry_run=1 ;;
+    --record) record_only=1 ;;
+    -h|--help) usage; exit 0 ;;
+    -*) usage >&2; exit 2 ;;
+    *) [[ "$record_only" == 1 ]] || { usage >&2; exit 2; }; record_targets+=("$argument") ;;
+  esac
+done
+
+. "$repo_root/bin/lib/dotfiles-profile.sh"
+DOTFILES_PROFILE="$(dotfiles_profile "$repo_root")" || exit
+export DOTFILES_PROFILE
+state_dir="$repo_root/.local/settings-sync"
+home_name() { printf '~/%s' "${1#"$HOME"/}"; }
+digest() { /usr/bin/ruby -rdigest -e 'print Digest::SHA256.file(ARGV[0]).hexdigest' "$1"; }
+record_file() { local name="${1#"$HOME"/}"; printf '%s/%s.sha256' "$state_dir" "${name//\//_}"; }
+
+# One line per merge that mise.toml declares: the live file and its source.
+entries="$("$repo_root/bin/repo-mise" dot status --json)" || exit
+rows="$(printf '%s' "$entries" | /usr/bin/ruby -rjson -e '
+  home = ENV.fetch("HOME")
+  shared = File.realpath(ARGV.fetch(0))
+  expand = ->(path) { path.start_with?("~/") ? File.join(home, path[2..-1]) : path }
+  JSON.parse($stdin.read).fetch("edits").each do |row|
+    origin = row.fetch("origin")
+    config = expand.(origin.fetch("config"))
+    next unless File.exist?(config) && File.realpath(config) == shared
+    puts [expand.(row.fetch("path")), expand.(origin.fetch("source"))].join("\t")
+  end
+' "$repo_root/mise.toml")"
+
+if [[ "$record_only" == 1 ]]; then
+  mkdir -p "$state_dir"
+  while IFS=$'\t' read -r target source; do
+    [[ -n "${target:-}" ]] || continue
+    for wanted in ${record_targets[@]+"${record_targets[@]}"}; do
+      [[ "$wanted" == "~/"* ]] && wanted="$HOME/${wanted#\~/}"
+      [[ "$wanted" == "$target" ]] || continue
+      digest "$source" > "$(record_file "$target")"
+    done
+  done <<< "$rows"
+  exit 0
+fi
+
+yq="$("$repo_root/bin/repo-mise" --global which yq 2>/dev/null)" || yq=""
+case "$yq" in
+  /*/shims/*|'') printf 'save-settings: yq is not installed. Run mise install yq.\n' >&2; exit 1 ;;
+esac
+[[ -n "$rows" ]] || { printf 'No merged settings to save.\n'; exit 0; }
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+status=0
+
+while IFS=$'\t' read -r target source; do
+  [[ -n "${target:-}" ]] || continue
+  name="${source#"$repo_root"/}"
+  case "$source" in
+    *.json|*.toml) ;;
+    *) printf 'save-settings: %s has no known format. Skipped.\n' "$name" >&2; status=1; continue ;;
+  esac
+  sync_keys="$(dirname "$source")/sync-keys"
+  if [[ ! -f "$sync_keys" ]]; then
+    printf 'save-settings: %s has no sync-keys file next to it. Skipped.\n' "$name" >&2
+    status=1
+    continue
+  fi
+  if [[ ! -f "$target" || -L "$target" ]]; then
+    printf 'save-settings: %s is missing or a link. Skipped.\n' "$(home_name "$target")" >&2
+    status=1
+    continue
+  fi
+  record="$(record_file "$target")"
+  if [[ ! -f "$record" || "$(cat "$record")" != "$(digest "$source")" ]]; then
+    printf 'save-settings: this machine has not merged the current %s. Run ./bin/link-dotfiles, then save again.\n' "$name" >&2
+    status=1
+    continue
+  fi
+  live="$target"
+  saved="$source"
+  if [[ "$source" == *.toml ]]; then
+    live="$work/live.json"
+    saved="$work/saved.json"
+    # yq can quote the file in an error, so its errors stay hidden.
+    if ! (cd / && "$yq" -p toml -o json "$target") > "$live" 2>/dev/null; then
+      printf 'save-settings: %s is not valid TOML. Skipped.\n' "$(home_name "$target")" >&2
+      status=1
+      continue
+    fi
+    if ! (cd / && "$yq" -p toml -o json "$source") > "$saved" 2>/dev/null; then
+      printf 'save-settings: %s is not valid TOML. Skipped.\n' "$name" >&2
+      status=1
+      continue
+    fi
+  fi
+  selected="$work/selected.json"
+  # From the repository root, the messages name the files by their short paths.
+  if ! (cd "$repo_root" && /usr/bin/ruby bin/lib/settings-sync.rb "$name" "$saved" "$live" "$selected" ${show_new:+"$show_new"}); then
+    status=1
+    continue
+  fi
+  output="$work/${source##*/}"
+  case "$source" in
+    *.json) cp "$selected" "$output" ;;
+    *.toml)
+      if ! (cd / && "$yq" -p json -o toml "$selected") > "$output" 2>/dev/null; then
+        printf 'save-settings: could not write %s as TOML. Nothing saved.\n' "$name" >&2
+        status=1
+        continue
+      fi
+      ;;
+  esac
+  if cmp -s "$output" "$source"; then
+    printf '%s is up to date\n' "$name"
+  elif [[ "$dry_run" == 1 ]]; then
+    printf 'Would save %s:\n' "$name"
+    diff -u "$source" "$output" || true
+  else
+    cat "$output" > "$source"
+    digest "$source" > "$record"
+    printf 'Saved %s. Review git diff, then commit.\n' "$name"
+  fi
+done <<< "$rows"
+exit "$status"

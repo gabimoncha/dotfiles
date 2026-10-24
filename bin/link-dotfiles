@@ -421,6 +421,9 @@ if [[ ${#merge_targets[@]} -gt 0 ]]; then
     exit 1
   fi
   printf 'Merged settings in %s\n' "${merge_targets[*]}"
+  # bin/save-settings saves only after this machine merged the current files.
+  "$repo_root/bin/save-settings" --record "${merge_targets[@]}" ||
+    printf 'Could not record the merge for bin/save-settings.\n' >&2
 fi
 # Trust the repository config, so mise commands in this folder load it.
 for config in "$repo_root"/mise.toml "$repo_root"/mise.*.toml; do
