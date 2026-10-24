@@ -35,7 +35,6 @@ min_version = { soft = "2026.10.19" }
 "~/.config/mise/config.toml" = { source = "configs/mise/global.toml", mode = "symlink" }
 "~/.config/mise/gemrc" = { source = "configs/mise/gemrc", mode = "symlink" }
 "~/.config/mise/mise.lock" = { source = "configs/mise/mise.lock", mode = "symlink" }
-"~/.config/mise/locks" = { source = "configs/mise/locks", mode = "symlink" }
 
 "~/bin/harness" = { source = "configs/harness/harness", mode = "symlink" }
 "~/.claude/CLAUDE.md" = { source = "configs/agents/instructions.md", mode = "symlink" }

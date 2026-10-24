@@ -325,8 +325,8 @@ installs the locked versions, and `mise up` writes newer versions into the
 tracked file. To add a tool, add it to `configs/mise/global.toml`, then run
 `mise lock --global --platform macos-arm64`. After either change, run
 `git add configs/mise` and commit the config, the lockfile, and the pipx lock
-folder that the lockfile names. Commit the lockfile after each `mise up`. An older lockfile
-moves the tools back to its versions.
+folder `configs/mise/.mise/locks/`. Commit the lockfile after each `mise up`.
+An older lockfile moves the tools back to its versions.
 
 `./bin/install-standalone` installs and repairs the vendor-installed tools and
 reuses healthy installs. Run it for one tool, for example

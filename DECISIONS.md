@@ -148,8 +148,10 @@ filter remains because a conflicting checkout stops native repository apply.
 Mac preferences are in `mise.macos.toml`; `macos/defaults.sh` keeps the
 input-source changes, Dock pruning, pmset, and service reloads.
 
-`configs/mise/mise.lock` and the lock folder that it names preserve the global
-dependency graphs for macos-arm64 and linux-x64. Keep the installed mise at or
+`configs/mise/mise.lock` and its sidecar folder `configs/mise/.mise/locks/`
+preserve the global dependency graphs for macos-arm64 and linux-x64. mise finds
+the sidecars next to the real lockfile, through the `~/.config/mise/mise.lock`
+link. Keep the installed mise at or
 above the pin before linking or updating the lockfile. Native package support
 does not yet preserve all tap trust, app-presence, sudo, and vendor installer
 rules. Those steps stay in scripts. Shell startup keeps static shims and zsh

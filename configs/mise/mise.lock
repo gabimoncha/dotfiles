@@ -1802,19 +1802,19 @@ url = "https://github.com/mislav/hub/releases/download/v2.14.2/hub-darwin-amd64-
 url_api = "https://api.github.com/repos/mislav/hub/releases/assets/18499942"
 
 [[tools.hunk]]
-version = "0.23.0"
+version = "0.24.0"
 backend = "aqua:modem-dev/hunk"
 specifiers = ["latest"]
 
 [tools.hunk."platforms.linux-x64"]
-checksum = "sha256:79ab6406cbb2b800e73c6fbc2546afb97ed4fbc3b50aad072eb9ad12151581e6"
-url = "https://github.com/modem-dev/hunk/releases/download/v0.23.0/hunkdiff-linux-x64.tar.gz"
-url_api = "https://api.github.com/repos/modem-dev/hunk/releases/assets/601411922"
+checksum = "sha256:7656402a8ebbd5117ad24e12bda1af045fc9c85c3b40e72dbfde4dea79b60c69"
+url = "https://github.com/modem-dev/hunk/releases/download/v0.24.0/hunkdiff-linux-x64.tar.gz"
+url_api = "https://api.github.com/repos/modem-dev/hunk/releases/assets/656237340"
 
 [tools.hunk."platforms.macos-arm64"]
-checksum = "sha256:ae42cfe52798a4f51d25f63ceb8685ca2a6cb3039a124d6a6fc172a112f8d6b8"
-url = "https://github.com/modem-dev/hunk/releases/download/v0.23.0/hunkdiff-darwin-arm64.tar.gz"
-url_api = "https://api.github.com/repos/modem-dev/hunk/releases/assets/601411924"
+checksum = "sha256:f876f1e86d6ba88e120937eb79f63889762a29fed951236d6de69ce3ff967819"
+url = "https://github.com/modem-dev/hunk/releases/download/v0.24.0/hunkdiff-darwin-arm64.tar.gz"
+url_api = "https://api.github.com/repos/modem-dev/hunk/releases/assets/656237354"
 
 [[tools.imagemagick]]
 version = "7.1.2_31"
@@ -2166,7 +2166,7 @@ checksum = "blake3:b38b043f13b44b58ff4bf223c3345e3b23ee72347aa1a60a2b1d1f669b922
 url = "https://registry.npmjs.org/npm/-/npm-12.2.1.tgz"
 
 [[tools."npm:@agentclientprotocol/claude-agent-acp"]]
-version = "0.94.0"
+version = "0.95.0"
 backend = "npm:@agentclientprotocol/claude-agent-acp"
 specifiers = ["latest"]
 
@@ -2191,12 +2191,12 @@ backend = "npm:agent-device"
 specifiers = ["latest"]
 
 [[tools."npm:cf"]]
-version = "1.0.0-beta.20"
+version = "1.0.0-beta.21"
 backend = "npm:cf"
 specifiers = ["latest"]
 
 [[tools."npm:ctx7"]]
-version = "0.8.0"
+version = "0.8.1"
 backend = "npm:ctx7"
 specifiers = ["latest"]
 
@@ -2283,7 +2283,7 @@ provenance = "github-attestations"
 version = "3.2.4"
 backend = "pipx:httpie"
 specifiers = ["latest"]
-uv = { path = "locks/pipx-httpie/3.2.4~2f338564", digest = "sha256:3bfebc47757187e82cf0431dee430eec2e59ecca30c433a312bb7b1e5b721bcf" }
+uv = { path = ".mise/locks/pipx-httpie/3.2.4~2f338564", digest = "sha256:3bfebc47757187e82cf0431dee430eec2e59ecca30c433a312bb7b1e5b721bcf" }
 
 [tools."pipx:httpie".options]
 with = '["certifi==2026.10.19"]'
@@ -2292,13 +2292,13 @@ with = '["certifi==2026.10.19"]'
 version = "0.11.2"
 backend = "pipx:mackup"
 specifiers = ["latest"]
-uv = { path = "locks/pipx-mackup/0.11.2", digest = "sha256:c85c4064034e698e0023e939e989fd477aaa3c77f4b5435b5843ca6efa932f15" }
+uv = { path = ".mise/locks/pipx-mackup/0.11.2", digest = "sha256:c85c4064034e698e0023e939e989fd477aaa3c77f4b5435b5843ca6efa932f15" }
 
 [[tools."pipx:tldr"]]
 version = "3.4.4"
 backend = "pipx:tldr"
 specifiers = ["latest"]
-uv = { path = "locks/pipx-tldr/3.4.4", digest = "sha256:c06b755b1f873d2ce1b5aa6305ca0e0f064e09846ce43d9739bdd738afd70ada" }
+uv = { path = ".mise/locks/pipx-tldr/3.4.4", digest = "sha256:c06b755b1f873d2ce1b5aa6305ca0e0f064e09846ce43d9739bdd738afd70ada" }
 
 [[tools.pnpm]]
 version = "12.14.0"
@@ -2503,7 +2503,7 @@ url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/664335803"
 provenance = "github-attestations"
 
 [[tools.vercel]]
-version = "64.5.0"
+version = "64.7.0"
 backend = "npm:vercel"
 specifiers = ["latest"]
 
@@ -2527,7 +2527,7 @@ url = "https://github.com/max-sixty/worktrunk/releases/download/v0.80.0/worktrun
 signer = "sigstore-oidc:https://github.com/max-sixty/worktrunk/.github/workflows/release.yaml"
 
 [[tools.wrangler]]
-version = "4.151.1"
+version = "4.151.2"
 backend = "npm:wrangler"
 specifiers = ["latest"]
 

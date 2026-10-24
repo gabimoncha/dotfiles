@@ -232,6 +232,7 @@ move_old_local_files() {
 # while it still points into this repository.
 retired_links=(
   "$HOME/.config/telemetry/env.sh"
+  "$HOME/.config/mise/locks"
   "$HOME/.config/mise/tasks/backup"
   "$HOME/.config/mise/tasks/doctor"
   "$HOME/.config/mise/tasks/packages"
