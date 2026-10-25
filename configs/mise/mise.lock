@@ -1079,9 +1079,11 @@ backend = "aqua:aws/aws-cli"
 specifiers = ["2.38.4"]
 
 [tools.awscli."platforms.linux-x64"]
+checksum = "sha256:10ab32a95b27138d7cc1c1ac4ebb4d3acab60cd0a0df2fc37c4e2c440ed40bce"
 url = "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.38.4.zip"
 
 [tools.awscli."platforms.macos-arm64"]
+checksum = "sha256:c50979dda2bdf5257d463ee5bb0f26a63f546b86857203153f67c17a5b273965"
 url = "https://awscli.amazonaws.com/AWSCLIV2-2.38.4.pkg"
 
 [[tools.bat]]
@@ -1511,30 +1513,33 @@ url = "https://github.com/direnv/direnv/releases/download/v2.38.2/direnv.darwin-
 url_api = "https://api.github.com/repos/direnv/direnv/releases/assets/627455431"
 
 [[tools.docker-cli]]
-version = "29.9.1"
+version = "29.9.2"
 backend = "aqua:docker/cli"
 specifiers = ["latest"]
 
 [tools.docker-cli."platforms.linux-x64"]
-url = "https://download.docker.com/linux/static/stable/x86_64/docker-29.9.1.tgz"
+checksum = "sha256:9ac225999fd5e863f7694c728ef23d480616b1e5639328fa309befd4243d69eb"
+url = "https://download.docker.com/linux/static/stable/x86_64/docker-29.9.2.tgz"
 
 [tools.docker-cli."platforms.macos-arm64"]
-url = "https://download.docker.com/mac/static/stable/aarch64/docker-29.9.1.tgz"
+checksum = "blake3:d10419d5ff12642d628f3cca6661628071b36c73e9f4a452b026f73b4959bff0"
+url = "https://download.docker.com/mac/static/stable/aarch64/docker-29.9.2.tgz"
 
 [[tools.docker-compose]]
-version = "5.6.0"
+version = "5.6.1"
 backend = "github:docker/compose"
 specifiers = ["latest"]
 
 [tools.docker-compose."platforms.linux-x64"]
-checksum = "sha256:40343e21ca777173e69cff5dbafeb37c6f81f3b0d57d9e597f036e95eb63e76a"
-url = "https://github.com/docker/compose/releases/download/v5.6.0/docker-compose-linux-x86_64"
-url_api = "https://api.github.com/repos/docker/compose/releases/assets/605922749"
+checksum = "sha256:47737f4236e6d3ccea7291995203f8f018058783b4c3a9469119811a0b5db8c0"
+checksum_source = "mise-versions"
+url = "https://github.com/docker/compose/releases/download/v5.6.1/docker-compose-linux-x86_64"
+url_api = "https://api.github.com/repos/docker/compose/releases/assets/661714739"
 
 [tools.docker-compose."platforms.macos-arm64"]
-checksum = "sha256:bd714a42b46e51757fc1121085b3096b9064e3f80d3ca5a991e33f44df4f43c9"
-url = "https://github.com/docker/compose/releases/download/v5.6.0/docker-compose-darwin-aarch64"
-url_api = "https://api.github.com/repos/docker/compose/releases/assets/605922795"
+checksum = "sha256:fcce41226abd2b7b2936094e688bbd61284673dddafea542e08cb9a3b4423a8b"
+url = "https://github.com/docker/compose/releases/download/v5.6.1/docker-compose-darwin-aarch64"
+url_api = "https://api.github.com/repos/docker/compose/releases/assets/661714755"
 
 [[tools.eza]]
 version = "0.23.5"
@@ -1542,9 +1547,11 @@ backend = "vfox:eza"
 specifiers = ["0.23.5"]
 
 [tools.eza."platforms.linux-x64"]
+checksum = "sha256:35c70c5c43c29108075e58b893234c67ef585f0b53a7eaf8e9e7d4eec9f339b4"
 url = "https://github.com/eza-community/eza/releases/download/v0.23.5/eza_x86_64-unknown-linux-gnu.tar.gz"
 
 [tools.eza."platforms.macos-arm64"]
+checksum = "sha256:c351f9506f6e30a8efb61701afc2313986004b8813c466c0f8b947db1ae891e9"
 url = "https://github.com/cargo-bins/cargo-quickinstall/releases/download/eza-0.23.5/eza-0.23.5-aarch64-apple-darwin.tar.gz"
 
 [[tools.fastfetch]]
@@ -1613,9 +1620,11 @@ backend = "vfox:jdx/vfox-gcloud"
 specifiers = ["589.0.0"]
 
 [tools.gcloud."platforms.linux-x64"]
+checksum = "sha256:8c0149c63f58a777959bbac11cc150fce98f2f9178a74ef337ce0b3acf24b7f0"
 url = "https://storage.googleapis.com/cloud-sdk-release/google-cloud-sdk-589.0.0-linux-x86_64.tar.gz"
 
 [tools.gcloud."platforms.macos-arm64"]
+checksum = "sha256:dc27f003c1061891f596ce04a4ac3b2b2ff8b9ee5d8b8822b62ae087d5e9e02c"
 url = "https://storage.googleapis.com/cloud-sdk-release/google-cloud-sdk-589.0.0-darwin-arm.tar.gz"
 
 [[tools."gem:fastlane"]]
@@ -1731,19 +1740,20 @@ url = "https://github.com/coollabsio/coolify-cli/releases/download/v1.10.0/cooli
 url_api = "https://api.github.com/repos/coollabsio/coolify-cli/releases/assets/631674188"
 
 [[tools."github:entireio/cli"]]
-version = "0.11.5"
+version = "0.11.6"
 backend = "github:entireio/cli"
 specifiers = ["latest"]
 
 [tools."github:entireio/cli"."platforms.linux-x64"]
-checksum = "sha256:c20476c4ba9689b1800fe8d590601792e2b6f3c89d03a95280d88484029d7eba"
-url = "https://github.com/entireio/cli/releases/download/v0.11.5/entire_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/entireio/cli/releases/assets/641227049"
+checksum = "sha256:1272cf16a81d30678dd9cf2597e9298dbf6481ada9b81215dc746afb0e79cab0"
+checksum_source = "mise-versions"
+url = "https://github.com/entireio/cli/releases/download/v0.11.6/entire_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/entireio/cli/releases/assets/660493045"
 
 [tools."github:entireio/cli"."platforms.macos-arm64"]
-checksum = "sha256:e7dc949a397e32cf2fa28a5ab21cbf738f0e864a50bae1a3a98ee8ab5f225911"
-url = "https://github.com/entireio/cli/releases/download/v0.11.5/entire_darwin_arm64.tar.gz"
-url_api = "https://api.github.com/repos/entireio/cli/releases/assets/641227148"
+checksum = "sha256:bdb3406e393047b6d251b10d95cbaa75eda1617e8052b8150ceeb8ec72f2b1ec"
+url = "https://github.com/entireio/cli/releases/download/v0.11.6/entire_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/entireio/cli/releases/assets/660493112"
 
 [[tools."github:flowcopilot/aether"]]
 version = "0.2.9"
@@ -1794,10 +1804,12 @@ backend = "aqua:mislav/hub"
 specifiers = ["latest"]
 
 [tools.hub."platforms.linux-x64"]
+checksum = "sha256:74d95fdfb3c78c8af4e2025b04b916ad905ab99a361778500d58269847c7922d"
 url = "https://github.com/mislav/hub/releases/download/v2.14.2/hub-linux-amd64-2.14.2.tgz"
 url_api = "https://api.github.com/repos/mislav/hub/releases/assets/18499949"
 
 [tools.hub."platforms.macos-arm64"]
+checksum = "sha256:7f4a8a739968fbeb77deca29b2b85e1fe9f4a8993cda85d3139fa36a2a6deaa7"
 url = "https://github.com/mislav/hub/releases/download/v2.14.2/hub-darwin-amd64-2.14.2.tgz"
 url_api = "https://api.github.com/repos/mislav/hub/releases/assets/18499942"
 
@@ -2121,10 +2133,12 @@ backend = "aqua:FiloSottile/mkcert"
 specifiers = ["latest"]
 
 [tools.mkcert."platforms.linux-x64"]
+checksum = "sha256:6d31c65b03972c6dc4a14ab429f2928300518b26503f58723e532d1b0a3bbb52"
 url = "https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-linux-amd64"
 url_api = "https://api.github.com/repos/FiloSottile/mkcert/releases/assets/63709955"
 
 [tools.mkcert."platforms.macos-arm64"]
+checksum = "sha256:c8af0df44bce04359794dad8ea28d750437411d632748049d08644ffb66a60c6"
 url = "https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-darwin-arm64"
 url_api = "https://api.github.com/repos/FiloSottile/mkcert/releases/assets/63709954"
 
@@ -2134,9 +2148,11 @@ backend = "vfox:jdx/vfox-neovim"
 specifiers = ["latest"]
 
 [tools.neovim."platforms.linux-x64"]
+checksum = "sha256:474430d53e6264f6d6dd18db42d6dc9df3a1b56ca9e88a325bbf860e1a811d87"
 url = "https://github.com/neovim/neovim/releases/download/v0.12.6/nvim-linux-x86_64.tar.gz"
 
 [tools.neovim."platforms.macos-arm64"]
+checksum = "sha256:1dbd148222b051ba6c307c4d17a318ed083df018a4f6a5a0ce46955ffc9ab87b"
 url = "https://github.com/neovim/neovim/releases/download/v0.12.6/nvim-macos-arm64.tar.gz"
 
 [[tools.node]]
@@ -2301,20 +2317,20 @@ specifiers = ["latest"]
 uv = { path = ".mise/locks/pipx-tldr/3.4.4", digest = "sha256:c06b755b1f873d2ce1b5aa6305ca0e0f064e09846ce43d9739bdd738afd70ada" }
 
 [[tools.pnpm]]
-version = "12.14.0"
+version = "12.15.0"
 backend = "aqua:pnpm/pnpm"
 specifiers = ["latest"]
 
 [tools.pnpm."platforms.linux-x64"]
-checksum = "sha256:3910c3852136bed5bc1511b9137a45fd4357ed6b3970d9d08893641e9005867e"
-url = "https://github.com/pnpm/pnpm/releases/download/v12.14.0/pnpm-linux-x64.tar.gz"
-url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/643957410"
+checksum = "sha256:55b5ed0092bd11176c1669598e231ae52e7cedac59de6efd0d415730f37d0598"
+url = "https://github.com/pnpm/pnpm/releases/download/v12.15.0/pnpm-linux-x64.tar.gz"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/662173360"
 provenance = "github-attestations"
 
 [tools.pnpm."platforms.macos-arm64"]
-checksum = "sha256:50f48e0e17508952790a3fbf58fcf14f3b82efa5f594ca04ad904e29aaf854b0"
-url = "https://github.com/pnpm/pnpm/releases/download/v12.14.0/pnpm-darwin-arm64.tar.gz"
-url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/643957413"
+checksum = "sha256:6a41a2877773e97f19832067187cc6fc82e186d8a2cf91fec4b4c1a5fbd6ef27"
+url = "https://github.com/pnpm/pnpm/releases/download/v12.15.0/pnpm-darwin-arm64.tar.gz"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/662173343"
 provenance = "github-attestations"
 
 [[tools.portless]]
@@ -2466,7 +2482,7 @@ url = "https://github.com/tmux/tmux-builds/releases/download/v3.7c/tmux-3.7c-mac
 url_api = "https://api.github.com/repos/tmux/tmux-builds/releases/assets/528734861"
 
 [[tools.turbo]]
-version = "2.11.9"
+version = "2.11.10"
 backend = "npm:turbo"
 specifiers = ["latest"]
 
@@ -2503,7 +2519,7 @@ url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/664335803"
 provenance = "github-attestations"
 
 [[tools.vercel]]
-version = "64.7.0"
+version = "65.0.0"
 backend = "npm:vercel"
 specifiers = ["latest"]
 
@@ -2512,22 +2528,24 @@ allow_builds = '["esbuild"]'
 trust_policy_excludes = '["undici"]'
 
 [[tools.worktrunk]]
-version = "0.80.0"
+version = "0.81.0"
 backend = "packslip:github.com/max-sixty/worktrunk"
 specifiers = ["latest"]
 
 [tools.worktrunk."platforms.linux-x64"]
-checksum = "sha256:532ce3ed5eecb1be274c925b5887f61671e2434a4ca2561b9a8ac9379dbba199"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.80.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
+checksum = "sha256:0c253f216985ce9cd7b202a11606b5ce6aa934b1019fd1fbb9b7ce2b47b1c74a"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.81.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
 signer = "sigstore-oidc:https://github.com/max-sixty/worktrunk/.github/workflows/release.yaml"
+repository_ids = { repository = "1078528927" }
 
 [tools.worktrunk."platforms.macos-arm64"]
-checksum = "sha256:8a2bb053c4bc80dea7d9ce6c221ff038d10a3d2dca2dc8f60d1b1a094fa783a9"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.80.0/worktrunk-aarch64-apple-darwin.tar.xz"
+checksum = "sha256:b9c3f2f8071554cf88500466d65d35e18ad5edad5762479a1f14bcddd5ab7882"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.81.0/worktrunk-aarch64-apple-darwin.tar.xz"
 signer = "sigstore-oidc:https://github.com/max-sixty/worktrunk/.github/workflows/release.yaml"
+repository_ids = { repository = "1078528927" }
 
 [[tools.wrangler]]
-version = "4.151.2"
+version = "4.151.3"
 backend = "npm:wrangler"
 specifiers = ["latest"]
 
