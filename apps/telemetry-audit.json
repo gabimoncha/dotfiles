@@ -3,8 +3,8 @@
   "scope": "Tracked mise/Brewfile/app inventories, explicit setup tools, and managed shell/tmux plugins. Excludes project dependencies, other plugins, nvim repository dependencies, and unrelated manually installed tools.",
   "verification": "Official documentation and upstream source reviews; fake-command tests only. No live installations, account changes, personal settings edits, or network-capture tests.",
   "coverage": {
-    "total": 186,
-    "reviewed": 186,
+    "total": 185,
+    "reviewed": 185,
     "pending": 0
   },
   "limitations": [
@@ -3372,23 +3372,6 @@
           "https://raw.githubusercontent.com/jpsim/SourceKitten/main/README.md"
         ],
         "notes": "SourceKitten interfaces with SourceKit to parse/index Swift or Objective-C code and prints completion, syntax, structure, and documentation results. SourceKit requests are compiler-service functions, not an identified remote telemetry channel. xcodebuild/compiler invocation, project build scripts, package resolution, OS crash reporting, framework embeddings, and installation downloads have separate behavior. Bounded documentation review; no compilation, live execution, or network validation.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {}
-    },
-    {
-      "id": "applesimutils",
-      "tool": "applesimutils",
-      "source": "setup",
-      "kind": "cli",
-      "research": {
-        "tool": "AppleSimUtils (wix/AppleSimulatorUtils)",
-        "status": "none_found",
-        "mechanism": "No documented opt-out found for this CLI's telemetry in the official README and options reviewed.",
-        "sources": [
-          "https://raw.githubusercontent.com/wix/AppleSimulatorUtils/master/README.md"
-        ],
-        "notes": "The CLI lists simulators and manages their app permissions, biometric tests, and state. The userTracking=NO permission applies to a specified simulator app, not AppleSimUtils reporting. Simulator/Xcode/OS diagnostics and apps under test have separate behavior. Homebrew/tap installation and update requests are artifact traffic. Bounded documentation review; no simulator state access, permission changes, live execution, or network validation.",
         "checked_date": "2026-10-03"
       },
       "setup_actions": {}
