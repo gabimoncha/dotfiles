@@ -64,18 +64,34 @@ When shims are absent from PATH, use `mise exec -- <command>`.
 
 ## tmux over SSH
 
-An interactive SSH login to a host with these dotfiles opens the tmux session
-`main`, or attaches to it when it exists. The session keeps running when the
-connection drops or you close the terminal. The next login returns to it.
-`prefix d` detaches and ends the SSH connection. `exit` in the last window
-closes the session. The prefix is `Ctrl-a`. Run `ssh -t HOST zsh` for a shell
-outside tmux.
+An interactive SSH login to a host with these dotfiles attaches to a tmux
+session that has no client. With no free session, it creates `main`, or a
+numbered session when `main` is in use. The session keeps running when the
+connection drops or you close the terminal, and the next login gets it back.
+When several connections drop at once, a login can get another free session
+than before. `prefix d` detaches and ends the SSH connection. `exit` in the
+last window closes the session. The prefix is `Ctrl-a`. Run
+`ssh -t HOST zsh` for a shell outside tmux, or
+`ssh -t HOST tmux new-session -A -s NAME` for a named session.
 
-In a tmux on your Mac, `ssh HOST` leaves the Mac tmux first, so the remote
-session is the only tmux on screen. When ssh ends, the terminal attaches to the
-Mac session again. A remote command, a tunnel (`-N`), and `command ssh HOST`
-stay in the Mac tmux pane. A container restart ends the session; tmux-resurrect
-restores its windows, but not the programs that ran in them.
+From a tmux on your Mac, the remote session hides its status bar and has no
+prefix, so you see one tmux and `Ctrl-a` goes to the Mac tmux. The remote host
+sees the Mac tmux in `TERM` (`tmux-*` or `screen-*`). Each Mac window that runs
+`ssh HOST` has its own remote session. In such a window, `prefix c`, `prefix H`,
+and `prefix V` open another `ssh HOST` in a new window or split
+([tmux-ssh-split](https://github.com/pschmitt/tmux-ssh-split)), which gets its
+own remote session. On macOS the plugin repeats a remote command, such as
+`uptime` in `ssh HOST uptime`, instead of removing it. Scroll the remote
+history with the mouse: the Mac tmux scrollback does not hold it. From a plain
+terminal tab or a phone, the remote session shows its status bar and uses
+`Ctrl-a`.
+
+The status bar runs the tmux-continuum autosave, so a hidden bar stops it. tmux
+also saves the sessions with tmux-resurrect at each detach, which includes a
+dropped connection. A container restart ends the sessions; tmux-resurrect
+restores their windows, but not the programs that ran in them. On the Mac,
+tmux-resurrect also starts the ssh panes again, and each one logs in to a free
+remote session.
 
 ## Android
 

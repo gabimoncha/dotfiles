@@ -23,12 +23,29 @@ unset brew_bin
 
 [ -r "$HOME/.config/zsh/path.zsh" ] && source "$HOME/.config/zsh/path.zsh"
 
-# An interactive SSH login opens the tmux session "main", or attaches to it,
-# so a dropped connection keeps the work. SSH commands, `ssh -t HOST zsh`, and
-# T3 terminals have no login shell with SSH_TTY, so they skip it. If tmux
-# fails, the normal shell starts.
+# An interactive SSH login attaches to a tmux session that has no client, so a
+# dropped connection keeps the work and the next login gets it back. With no
+# free session, it creates "main", or a numbered session when "main" is in use.
+# So each tmux window on the Mac that runs ssh keeps its own session. SSH
+# commands, `ssh -t HOST zsh`, and T3 terminals have no login shell with
+# SSH_TTY, so they skip it. If tmux fails, the normal shell starts.
 if [[ -n "${SSH_TTY-}" && -z "${TMUX-}" && -o login && -o interactive ]] && (( $+commands[tmux] )); then
-  tmux new-session -A -s main && exit
+  () {
+    local line free="" has_main=0
+    for line in ${(f)"$(tmux list-sessions -F '#{session_attached}:#{session_name}' 2>/dev/null)"}; do
+      [[ "${line#*:}" == main ]] && has_main=1
+      if [[ "${line%%:*}" == 0 ]] && [[ -z "$free" || "${line#*:}" == main ]]; then
+        free="${line#*:}"
+      fi
+    done
+    if [[ -n "$free" ]]; then
+      tmux attach-session -t "=$free" && exit
+    elif (( has_main )); then
+      tmux new-session && exit
+    else
+      tmux new-session -s main && exit
+    fi
+  }
 fi
 
 # Static shims avoid invoking mise or credentials during prompt initialization.
