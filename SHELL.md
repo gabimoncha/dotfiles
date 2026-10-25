@@ -74,11 +74,14 @@ last window closes the session. The prefix is `Ctrl-a`. Run
 `ssh -t HOST zsh` for a shell outside tmux, or
 `ssh -t HOST tmux new-session -A -s NAME` for a named session.
 
-From a tmux on your Mac, the remote session hides its status bar and has no
-prefix, so you see one tmux and `Ctrl-a` goes to the Mac tmux. The remote host
-sees the Mac tmux in `TERM` (`tmux-*` or `screen-*`). Each Mac window that runs
-`ssh HOST` has its own remote session. In such a window, `prefix c`, `prefix H`,
-and `prefix V` open another `ssh HOST` in a new window or split
+From a tmux on your Mac, the remote session hides its status bar and uses the
+prefix `Ctrl-b`, so you see one status bar, `Ctrl-a` goes to the Mac tmux, and
+`Ctrl-b` goes to the remote tmux. For example, `Ctrl-b S` and `Ctrl-b s` open
+the remote session and window pickers, and `Ctrl-b d` detaches. `Ctrl-b Ctrl-b`
+sends `Ctrl-b` to the program, such as page up in nvim. The remote host sees
+the Mac tmux in `TERM` (`tmux-*` or `screen-*`). Each Mac window that runs
+`ssh HOST` has its own remote session. In such a window, `Ctrl-a c`, `Ctrl-a H`,
+and `Ctrl-a V` open another `ssh HOST` in a new Mac window or split
 ([tmux-ssh-split](https://github.com/pschmitt/tmux-ssh-split)), which gets its
 own remote session. On macOS the plugin repeats a remote command, such as
 `uptime` in `ssh HOST uptime`, instead of removing it. Scroll the remote
