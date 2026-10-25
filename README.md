@@ -59,7 +59,7 @@ For later sessions, save `env = ["pro"]` in the ignored
 `mise/setup/miserc.local.toml`. Do not select Pro for an Air. Air and VM setup
 remain deferred.
 
-When you are ready to migrate configuration, use mise 2026.10.17 or newer and run:
+When you are ready to migrate configuration, use mise 2026.10.19 or newer and run:
 
 ```bash
 ./bin/link-dotfiles --dry-run
