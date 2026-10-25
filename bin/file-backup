@@ -685,7 +685,7 @@ mackup_using_dry_run() {
 }
 
 mackup_validate_config() {
-  need_command mackup "Run ./bin/bootstrap first."
+  need_command mackup "Run ./bin/setup first."
 
   if [[ ! -f "$mackup_config" ]]; then
     warn "Missing tracked Mackup config: ${mackup_config}"

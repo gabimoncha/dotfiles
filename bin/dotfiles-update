@@ -7,9 +7,9 @@ dry_run=0
 for argument in "$@"; do
   case "$argument" in
     --dry-run) dry_run=1 ;;
-    --serial|--skip-mobile-dev|--continue) ;;
+    --skip-mobile-dev|--continue) ;;
     -h|--help)
-      printf 'Usage: dotfiles-update [--dry-run] [--serial] [--skip-mobile-dev]\n'
+      printf 'Usage: dotfiles-update [--dry-run] [--skip-mobile-dev]\n'
       exit 0
       ;;
     *) printf 'Unknown update argument: %s\n' "$argument" >&2; exit 2 ;;
@@ -30,7 +30,7 @@ else
   git -C "$repo_root" pull --ff-only
 fi
 
-log "Applying bootstrap-managed updates"
-DOTFILES_SKIP_MACOS_DEFAULTS=1 "${repo_root}/bin/bootstrap" --continue "$@"
+log "Running setup"
+DOTFILES_SKIP_MACOS_DEFAULTS=1 "${repo_root}/bin/setup" --continue "$@"
 
 log "Dotfiles update complete"

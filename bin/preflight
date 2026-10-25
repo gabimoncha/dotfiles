@@ -64,7 +64,7 @@ check_linux() {
   elif sudo -n true 2>/dev/null; then
     pass "sudo works without a password"
   else
-    warn "sudo will ask for a password in the sudo stage"
+    warn "sudo will ask for a password in the sudo step"
   fi
 }
 
@@ -88,7 +88,7 @@ check_xcode_clt() {
   if xcode-select -p >/dev/null 2>&1; then
     pass "Xcode Command Line Tools installed"
   else
-    warn "Xcode Command Line Tools missing; ./bin/bootstrap will launch the installer and exit for a rerun"
+    warn "Xcode Command Line Tools missing; ./bin/setup will launch the installer and exit for a rerun"
   fi
 }
 
@@ -164,7 +164,7 @@ check_homebrew() {
       warn "brew exists but brew --prefix failed; the Homebrew foundation will report readiness independently"
     fi
   else
-    warn "Homebrew not found; ./bin/bootstrap will install it"
+    warn "Homebrew not found; ./bin/setup will install it"
   fi
 }
 
@@ -300,7 +300,7 @@ case "$(uname -s)" in
   Linux) check_linux ;;
   *) fail "setup supports macOS and Linux, not $(uname -s)" ;;
 esac
-# API and SSH checks belong to the explicit authentication stages.
+# API and SSH checks belong to the authentication steps.
 check_submodule_url
 check_repo_state
 check_layout

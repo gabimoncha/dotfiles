@@ -60,8 +60,9 @@ run, and the mise tool list. A change that works only on the Mac breaks Linux.
 
 - Edit tracked sources here, not live files under HOME.
 - Keep setup rerunnable. Preserve link backups and existing user state.
-- `bin/setup` owns the two-phase macOS plan and the one-phase Linux plan;
-  `bin/bootstrap` delegates to it.
+- `bin/setup` lists the setup steps in order: two phases on macOS, one on
+  Linux. The step functions are in `bin/lib/setup-steps.sh`. Mark a step
+  `--optional` when the later steps can run without it.
 - Add GUI apps through mas when available, then use mise for supported tools,
   then Homebrew. Coding agent CLIs, mise, and the Linux T3 server are
   standalone exceptions, listed in `apps/standalone.tsv`.
@@ -84,7 +85,7 @@ run, and the mise tool list. A change that works only on the Mac breaks Linux.
 
 ## Setup repairs
 
-When a `./bin/setup` stage fails, is blocked, or is deferred, or the user asks
+When a `./bin/setup` step fails, is blocked, or is deferred, or the user asks
 you to repair setup, follow [SETUP-AGENT.md](SETUP-AGENT.md). Put each
 repeatable setup step in a `bin/` script. The guide covers failures and
 judgment only.

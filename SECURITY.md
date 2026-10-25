@@ -52,6 +52,6 @@ untrusted code until setup exits. See [the grant rules](DECISIONS.md#temporary-s
 ## Check a fresh Mac by hand
 
 On a disposable Mac with public Apple releases, check Command Line Tools,
-Keychain and device login, SSH prompts, sudo in stages without a terminal,
+Keychain and device login, SSH prompts, sudo in steps without a terminal,
 Xcode installation, iOS downloads, cloud backup downloads, GUI imports, and
 macOS permission prompts. Never use personal backups or credentials.

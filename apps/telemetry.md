@@ -2,13 +2,13 @@
 
 Reviewed on 2026-10-03. Coverage: 186 of 186 tracked entries.
 
-Setup exports the supported environment controls before installers run. It applies saved preferences after foundation installation, and again at the end of continuation after restores. A failed setter makes the stage fail; other installed tools are still configured.
+Setup exports the supported environment controls before installers run. It applies saved preferences after foundation installation, and again at the end of continuation after restores. A failed setter makes the step fail; other installed tools are still configured.
 
 Run `./bin/configure-telemetry --dry-run` to preview the changes. Run it without that option to retry. Existing configuration is merged and backed up. Claude Code and Codex get their saved opt-outs from the settings that `./bin/link-dotfiles` merges: [configs/claude/settings.json](../configs/claude/settings.json) and [configs/codex/config.toml](../configs/codex/config.toml). Cursor's files are JSON with comments, which mise cannot merge, so `./bin/configure-telemetry` sets its two keys.
 
 Start a new shell and reopen apps after setup. A user LaunchAgent applies the managed privacy environment to GUI launches at login. An app already running, or started before the login job, can retain its old environment. Explicit flags, managed policy, local project configuration, remote servers, and extensions can have separate behavior.
 
-The login job is `~/Library/LaunchAgents/com.dotfiles.telemetry-env.plist`. Setup copies it instead of linking it. If the copy differs from the tracked plist, setup backs it up, replaces it, and reloads the job. The job sets only the keys in `telemetry.sh`. To remove it, run `launchctl bootout gui/$(id -u)/com.dotfiles.telemetry-env` and delete the plist. `launchctl unsetenv <variable>` clears one variable for the current session. For GUI apps, `AZ_CRS_ARGUMENTS` keeps only the properties already in the launchd environment, not those of the shell that runs setup.
+The login job is `~/Library/LaunchAgents/dev.mise.telemetry-env.plist`. `./bin/configure-telemetry` asks mise to write and load it from `[bootstrap.macos.launchd.agents.telemetry-env]` in `mise.macos.toml`. The same run removes the older `com.dotfiles.telemetry-env` job. The job sets only the keys in `telemetry.sh`. To remove it, run `launchctl bootout gui/$(id -u)/dev.mise.telemetry-env` and delete the plist. `launchctl unsetenv <variable>` clears one variable for the current session. For GUI apps, `AZ_CRS_ARGUMENTS` keeps only the properties already in the launchd environment, not those of the shell that runs setup.
 
 ## Automatic controls
 

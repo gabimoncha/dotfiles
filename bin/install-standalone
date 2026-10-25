@@ -26,8 +26,7 @@ done
 . "$repo_root/bin/lib/setup-runtime.sh"
 . "$repo_root/bin/lib/standalone.sh"
 if [[ "$action" == update ]]; then
-  # Setup can serialize its stages without serializing independent vendor updates.
-  DOTFILES_SETUP_SERIAL=0
+  # The vendor updates run in parallel. A hung updater stops after this time.
   DOTFILES_JOB_IDLE_TIMEOUT_SECONDS="${DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS:-30}"
   if [[ ! "$DOTFILES_JOB_IDLE_TIMEOUT_SECONDS" =~ ^[1-9][0-9]*$ ]]; then
     printf 'DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS must be a positive integer.\n' >&2

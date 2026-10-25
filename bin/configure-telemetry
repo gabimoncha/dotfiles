@@ -59,9 +59,27 @@ telemetry_file() {
   fi
 }
 
+telemetry_backup_dir=""
+# Usage: telemetry_backup FILE mv|cp. Keeps FILE in one private folder per run.
+telemetry_backup() {
+  if [[ -z "$telemetry_backup_dir" ]]; then
+    if [[ -L "$HOME/.dotfiles-backups" ]]; then
+      printf '~/.dotfiles-backups is a link. Replace it with a folder.\n' >&2
+      return 1
+    fi
+    mkdir -p "$HOME/.dotfiles-backups" && chmod 700 "$HOME/.dotfiles-backups" &&
+      telemetry_backup_dir="$(mktemp -d "$HOME/.dotfiles-backups/telemetry-$(date +%Y%m%d-%H%M%S)-XXXXXX")" || return
+  fi
+  case "$2" in
+    mv) mv "$1" "$telemetry_backup_dir/" ;;
+    *) cp -p "$1" "$telemetry_backup_dir/" ;;
+  esac
+}
+
 telemetry_gui_environment() {
-  local launchctl_path domain="gui/$UID" job="com.dotfiles.telemetry-env" result=0 changed=0 loaded=0
-  local plist="$HOME/Library/LaunchAgents/com.dotfiles.telemetry-env.plist" account_home
+  local launchctl_path old_job="com.dotfiles.telemetry-env" result=0 account_home folder
+  local agents="$HOME/Library/LaunchAgents"
+  local old_plist="$agents/com.dotfiles.telemetry-env.plist" new_plist="$agents/dev.mise.telemetry-env.plist"
   # The job loads into the account's GUI session. A run with a temporary HOME
   # must not replace it.
   account_home="$(dscl . -read "/Users/$(id -un)" NFSHomeDirectory 2>/dev/null | awk '{print $2}')" || account_home=""
@@ -69,27 +87,41 @@ telemetry_gui_environment() {
     printf 'Skipped the telemetry login job: HOME is not the home folder of this account.\n'
     return 0
   fi
+  # mise writes the job file, and it follows links. As for bin/link-dotfiles,
+  # the folder must resolve inside HOME and outside this repository.
+  folder="$agents"
+  while [[ ! -d "$folder" ]]; do folder="$(dirname "$folder")"; done
+  folder="$(cd "$folder" && pwd -P)"
+  if [[ "$folder/" != "$(cd "$HOME" && pwd -P)/"* || "$folder/" == "$(cd "$repo_root" && pwd -P)/"* ||
+    -L "$new_plist" || -L "$old_plist" ]]; then
+    printf 'Could not install the telemetry login job: ~/Library/LaunchAgents must be a folder in HOME, and its job files must not be links.\n' >&2
+    status=1
+    return
+  fi
   if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
     printf 'Would install and load the telemetry environment login job\n'
     return 0
   fi
-  [[ -f "$plist" && ! -L "$plist" ]] && cmp -s "$repo_root/macos/$job.plist" "$plist" || changed=1
-  # Apply only the login job files, with the usual backups.
-  "$repo_root/bin/link-dotfiles" "$HOME/.config/zsh/telemetry.sh" "$HOME/bin/dotfiles-telemetry-env" "$plist" ||
+  # Apply only the files of the login script, with the usual backups.
+  "$repo_root/bin/link-dotfiles" "$HOME/.config/zsh/telemetry.sh" "$HOME/bin/dotfiles-telemetry-env" ||
     { status=1; return; }
-  launchctl_path="$(telemetry_tool launchctl)" || { status=1; return; }
+  # Setup copied its own job definition before mise managed the job.
+  if [[ -f "$old_plist" ]]; then
+    launchctl_path="$(telemetry_tool launchctl)" || { status=1; return; }
+    telemetry_backup "$old_plist" mv ||
+      { printf 'Could not back up the old login job %s.\n' "$old_job" >&2; status=1; return; }
+    standalone_probe "$launchctl_path" bootout "gui/$UID/$old_job" >/dev/null 2>&1 || true
+    printf 'Unloaded the old login job %s. Its file is in %s\n' "$old_job" "$telemetry_backup_dir"
+  fi
+  # mise replaces a job file that differs from its config. Keep a copy first.
+  if [[ -f "$new_plist" ]] && ! "$repo_root/bin/repo-mise" bootstrap macos launchd-agents status --missing >/dev/null 2>&1; then
+    telemetry_backup "$new_plist" cp ||
+      { printf 'Could not back up the current login job file.\n' >&2; status=1; return; }
+    printf 'Copied the current login job file to %s\n' "$telemetry_backup_dir"
+  fi
+  # The job runs at the next login. The script runs now for this session.
   standalone_probe "$HOME/bin/dotfiles-telemetry-env" || result=$?
-  if [[ "$changed" == 1 ]]; then
-    # Unload a changed definition; the old job can be absent.
-    standalone_probe "$launchctl_path" bootout "$domain/$job" >/dev/null 2>&1 || true
-  elif standalone_probe "$launchctl_path" print "$domain/$job" >/dev/null 2>&1; then
-    loaded=1
-  fi
-  if [[ "$loaded" == 0 ]]; then
-    # bootstrap can fail briefly right after bootout; retry once.
-    standalone_probe "$launchctl_path" bootstrap "$domain" "$plist" ||
-      { sleep 1; standalone_probe "$launchctl_path" bootstrap "$domain" "$plist"; } || result=$?
-  fi
+  "$repo_root/bin/repo-mise" bootstrap macos launchd-agents apply --yes || result=$?
   if [[ "$result" != 0 ]]; then
     printf 'Could not load the telemetry environment login job; rerun in your macOS GUI session.\n' >&2
     status=1

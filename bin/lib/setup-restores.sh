@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# The restore step of bin/setup. It uses setup_real_tool from setup-steps.sh.
 
 codex_portable_state_exists() {
   [[ -e "${HOME}/.codex/config.toml" ]] ||
@@ -9,21 +10,7 @@ codex_portable_state_exists() {
     [[ -d "${HOME}/.codex/automations" ]]
 }
 
-
 . "${repo_root}/bin/lib/backup-discovery.sh"
-
-setup_real_tool() {
-  local tool="$1" candidate
-  if [[ -x "${HOME}/.local/bin/mise" ]]; then
-    candidate="$(MISE_AUTO_INSTALL=0 "$repo_root/bin/repo-mise" --global which "$tool" 2>/dev/null)" || candidate=""
-    case "$candidate" in */shims/*) candidate="" ;; esac
-    if [[ -n "$candidate" && -x "$candidate" ]]; then printf '%s\n' "$candidate"; return; fi
-  fi
-  candidate="$(command -v "$tool" 2>/dev/null)" || return 1
-  case "$candidate" in /*/shims/*|*/configs/gh/gh|"$HOME/bin/gh") return 1 ;; esac
-  [[ "$candidate" == /* && -x "$candidate" ]] || return 1
-  printf '%s\n' "$candidate"
-}
 
 restore_offer() {
   local kind="$1" response status=0

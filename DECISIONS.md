@@ -4,11 +4,11 @@ This file records constraints and their reasons. Commands are in
 [README.md](README.md), shell usage in [SHELL.md](SHELL.md), and backups in
 [MACKUP.md](MACKUP.md).
 
-## One planner, two phases
+## One step list, two phases
 
-`bin/setup` owns the dependency plan. `bin/bootstrap` is a compatibility
-entrypoint and a function library. Normal, serial, and dry-run runs share the
-planner. A dry run executes only the preflight probes.
+`bin/setup` runs the steps in order, one at a time. The step functions are in
+`bin/lib/setup-steps.sh`, and `bin/bootstrap` only calls `bin/setup`. A dry run
+executes only the preflight check.
 
 Preparation stops before bulk packages, personal configuration, authentication,
 and restores. The user then signs in to the App Store, reviews App Management,
@@ -17,14 +17,21 @@ probe can verify consent or a restart.
 
 Telemetry opt-outs are the one exception to that boundary. Setup exports them
 before installers run and reapplies them after packages and restores, also when
-an unrelated stage fails.
+another step fails. mise installs the login job that sets them for GUI apps,
+from `[bootstrap.macos.launchd.agents]` in `mise.macos.toml`.
 
-Homebrew and mise can run at the same time. Resource locks serialize writes to
-each package manager across nested helpers. A failed prerequisite blocks only
-its consumers. Required failed or deferred stages make setup return nonzero.
-Missing optional restore inputs and the explicit mobile opt-out do not.
+An earlier planner tracked dependencies and ran Homebrew and mise at the same
+time. One list in order is easier to read and to repair, and a rerun skips
+finished work. A first install is slower. The foundation steps are required:
+when one fails, setup stops and records the later steps as blocked. The other
+steps are optional, because each one checks what it needs. So a failed GitHub
+check stops the mise install, which needs the API access, but not the Homebrew
+inventory or the restores. Resource locks still serialize writes to each
+package manager across nested helpers. A failed, blocked, or deferred step
+makes setup return nonzero. Missing optional restore inputs and the steps that
+the user turns off do not.
 
-Scripts own every repeatable step. A coding agent repairs failed stages through
+Scripts own every repeatable step. A coding agent repairs failed steps through
 [SETUP-AGENT.md](SETUP-AGENT.md), but it does not replace a script step.
 Inference is slower, costs tokens, and can give a different result on each run.
 
@@ -126,8 +133,6 @@ link where a real file is, and one refused entry stops the whole apply.
 - Before it replaces `~/.gitconfig`, it copies the Git identity to
   `~/.gitconfig.local`, which the tracked file includes.
 - It skips `~/.config/nvim` while the `nvim/` submodule is empty.
-- It leaves the telemetry job definition to `bin/configure-telemetry`, which
-  compares it first to decide whether to reload the job.
 - It removes links that older versions made, only while they point into this
   repository. It moves local files from the old layout, such as
   `mise/setup/miserc.local.toml`, to their new place.
@@ -229,7 +234,7 @@ The App Store installs Xcode with `sudo mas get`. After the App Store sign-in
 at the checkpoint, it needs no Apple ID prompt and offers only public releases.
 mas 7 needs root to install apps. The xcodes CLI is the fallback installer.
 
-The mobile stage runs after every interactive stage, so the long download runs
+The mobile step runs after every interactive step, so the long download runs
 unattended. It runs before telemetry, so the opt-outs cover the new tools.
 `bin/install-mobile-dev` skips finished steps, and `bin/check-mobile-ready` is
 its read-only check. `apps/mobile.Brewfile` lists the formulae that need full
@@ -240,7 +245,7 @@ tools from the common mise inventory.
 
 After the first `sudo -v`, setup installs `/etc/sudoers.d/dotfiles-setup`. The
 file sets `timestamp_type=global` and `timestamp_timeout=30` for the setup user
-and grants no new commands. Stages without a terminal, and an agent shell, can
+and grants no new commands. Steps without a terminal, and an agent shell, can
 then use the timestamp that the user created.
 
 The keepalive loop stops when setup exits, so the timestamp expires at most 30

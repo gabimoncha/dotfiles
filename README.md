@@ -15,7 +15,7 @@ configs/<app>/        the settings files, one folder per app
 Brewfile              Homebrew formulae, casks, taps, and App Store apps
 apps/                 the app manifest, vendor-installed tools, login items
 bin/                  setup and repair scripts
-macos/                the macOS defaults script and the telemetry login job
+macos/                the macOS defaults script and the telemetry login script
 local/                ignored local files; only the examples are tracked
 nvim/                 the Neovim config, a separate repository
 ```
@@ -58,10 +58,9 @@ file, then preview and apply:
 
 `bin/link-dotfiles` saves each file that it replaces in
 `~/.dotfiles-backups/links-<time>-*/`. `--status` exits with 1 when an entry is
-missing or differs. Two entries wait for other steps: `~/.config/nvim` until
-the `nvim/` submodule is checked out, and the telemetry login job until
-`./bin/configure-telemetry` installs it. `--diff` does not show the content of
-merged settings, because those files can hold tokens.
+missing or differs. `~/.config/nvim` waits until the `nvim/` submodule is
+checked out. `--diff` does not show the content of merged settings, because
+those files can hold tokens.
 
 These mise tasks run the same scripts from any folder, for the checkout in
 `$DOTFILES_ROOT` or `~/development/dotfiles`: `dot:status`, `dot:diff`,
@@ -146,7 +145,7 @@ Command Line Tools installer, finish it and retry the command.
 Each phase asks twice for your password, or Touch ID, near its start. The
 first prompt is for `sudo`. The second installs a temporary sudoers file at
 `/etc/sudoers.d/dotfiles-setup`, so all your processes share one `sudo`
-timestamp. Later stages, and a coding agent shell without a terminal, can then
+timestamp. Later steps, and a coding agent shell without a terminal, can then
 use `sudo` without a prompt. The timestamp expires after 30 minutes without a
 `sudo` command. Setup removes the file when it exits, also after a failure or
 Ctrl-C. Preflight reports a file that a killed run left behind. Set
@@ -172,24 +171,33 @@ terminal restart. Some apps ask for consent only after they install.
 The continuation checks the foundations again, logs in to GitHub, installs
 packages, offers restores, and applies configuration. Pi installs here, after
 mise provides Node and npm. GitHub API access gates the large mise install. An
-SSH failure alone does not block it. The mobile stage runs after every
-interactive stage and before telemetry. It installs Xcode from the App Store
+SSH failure alone does not block it. The mobile step runs after every
+interactive step and before telemetry. It installs Xcode from the App Store
 without an Apple ID prompt.
 
 Setup exports the telemetry opt-outs in
-[telemetry.sh](configs/zsh/telemetry.sh) before installers run, and a login
-job sets the same values for GUI apps. Reopen apps after setup.
+[telemetry.sh](configs/zsh/telemetry.sh) before installers run. A login job,
+which mise installs from `mise.macos.toml`, sets the same values for GUI apps.
+Reopen apps after setup.
 `./bin/configure-telemetry [--dry-run]` applies them again. The
 [telemetry guide](apps/telemetry.md) lists every control, the manual settings,
 and the tools without an opt-out.
 
 | Option | Effect |
 | --- | --- |
-| `--dry-run` | Run the preflight probes and write private logs. Plan the other stages without running them. Add `--continue` to preview that phase. |
-| `--serial` | Wait for each scheduled job before the next one starts. |
+| `--dry-run` | Run the preflight check and write private logs. List the other steps without running them. Add `--continue` to preview that phase. |
 | `--skip-mobile-dev` | Skip Xcode, iOS support, Android Studio, and `apps/mobile.Brewfile`. Mobile tools in the shared mise list still install. |
 
-The exact order and dependencies are in [setup-plan.sh](bin/lib/setup-plan.sh).
+[bin/setup](bin/setup) lists the steps in order, and they run one at a time.
+The foundation steps are required: preflight, the Command Line Tools, `sudo`
+and its keepalive, Homebrew and its environment, mise, the GitHub CLI, the
+links, and the Brewfile preparation (`brewfiles`). On Linux, the system
+packages are required too. In the first macOS phase, so are the agent CLIs
+and the permission handoff. When a required step fails, setup stops and
+records the later steps as blocked. The other steps are marked `--optional`.
+Each one checks what it needs, records its failure, and lets the run go on.
+For example, the mise inventory runs only after the GitHub check passes. The
+telemetry step runs even after a failure.
 
 ## Set up a Linux host
 
@@ -205,7 +213,7 @@ cd ~/development/dotfiles
 ./bin/setup
 ```
 
-Linux runs every stage in one run. It has no App Store or restart step.
+Linux runs every step in one run. It has no App Store or restart step.
 
 1. `bin/linux-prerequisites` installs Ruby, Git, and curl with apt. Setup's
    diagnostics run on `/usr/bin/ruby`, as they do on macOS.
@@ -247,18 +255,21 @@ protected key.
   Build-Tools, and the Emulator in Android Studio, and create a virtual device.
 - Personal skills need a reviewed `skills` CLI and
   `DOTFILES_REVIEWED_SKILLS_REF` set to a reviewed 40-character commit of
-  `gabimoncha/skills`. Without them, setup defers the stage and returns
-  nonzero. Skills and their lock file stay on the machine.
+  `gabimoncha/skills`. Without that commit, setup skips the step. With the
+  commit but without the CLI, setup defers the step and returns nonzero. Skills
+  and their lock file stay on the machine.
 
 Missing optional restore inputs do not fail a run. A restore that runs and
-fails does. Failed, blocked, or deferred required stages return nonzero.
+fails does. A failed, blocked, or deferred step makes setup return nonzero. A
+step that you turn off, with `--skip-mobile-dev` or a `DOTFILES_SKIP_*`
+setting, does not.
 `./bin/app-state-doctor` checks the managed app links, tmux plugins, Raycast,
 Spotlight hotkeys, Touch ID, and disabled background jobs. It is not a complete
 installation test.
 
 ## Recovery
 
-To let a coding agent repair a failed stage, ask it to follow
+To let a coding agent repair a failed step, ask it to follow
 [the setup repair guide](SETUP-AGENT.md). If preparation failed before the
 permission step, rerun `./bin/setup`. After that step, use
 `./bin/setup --continue`. Setup reuses existing links and installs. Homebrew
@@ -269,9 +280,11 @@ run.
 
 Each run prints its private `.local/setup-runs/<run-id>/` folder:
 
-- `summary.txt`: outcomes and repair hints.
-- `events.jsonl`: stage IDs, prerequisites, timing, status, and failure locations.
-- `*.log` and `streams/`: sanitized stage output and the original event streams.
+- `summary.txt`: one result line for each step, with a repair hint. Helpers
+  add their own lines, such as one for each restore.
+- `setup.log`: the output of the steps, with tokens removed. Steps that ask for
+  a password or a login print to the terminal only. So do the steps that run
+  in the setup shell, such as `brewfiles`.
 
 Git ignores the whole `.local/` folder. Each new run keeps the latest three
 run folders and removes older ones. A run that is still active stays until a
@@ -327,7 +340,7 @@ xcodes install <public-version> --path "/path/to/Xcode.xip" --select --experimen
 ./bin/setup --continue
 ```
 
-A passed screenshot stage proves that the preferences were written, not that
+A passed screenshot step proves that the preferences were written, not that
 captures work. Take a screenshot with Shift-Command-3 or 4 and check the file.
 If needed, select `~/Screenshots` in Shift-Command-5 > Options > Save to.
 

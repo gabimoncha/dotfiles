@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Share one sudo timestamp across this user's processes, so setup stages and an
+# Share one sudo timestamp across this user's processes, so setup steps and an
 # agent shell without a terminal can use sudo after one authentication. The
 # timestamp expires after 30 idle minutes. Setup removes the drop-in at exit.
 
