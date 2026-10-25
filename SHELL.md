@@ -68,9 +68,13 @@ An interactive SSH login to a host with these dotfiles opens the tmux session
 `main`, or attaches to it when it exists. The session keeps running when the
 connection drops or you close the terminal. The next login returns to it.
 `prefix d` detaches and ends the SSH connection. `exit` in the last window
-closes the session. The prefix is `Ctrl-a`. In a tmux on your Mac, press
-`Ctrl-a Ctrl-a` to send the prefix to the inner tmux. Run `ssh -t HOST zsh`
-for a shell outside tmux. A container restart ends the session; tmux-resurrect
+closes the session. The prefix is `Ctrl-a`. Run `ssh -t HOST zsh` for a shell
+outside tmux.
+
+An SSH login from inside a tmux on your Mac skips the remote session: ssh sends
+`TERM`, and a `tmux-*` or `screen-*` value shows that the Mac tmux already
+holds the shell. Then a dropped connection ends the remote shell. Run
+`tmux new-session -A -s main` on the host when you want the remote session. A container restart ends the session; tmux-resurrect
 restores its windows, but not the programs that ran in them.
 
 ## Android

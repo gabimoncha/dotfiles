@@ -25,9 +25,11 @@ unset brew_bin
 
 # An interactive SSH login opens the tmux session "main", or attaches to it,
 # so a dropped connection keeps the work. SSH commands, `ssh -t HOST zsh`, and
-# T3 terminals have no login shell with SSH_TTY, so they skip it. If tmux
-# fails, the normal shell starts.
-if [[ -n "${SSH_TTY-}" && -z "${TMUX-}" && -o login && -o interactive ]] && (( $+commands[tmux] )); then
+# T3 terminals have no login shell with SSH_TTY, so they skip it. ssh sends
+# TERM, so a tmux-* or screen-* TERM means that the client already runs tmux;
+# a second tmux inside it would show two status bars. If tmux fails, the
+# normal shell starts.
+if [[ -n "${SSH_TTY-}" && -z "${TMUX-}" && "${TERM-}" != (tmux|screen)* && -o login && -o interactive ]] && (( $+commands[tmux] )); then
   tmux new-session -A -s main && exit
 fi
 
