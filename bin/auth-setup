@@ -18,13 +18,11 @@ warn() {
 }
 
 run_gh() {
-  "$repo_root/home/bin/dotfiles-gh-real" "$@"
+  "$repo_root/configs/gh/dotfiles-gh-real" "$@"
 }
 
 run_mise() {
-  local mise_path="${HOME}/.local/bin/mise"
-  [[ -x "$mise_path" ]] || return 127
-  MISE_GLOBAL_CONFIG_FILE="${repo_root}/home/.config/mise/config.toml" "$mise_path" "$@"
+  "$repo_root/bin/repo-mise" --global "$@"
 }
 
 gh_available() {
@@ -498,7 +496,7 @@ configure_github_ssh() {
 
 # Linux hosts use HTTPS with the GitHub CLI token: agents there start without
 # an SSH agent, so they cannot unlock a protected key. The credential helper in
-# home/.gitconfig runs ~/bin/gh.
+# git/gitconfig runs ~/bin/gh.
 configure_github_https() {
   local output
   ensure_git_identity || return 1

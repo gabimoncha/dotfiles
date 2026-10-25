@@ -1,0 +1,20 @@
+# Profile: the NAS development container (Debian 12, user box). It has no
+# systemd, and its kernel cannot start the agent sandboxes.
+
+[bootstrap.packages]
+# Keep these container packages in the native upgrade inventory.
+"apt:libbrotli-dev" = "latest"
+"apt:libbrotli1" = "latest"
+"apt:libexpat1" = "latest"
+"apt:libexpat1-dev" = "latest"
+"apt:tzdata" = "latest"
+
+[vars]
+dotfiles_shared_instructions = "{{ config_root }}/configs/agents/instructions.md"
+dotfiles_host_instructions = "{{ config_root }}/configs/agents/container.md"
+
+[dotfiles]
+# Codex reads one global file, so it gets the shared and the host rules joined.
+"~/.codex/AGENTS.md" = { source = "configs/agents/instructions.md.tera", mode = "template" }
+"~/.claude/rules/host.md" = { source = "configs/agents/container.md", mode = "symlink" }
+"~/.codex/config.toml/host" = { source = "configs/codex/container.toml", merge = true }

@@ -1,26 +1,142 @@
 # dotfiles
 
-Setup scripts, tool inventories, and managed configuration for a Mac and for
-Linux hosts (Docker containers and VMs). See [Linux box](#linux-box) for
-Linux. Start here. [DECISIONS.md](DECISIONS.md) explains the design;
-[AGENTS.md](AGENTS.md) contains editing rules.
+Setup scripts, tool lists, and app settings for the owner's Macs and Linux
+hosts. [AGENTS.md](AGENTS.md) has the editing rules and the table of where
+each setting lives. [DECISIONS.md](DECISIONS.md) explains the design.
 
-## Fresh Mac
+## Layout
+
+```text
+mise.toml             file links and shell checkouts for every host
+mise.macos.toml       Mac file links and macOS preferences
+mise.linux.toml       apt packages and the login shell for Linux
+mise.<profile>.toml   one file per machine: pro, air, container, vm
+configs/<app>/        the settings files, one folder per app
+Brewfile              Homebrew formulae, casks, taps, and App Store apps
+apps/                 the app manifest, vendor-installed tools, login items
+bin/                  setup and repair scripts
+macos/                the macOS defaults script and the telemetry login job
+local/                ignored local files; only the examples are tracked
+nvim/                 the Neovim config, a separate repository
+```
+
+Most files in `configs/` are links in HOME, so an app's change to its file is a
+change in this repository. Commit it to share it with your other machines.
+Agent settings are the exception. The agents write private paths into
+`~/.claude/settings.json` and `~/.codex/config.toml`, so mise merges the keys
+of `configs/claude/settings.json` and `configs/codex/config.toml` into them.
+`./bin/save-settings` copies your changes back without the private keys. See
+[Agent settings](#agent-settings).
+
+## Profiles
+
+| Profile | Machine | Status |
+| --- | --- | --- |
+| `pro` | MacBook Pro | Set up. |
+| `air` | MacBook Air | Not set up yet. Setup stops before it changes anything. |
+| `container` | NAS development container | Set up. |
+| `vm` | Linux VM, planned on GCP | Not set up yet. Setup stops before it changes anything. |
+
+Save the machine's profile in the ignored `.miserc.local.toml`. A Linux
+container without this file uses `container`. `DOTFILES_PROFILE=pro` selects a
+profile for one command.
+
+```bash
+printf 'env = ["pro"]\n' > .miserc.local.toml
+```
+
+## Change a setting
+
+Edit the file in `configs/<app>/`, or the `[dotfiles]` entry in a root mise
+file, then preview and apply:
+
+```bash
+./bin/link-dotfiles --status
+./bin/link-dotfiles --dry-run
+./bin/link-dotfiles
+```
+
+`bin/link-dotfiles` saves each file that it replaces in
+`~/.dotfiles-backups/links-<time>-*/`. `--status` exits with 1 when an entry is
+missing or differs. Two entries wait for other steps: `~/.config/nvim` until
+the `nvim/` submodule is checked out, and the telemetry login job until
+`./bin/configure-telemetry` installs it. `--diff` does not show the content of
+merged settings, because those files can hold tokens.
+
+These mise tasks run the same scripts from any folder, for the checkout in
+`$DOTFILES_ROOT` or `~/development/dotfiles`: `dot:status`, `dot:diff`,
+`dot:apply`, `dot:save`, `setup`, `update`, `packages`, `backup`, `restore`,
+and `doctor`. For example, run `mise run dot:apply -- --dry-run`.
+
+### Agent settings
+
+Claude Code and Codex write private data into `~/.claude/settings.json` and
+`~/.codex/config.toml`: project paths, hook state, and MCP server details. So
+these files are merges, not links. After you change a setting in one of
+these apps, save it into the repository and review the result:
+
+```bash
+./bin/save-settings --dry-run
+./bin/save-settings
+git diff configs/claude configs/codex
+```
+
+`configs/<app>/sync-keys` marks settings `public` or `private`. A public rule
+names one setting, such as `.theme`. A private rule can name a whole section,
+such as `.projects`. Each key in the repository file needs a public rule, so
+add one when you add a key to `configs/claude/settings.json` or
+`configs/codex/config.toml`. `bin/save-settings` saves only the public
+settings. It counts the settings that are on neither list and does not save
+them. Run `./bin/save-settings --show-new` to list them, add each one to the
+list, then save again.
+
+`bin/save-settings` leaves a file unchanged when one of its keys has no public
+rule, or when a public setting has become a section or holds a local path, a
+credential, or an email address. Its messages never show a value.
+
+On the other machines, `./bin/link-dotfiles` merges the saved keys and keeps
+their own private keys. The last save replaces the saved values, so merge
+before you change a setting: `bin/save-settings` refuses to save until this
+machine has merged the current repository file. A merge never removes a key.
+A key that you delete in an app stays on the other machines, and a later save
+from one of them puts it back. Delete it on every machine, or mark it private.
+
+## Update a machine
+
+```bash
+git pull --ff-only
+./bin/link-dotfiles --dry-run
+./bin/link-dotfiles
+```
+
+The repository's mise commands need mise 2026.10.19. If `bin/repo-mise`
+reports an older mise, run `./bin/install-standalone mise` first. After a pull
+that moves files, `bin/link-dotfiles` points the old links at the new sources.
+It also moves local files from the old layout, such as
+`home/.config/local/secrets.zsh`, to `local/`.
+`dotfiles-update` pulls, then runs the setup continuation without the general
+macOS defaults. It does not upgrade every installed package. The shell's daily
+background check only reports new commits. `./bin/prepare-sync` compares the
+live inventory with the repository and saves a Brewfile copy under
+`.sync-backups/`.
+
+## Set up a new Mac
 
 On the old Mac, run `./bin/prepare-sync` to report inventory drift and
 `./bin/file-backup` to save portable state. Complete the Raycast export and
 rerun `./bin/file-backup raycast` to mirror it. Confirm the backups are
-available before erasing the old Mac. See [backup and restore](MACKUP.md).
+available before you erase the old Mac. See [backup and restore](MACKUP.md).
 
 Use a public macOS release. Setup stops if the active Apple or MDM catalog
-offers a macOS update, the update check is inconclusive, or macOS/Xcode appears
-to be a prerelease. Update in System Settings, restart if needed, and retry.
-Setup does not install OS updates or change beta enrollment.
+offers a macOS update, the update check is inconclusive, or macOS or Xcode
+appears to be a prerelease. Update in System Settings, restart if needed, and
+retry. Setup does not install OS updates or change beta enrollment.
 
 ```bash
 mkdir -p ~/development
 git clone https://github.com/gabimoncha/dotfiles.git ~/development/dotfiles
 cd ~/development/dotfiles
+printf 'env = ["pro"]\n' > .miserc.local.toml
 ./bin/setup
 ```
 
@@ -37,47 +153,49 @@ Ctrl-C. Preflight reports a file that a killed run left behind. Set
 `DOTFILES_SKIP_SUDO_GRANT=1` to skip the grant. Later `sudo` steps then ask in
 the terminal.
 
-The first phase installs foundation tools: Homebrew, standalone mise, isolated
-GitHub CLI, Codex CLI, Claude Code, Cursor Agent, and OpenCode v2. Pi installs
-in the continuation phase, after mise provides Node and npm. Preparation then
-exits. Sign in to the App Store app. Review **System Settings
-> Privacy & Security > App Management** for the terminal application you use.
-Approve access when requested and fully quit/reopen that application as directed.
-Return to the repository and continue:
+The first phase installs the foundation tools: Homebrew, standalone mise, an
+isolated GitHub CLI, Codex CLI, Claude Code, Cursor Agent, and OpenCode v2.
+Then it stops:
+
+1. Sign in to the App Store app.
+2. In **System Settings > Privacy & Security > App Management**, allow the
+   terminal app that runs setup. Approve access when macOS asks.
+3. Quit and reopen that terminal app, then continue:
 
 ```bash
 ./bin/setup --continue
 ```
 
-This flag acknowledges the manual checkpoint; it does not verify permissions
-or a terminal restart. Some apps request consent only after installation.
+This flag confirms the manual step. Setup cannot check permissions or the
+terminal restart. Some apps ask for consent only after they install.
 
-Continuation rechecks foundations, authenticates GitHub, installs packages,
-offers restores, and applies configuration. GitHub API access gates the large
-mise install. An SSH-only failure does not block it. The mobile stage runs
-after every interactive stage and before telemetry. It installs Xcode from the
-App Store without an Apple ID prompt.
+The continuation checks the foundations again, logs in to GitHub, installs
+packages, offers restores, and applies configuration. Pi installs here, after
+mise provides Node and npm. GitHub API access gates the large mise install. An
+SSH failure alone does not block it. The mobile stage runs after every
+interactive stage and before telemetry. It installs Xcode from the App Store
+without an Apple ID prompt.
 
-Setup exports documented telemetry opt-outs before installers run and applies
-saved preferences to installed tools. A login job sets the same values for GUI
-apps. Reopen apps after setup. `./bin/configure-telemetry [--dry-run]`
-reapplies them. The [telemetry guide](apps/telemetry.md) lists every control,
-the manual settings, and the tools without an opt-out.
-
-The exact order and dependencies are in [setup-plan.sh](bin/lib/setup-plan.sh).
-`bin/bootstrap` delegates to this same planner.
+Setup exports the telemetry opt-outs in
+[telemetry.sh](configs/zsh/telemetry.sh) before installers run, and a login
+job sets the same values for GUI apps. Reopen apps after setup.
+`./bin/configure-telemetry [--dry-run]` applies them again. The
+[telemetry guide](apps/telemetry.md) lists every control, the manual settings,
+and the tools without an opt-out.
 
 | Option | Effect |
 | --- | --- |
-| `--dry-run` | Run preflight probes and write private logs; plan provisioning without executing it. Add `--continue` to preview that phase. |
-| `--serial` | Wait for each scheduled job before starting the next. |
-| `--skip-mobile-dev` | Skip the mobile stage: Xcode, iOS support, Android Studio, and `apps/mobile.Brewfile`. Mobile tools in the common mise inventory still install. |
+| `--dry-run` | Run the preflight probes and write private logs. Plan the other stages without running them. Add `--continue` to preview that phase. |
+| `--serial` | Wait for each scheduled job before the next one starts. |
+| `--skip-mobile-dev` | Skip Xcode, iOS support, Android Studio, and `apps/mobile.Brewfile`. Mobile tools in the shared mise list still install. |
 
-## Linux box
+The exact order and dependencies are in [setup-plan.sh](bin/lib/setup-plan.sh).
+
+## Set up a Linux host
 
 Setup also runs on Debian and Ubuntu, for example the NAS container in
 [remote development](apps/remote-development.md). Run it as your normal user.
-It needs sudo for apt and the login shell.
+It needs `sudo` for apt and the login shell.
 
 ```bash
 mkdir -p ~/development
@@ -87,144 +205,121 @@ cd ~/development/dotfiles
 ./bin/setup
 ```
 
-Linux runs every stage in one run. It has no App Store or restart checkpoint.
+Linux runs every stage in one run. It has no App Store or restart step.
 
 1. `bin/linux-prerequisites` installs Ruby, Git, and curl with apt. Setup's
    diagnostics run on `/usr/bin/ruby`, as they do on macOS.
-2. `linux/mise.toml` installs the other system packages (zsh,
-   build-essential, unzip) and makes zsh the login shell.
-3. Setup installs mise, the Mac and Linux tool list, the agent CLIs, and T3
+2. mise installs the system packages in `mise.linux.toml` and the profile file,
+   and makes zsh the login shell.
+3. Setup installs the runtime tools, the agent CLIs, and T3
    (`apps/standalone.tsv`), then links the shared files.
 
-The tools marked `os = "macos"` in `home/.config/mise/config.toml` stay on the
-Mac. Move a tool to the shared list when a Linux box needs it. Mac-only links,
-such as Karabiner and the Library files, are skipped.
+Tools marked `os = "macos"` in `configs/mise/global.toml` stay on the Mac.
+Entries in `mise.macos.toml` do not load on Linux.
 
-Codex reads one global instructions file. On Linux, `bin/link-dotfiles`
-writes `~/.codex/AGENTS.md` from `home/.codex/AGENTS.md` plus the host file
-`linux/hosts/<profile>.md`. Claude reads the host file through
-`~/.claude/rules/host.md`. The profile is `linux-container` inside Docker and
-`linux-vm` elsewhere. Set `DOTFILES_PROFILE` to choose another file. Only
-`linux-container.md` exists today. The agent links stop with an error until the
-host file exists, so add `linux/hosts/linux-vm.md` before the first VM setup.
-An optional `linux/hosts/<profile>.toml` merges host keys into the agent
-settings after the shared keys. The container uses it to turn off the Codex
-sandbox, which cannot start on its kernel. Edit the source files, then rerun
-`./bin/link-dotfiles`.
+Codex reads one global instructions file. On the container, mise renders
+`~/.codex/AGENTS.md` from `configs/agents/instructions.md` and the host rules in
+`configs/agents/container.md`. Claude reads the host rules from
+`~/.claude/rules/host.md`. The container also turns off the Codex sandbox in
+`configs/codex/container.toml`, because its kernel cannot start it.
 
 `DOTFILES_SKIP_GITHUB_AUTH=1 ./bin/setup` defers the GitHub login. mise then
 installs tools without a GitHub token. Log in later with `./bin/auth-setup`.
 The login asks for the `workflow` scope, so Git can push changes to GitHub
 Actions files. On an existing login, `./bin/auth-setup --api-only` adds a
-missing scope.
-Linux uses Git over HTTPS with the GitHub CLI token, not an SSH key. Agents on
-a headless host start without an SSH agent and cannot unlock a protected key.
+missing scope. Linux uses Git over HTTPS with the GitHub CLI token, not an SSH
+key. Agents on a headless host start without an SSH agent and cannot unlock a
+protected key.
 
 ## Manual completion
 
-- Sign in to Apple/App Store/iCloud and the applications you use.
-- Download one provider's backup copies in Finder. The initial checklist reads
-  metadata; it neither downloads nor proves backup validity.
-- Grant app privacy access manually when a feature needs it. Setup does not
-  maintain app permission lists or grant or verify consent. App settings and
-  backups do not transfer macOS permission grants.
-- Complete eligible restore prompts. Raycast import needs its GUI and password.
-  Existing Codex state is preserved for comparison. See [MACKUP.md](MACKUP.md).
-- Complete first launch for Android Studio, OrbStack, and vendor apps listed as
-  `manual` in [the app manifest](apps/manifest.tsv).
-- For the configured Android workflow, install SDK Platform 35, Sources for
-  Android 35, Build-Tools and Emulator in Android Studio; create a virtual device.
-- Personal skills require a reviewed `skills` CLI and
-  `DOTFILES_REVIEWED_SKILLS_REF` set to a reviewed 40-character commit from
-  `gabimoncha/skills`. Missing inputs defer the required stage and make setup
-  return nonzero. Skills and their lock file stay machine-local.
+- Sign in to Apple, the App Store, iCloud, and the apps you use.
+- Download one provider's backup copies in Finder. The first checklist reads
+  metadata. It does not download the files or prove that the backup is valid.
+- Grant app privacy access by hand when a feature needs it. Setup does not
+  grant or check consent, and app settings and backups do not carry macOS
+  permission grants.
+- Complete the restore prompts. Raycast import needs its GUI and password.
+  Existing Codex state is kept for comparison. See [MACKUP.md](MACKUP.md).
+- Complete the first launch of Android Studio, OrbStack, and the vendor apps
+  marked `manual` in [the app manifest](apps/manifest.tsv).
+- For the Android workflow, install SDK Platform 35, Sources for Android 35,
+  Build-Tools, and the Emulator in Android Studio, and create a virtual device.
+- Personal skills need a reviewed `skills` CLI and
+  `DOTFILES_REVIEWED_SKILLS_REF` set to a reviewed 40-character commit of
+  `gabimoncha/skills`. Without them, setup defers the stage and returns
+  nonzero. Skills and their lock file stay on the machine.
 
-Missing optional restore prerequisites do not fail a run; an attempted restore
-that fails does. Required failed, blocked, or deferred stages return nonzero.
-Use `./bin/app-state-doctor` to check managed app links, tmux plugins, Raycast,
+Missing optional restore inputs do not fail a run. A restore that runs and
+fails does. Failed, blocked, or deferred required stages return nonzero.
+`./bin/app-state-doctor` checks the managed app links, tmux plugins, Raycast,
 Spotlight hotkeys, Touch ID, and disabled background jobs. It is not a complete
 installation test.
 
 ## Recovery
 
 To let a coding agent repair a failed stage, ask it to follow
-[the setup repair guide](SETUP-AGENT.md).
-Repair the failed prerequisite. If preparation failed before the permission
-handoff, rerun `./bin/setup`. After completing that handoff, use
-`./bin/setup --continue`.
-Existing links and installations are reused where possible; changed link targets
-are backed up under `~/.dotfiles-backups/<timestamp>/`. Homebrew inventory uses
-`--no-upgrade`. T3 desktop updates itself. Setup replaces a mise older than
-the pinned release with the pinned release, and it does not update a newer one.
-Between setup runs, mise updates itself because the global config sets
-`self_update.auto`. Setup turns that off for its own run.
+[the setup repair guide](SETUP-AGENT.md). If preparation failed before the
+permission step, rerun `./bin/setup`. After that step, use
+`./bin/setup --continue`. Setup reuses existing links and installs. Homebrew
+installs use `--no-upgrade`. Setup replaces a mise older than the pin, and it
+does not update a newer one. Between setup runs, mise updates itself because
+the runtime config sets `self_update.auto`. Setup turns that off for its own
+run.
 
-Each run prints its private `.local/setup-runs/<run-id>/` directory:
+Each run prints its private `.local/setup-runs/<run-id>/` folder:
 
 - `summary.txt`: outcomes and repair hints.
 - `events.jsonl`: stage IDs, prerequisites, timing, status, and failure locations.
-- `*.log` and `streams/`: sanitized stage output and original event streams.
+- `*.log` and `streams/`: sanitized stage output and the original event streams.
 
-The entire `.local/` directory is ignored by Git. Each new run keeps the latest
-three run directories and removes older ones. Active runs are kept until a
-later run can remove them. Normal runs, dry runs, and standalone helper commands
-share this limit. Helpers called by setup use the parent run's directory.
-Copy logs elsewhere before further runs if you need to keep them longer.
-
-Authentication output is omitted. Review logs before sharing them.
-Cancellation stops owned descendants and releases locks. This requires process
-inspection access. System Bash and `/usr/bin/ruby` handle diagnostics so a broken
-managed runtime does not prevent recovery.
+Git ignores the whole `.local/` folder. Each new run keeps the latest three
+run folders and removes older ones. A run that is still active stays until a
+later run can remove it. Normal runs, dry runs, and helper commands share this
+limit. Copy logs elsewhere before more runs if you need them longer.
+Authentication output is omitted. Review logs before you share them.
 
 | Command | Use |
 | --- | --- |
-| `./bin/preflight` | Check macOS updates and repository prerequisites. |
-| `./bin/github-bootstrap install-gh` | Repair isolated GitHub CLI acquisition. |
-| `./bin/auth-setup --api-only` | Repair GitHub API login. |
-| `./bin/auth-setup --ssh-only` | Repair Git identity and SSH access. |
-| `./bin/auth-setup --git-only` | Linux: repair Git identity and Git over HTTPS. |
+| `./bin/preflight` | Check macOS updates and the repository prerequisites. |
+| `./bin/link-dotfiles [--status \| --diff \| --dry-run]` | Apply, check, or preview the managed files. |
+| `./bin/repo-mise bootstrap repos status` | Check the Oh My Zsh, plugin, and TPM checkouts. |
+| `./bin/repo-mise bootstrap macos defaults status` | Compare macOS preferences with `mise.macos.toml`. |
+| `./macos/defaults.sh` | Apply macOS preferences, input sources, the Dock, and display sleep. |
+| `./bin/github-bootstrap install-gh` | Repair the isolated GitHub CLI install. |
+| `./bin/auth-setup --api-only` | Repair the GitHub API login. |
+| `./bin/auth-setup --ssh-only` | Repair the Git identity and SSH access. |
+| `./bin/auth-setup --git-only` | Linux: repair the Git identity and Git over HTTPS. |
 | `./bin/auth-setup --verify-mise` | Check the direct credential helper. |
-| `./bin/check-mise-tools` | Probe real installed tools without provisioning. |
+| `./bin/check-mise-tools` | Check the installed tools without installing any. |
 | `./bin/install-apps [--dry-run]` | Retry or preview the app manifest. |
-| `./bin/install-steam [--dry-run]` | Install Valve's verified ARM64 Steam bootstrapper and replace the old Homebrew cask. |
-| `./bin/check-mobile-ready` | Check Xcode, iOS, Android Studio, and `apps/mobile.Brewfile` without changes. |
-| `./bin/install-mobile-dev [--dry-run]` | Install or repair Xcode, iOS support, Android Studio, and the mobile formulae. |
-| `./bin/sudo-grant --check` | Report a leftover sudo grant; `--enable` and `--disable` change it. |
-| `./bin/link-dotfiles` | Reconcile managed links and back up replaced targets. |
-| `./bin/link-dotfiles --status` | Report managed files that are missing or differ, without changing them. |
-| `./bin/repo-mise "$PWD/mise/setup.toml" bootstrap repos status` | Check the Oh My Zsh, plugin, and TPM checkouts without changing them. |
-| `./bin/repo-mise "$PWD/macos/defaults.toml" bootstrap macos defaults status` | Compare macOS preferences with `macos/defaults.toml` without changing them. |
-| `./macos/defaults.sh` | Reapply macOS preferences, input sources, the Dock, and display sleep. |
-| `./bin/setup-tmux` | Install missing TPM plugins and reload a running server. |
-| `./bin/configure-app-settings` | Retry automatic login-item setup. |
-| `./bin/configure-telemetry [--dry-run]` | Apply documented telemetry opt-outs to installed tools. |
-| `./bin/configure-screenshots` | Repair PNG destination preferences at `~/Screenshots`. |
-| `./bin/finder-sidebar-favorites` | Retry `development` and `screenshots` favorites. |
-| `./bin/configure-sudo-touch-id --check` | Inspect Touch ID for sudo; `--enable`/`--disable` change it. |
-| `./bin/configure-background-jobs [--dry-run]` | Disable the user launchd jobs in `macos/disabled-jobs.txt`; `--check` reports drift and `--revert` enables them. |
 | `./bin/install-standalone status` | Report the vendor-installed tools in `apps/standalone.tsv`. |
 | `./bin/install-standalone [NAME...]` | Install or repair those tools. `--dry-run` previews. |
+| `./bin/install-steam [--dry-run]` | Install Valve's verified ARM64 Steam bootstrapper. |
+| `./bin/check-mobile-ready` | Check Xcode, iOS, Android Studio, and `apps/mobile.Brewfile`. |
+| `./bin/install-mobile-dev [--dry-run]` | Install or repair Xcode, iOS support, Android Studio, and the mobile formulae. |
+| `./bin/sudo-grant --check` | Report a leftover sudo grant. `--enable` and `--disable` change it. |
+| `./bin/setup-tmux` | Install missing TPM plugins and reload a running server. |
+| `./bin/configure-app-settings` | Retry the login-item setup. |
+| `./bin/configure-telemetry [--dry-run]` | Apply the telemetry opt-outs to installed tools. |
+| `./bin/configure-screenshots` | Repair the PNG destination at `~/Screenshots`. |
+| `./bin/finder-sidebar-favorites` | Retry the `development` and `screenshots` favorites. |
+| `./bin/configure-sudo-touch-id --check` | Inspect Touch ID for sudo. `--enable` and `--disable` change it. |
+| `./bin/configure-background-jobs [--dry-run]` | Disable the jobs in `macos/disabled-jobs.txt`. `--check` reports drift, and `--revert` enables them. |
 
-The `repo-mise` commands, `link-dotfiles --status`, and `macos/defaults.sh`
-need the pinned mise. Plain `./bin/link-dotfiles` also needs it for the agent
-settings merge and the `mise.lock` link. Without it, the script makes the other
-links, skips those two steps, and exits 1. If a command reports an older mise,
-run `./bin/install-standalone mise`. `mise self-update` can stop below the pin
-because of the four-day `minimum_release_age`.
+Tool checks and version probes stop after 10 seconds. Set
+`DOTFILES_TOOL_CHECK_TIMEOUT_SECONDS` to change that. The macOS update probe
+stops after 120 seconds (`DOTFILES_SOFTWAREUPDATE_TIMEOUT_SECONDS`).
 
-Capability resolution and version probes each default to a 10-second deadline;
-set `DOTFILES_TOOL_CHECK_TIMEOUT_SECONDS` to override it. The macOS update probe
-defaults to 120 seconds (`DOTFILES_SOFTWAREUPDATE_TIMEOUT_SECONDS`).
-
-Use `DOTFILES_SKIP_SUDO_TOUCH_ID=1` to skip Touch ID setup or
-`DOTFILES_SKIP_MACOS_DEFAULTS=1` to skip general defaults. Screenshot repair is
-separate and still runs. General defaults use the `~/.macos-defaults-applied`
-stamp. Apple Watch approval is configured in macOS, not by these scripts.
+Set `DOTFILES_SKIP_SUDO_TOUCH_ID=1` to skip Touch ID setup, or
+`DOTFILES_SKIP_MACOS_DEFAULTS=1` to skip the general defaults. Screenshot
+repair still runs. The general defaults run once per `~/.macos-defaults-applied`
+stamp.
 
 Setup installs Xcode with `sudo mas get 497799835`. The App Store offers only
-public releases. It also updates Xcode automatically, unless you turn off
-automatic updates in the App Store settings. Setup does not remove other Xcode
-apps. If the App Store cannot install Xcode, download the public `.xip` from
+public releases and updates Xcode automatically, unless you turn that off in
+the App Store settings. If the App Store cannot install Xcode, download the
+public `.xip` from
 [Apple Developer Downloads](https://developer.apple.com/download/all/), then run:
 
 ```bash
@@ -232,163 +327,51 @@ xcodes install <public-version> --path "/path/to/Xcode.xip" --select --experimen
 ./bin/setup --continue
 ```
 
-For screenshots, a successful stage proves preference writes, not capture.
-Verify a saved file with Shift–Command–3/4. If needed, select `~/Screenshots`
-in Shift–Command–5 > Options > Save to. Control copies to the clipboard;
-dragging the floating thumbnail can also change where the capture ends up.
+A passed screenshot stage proves that the preferences were written, not that
+captures work. Take a screenshot with Shift-Command-3 or 4 and check the file.
+If needed, select `~/Screenshots` in Shift-Command-5 > Options > Save to.
 
 ### Known limits
 
-These defects are not fixed yet:
-
-- General defaults currently disable display sleep on battery and power.
+- The general defaults turn off display sleep on battery and on power.
 - If Homebrew reports the Xcode app as too old, setup skips `borders` and does
   not retry it after Xcode installs. Rerun `./bin/setup --continue`.
-- A direct `./bin/install-mobile-dev` run omits the macOS update check in
-  preflight. It rejects only a prerelease Xcode.
-- Raycast backup can create absent provider directories; confirm real cloud
-  synchronization. Combined backup can exit zero when neither provider is ready.
-- Finder failures can be reported as success; check the resulting sidebar.
+- A direct `./bin/install-mobile-dev` run skips the macOS update check. It
+  rejects only a prerelease Xcode.
+- Raycast backup can create missing provider folders. Confirm the cloud sync.
+  The combined backup can exit zero when neither provider is ready.
+- Finder failures can report success. Check the sidebar.
 - The optional Postgres 18 Compose service uses a legacy data-volume target.
 
 No script proves a fresh-Mac install. See
 [the manual checks](SECURITY.md#check-a-fresh-mac-by-hand).
 
-## Ownership and configuration
+## Packages and tools
 
-| Source | Owns |
-| --- | --- |
-| [Brewfile](Brewfile) | Homebrew formulae, casks, taps and App Store entries. |
-| [mise config](home/.config/mise/config.toml) | Runtimes and supported global developer tools. |
-| [mise lockfile](home/.config/mise/mise.lock) | Exact tool versions, download URLs, and checksums for the mise config. |
-| [setup mise config](mise/setup.toml) | Shell framework checkouts, the managed-file list for `link-dotfiles --status`, and the Claude and Codex settings merges. |
-| [app manifest](apps/manifest.tsv) | Explicit app installation status and manual vendor steps. |
-| [link-dotfiles](bin/link-dotfiles) and `home/` | Managed files and backup-before-replace behavior. |
-| [macOS defaults](macos/defaults.toml) and [defaults.sh](macos/defaults.sh) | OS preferences. The script applies the TOML with mise and handles input sources, the Dock, and display sleep. |
-| [disabled jobs](macos/disabled-jobs.txt) | Apple user launchd jobs that `bin/configure-background-jobs` disables. |
-| [Mackup config](home/.mackup.cfg) | Allowlisted app settings, separate from repo-owned files. |
-| `nvim/` | Separate Neovim submodule linked to `~/.config/nvim`; plugins download at first launch. |
+Add packages in this order: the Mac App Store, then mise, then Homebrew. The
+agent CLIs and mise itself are vendor-installed exceptions in
+`apps/standalone.tsv`. The T3 nightly desktop app is a Homebrew cask. Hex and
+Scrawl come from their vendor taps, `anomalyco/tap` and `kitlangton/tap`.
+`vscode "publisher.extension"` lines in the Brewfile select Cursor extensions.
 
-Add packages in this order: Mac App Store, then mise, then Homebrew. Coding agent
-CLIs and mise itself are explicit standalone-installer exceptions. T3 desktop
-uses the nightly Homebrew cask.
-Hex and Scrawl use their vendor taps, `anomalyco/tap` and `kitlangton/tap`.
-Steam uses the verified native installer described below.
-See [DECISIONS.md](DECISIONS.md) for the reasons and constraints.
-
-`~/.config/mise/mise.lock` links to the tracked lockfile. `bin/link-dotfiles`
-creates that link only when the pinned mise is installed. `mise install`
+`~/.config/mise/mise.lock` links to `configs/mise/mise.lock`. `mise install`
 installs the locked versions, and `mise up` writes newer versions into the
-tracked file. To add a tool, add it to the mise config, then run
+tracked file. To add a tool, add it to `configs/mise/global.toml`, then run
 `mise lock --global --platform macos-arm64`. After either change, run
-`git add home/.config/mise` and commit `config.toml`, `mise.lock`, and the
-`locks/` folder. The pipx entries need their `locks/` dependency graphs.
+`git add configs/mise` and commit the config, the lockfile, and the pipx lock
+folder `configs/mise/.mise/locks/`. Commit the lockfile after each `mise up`.
+An older lockfile moves the tools back to its versions.
 
-Fastlane uses `home/.config/mise/gemrc` to skip Ruby documentation generation.
-This avoids an RDoc failure with Ruby 3.4.11 during installation.
-
-The first `mise install` after the link is created installs the three pipx
-tools again, in new folders that match their locked dependency graphs. It also
-adds checksums for tools whose releases publish none. Commit that lockfile
-change once. A lockfile that is older than your installs moves the tools back
-to the locked versions, so commit the lockfile after each `mise up`.
-
-`vscode "publisher.extension"` entries in `Brewfile` select Cursor extensions.
-Setup uses Cursor's editor CLI and skips installed extensions.
-
-Mise pins `tsrs`, the Rust port of TypeScript 7, on the Mac and on Linux.
-`~/.config/tsrs/tsgo` runs it under the name that the TypeScript 7 extension
-looks for. It runs the native binary from the mise install, not the npm
-package's Node.js launcher, which adds about 100 ms to each start. Neovim's `tsrs` server runs a project's own
-`node_modules/.bin/tsrs` when the project has one, and this launcher
-otherwise. In Cursor, a project sets `js/ts.tsdk.path` to its own launcher.
-For other projects, set it to the absolute path of `~/.config/tsrs` in Cursor
-user settings.
-
-AeroSpace and Ghostty links wait for their application bundles. Final links
-share `home/.codex/AGENTS.md` with Codex and Claude, and merge tracked Codex and
-Claude settings without discarding other keys. Replaced files are backed up.
-The tracked settings disable [Codex memories](https://learn.chatgpt.com/docs/config-file/config-basic)
-with `features.memories = false` and [Claude auto memory](https://code.claude.com/docs/en/env-vars)
-with `env.CLAUDE_CODE_DISABLE_AUTO_MEMORY = "1"`. Existing memory files remain.
-Start new agent sessions after applying these settings.
-`./bin/link-dotfiles` merges these keys with `mise dot apply`, from the
-`[dotfiles]` merge entries in `mise/setup.toml`. It backs up each file that
-will change, and it creates a missing file with mode 0600. To preview the
-merge, run
-`./bin/repo-mise "$PWD/mise/setup.toml" dot diff '~/.claude/settings.json' '~/.codex/config.toml'`.
-The Codex merge always uses `~/.codex/config.toml` and ignores `CODEX_HOME`.
-mise refuses a settings file that is a symlink or that is not valid JSON or
-TOML, and it leaves that file unchanged. A managed key that holds a value of
-another type is replaced; the backup keeps the old value. mise writes the file
-in place, not through a temporary file, so the backup under
-`~/.dotfiles-backups/` or `mise dot recover` restores an interrupted write.
-
-AeroSpace leaves the workspace unchanged for Superwhisper. The main Typeless
-window floats on workspace `D`. A separate rule matches Typeless's `Status`
-pill by app ID and window title, applies floating layout, and leaves its
-workspace unchanged. This rule does not make the pill visible on all workspaces.
-
-CLIProxyAPI binds to `127.0.0.1:49156`. Its tracked configuration is linked into
-HOME and Homebrew's `etc/cliproxyapi.conf` before the service starts. Provider
-OAuth files remain local and must not be copied into tracked configuration.
-
-[Shell usage](SHELL.md) covers local secrets, GitHub account routing, command
-helpers, package runners, and Android paths. [SECURITY.md](SECURITY.md) lists
-state that must stay out of Git.
-
-### Steam without Rosetta
-
-The app manifest runs `bin/install-steam`. It downloads the native bootstrapper
-from Valve and checks its checksum, ARM64 support, Valve signature, and Gatekeeper
-acceptance. A healthy native installation is reused. Steam updates itself after
-first launch. The script preserves your existing update channel.
-
-To preview the replacement, run `./bin/install-steam --dry-run`.
-Use `./bin/install-steam --verify-download` to download and verify the package
-without installing or starting Steam. To replace an existing installation,
-quit Steam and run `./bin/install-steam`. Repository preflight must pass first.
-If preflight fails, the installer leaves the old app in place. An Intel-only
-app will still ask for Rosetta until the replacement completes.
-Use `./bin/install-steam --check` to check the installed launchers and signature.
-These checks do not prove that first launch or game downloads work.
-
-The installer retains the old app under `~/.dotfiles-backups/` and removes its
-Homebrew cask without `--zap`. It preserves games, account data, and the
-`Steam.AppBundle` cache. If replacement fails, it restores the old app.
-The Homebrew receipt is not restored. Keep the backup until Steam starts correctly.
-The download receives a quarantine attribute for macOS first-launch confirmation.
-The installer does not install Rosetta or clear quarantine. Intel-only games
-can still require Rosetta even when the Steam client runs natively.
-
-## Coding agents
-
-[`apps/standalone.tsv`](apps/standalone.tsv) lists every tool that a vendor
-installer owns: mise, the agent CLIs, and T3 on Linux. Each row names the
-command, the folder that the vendor install owns, the installer, and the
-update command. `./bin/install-standalone` reads it. Setup runs it and reuses
-healthy installs. Run it yourself to install or repair one tool, for example
-`./bin/install-standalone codex`. Pi installs after the mise tools, because it
-needs Node 22.19 or newer.
-
-`harness update` runs `./bin/install-standalone update`. It updates the
-installed tools in parallel and reports every failure. `--dry-run` previews
-the commands, and `--installed-only` skips absent tools. mise updates itself,
-so `update` skips it unless you name it. The T3 app updates the Linux T3
-server, so `update` skips T3. Each update stops after 30 seconds
-without new output. Set `DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS` to allow a
-longer idle period.
-
-The global mise `postinstall` hook runs `harness update --installed-only`. The
-zsh `mise` helper also runs it after a no-op `mise install` or `mise up`, where
-mise fires no hook. After `mise up`, or `mise install` without tool names, the
-helper first runs `mise prune --tools` for the tools in the global config. It
-deletes their versions that no tracked config selects, such as the old Bun
-after a pin change. Tools that only projects use stay, also when mise does not
-track the project's config (for example an untrusted one). The hook never
-prunes, because it also fires when `mise exec TOOL@VERSION` installs a tool.
-The global mise config disables the old Codex CLI tool names, so a stale request cannot reinstall them. The `codex-acp` adapter stays
-enabled and still pulls its own npm `@openai/codex` dependency.
+`./bin/install-standalone` installs and repairs the vendor-installed tools and
+reuses healthy installs. Run it for one tool, for example
+`./bin/install-standalone codex`. `harness update` updates the installed tools
+in parallel and reports every failure. `--dry-run` previews the commands, and
+`--installed-only` skips absent tools. It skips mise, which updates itself, and
+the Linux T3 server, which the T3 app updates. Each update stops after 30
+seconds without new output (`DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS`). The
+interactive zsh `mise` helper runs `harness update --installed-only` after a
+successful `mise install` or `mise up`. Setup installs missing or broken
+agents. It does not update healthy ones.
 
 The T3 Code nightly app updates itself and its `t3` launcher. Setup links
 Homebrew's `bin/t3` to `~/.t3/bin/t3`. Open the app once to create the
@@ -396,25 +379,30 @@ launcher. `./bin/link-t3-command [--dry-run]` repairs the link and keeps any
 other `t3` command. To adopt an existing app bundle, run
 `brew install --cask --adopt t3-code@nightly`.
 
-## Login items and permissions
+CLIProxyAPI binds to `127.0.0.1:49156`. `bin/link-dotfiles` links its tracked
+config into HOME and into Homebrew's `etc/cliproxyapi.conf`. Provider OAuth
+files stay local.
+
+`bin/install-steam` replaces the Intel-only Homebrew cask with Valve's ARM64
+bootstrapper. It checks the checksum, the ARM64 code, Valve's signature, and
+Gatekeeper before it replaces the app, and it keeps the old app under
+`~/.dotfiles-backups/`. `--verify-download` checks a download without
+installing it, and `--check` checks the installed app. Quit Steam before a
+replacement. See [DECISIONS.md](DECISIONS.md#native-steam-installer).
 
 Setup adds the apps in [the login item list](apps/login-items.txt) as login
-items. This can ask for Automation access to System Events. After setup adds
-T3 Code Nightly, it removes the `/Applications/Codex.app` login item. Run
-`./bin/configure-app-settings --dry-run` to preview the changes.
+items. This can ask for Automation access to System Events. After it adds T3
+Code Nightly, it removes the `/Applications/Codex.app` login item. Run
+`./bin/configure-app-settings --dry-run` to preview the changes. Privacy
+permissions are manual for every app.
 
-Privacy permissions are manual for every app. Setup does not write the macOS
-consent database, grant TCC access, or clear quarantine.
+[SHELL.md](SHELL.md) covers local secrets, GitHub account routing, command
+helpers, package runners, and Android paths. [SECURITY.md](SECURITY.md) lists
+the state that must stay out of Git.
 
-## Updating and checking changes
+## Before you commit
 
-`dotfiles-update` runs `git pull --ff-only`, then the continuation plan without
-general defaults. It does not upgrade every installed package. The shell's
-daily background check only reports new repository commits.
-`./bin/prepare-sync` compares the live inventory with the repo and saves a
-Brewfile copy under `.sync-backups/`. It does not change tracked inventories.
-
-Before you commit a change, run `bash -n` on the changed scripts,
-`./bin/preflight`, and `git diff --check`. Use `./bin/setup --dry-run` or
-`./bin/setup --continue --dry-run` to inspect the real preflight and plan.
-These commands query Apple's update catalog and write logs.
+Run `bash -n` on the changed scripts, `./bin/preflight`, and `git diff --check`.
+Run `./bin/link-dotfiles --dry-run` for a config change, and
+`./bin/setup --dry-run` or `./bin/setup --continue --dry-run` for a setup
+change. The setup previews query Apple's update catalog and write logs.

@@ -25,12 +25,12 @@ if command -v brew >/dev/null 2>&1; then
   cp "${repo_root}/Brewfile" "${backup_dir}/Brewfile"
   git --no-pager diff --no-index "${repo_root}/Brewfile" "$temp_brewfile" || true
 else
-  log "Homebrew is not available; skipping Brewfile comparison"
+  log "Homebrew is not available; skipping the Brewfile comparison"
 fi
 
 if command -v mise >/dev/null 2>&1; then
   log "Current mise tool state"
-  (cd "$repo_root" && mise current || true)
+  "$repo_root/bin/repo-mise" --global current || true
 else
   log "mise is not available; skipping mise current"
 fi

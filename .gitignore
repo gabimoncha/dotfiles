@@ -6,18 +6,27 @@
 *.rayconfig
 codex-state-*.tar.gz.age
 
-# Local-only shell config and secrets. Keep examples tracked.
-home/.config/local/*
-!home/.config/local/
-!home/.config/local/*.example
-
-# CLIProxyAPI auth state stays local; only its secret-free config is tracked.
-home/.cli-proxy-api/*
-!home/.cli-proxy-api/
-!home/.cli-proxy-api/config.yaml
-
 # Local worktree noise from nested repos/submodules.
 .submodule-seed/
 
 # Generated diagnostics and local working files.
 /.local/
+
+# This machine's profile and local mise overrides.
+/.miserc.local.toml
+mise.local.toml
+mise.*.local.toml
+
+# Local companions stay on this machine. Keep the examples tracked.
+/local/*
+!/local/*.example
+
+# CLIProxyAPI writes its auth state next to its config. Track the config only.
+/configs/cliproxyapi/*
+!/configs/cliproxyapi/config.yaml
+
+# Local files from the old layout stay ignored until bin/link-dotfiles moves
+# them on every machine.
+/home/
+/cliproxyapi/
+/mise/setup/miserc.local.toml

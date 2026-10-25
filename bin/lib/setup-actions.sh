@@ -15,7 +15,7 @@ setup_sudo() { ensure_admin_user; sudo -v; }
 setup_linux_sudo() { sudo -v; }
 # apt packages and the zsh login shell. mise uses sudo for both.
 setup_linux_system() {
-  "${repo_root}/bin/repo-mise" "${repo_root}/linux/mise.toml" bootstrap --only packages,user --yes
+  "${repo_root}/bin/repo-mise" bootstrap --only packages,user --yes
 }
 setup_sudo_grant() {
   [[ "${DOTFILES_SKIP_SUDO_GRANT:-0}" == 1 ]] && return 20
@@ -35,8 +35,8 @@ setup_api() { "${repo_root}/bin/auth-setup" --api-only; }
 setup_ssh() { "${repo_root}/bin/auth-setup" --ssh-only; }
 setup_git_https() { "${repo_root}/bin/auth-setup" --git-only; }
 setup_verify_auth() { "${repo_root}/bin/auth-setup" --verify-mise; }
-setup_links() { DOTFILES_LINK_AGENT_CONFIG=0 "${repo_root}/bin/link-dotfiles"; }
-setup_final_links() { DOTFILES_LINK_AGENT_CONFIG=1 "${repo_root}/bin/link-dotfiles"; }
+setup_links() { "${repo_root}/bin/link-dotfiles" --skip-agents; }
+setup_final_links() { "${repo_root}/bin/link-dotfiles"; }
 setup_brew_environment() { load_homebrew_shellenv; }
 setup_brewfiles() {
   log "Preparing Homebrew inventory (checking existing apps; no casks installed in this step)"

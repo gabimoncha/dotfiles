@@ -5,7 +5,7 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 mise_bin_dir="${HOME}/.local/bin"
 shim_dir="${HOME}/.local/share/mise/shims"
-# Commands from the Mac and Linux tool list in home/.config/mise/config.toml.
+# Commands from the Mac and Linux tool list in configs/mise/global.toml.
 smoke_commands=(
   tmux
   gh
@@ -96,7 +96,7 @@ fi
 
 status=0
 log "Checking configured tools (each probe limited to ${check_timeout}s)"
-missing="$(cd "$repo_root" && bounded_check mise ls --current --missing --no-header 2>/dev/null)" || {
+missing="$(bounded_check "$repo_root/bin/repo-mise" --global ls --current --missing --no-header 2>/dev/null)" || {
   warn "Unable to list missing tools within ${check_timeout}s"
   status=1
 }
@@ -109,7 +109,7 @@ fi
 # mise which resolves the installed executable without running a shim or provisioning.
 for command_name in "${smoke_commands[@]}"; do
   log "Checking ${command_name}"
-  resolved="$(cd "$repo_root" && bounded_check mise which "$command_name" 2>/dev/null)" || resolved=""
+  resolved="$(bounded_check "$repo_root/bin/repo-mise" --global which "$command_name" 2>/dev/null)" || resolved=""
   if [[ -z "$resolved" || ! -x "$resolved" || "$resolved" == "$shim_dir/"* ]]; then
     warn "Installed executable unavailable: ${command_name}"
     status=1

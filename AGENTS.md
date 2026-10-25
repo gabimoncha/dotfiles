@@ -1,16 +1,50 @@
 # Repository rules
 
 This repository owns setup, tool inventories, and selected app settings for
-the owner's Mac and for Linux hosts: Docker containers and VMs. Read
+the owner's Macs and for Linux hosts: Docker containers and VMs. Read
 [README.md](README.md) for the workflow and [DECISIONS.md](DECISIONS.md)
 before changing ownership, bootstrap boundaries, or other design decisions.
+
+## Where things live
+
+| To change | Edit |
+| --- | --- |
+| An app's settings file | `configs/<app>/` |
+| Where a file goes in HOME | the `[dotfiles]` entry in a root mise file |
+| Entries for every host | `mise.toml` |
+| Entries for one platform | `mise.macos.toml` or `mise.linux.toml` |
+| Entries for one machine | the profile file: `mise.pro.toml`, `mise.air.toml`, `mise.container.toml`, or `mise.vm.toml` |
+| Agent settings that sync between machines | the merge sources in `configs/claude/` and `configs/codex/`; save them with `./bin/save-settings` |
+| Which agent settings sync | `configs/<app>/sync-keys`: one `public` rule per setting, including each key of the merge source, and `private` rules for sections |
+| Agent rules for every host | `configs/agents/instructions.md` |
+| Agent rules for one host | `configs/agents/<profile>.md` |
+| Runtime tools and mise tasks | `configs/mise/global.toml` |
+| Homebrew formulae, casks, and App Store apps | `Brewfile` |
+| Apt packages | `mise.linux.toml` or the profile file |
+| macOS preferences | `[bootstrap.macos]` in `mise.macos.toml`, and `macos/defaults.sh` |
+| Agent CLIs, mise, and other vendor-installed tools | `apps/standalone.tsv` |
+| Setup steps | `bin/` |
+
+Apply file changes with `./bin/link-dotfiles`. Preview them first with
+`./bin/link-dotfiles --dry-run`. Run other mise commands for this repository
+through `./bin/repo-mise`, which loads the selected profile and the pinned mise.
+
+## Add a config file
+
+1. Put the file in `configs/<app>/`. Use the app's short name for the folder.
+2. Add a `[dotfiles]` entry to the root mise file for the hosts that need it.
+   Use `mode = "symlink"` when the app only reads the file. Use `merge = true`
+   when the app also writes the file, and add a `sync-keys` list next to the
+   source. Agent settings are merges, because the agents write private paths
+   into them. `./bin/save-settings` copies only the public keys back.
+3. Run `./bin/link-dotfiles --dry-run`, then `./bin/link-dotfiles`.
+4. Run `./bin/preflight`. It fails when a file in `configs/` has no entry.
 
 ## Platforms
 
 Every shared file runs on macOS and on Linux (Debian and Ubuntu). Shared files
-are the `home/` files that both systems link, the `bin/` scripts that both
-setups run, and the mise tool list. A change that works only on the Mac breaks
-the Linux hosts.
+include app sources that both systems use, the `bin/` scripts that both setups
+run, and the mise tool list. A change that works only on the Mac breaks Linux.
 
 - Write shell scripts for Bash 3.2 (macOS `/bin/bash`) and for both BSD and
   GNU tools. Where the tools differ (`sed -i`, `stat`, `date`, `shasum` and
@@ -18,11 +52,9 @@ the Linux hosts.
   `bin/lib/standalone.sh` does. Setup's Ruby helpers run on `/usr/bin/ruby`:
   2.6 on macOS and 3.1 on Debian 12.
 - Gate macOS-only behavior: `$OSTYPE == darwin*` in zsh, `uname -s` in Bash,
-  `os = "macos"` on a mise tool, and `macos_only_targets` in
-  `bin/link-dotfiles` for a link.
+  `os = "macos"` on a mise tool, and `mise.macos.toml` for file entries.
 - Linux hosts have no Homebrew, GUI apps, launchd, or Keychain. A container
-  can also lack systemd and the agent sandboxes. Linux system packages go in
-  `linux/mise.toml`. Host-specific files go in `linux/hosts/<profile>.*`.
+  can also lack systemd and the agent sandboxes.
 
 ## Editing
 
@@ -37,10 +69,9 @@ the Linux hosts.
 - Steam uses `bin/install-steam` for Valve's verified ARM64 bootstrapper.
   Preserve its update channel and quarantine. Keep Rosetta installation manual.
 - Keep Brewfile entries alphabetized within sections unless deliberately grouped.
-- Put managed files under `home/`, wire them through `bin/link-dotfiles`, add
-  them to `[dotfiles]` in `mise/setup.toml`, and update the relevant
-  documentation. Keep local companions under ignored
-  `home/.config/local/`; only examples belong in Git.
+- Keep local companions under ignored `local/`; only examples belong in Git.
+- Keep the profile checks in `bin/lib/dotfiles-profile.sh` before setup writes.
+  The Air and VM profiles stay deferred.
 - Never commit credentials, private identities, backup payloads, or machine-local
   state. See [SECURITY.md](SECURITY.md).
 - Keep test fixtures and diagnostic scratch files in system temporary directories.

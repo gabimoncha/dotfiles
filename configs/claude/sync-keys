@@ -1,0 +1,32 @@
+# Settings of ~/.claude/settings.json that bin/save-settings copies into
+# configs/claude/settings.json. A public rule names one setting. A private rule
+# can name a whole section. Each key in configs/claude/settings.json needs a
+# public rule. Settings on neither list are counted, not saved: run
+# ./bin/save-settings --show-new to list them.
+public .theme
+public .editorMode
+public .tui
+public .modelSettings."claude-opus-5-5".effortLevel
+public .autoUpdatesChannel
+public .autoCompactEnabled
+public .autoMemoryEnabled
+public .askUserQuestionTimeout
+public .dialogExpiry
+public .preferredNotifChannel
+public .switchModelsOnFlag
+public .teammateMode
+public .useAutoModeDuringPlan
+public .skipDangerousModePermissionPrompt
+public .worktree.baseRef
+public .permissions.defaultMode
+public .pluginConfigs."agents-md@builtin".options.instructionFiles
+public .env.CLAUDE_CODE_DISABLE_AUTO_MEMORY
+public .env.DISABLE_TELEMETRY
+public .env.DISABLE_ERROR_REPORTING
+public .env.CLAUDE_CODE_ENABLE_TELEMETRY
+public .env.CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY
+# Commands, paths, and permission rules stay on each machine.
+private .hooks
+private .permissions.allow
+private .permissions.deny
+private .permissions.ask

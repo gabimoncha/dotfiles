@@ -1,0 +1,40 @@
+{
+  "theme": "dark",
+  "editorMode": "vim",
+  "tui": "fullscreen",
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "medium"
+    }
+  },
+  "autoUpdatesChannel": "latest",
+  "autoCompactEnabled": true,
+  "autoMemoryEnabled": false,
+  "askUserQuestionTimeout": "never",
+  "dialogExpiry": "never",
+  "preferredNotifChannel": "auto",
+  "switchModelsOnFlag": true,
+  "teammateMode": "tmux",
+  "useAutoModeDuringPlan": true,
+  "skipDangerousModePermissionPrompt": true,
+  "worktree": {
+    "baseRef": "fresh"
+  },
+  "permissions": {
+    "defaultMode": "auto"
+  },
+  "pluginConfigs": {
+    "agents-md@builtin": {
+      "options": {
+        "instructionFiles": "claude-md-and-agents-md"
+      }
+    }
+  },
+  "env": {
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "0",
+    "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1"
+  }
+}

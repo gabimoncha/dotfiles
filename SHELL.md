@@ -1,6 +1,6 @@
 # Shell usage
 
-Zsh entrypoints load modules from `home/.config/zsh/`: environment for every
+Zsh entrypoints load modules from `configs/zsh/`: environment for every
 shell, profile/PATH for login shells, and interactive tools, aliases and
 functions for interactive shells. Optional integrations use installed
 executables; prompt startup does not provision tools or fetch credentials.
@@ -9,8 +9,8 @@ Open a new terminal after changing configuration.
 ## Local configuration and accounts
 
 Put local exports and secrets in ignored `~/.config/local/*.zsh` or
-`home/.config/local/*.zsh`. Start from
-[secrets.zsh.example](home/.config/local/secrets.zsh.example).
+`local/*.zsh`. Start from
+[secrets.zsh.example](local/secrets.zsh.example).
 Use the zsh `path` array for tracked PATH changes; keep private values out of Git.
 
 Git commit identity, SSH identity, and GitHub API identity are separate.
@@ -19,7 +19,7 @@ for per-account hosts. The managed `~/bin/gh` wrapper selects a stored API
 account for one command without switching the global active account:
 
 ```bash
-cp home/.config/local/github-account-routing.example home/.config/local/github-account-routing
+cp local/github-account-routing.example local/github-account-routing
 ```
 
 Edit the copy with tab-separated values. `default` selects the usual account;
@@ -31,8 +31,8 @@ bypass routing. Git push/pull use SSH configuration independently.
 
 Run `use-my-mac` (or `help`) for the searchable command menu. It copies commands
 and can execute the selected entry after confirmation. Implementations are in
-[functions.zsh](home/.config/zsh/functions.zsh) and
-[aliases.zsh](home/.config/zsh/aliases.zsh).
+[functions.zsh](configs/zsh/functions.zsh) and
+[aliases.zsh](configs/zsh/aliases.zsh).
 
 `commit-ai` / `gcai` asks Codex for a Conventional Commit subject from the staged
 patch, then opens it in Neovim before Git hooks run. Save with `:wq` to commit
@@ -92,10 +92,10 @@ updates itself and its `t3` command. On Linux, the T3 app updates the T3
 server. A failure does not stop other
 updates, and the command returns nonzero when any update fails.
 
-The mise postinstall hook runs the updater for installed agents. The zsh `mise`
-helper makes `mise install`, `mise up`, and `mise up --local` run it once after
-success, including when no mise tools change. After `mise up`, or
+In interactive zsh, the `mise` helper runs the updater for installed agents
+after a successful `mise install`, `mise up`, or `mise up --local`.
+It also runs when no mise tools change. After `mise up`, or
 `mise install` without tool names, the helper first deletes the unused
 versions of the tools in the global config (`mise prune --tools TOOL...`). Help and dry-run commands do not
-update agents. `command mise` bypasses the shell helper and uses mise's native
-hook behavior.
+update agents. `command mise` bypasses the shell helper and does not update
+agents. Package resolution, `mise exec`, and shim calls do not start agent updates.

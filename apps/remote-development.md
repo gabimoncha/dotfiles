@@ -64,8 +64,8 @@ review subsequent edits first. Remove the copied key only if nothing else uses i
 
 ## NAS T3 container
 
-`home/.config/local/t3-dev.compose.yaml.example` is a sanitized deployment example.
-Keep the machine-specific copy under ignored `home/.config/local/t3-dev/` and
+`local/t3-dev.compose.yaml.example` is a sanitized deployment example.
+Keep the machine-specific copy under ignored `local/t3-dev/` and
 upload its `compose.yaml` to the existing NAS Container Manager project folder.
 Replace the documentation-only LAN address and public-key placeholder first.
 Do not commit actual host addresses, identities, keys, or pairing links.
@@ -176,11 +176,11 @@ DOTFILES_SKIP_GITHUB_AUTH=1 ./bin/setup   # until you log in to GitHub
 ```
 
 Setup installs Ruby, Git, and curl (`bin/linux-prerequisites`), zsh,
-build-essential, and unzip (`linux/mise.toml`), makes zsh the login shell,
+build-essential, and unzip (`mise.linux.toml`), makes zsh the login shell,
 installs the shared mise tools, and installs the tools in
 `apps/standalone.tsv`: mise, Codex, Claude Code, Cursor Agent, OpenCode, Pi,
 and T3. It links the shared dotfiles and skips the Mac-only ones. Agents read
-the box rules from `linux/hosts/linux-container.md`; see the Linux section of
+the box rules from `configs/agents/container.md`; see the Linux section of
 the README.
 
 The apt packages and the login shell live in the container layer. After a
@@ -190,14 +190,38 @@ rest. The home volume keeps mise, the tools, the agent CLIs, and their logins.
 
 Log in to GitHub on the box with `./bin/auth-setup`. It runs the GitHub CLI
 login, and Git then uses that token over HTTPS through the credential helper in
-`home/.gitconfig`. The box needs no SSH key. Until the login, mise downloads
+`configs/git/gitconfig`. The box needs no SSH key. Until the login, mise downloads
 tools without a GitHub token.
 
 The Codex CLI sandbox cannot run here: the kernel has no user namespaces and
 the container has no capabilities, so even a setuid `bwrap` fails. The
 container is the boundary, so `bin/link-dotfiles` sets
 `sandbox_mode = "danger-full-access"` in `~/.codex/config.toml` from
-`linux/hosts/linux-container.codex.toml`.
+`configs/codex/container.toml`.
 
 `harness update` skips T3, so a `mise install` never restarts the server. An
 update from the app restarts it, and running agent tasks stop.
+
+## Future GCP VM
+
+The VM does not exist yet. `vm` (`mise.vm.toml`) is a reserved, deferred profile.
+VM creation, guest setup, cloud control tasks, and hardening belong to a later
+session. Do not copy the NAS container's sandbox or sudo exceptions into a VM.
+
+Start that session with the hardening requirements. Choose the project, zone,
+machine size, disk, IAM permissions, guest access, updates, and backup policy.
+The earlier proposal was IAP SSH with OS Login, persistent disks, and an
+ephemeral external IP for outbound access. Revisit those choices during the
+hardening review before provisioning.
+
+Then add `vm:status`, `vm:start`, `vm:stop`, `vm:ssh`, and `vm:doctor` mise tasks
+that call gcloud with an explicit configuration, project, zone, and instance.
+Keep these values local and leave credentials in gcloud. Start and stop must
+handle repeated calls safely. SSH must not start a stopped VM automatically.
+See [GCP stop and start](https://docs.cloud.google.com/compute/docs/instances/stop-start-instance)
+and [IAP SSH](https://docs.cloud.google.com/compute/docs/connect/ssh-using-iap).
+
+Use manual start and stop by default. An optional runtime cap must use `STOP`
+and state that it can interrupt work. A missing SSH session does not prove that
+agents or tmux are idle. Stopping loses RAM and running processes; retained
+storage and other resources can still incur charges.

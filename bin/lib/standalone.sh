@@ -5,6 +5,22 @@ standalone_manifest="${repo_root}/apps/standalone.tsv"
 # shellcheck source=bin/lib/mise-pin.sh
 . "${repo_root}/bin/lib/mise-pin.sh"
 
+# Keep inherited discovery settings from adding or omitting repository configs.
+# Preserve cache, state, data, and authentication settings for the caller.
+# The config folder does not exist, so mise finds no global or system config
+# there. Callers name the config files they want.
+standalone_mise_isolate() {
+  cd / || return
+  unset MISE_CONFIG_FILE MISE_GLOBAL_CONFIG_FILE MISE_SYSTEM_CONFIG_FILE MISE_ENV MISE_DOTFILES_ROOT MISE_ENV_FILE MISE_CD
+  export MISE_CONFIG_DIR="${repo_root}/.local/no-mise-config"
+  # A character device cannot contain system config or miserc files.
+  export MISE_SYSTEM_CONFIG_DIR=/dev/null
+  export MISE_GLOBAL_CONFIG_ROOT="$HOME" MISE_CEILING_PATHS=/
+  export MISE_NO_CONFIG=0 MISE_USE_TOML=1 MISE_IGNORED_CONFIG_PATHS= MISE_OVERRIDE_CONFIG_FILENAMES=
+  export MISE_DEFAULT_CONFIG_FILENAME=mise.toml MISE_OVERRIDE_TOOL_VERSIONS_FILENAMES=none
+  export MISE_SELF_UPDATE_AUTO=0
+}
+
 standalone_os() {
   case "$(uname -s)" in
     Darwin) printf 'macos\n' ;;
@@ -93,16 +109,43 @@ standalone_installed() {
   [[ "$real" == "$root/"* ]]
 }
 
-# The hook's PATH can put mise shims ahead of vendor commands. Pi still needs
+# The caller's PATH can put mise shims ahead of vendor commands. Pi still needs
 # Node, so resolve an installed Node before removing shims from PATH.
+standalone_installed_node() {
+  local node_path mise_bin version
+  node_path="$(MISE_AUTO_INSTALL=0 MISE_OFFLINE=1 "$repo_root/bin/repo-mise" --global which node 2>/dev/null)" || {
+    # PATH is prepared before the installer can bring mise up to the pin.
+    # This exception permits only an offline lookup with the runtime config.
+    mise_bin="$(standalone_field mise command)" || return 1
+    [[ -f "$mise_bin" && -x "$mise_bin" && ! -L "$mise_bin" ]] || return 1
+    mise_bin="$(standalone_realpath "$mise_bin")" || return 1
+    case "$mise_bin" in */shims/*|*/Cellar/*) return 1 ;; esac
+    standalone_mise_isolate || return
+    version="$(mise_installed_version "$mise_bin")" || return 1
+    if mise_version_at_least "$version" "$pinned_mise_version"; then return 1; fi
+    node_path="$(
+      MISE_GLOBAL_CONFIG_FILE="$repo_root/configs/mise/global.toml" MISE_ENV= MISE_AUTO_ENV=0 \
+        MISE_AUTO_INSTALL=0 MISE_OFFLINE=1 "$mise_bin" which node 2>/dev/null
+    )" || return 1
+  }
+  case "$node_path" in /*) ;; *) return 1 ;; esac
+  case "$node_path" in */shims/*) return 1 ;; esac
+  node_path="$(standalone_realpath "$node_path")" || return 1
+  [[ -f "$node_path" && -x "$node_path" && "$node_path" != */shims/* ]] || return 1
+  printf '%s\n' "$node_path"
+}
+
 standalone_prepare_path() {
   local node_path entry filtered="" entries=()
   node_path="$(command -v node || true)"
   case "$node_path" in
     */shims/*)
-      node_path="$(MISE_AUTO_INSTALL=0 MISE_OFFLINE=1 mise which node 2>/dev/null || true)"
+      node_path="$(standalone_installed_node || true)"
       ;;
   esac
+  if [[ -n "$node_path" ]]; then
+    node_path="$(standalone_realpath "$node_path" 2>/dev/null || true)"
+  fi
   IFS=: read -r -a entries <<< "$PATH"
   for entry in "${entries[@]}"; do
     [[ -n "$entry" ]] || continue
@@ -110,7 +153,7 @@ standalone_prepare_path() {
     filtered="${filtered:+$filtered:}$entry"
   done
   export PATH="${HOME}/.local/bin:${HOME}/.opencode/bin:${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}/bin:${filtered}"
-  if [[ -n "$node_path" && -x "$node_path" && "$node_path" != */shims/* ]]; then
+  if [[ -n "$node_path" && -f "$node_path" && -x "$node_path" && "$node_path" != */shims/* ]]; then
     export PATH="$(dirname "$node_path"):$PATH"
   fi
   export MISE_AUTO_INSTALL=0

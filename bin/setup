@@ -14,6 +14,9 @@ for argument in "$@"; do
   esac
 done
 export DOTFILES_RUN_MODE DOTFILES_SETUP_PHASE
+. "${repo_root}/bin/lib/dotfiles-profile.sh"
+DOTFILES_PROFILE="$(dotfiles_profile)" || exit 1
+export DOTFILES_PROFILE
 # The setup runtime runs on /usr/bin/ruby, so Linux installs it first.
 if [[ "$(uname -s)" == Linux ]]; then
   if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then

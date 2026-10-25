@@ -1,0 +1,73 @@
+# Settings of ~/.codex/config.toml that bin/save-settings copies into
+# configs/codex/config.toml. A public rule names one setting. A private rule
+# can name a whole section. Each key in configs/codex/config.toml needs a
+# public rule. Settings on neither list are counted, not saved: run
+# ./bin/save-settings --show-new to list them.
+public .model
+public .model_reasoning_effort
+public .service_tier
+public .approval_policy
+public .approvals_reviewer
+public .features.memories
+public .features.chronicle
+public .features.plugins
+public .memories.generate_memories
+public .memories.use_memories
+public .memories.disable_on_external_context
+public .analytics.enabled
+public .otel.exporter
+public .otel.metrics_exporter
+public .otel.trace_exporter
+public .otel.log_user_prompt
+public .plugins."codex-app-tools@openai-bundled".enabled
+public .plugins."browser@openai-bundled".enabled
+public .plugins."unified-computer-use@openai-bundled".enabled
+public .plugins."visualize@openai-bundled".enabled
+public .plugins."documents@openai-primary-runtime".enabled
+public .plugins."pdf@openai-primary-runtime".enabled
+public .plugins."spreadsheets@openai-primary-runtime".enabled
+public .plugins."presentations@openai-primary-runtime".enabled
+public .plugins."template-creator@openai-primary-runtime".enabled
+public .plugins."computer-use@openai-bundled".enabled
+public .plugins."chrome@openai-bundled".enabled
+public .plugins."code-review@openai-bundled".enabled
+public .desktop.appearanceTheme
+public .desktop.appearanceLightCodeThemeId
+public .desktop.appearanceDarkCodeThemeId
+public .desktop.appearanceLightChromeTheme.accent
+public .desktop.appearanceLightChromeTheme.contrast
+public .desktop.appearanceLightChromeTheme.ink
+public .desktop.appearanceLightChromeTheme.opaqueWindows
+public .desktop.appearanceLightChromeTheme.surface
+public .desktop.appearanceLightChromeTheme.semanticColors.diffAdded
+public .desktop.appearanceLightChromeTheme.semanticColors.diffRemoved
+public .desktop.appearanceLightChromeTheme.semanticColors.skill
+public .desktop.appearanceDarkChromeTheme.accent
+public .desktop.appearanceDarkChromeTheme.contrast
+public .desktop.appearanceDarkChromeTheme.ink
+public .desktop.appearanceDarkChromeTheme.opaqueWindows
+public .desktop.appearanceDarkChromeTheme.surface
+public .desktop.appearanceDarkChromeTheme.semanticColors.diffAdded
+public .desktop.appearanceDarkChromeTheme.semanticColors.diffRemoved
+public .desktop.appearanceDarkChromeTheme.semanticColors.skill
+public .desktop.followUpQueueMode
+public .desktop.conversationDetailMode
+public .desktop.ambient-suggestions-enabled
+public .desktop.enabled-reasoning-efforts
+public .desktop.show-context-window-usage
+public .desktop.keepRemoteControlAwakeWhilePluggedIn
+public .desktop.localeOverride
+public .desktop.preventSleepWhileRunning
+public .desktop.composerPlainTextMode
+# Local paths, per-host values, and app state stay on each machine.
+private .desktop."open-in-target-preferences"
+private .desktop.appearanceLightChromeTheme.fonts
+private .desktop.appearanceDarkChromeTheme.fonts
+private .projects
+private .hooks
+private .mcp_servers
+private .notify
+private .marketplaces
+private .tui
+# The container profile sets this key in configs/codex/container.toml.
+private .sandbox_mode

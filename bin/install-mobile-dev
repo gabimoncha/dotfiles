@@ -33,7 +33,7 @@ resolve_mas() {
   candidate="$(command -v mas 2>/dev/null || true)"
   # sudo cannot resolve a mise shim, so pass the real binary.
   case "$candidate" in
-    *'/shims/'*) candidate="$(cd "$repo_root" && mise which mas 2>/dev/null)" || return 1 ;;
+    *'/shims/'*) candidate="$("$repo_root/bin/repo-mise" --global which mas 2>/dev/null)" || return 1 ;;
   esac
   [[ -n "$candidate" && -x "$candidate" ]] || return 1
   printf '%s\n' "$candidate"

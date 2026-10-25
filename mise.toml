@@ -1,0 +1,51 @@
+# Files and checkouts for every host. Apply them with ./bin/link-dotfiles.
+# mise also loads mise.macos.toml or mise.linux.toml for the platform, and the
+# profile file that the ignored .miserc.local.toml selects:
+# mise.pro.toml, mise.air.toml, mise.container.toml, or mise.vm.toml.
+# bin/repo-mise requires the pinned mise. A soft minimum only warns, so tools
+# in this folder keep working while an older mise is installed.
+min_version = { soft = "2026.10.19" }
+
+[dotfiles]
+"~/.zshenv" = { source = "configs/zsh/zshenv", mode = "symlink" }
+"~/.zprofile" = { source = "configs/zsh/zprofile", mode = "symlink" }
+"~/.zshrc" = { source = "configs/zsh/zshrc", mode = "symlink" }
+"~/.p10k.zsh" = { source = "configs/zsh/p10k.zsh", mode = "symlink" }
+"~/.config/zsh/aliases.zsh" = { source = "configs/zsh/aliases.zsh", mode = "symlink" }
+"~/.config/zsh/check-updates.zsh" = { source = "configs/zsh/check-updates.zsh", mode = "symlink" }
+"~/.config/zsh/env.zsh" = { source = "configs/zsh/env.zsh", mode = "symlink" }
+"~/.config/zsh/functions.zsh" = { source = "configs/zsh/functions.zsh", mode = "symlink" }
+"~/.config/zsh/harness.zsh" = { source = "configs/zsh/harness.zsh", mode = "symlink" }
+"~/.config/zsh/interactive.zsh" = { source = "configs/zsh/interactive.zsh", mode = "symlink" }
+"~/.config/zsh/mise-npx.zsh" = { source = "configs/zsh/mise-npx.zsh", mode = "symlink" }
+"~/.config/zsh/path.zsh" = { source = "configs/zsh/path.zsh", mode = "symlink" }
+"~/.config/zsh/profile.zsh" = { source = "configs/zsh/profile.zsh", mode = "symlink" }
+"~/.config/zsh/telemetry.sh" = { source = "configs/zsh/telemetry.sh", mode = "symlink" }
+
+"~/.gitconfig" = { source = "configs/git/gitconfig", mode = "symlink" }
+"~/bin/gh" = { source = "configs/gh/gh", mode = "symlink" }
+"~/bin/dotfiles-gh-real" = { source = "configs/gh/dotfiles-gh-real", mode = "symlink" }
+
+"~/.tmux.conf" = { source = "configs/tmux/tmux.conf", mode = "symlink" }
+"~/.rgrc" = { source = "configs/ripgrep/rgrc", mode = "symlink" }
+"~/.config/tsrs/tsgo" = { source = "configs/tsrs/tsgo", mode = "symlink" }
+"~/.config/nvim" = { source = "nvim", mode = "symlink" }
+
+# The global mise config: runtime tools, their lockfile, and settings.
+"~/.config/mise/config.toml" = { source = "configs/mise/global.toml", mode = "symlink" }
+"~/.config/mise/gemrc" = { source = "configs/mise/gemrc", mode = "symlink" }
+"~/.config/mise/mise.lock" = { source = "configs/mise/mise.lock", mode = "symlink" }
+
+"~/bin/harness" = { source = "configs/harness/harness", mode = "symlink" }
+"~/.claude/CLAUDE.md" = { source = "configs/agents/instructions.md", mode = "symlink" }
+"~/.codex/AGENTS.md" = { source = "configs/agents/instructions.md", mode = "symlink" }
+# The agents rewrite these files. mise sets only the keys in the source files.
+"~/.claude/settings.json/dotfiles" = { source = "configs/claude/settings.json", merge = true }
+"~/.codex/config.toml/dotfiles" = { source = "configs/codex/config.toml", merge = true }
+
+[bootstrap.repos]
+"~/.oh-my-zsh" = { url = "https://github.com/ohmyzsh/ohmyzsh.git", depth = 1 }
+"{{ env.ZSH_CUSTOM | default(value='~/.oh-my-zsh/custom') }}/themes/powerlevel10k" = { url = "https://github.com/romkatv/powerlevel10k.git", depth = 1 }
+"{{ env.ZSH_CUSTOM | default(value='~/.oh-my-zsh/custom') }}/plugins/zsh-autosuggestions" = { url = "https://github.com/zsh-users/zsh-autosuggestions.git", depth = 1 }
+"{{ env.ZSH_CUSTOM | default(value='~/.oh-my-zsh/custom') }}/plugins/zsh-fzf-history-search" = { url = "https://github.com/joshskidmore/zsh-fzf-history-search.git", depth = 1 }
+"~/.tmux/plugins/tpm" = { url = "https://github.com/tmux-plugins/tpm", depth = 1 }

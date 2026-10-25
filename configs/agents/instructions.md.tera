@@ -1,0 +1,4 @@
+<!-- Generated from configs/agents/instructions.md and the host rules in configs/agents/. Edit those files, then run ./bin/link-dotfiles. -->
+
+{{ read_file(path=vars.dotfiles_shared_instructions) }}
+{{ read_file(path=vars.dotfiles_host_instructions) }}

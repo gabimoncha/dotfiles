@@ -58,57 +58,126 @@ small cases in that script:
 
 The global mise config disables the old Codex tool names so that a stale
 request cannot reinstall them. `harness update` updates the agent CLIs in
-parallel and reports every failure. The mise postinstall hook runs it, and a
-zsh helper covers no-op `mise up` runs, where mise fires no hook. After
-`mise up`, or `mise install` without tool names, the helper first runs
+parallel and reports every failure. Setup installs missing or broken agents.
+The interactive zsh `mise` helper also updates installed agents. The helper runs the
+updater after a successful install or upgrade, including when no mise tools
+change. After `mise up`, or `mise install` without tool names, the helper first runs
 `mise prune --tools` for the tools in the global config. A full prune would
 also delete project tools whose untrusted configs mise does not track. mise's own upgrade prune waits 24 hours, so a broken version can
 go back, and it skips pin changes. Here the old version goes at once; going
-back means a new install. The hook never prunes: it also fires when
-`mise exec TOOL@VERSION` installs a tool, and prune would delete that version.
+back means a new install.
 
 mise owns pnpm before Node, so Corepack wrappers do not shadow it.
 
 ### mise configuration files
 
-`~/.config/mise/config.toml` links to the tracked global config, so an edit
-changes every machine that links it at once. That file must stay readable by
-the oldest mise still in use. Its `min_version` makes an older mise stop with
-an upgrade message after a short parse warning. The pin, its installer digest,
-and the version check are in `bin/lib/mise-pin.sh`.
+The repository root holds the setup config, as mise expects for a bootstrap
+project:
 
-Features that need the pinned mise go in separate files that `bin/repo-mise`
-loads as the only global config:
+- `mise.toml` has the entries for every host.
+- `mise.macos.toml` and `mise.linux.toml` have the platform entries. The root
+  `.miserc.toml` sets `auto_env`, so mise loads the platform file by itself.
+- `mise.pro.toml`, `mise.air.toml`, `mise.container.toml`, and `mise.vm.toml`
+  are the profiles. The ignored `.miserc.local.toml` selects one, for example
+  `env = ["pro"]`. A profile file can replace an entry of the shared file, as
+  the container does for `~/.codex/AGENTS.md`.
 
-- `mise/setup.toml` declares the shell framework checkouts.
-  `install_shell_framework` clones only the missing ones with
-  `mise bootstrap repos update <paths>`, because `repos apply` stops at the
-  first conflicting path. It also
-  lists the managed files for `link-dotfiles --status`. `bin/link-dotfiles`
-  still writes the links, because mise does not back up a file that it
-  replaces.
-- `mise/setup.toml` also has `merge = true` entries for
-  `~/.claude/settings.json` and `~/.codex/config.toml`. Both agents rewrite
-  these files, so the repo owns only some keys. `bin/link-dotfiles` backs up a
-  file that will change, then runs `mise dot apply` for these two targets only.
-  mise does not render templates in `[dotfiles]` keys, so the Codex entry
-  cannot follow `CODEX_HOME`. mise writes these files in place, not with an
-  atomic rename. The backup and the mise journal (`mise dot recover`) cover an
-  interrupted write. The merge hides mise's error text, because a TOML parse
-  error quotes the file.
-- `macos/defaults.toml` holds the plain preference writes. `macos/defaults.sh`
-  applies it with `mise bootstrap macos defaults apply`. The script keeps the
-  input sources, the Dock prune, pmset, and app restarts, which mise does not
-  cover.
+Each `[dotfiles]` entry names its source in `configs/<app>/`. An earlier layout
+kept one mise file in each app folder. That needed 21 module files, 24 links in
+`mise/setup/conf.d/` to load them, and an ignore list so mise did not load the
+module files as project config. One file per platform and per profile gives the
+same result without those parts.
 
-`bin/repo-mise` runs from `/`. From a directory inside HOME, mise would also
-load `~/.config/mise/config.toml` as an untrusted project config.
+`~/.config/mise/config.toml` links to `configs/mise/global.toml`, the runtime
+tool list. mise loads `mise/config.toml` from any folder as project config, so
+the source keeps the name `global.toml`. The runtime list also holds the tasks,
+such as `mise run dot:status`, so they work from every folder.
 
-The tracked `home/.config/mise/mise.lock` and its `locks/` folder record the
-versions that `mise install` installs. mise reads a global lockfile only at
-`~/.config/mise/mise.lock`, so `bin/link-dotfiles` links that path. It links it
-only for the pinned mise, because mise before 2026.10.11 can drop the pipx
-dependency graphs from the lockfile.
+`bin/repo-mise` runs the pinned mise from the repository root. It loads only
+this repository's files: no global or system config, and no config file in a
+parent folder. `bin/lib/dotfiles-profile.sh` selects the profile and stops the
+deferred Air and VM profiles before any write. `repo-mise --global` loads only
+the runtime tool list.
+
+Two settings keep tools working inside the repository. mise refuses an
+untrusted file with `[dotfiles]` entries, and then every shim in this folder
+fails. The runtime list therefore trusts `~/development/dotfiles`
+(`trusted_config_paths`), and `bin/link-dotfiles` trusts the root files for a
+checkout in another path. The root `min_version` is soft for the same reason:
+a hard minimum stops every shim in this folder while an older mise is
+installed. `bin/repo-mise` still requires the pinned release.
+
+mise applies the links, copies, templates, and merges. It refuses to put a
+link where a real file is, and one refused entry stops the whole apply.
+`bin/link-dotfiles` handles what mise does not:
+
+- It checks the whole selection with a dry run, and renders the templates,
+  before it changes a file. It stops when the folder of a target resolves into
+  this repository or out of HOME, and when `~/.dotfiles-backups` or
+  `~/.gitconfig.local` is a link, because private data would go there.
+- It moves a real file at a link target to `~/.dotfiles-backups/links-*/`. It
+  copies a file that mise will overwrite or merge into, and it keeps an old
+  link as a link. If mise then stops, it moves the files back.
+- It refuses a settings file that is a link, and it creates a missing settings
+  file with mode 0600. mise would use 0644.
+- It keeps mise's output for merges out of the terminal and the setup logs,
+  because a parse error can quote the file. `--diff` names the merged files
+  without their content.
+- Before it replaces `~/.gitconfig`, it copies the Git identity to
+  `~/.gitconfig.local`, which the tracked file includes.
+- It skips `~/.config/nvim` while the `nvim/` submodule is empty.
+- It leaves the telemetry job definition to `bin/configure-telemetry`, which
+  compares it first to decide whether to reload the job.
+- It removes links that older versions made, only while they point into this
+  repository. It moves local files from the old layout, such as
+  `mise/setup/miserc.local.toml`, to their new place.
+- On a Mac, it links Homebrew's `etc/cliproxyapi.conf`, which is outside HOME,
+  and runs `bin/link-t3-command`. Both steps, and the telemetry login job in
+  `bin/configure-telemetry`, run only when `$HOME` is the account's home
+  folder, so a test with a temporary HOME cannot change them.
+
+Agent settings remain regular files because the agents rewrite them, and they
+write private data into them: project paths, hook state, and MCP server
+details. A link would publish that data with the next commit. A Git filter
+cannot fix that either: each pull would overwrite the live file and lose the
+machine's own keys. So the sync has two directions. `bin/link-dotfiles` merges
+the keys of `configs/claude/settings.json` and `configs/codex/config.toml` into
+the live files and keeps every other key. `bin/save-settings` copies the
+settings that `configs/<app>/sync-keys` marks public back into the source.
+mise 2026.10.18 cannot do this step: `mise dot add` refuses a merged file, and
+`mise dot track` saves whole files, private keys included, to its own history. A
+list of public settings, not a list of private ones, decides what is saved:
+an ordinary key can hold a credential, such as an authorization header, and a
+section can gain new fields, such as exporter headers. So a public rule names
+one setting, and a setting on neither list is counted until you mark it. Each
+key in the source needs a public rule, so that a save cannot delete a key that
+nobody listed. The messages of `bin/save-settings` name only paths from the
+list and the source, because a key name can be private too. The save converts
+the file to JSON, which drops comments. It stops when a public setting has
+become a section or holds a local path, a credential, or an email address. It
+also stops until this machine has merged the current source, so an older live
+value cannot replace a newer save from another machine. A merge never removes
+a key, so a key deleted in an app stays on the
+other machines. The container adds its sandbox key in a second merge, and the
+Codex list keeps that key private. The Codex target remains
+`~/.codex/config.toml`, independent of `CODEX_HOME`.
+
+The shell checkout declarations are in `mise.toml`. The existing missing-path
+filter remains because a conflicting checkout stops native repository apply.
+Mac preferences are in `mise.macos.toml`; `macos/defaults.sh` keeps the
+input-source changes, Dock pruning, pmset, and service reloads.
+
+`configs/mise/mise.lock` and its sidecar folder `configs/mise/.mise/locks/`
+preserve the global dependency graphs for macos-arm64 and linux-x64. mise finds
+the sidecars next to the real lockfile, through the `~/.config/mise/mise.lock`
+link. Keep the installed mise at or
+above the pin before linking or updating the lockfile. Native package support
+does not yet preserve all tap trust, app-presence, sudo, and vendor installer
+rules. Those steps stay in scripts. Shell startup keeps static shims and zsh
+aliases.
+
+After a pull that moves sources, the old HOME links are broken until
+`./bin/link-dotfiles` runs. It points them at the new sources.
 
 ### Native Steam installer
 
@@ -138,19 +207,14 @@ container is the first host. A GCP VM is the next one.
 - Setup diagnostics stay on `/usr/bin/ruby`. Debian's `ruby` package provides
   it, as the Command Line Tools do on macOS. `bin/linux-prerequisites` installs
   it with Git and curl before the runtime starts, because the runtime needs it.
-- mise installs tools first. `linux/mise.toml` lists only the system packages
+- mise owns tools. `mise.linux.toml` lists only the system packages
   that mise cannot install, and `mise bootstrap` installs them with apt. Linux
   has no Homebrew and no Nix.
-- One tool list serves both systems. Tools that only the Mac needs carry
-  `os = "macos"`. Platform config files would need `auto_env`, and
-  `MISE_GLOBAL_CONFIG_FILE` (set by `bin/repo-mise` and `bin/auth-setup`)
-  stops them from loading. The lockfile holds macos-arm64 and linux-x64.
-- `bin/link-dotfiles` still writes the links. `mise dot apply --force` keeps no
-  backup and no undo point for a replaced file.
-- Codex reads one global instructions file and has no include syntax. On
-  Linux, `bin/link-dotfiles` writes `~/.codex/AGENTS.md` from the shared file
-  and `linux/hosts/<profile>.md`, backs up a changed file, and stops when the
-  host file is missing. Claude reads the host file from `~/.claude/rules/`.
+- One runtime tool list serves both systems. Mac-only tools carry
+  `os = "macos"`. The platform and profile files add the file entries.
+- mise renders Codex's global instructions from the shared rules and the host
+  rules in `configs/agents/`. Claude reads the host file from
+  `~/.claude/rules/`.
 - Linux hosts use Git over HTTPS with the GitHub CLI token. Agents there start
   without an SSH agent, so a protected SSH key would block every push, and an
   unprotected key would add a second credential next to the token.

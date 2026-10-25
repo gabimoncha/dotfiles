@@ -1,33 +1,56 @@
 #!/usr/bin/env bash
-# Run the standalone mise with one repo-owned config as its only global config.
-# Usage: ./bin/repo-mise <config.toml> <mise arguments...>
+# Run the pinned standalone mise on this repository's config only.
+#
+#   ./bin/repo-mise <mise arguments...>
+#     Loads mise.toml, mise.macos.toml or mise.linux.toml, and the profile's
+#     mise.<profile>.toml from the repository root. Example: dot status
+#   ./bin/repo-mise --global <mise arguments...>
+#     Loads only the runtime tool list, configs/mise/global.toml.
+#     Example: --global install
 set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-. "${repo_root}/bin/lib/mise-pin.sh"
-if [[ $# -lt 2 ]]; then
-  printf 'Usage: repo-mise <config.toml> <mise arguments...>\n' >&2
+. "${repo_root}/bin/lib/standalone.sh"
+scope=project
+if [[ "${1:-}" == --global ]]; then
+  scope=global
+  shift
+fi
+if [[ $# -lt 1 ]]; then
+  printf 'Usage: repo-mise [--global] <mise arguments...>\n' >&2
   exit 2
 fi
-config="$1"
-shift
-[[ "$config" == /* ]] || config="${PWD}/${config}"
-if [[ ! -f "$config" ]]; then
-  printf 'repo-mise: config not found: %s\n' "$config" >&2
-  exit 2
+if [[ "$scope" == project ]]; then
+  for argument in "$@"; do
+    [[ "$argument" == -- ]] && break
+    case "$argument" in
+      -E*|-P*|--env|--env=*|--profile|--profile=*)
+        printf 'repo-mise: select the profile in .miserc.local.toml or with DOTFILES_PROFILE.\n' >&2
+        exit 2
+        ;;
+    esac
+  done
+  . "${repo_root}/bin/lib/dotfiles-profile.sh"
+  profile="$(dotfiles_profile "$repo_root")" || exit
 fi
 mise_bin="${MISE_INSTALL_PATH:-${HOME}/.local/bin/mise}"
 if [[ ! -x "$mise_bin" ]]; then
   printf 'repo-mise: mise is not installed at %s. Run ./bin/install-standalone mise.\n' "$mise_bin" >&2
   exit 127
 fi
+standalone_mise_isolate
 # `mise self-update` can stop below the pin because of minimum_release_age.
 if ! mise_at_pin "$mise_bin"; then
   printf 'repo-mise: %s is older than the pinned mise %s. Run ./bin/install-standalone mise.\n' \
     "$mise_bin" "$pinned_mise_version" >&2
   exit 1
 fi
-# Inside HOME, mise would also load ~/.config/mise/config.toml as an untrusted
-# project config. Sources in [dotfiles] without a source key resolve under home/.
-cd /
-MISE_GLOBAL_CONFIG_FILE="$config" MISE_DOTFILES_ROOT="${repo_root}/home" MISE_SELF_UPDATE_AUTO=0 \
-  exec "$mise_bin" "$@"
+if [[ "$scope" == global ]]; then
+  MISE_GLOBAL_CONFIG_FILE="${repo_root}/configs/mise/global.toml" MISE_ENV= MISE_AUTO_ENV=0 \
+    exec "$mise_bin" "$@"
+fi
+cd "$repo_root"
+# The ceiling stops mise from loading a config file in a parent folder. mise
+# reads ~/.config/mise/config.toml again after it links it, so trust it too.
+MISE_GLOBAL_CONFIG_FILE="${MISE_CONFIG_DIR}/config.toml" MISE_CEILING_PATHS="$(dirname "$repo_root")" \
+  MISE_TRUSTED_CONFIG_PATHS="${repo_root}:${repo_root}/configs/mise:${HOME}/.config/mise" MISE_AUTO_ENV=1 MISE_ENV="$profile" \
+  DOTFILES_PROFILE="$profile" exec "$mise_bin" "$@"

@@ -1,0 +1,98 @@
+model = "gpt-6.1-sol"
+model_reasoning_effort = "high"
+service_tier = "priority"
+approval_policy = "on-request"
+approvals_reviewer = "user"
+
+[features]
+memories = false
+chronicle = false
+plugins = false
+
+[memories]
+generate_memories = false
+use_memories = false
+disable_on_external_context = true
+
+[analytics]
+enabled = false
+
+[otel]
+exporter = "none"
+metrics_exporter = "none"
+trace_exporter = "none"
+log_user_prompt = false
+
+[plugins."codex-app-tools@openai-bundled"]
+enabled = true
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[plugins."unified-computer-use@openai-bundled"]
+enabled = true
+
+[plugins."visualize@openai-bundled"]
+enabled = true
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."pdf@openai-primary-runtime"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."template-creator@openai-primary-runtime"]
+enabled = true
+
+[plugins."computer-use@openai-bundled"]
+enabled = true
+
+[plugins."chrome@openai-bundled"]
+enabled = true
+
+[plugins."code-review@openai-bundled"]
+enabled = true
+
+[desktop]
+appearanceTheme = "system"
+appearanceLightCodeThemeId = "everforest"
+appearanceDarkCodeThemeId = "everforest"
+followUpQueueMode = "queue"
+conversationDetailMode = "STEPS_COMMANDS"
+ambient-suggestions-enabled = false
+enabled-reasoning-efforts = ["low", "medium", "high", "xhigh", "ultra", "persistent", "max"]
+show-context-window-usage = true
+keepRemoteControlAwakeWhilePluggedIn = true
+localeOverride = "en-US"
+preventSleepWhileRunning = true
+composerPlainTextMode = true
+
+[desktop.appearanceLightChromeTheme]
+accent = "#53944c"
+contrast = 90
+ink = "#5c6a72"
+opaqueWindows = false
+surface = "#fcf3db"
+
+[desktop.appearanceLightChromeTheme.semanticColors]
+diffAdded = "#8da101"
+diffRemoved = "#f85552"
+skill = "#df69ba"
+
+[desktop.appearanceDarkChromeTheme]
+accent = "#61b04c"
+contrast = 70
+ink = "#d5c39b"
+opaqueWindows = false
+surface = "#16211a"
+
+[desktop.appearanceDarkChromeTheme.semanticColors]
+diffAdded = "#a7c080"
+diffRemoved = "#e67e80"
+skill = "#d699b6"

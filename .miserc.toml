@@ -1,0 +1,5 @@
+# mise reads this file before any config file in this repository.
+# auto_env loads mise.macos.toml on a Mac and mise.linux.toml on Linux.
+# Select this machine's profile in the ignored .miserc.local.toml, for example:
+# env = ["pro"]
+auto_env = true
