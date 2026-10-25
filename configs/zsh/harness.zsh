@@ -1,4 +1,5 @@
-# Interactive mise installs and upgrades update installed vendor-owned agents.
+# Interactive mise installs and upgrades update installed vendor-owned agents,
+# then bin/save-lock commits and pushes a changed lockfile on main.
 # After a full install or an upgrade, the helper also deletes unused versions.
 # It prunes only the tools in the global config, such as the old Bun after a pin
 # change. A project whose mise.toml mise does not track (for example an
@@ -35,6 +36,7 @@ mise() {
         _dotfiles_mise_prune_global
       fi
       "$HOME/bin/harness" update --installed-only
+      "${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/save-lock"
       ;;
     *) command mise "$@" ;;
   esac

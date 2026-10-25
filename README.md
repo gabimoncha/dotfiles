@@ -370,10 +370,17 @@ Scrawl come from their vendor taps, `anomalyco/tap` and `kitlangton/tap`.
 `~/.config/mise/mise.lock` links to `configs/mise/mise.lock`. `mise install`
 installs the locked versions, and `mise up` writes newer versions into the
 tracked file. To add a tool, add it to `configs/mise/global.toml`, then run
-`mise lock --global --platform macos-arm64`. After either change, run
-`git add configs/mise` and commit the config, the lockfile, and the pipx lock
-folder `configs/mise/.mise/locks/`. Commit the lockfile after each `mise up`.
-An older lockfile moves the tools back to its versions.
+`mise lock --global`, then commit the config, the lockfile, and the pipx lock
+folder `configs/mise/.mise/locks/`. An older lockfile moves the tools back to
+its versions.
+
+After an interactive `mise install` or `mise up`, and after `mise run update`,
+`./bin/save-lock` commits a changed lockfile and pushes it to `main`, so the
+other machines get the same versions at their next pull. The commit holds only
+the lock files. The script does nothing on another branch. It stops when
+`origin/main` changed the lock too, and prints the commands that take that
+lock. `DOTFILES_SAVE_LOCK=0` turns it off. Every lock entry has a checksum for
+both platforms, so a plain `mise install` leaves the lock unchanged.
 
 `./bin/install-standalone` installs and repairs the vendor-installed tools and
 reuses healthy installs. Run it for one tool, for example

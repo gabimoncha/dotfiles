@@ -32,5 +32,6 @@ fi
 
 log "Running setup"
 DOTFILES_SKIP_MACOS_DEFAULTS=1 "${repo_root}/bin/setup" --continue "$@"
+[[ "$dry_run" == 1 ]] || "${repo_root}/bin/save-lock" || true
 
 log "Dotfiles update complete"

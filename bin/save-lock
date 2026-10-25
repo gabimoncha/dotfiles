@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# Commit a changed mise lockfile on main and push it, so every machine
+# installs the same versions and no machine keeps a lock edit that conflicts
+# with the next pull. The interactive `mise` helper in configs/zsh/harness.zsh
+# and bin/dotfiles-update run this after mise installs or upgrades tools.
+#
+# Usage: save-lock [--dry-run]
+#
+# The commit holds only configs/mise/mise.lock and the pipx lock folder;
+# other changes stay as they are. The script does nothing on another branch,
+# and it stops without a commit when origin/main changed the lock too. It
+# pushes only when the lock commit is the only unpushed commit.
+# DOTFILES_SAVE_LOCK=0 turns it off.
+set -euo pipefail
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+paths=(configs/mise/mise.lock configs/mise/.mise/locks)
+dry_run=0
+case "${1:-}" in
+  "") ;;
+  --dry-run) dry_run=1 ;;
+  -h|--help) printf 'Usage: save-lock [--dry-run]\n'; exit 0 ;;
+  *) printf 'Usage: save-lock [--dry-run]\n' >&2; exit 2 ;;
+esac
+[[ "${DOTFILES_SAVE_LOCK:-1}" != 0 ]] || exit 0
+
+git() { command git -C "$repo_root" "$@"; }
+say() { printf 'save-lock: %s\n' "$*" >&2; }
+
+[[ -n "$(git status --porcelain -- "${paths[@]}")" ]] || exit 0
+branch="$(git symbolic-ref --quiet --short HEAD || true)"
+if [[ "$branch" != main ]]; then
+  say "the mise lock changed on ${branch:-a detached HEAD}. Commit it yourself."
+  exit 0
+fi
+if ! git fetch --quiet origin main; then
+  say 'could not fetch origin/main. The lock change is not saved.'
+  exit 1
+fi
+if ! git merge-base --is-ancestor origin/main HEAD; then
+  if ! git diff --quiet HEAD origin/main -- "${paths[@]}"; then
+    say 'origin/main changed the mise lock too. Take that lock, then install it:'
+    say "  git -C $repo_root checkout -- ${paths[*]}"
+    say "  git -C $repo_root pull --ff-only && mise install"
+    say "Then run mise up again if you still want the newer versions."
+    exit 1
+  fi
+  if [[ "$dry_run" == 1 ]]; then
+    say 'would fast-forward main to origin/main'
+  elif ! git merge --ff-only --quiet origin/main; then
+    say 'could not fast-forward main to origin/main. The lock change is not saved.'
+    exit 1
+  fi
+fi
+if [[ "$dry_run" == 1 ]]; then
+  say 'would commit and push:'
+  git status --short -- "${paths[@]}" >&2
+  exit 0
+fi
+unpushed="$(git rev-list --count origin/main..HEAD)"
+git add --all -- "${paths[@]}"
+git commit --quiet -m 'chore: update mise.lock' -- "${paths[@]}"
+if [[ "$unpushed" != 0 ]]; then
+  say "committed the lock, but main has other unpushed commits ($unpushed). Push them yourself."
+  exit 0
+fi
+if git push --quiet origin HEAD:main; then
+  say "pushed $(git rev-parse --short HEAD) to origin/main."
+else
+  say 'committed the lock, but the push failed. Run: git push origin main'
+  exit 1
+fi
