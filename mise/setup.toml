@@ -1,6 +1,6 @@
 # Setup-only mise config. bin/repo-mise loads it as the only global config, so
 # the linked ~/.config/mise/config.toml stays readable by an older mise.
-min_version = "2026.10.17"
+min_version = "2026.10.19"
 
 # Shell framework and tmux plugin manager. install_shell_framework in
 # bin/bootstrap clones only the missing paths, in this order, and leaves

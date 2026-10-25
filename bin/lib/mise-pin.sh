@@ -6,8 +6,10 @@
 # release's install.sh digest in GitHub's release metadata. Pick a release that
 # passes the four-day minimum_release_age, unless a needed feature or an
 # explicitly requested release is newer.
-pinned_mise_version=2026.10.17
-pinned_installer_sha256=314162b17b5fe78e31d464416ab91ede17e9149aea4322f5f3539f1ebe46242f
+# Security exception to the four-day delay: 2026.10.19 fixes trust and
+# checksum bypasses and includes ctutils 0.4.5 for RUSTSEC-2026-0385.
+pinned_mise_version=2026.10.19
+pinned_installer_sha256=82d35715f9d54b9ca4ff5b909ebeb4f4ded457d4fae15814db2fe6da5b943e1f
 
 # An older mise can refuse the current global config, so read only its version.
 mise_installed_version() {
