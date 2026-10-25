@@ -14,6 +14,9 @@ tap "nikitabobko/tap", trusted: true
 tap "xykong/tap", trusted: true
 
 brew "apktool"
+# Bash 5 comes first on PATH. The bin/ scripts stay Bash 3.2 compatible,
+# because a new Mac runs setup with /bin/bash before Homebrew exists.
+brew "bash"
 brew "borders"
 brew "btop"
 brew "cliproxyapi", restart_service: true
