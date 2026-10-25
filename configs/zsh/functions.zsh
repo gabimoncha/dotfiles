@@ -299,6 +299,50 @@ reload-shell() {
   print "Shell reloaded"
 }
 
+# An interactive login to another host opens its own tmux session "main". Inside
+# a local tmux that gives two status bars and two prefixes. So an interactive
+# `ssh HOST` here leaves the local tmux first: the terminal runs ssh outside
+# it, then attaches to the local session again when ssh ends. A remote
+# command, -N, -T, -W, -O, -G, -V, -Q, or -f keeps ssh in the pane.
+# `command ssh` always stays in the pane.
+ssh() {
+  local -a positional
+  local argument flag rest skip_next=0 interactive=1 session ssh_bin
+  if [[ -n "${TMUX-}" && -t 0 && -t 1 ]]; then
+    for argument in "$@"; do
+      if (( skip_next )); then
+        skip_next=0
+      elif (( ${#positional} )) || [[ "$argument" != -* || "$argument" == - ]]; then
+        positional+=("$argument")
+      elif [[ "$argument" == -- ]]; then
+        :
+      else
+        rest="${argument#-}"
+        while [[ -n "$rest" ]]; do
+          flag="${rest[1]}"
+          rest="${rest[2,-1]}"
+          case "$flag" in
+            [NTWOGVQf]) interactive=0 ;;
+          esac
+          if [[ "$flag" == [BbcDEeFIiJLlmOoPpQRSWw] ]]; then
+            [[ -z "$rest" ]] && skip_next=1
+            break
+          fi
+        done
+      fi
+    done
+    (( ${#positional} == 1 )) || interactive=0
+  else
+    interactive=0
+  fi
+  if (( interactive )) && session="$(command tmux display-message -p '#S' 2>/dev/null)" &&
+    ssh_bin="$(whence -p ssh)"; then
+    command tmux detach-client -E "${(qq)ssh_bin} ${(j: :)${(qq)@}}; exec tmux -S ${(qq)${TMUX%%,*}} attach-session -t ${(qq)session}"
+    return
+  fi
+  command ssh "$@"
+}
+
 _cursor_available() {
   whence -p cursor >/dev/null 2>&1
 }

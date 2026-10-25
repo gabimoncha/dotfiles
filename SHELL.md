@@ -71,10 +71,10 @@ connection drops or you close the terminal. The next login returns to it.
 closes the session. The prefix is `Ctrl-a`. Run `ssh -t HOST zsh` for a shell
 outside tmux.
 
-An SSH login from inside a tmux on your Mac skips the remote session: ssh sends
-`TERM`, and a `tmux-*` or `screen-*` value shows that the Mac tmux already
-holds the shell. Then a dropped connection ends the remote shell. Run
-`tmux new-session -A -s main` on the host when you want the remote session. A container restart ends the session; tmux-resurrect
+In a tmux on your Mac, `ssh HOST` leaves the Mac tmux first, so the remote
+session is the only tmux on screen. When ssh ends, the terminal attaches to the
+Mac session again. A remote command, a tunnel (`-N`), and `command ssh HOST`
+stay in the Mac tmux pane. A container restart ends the session; tmux-resurrect
 restores its windows, but not the programs that ran in them.
 
 ## Android
