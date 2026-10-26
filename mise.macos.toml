@@ -268,3 +268,10 @@ domain = "com.apple.symbolichotkeys"
 key = "AppleSymbolicHotKeys"
 path = ["65"]
 value = { enabled = false, value = { type = "standard", parameters = [32, 49, 1572864] } }
+
+# Turn off Windows > General > Minimize (Cmd-M).
+[[bootstrap.macos.defaults_entries]]
+domain = "com.apple.symbolichotkeys"
+key = "AppleSymbolicHotKeys"
+path = ["233"]
+value = { enabled = false, value = { type = "standard", parameters = [109, 46, 1048576] } }
