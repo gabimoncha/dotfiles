@@ -254,9 +254,10 @@ protected key.
   Existing Codex state is kept for comparison. See [MACKUP.md](MACKUP.md).
 - Complete the first launch of Android Studio, OrbStack, and the vendor apps
   marked `manual` in [the app manifest](apps/manifest.tsv).
-- Setup installs the Android SDK packages for command-line builds. For an
-  emulator, install the Emulator and a system image with `sdkmanager` or in
-  Android Studio, and create a virtual device.
+- Setup installs the Android SDK packages for command-line builds and the
+  Android Emulator, which the T3 Code device hub needs. To run an emulator,
+  install a system image with `sdkmanager` or in Android Studio, and create a
+  virtual device.
 - Personal skills need a reviewed `skills` CLI and
   `DOTFILES_REVIEWED_SKILLS_REF` set to a reviewed 40-character commit of
   `gabimoncha/skills`. Without that commit, setup skips the step. With the
