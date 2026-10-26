@@ -21,9 +21,8 @@ mise.*.local.toml
 /local/*
 !/local/*.example
 
-# CLIProxyAPI writes its auth state next to its config. Track the config only.
+# Keep credentials from the retired workstation proxy out of Git.
 /configs/cliproxyapi/*
-!/configs/cliproxyapi/config.yaml
 
 # Local files from the old layout stay ignored until bin/link-dotfiles moves
 # them on every machine.

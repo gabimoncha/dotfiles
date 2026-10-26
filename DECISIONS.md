@@ -136,9 +136,8 @@ link where a real file is, and one refused entry stops the whole apply.
 - It removes links that older versions made, only while they point into this
   repository. It moves local files from the old layout, such as
   `mise/setup/miserc.local.toml`, to their new place.
-- On a Mac, it links Homebrew's `etc/cliproxyapi.conf`, which is outside HOME,
-  and runs `bin/link-t3-command`. Both steps, and the telemetry login job in
-  `bin/configure-telemetry`, run only when `$HOME` is the account's home
+- On a Mac, it runs `bin/link-t3-command`. That step and the telemetry login job
+  in `bin/configure-telemetry` run only when `$HOME` is the account's home
   folder, so a test with a temporary HOME cannot change them.
 
 Agent settings remain regular files because the agents rewrite them, and they
@@ -283,9 +282,22 @@ excludes Siri and Apple Intelligence jobs, which share services on macOS 27. It
 also excludes Spotlight, because mas reads installed App Store apps from the
 Spotlight index. `--revert` enables the jobs again.
 
-CLIProxyAPI configuration is linked before Homebrew starts its service, and the
-service binds to loopback. Neovim is a separate submodule. Its plugins install
-at editor startup.
+Neovim is a separate submodule. Its plugins install at editor startup.
+
+## NAS agent proxy
+
+CLIProxyAPI uses the official image in a separate NAS Compose project. Docker
+owns installation, restarts, and logs. Separate mounts keep provider OAuth
+files outside `t3-dev`, where coding agents have passwordless sudo. Proxy
+updates do not require a restart of the development container.
+
+The Compose example publishes only on NAS loopback and joins the existing
+development network for `t3-dev` clients. The NAS's existing Tailscale Serve
+provides remote HTTPS access. Dotfiles keeps public provider
+settings and deployment examples. Private client URLs, keys, and the live
+server configuration stay outside Git. Codex uses `env_key` for its proxy key;
+its provider selection and URL stay local. Claude uses private native `env`
+settings. See [NAS agent proxy](apps/remote-development.md#nas-agent-proxy).
 
 ## Portable state
 

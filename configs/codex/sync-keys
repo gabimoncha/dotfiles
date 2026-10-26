@@ -71,3 +71,13 @@ private .marketplaces
 private .tui
 # The container profile sets this key in configs/codex/container.toml.
 private .sandbox_mode
+public .model_providers.cliproxyapi.name
+public .model_providers.cliproxyapi.wire_api
+public .model_providers.cliproxyapi.env_key
+# Select the proxy only after its private endpoint and credential are available.
+private .model_provider
+private .model_providers.cliproxyapi.base_url
+private .model_providers.cliproxyapi.http_headers
+private .model_providers.cliproxyapi.env_http_headers
+private .model_providers.cliproxyapi.experimental_bearer_token
+private .model_providers.cliproxyapi.auth

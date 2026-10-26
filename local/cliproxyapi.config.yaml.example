@@ -1,0 +1,12 @@
+config-version: 8
+server:
+  host: "0.0.0.0"
+  port: 8317
+management:
+  allow-remote: true
+  secret-key: "REPLACE_WITH_A_RANDOM_MANAGEMENT_KEY"
+access:
+  api-keys:
+    - "REPLACE_WITH_A_RANDOM_PROXY_CLIENT_KEY"
+oauth:
+  auth-dir: "/root/.cli-proxy-api"

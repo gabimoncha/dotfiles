@@ -1,0 +1,28 @@
+# Deploy as a separate NAS Container Manager project.
+services:
+  cliproxyapi:
+    image: eceasy/cli-proxy-api:v8.0.38
+    restart: unless-stopped
+    command: ["./CLIProxyAPI", "--config", "/CLIProxyAPI/config/config.yaml"]
+    environment:
+      TZ: UTC
+    ports:
+      - "127.0.0.1:8317:8317"
+    networks:
+      - development
+    volumes:
+      - type: bind
+        source: ./config
+        target: /CLIProxyAPI/config
+        bind:
+          create_host_path: false
+      - ./auths:/root/.cli-proxy-api
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+networks:
+  development:
+    external: true
+    name: ${NAS_DEV_NETWORK:?Set NAS_DEV_NETWORK to the existing t3-dev Docker network}

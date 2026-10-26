@@ -19,7 +19,6 @@ brew "apktool"
 brew "bash"
 brew "borders"
 brew "btop"
-brew "cliproxyapi", restart_service: true
 brew "curl"
 brew "ffmpeg"
 brew "gcc"
