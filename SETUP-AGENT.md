@@ -65,6 +65,7 @@ run outside that directory before repeated repair attempts if you need its logs.
 | `app_settings` | `./bin/configure-app-settings` |
 | `screenshots` | `./bin/configure-screenshots` |
 | `finder` | `./bin/finder-sidebar-favorites` |
+| `tokenburnmarket` | `./bin/setup-tokenburnmarket` (the user runs it in a terminal for the browser sign-in) |
 | `mobile_setup` | `./bin/install-mobile-dev` |
 
 The other steps run functions in `bin/lib/setup-steps.sh`. To retry one of

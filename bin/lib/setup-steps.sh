@@ -613,6 +613,7 @@ setup_standalone_agents() {
   fi
 }
 setup_telemetry() { "${repo_root}/bin/configure-telemetry"; }
+setup_tokenburnmarket() { "${repo_root}/bin/setup-tokenburnmarket"; }
 setup_app_settings() { "${repo_root}/bin/configure-app-settings"; }
 setup_screenshots() { "${repo_root}/bin/configure-screenshots"; }
 setup_permission_handoff() {

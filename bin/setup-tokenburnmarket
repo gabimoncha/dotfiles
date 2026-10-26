@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# Connects this machine to tokenburnmarket and keeps its sync daemon current.
+# mise installs the CLI. A connected machine whose service file matches what
+# `daemon install` would write now is left alone. A changed service file, for
+# example after `mise up` moved node or the CLI, is written again without a new
+# sign-in. Exit 20 means deferred: the step needs a terminal or a service manager.
+set -euo pipefail
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+dry_run=0
+case "${1:-}" in
+  --dry-run) dry_run=1 ;;
+  '') ;;
+  *) echo 'Usage: setup-tokenburnmarket [--dry-run]' >&2; exit 2 ;;
+esac
+real_tool() {
+  local path
+  path="$(MISE_AUTO_INSTALL=0 "$repo_root/bin/repo-mise" --global which "$1" 2>/dev/null)" || return 1
+  [[ -n "$path" && -x "$path" ]] || return 1
+  printf '%s\n' "$path"
+}
+
+if ! cli="$(real_tool tokenburnmarket)" || ! node="$(real_tool node)"; then
+  echo 'tokenburnmarket is not installed. Install the mise tools, then rerun setup.' >&2
+  exit 20
+fi
+# The same node and script paths that the shebang and the mise shim give.
+tbm() { (cd "$HOME" && "$node" "$cli" "$@"); }
+
+if [[ "$(uname -s)" == Darwin ]]; then
+  service="$HOME/Library/LaunchAgents/com.tokenburnmarket.daemon.plist"
+else
+  service="$HOME/.config/systemd/user/tokenburnmarket.service"
+  if ! systemctl --user show-environment >/dev/null 2>&1; then
+    echo 'This host has no systemd user session, so the tokenburnmarket daemon cannot run here.' >&2
+    echo 'Use the MCP server in an agent instead: tokenburnmarket mcp setup' >&2
+    exit 20
+  fi
+fi
+
+# The definition between "Save this as PATH" and "Then load it:" or "Then enable it:".
+expected_service() {
+  tbm daemon install --dry-run | awk '
+    NR <= 2 { next }
+    /^Then (load|enable) it:$/ { exit }
+    { lines[++n] = $0 }
+    END { for (i = 1; i < n; i++) print lines[i] }'
+}
+
+connected=1
+# The check must not ask npm for a newer version. Only status asks, and
+# `daemon install` would copy an exported switch into the service.
+if TBM_NO_UPDATE_CHECK=1 tbm status | grep -q '^Not connected\.'; then connected=0; fi
+current=''
+[[ ! -f "$service" ]] || current="$(cat "$service")"
+expected="$(expected_service)"
+[[ -n "$expected" ]] || { echo 'Could not read the service definition from tokenburnmarket.' >&2; exit 1; }
+
+# Keep a service that runs another install of the CLI, such as a bun or npm
+# global, while that install exists. A removed install gets the mise service.
+foreign_service() {
+  local path found=0
+  [[ "$current" != *"/mise/installs/npm-tokenburnmarket/"* ]] || return 1
+  while IFS= read -r path; do
+    case "$path" in *.log) continue ;; esac
+    [[ -e "$path" ]] || return 1
+    found=1
+  done < <(printf '%s\n' "$current" | grep -o '/[^<>" ]*tokenburnmarket[^<>" ]*' || true)
+  [[ "$found" == 1 ]]
+}
+if [[ -n "$current" && "$current" != "$expected" ]] && foreign_service; then
+  printf 'Kept the tokenburnmarket service from another install: %s\n' "$service"
+  printf 'To move it to the mise install, remove the other install, then rerun this script.\n'
+  current="$expected"
+fi
+if [[ "$connected" == 1 && "$current" == "$expected" ]]; then
+  printf 'tokenburnmarket is connected and its daemon is installed: %s\n' "$service"
+  exit 0
+fi
+
+if [[ "$dry_run" == 1 ]]; then
+  [[ "$connected" == 1 ]] || echo 'Would run tokenburnmarket connect (browser sign-in).'
+  if [[ -z "$current" ]]; then
+    printf 'Would install the daemon service: %s\n' "$service"
+  elif [[ "$current" != "$expected" ]]; then
+    printf 'Would rewrite the daemon service, which differs from the current definition: %s\n' "$service"
+  fi
+  exit 0
+fi
+
+if [[ "$connected" == 0 ]]; then
+  if [[ ! -t 0 ]]; then
+    echo 'tokenburnmarket sign-in needs a terminal. Rerun setup interactively, or run ./bin/setup-tokenburnmarket.' >&2
+    exit 20
+  fi
+  echo 'Connecting this machine to tokenburnmarket. Approve the code in the browser.'
+  tbm connect
+fi
+
+if [[ "$current" != "$expected" ]]; then
+  tbm daemon install
+fi

@@ -51,6 +51,9 @@ yamlfmt = "latest"
 "conda:tig" = "latest"
 "conda:tree" = "latest"
 "npm:cf" = "latest"
+# Needs node 22.15 or later. bin/setup-tokenburnmarket signs in and installs
+# the sync daemon, and refreshes it after `mise up` moves node or this tool.
+"npm:tokenburnmarket" = "latest"
 wrangler = { version = "latest", allow_builds = ["esbuild", "sharp", "workerd"] }
 shellcheck = "latest"
 shfmt = "latest"
@@ -117,7 +120,7 @@ use_versions_host_track = false
 disable_tools = ["codex", "aqua:openai/codex", "npm:@openai/codex"]
 minimum_release_age = "4d"
 # Entries match a full backend ID, a registry short name, or a backend wildcard.
-minimum_release_age_excludes = ["npm:agent-browser", "npm:agent-device", "npm:eas-cli", "npm:@agentclientprotocol/codex-acp", "npm:@agentclientprotocol/claude-agent-acp", "npm:cf", "github:flowcopilot/aether"]
+minimum_release_age_excludes = ["npm:agent-browser", "npm:agent-device", "npm:eas-cli", "npm:@agentclientprotocol/codex-acp", "npm:@agentclientprotocol/claude-agent-acp", "npm:cf", "github:flowcopilot/aether", "npm:tokenburnmarket"]
 
 [settings.npm]
 package_manager = "bun"

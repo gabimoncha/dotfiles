@@ -333,6 +333,7 @@ Authentication output is omitted. Review logs before you share them.
 | `./bin/configure-telemetry [--dry-run]` | Apply the telemetry opt-outs to installed tools. |
 | `./bin/configure-screenshots` | Repair the PNG destination at `~/Screenshots`. |
 | `./bin/finder-sidebar-favorites` | Retry the `development` and `screenshots` favorites. |
+| `./bin/setup-tokenburnmarket [--dry-run]` | Sign in to tokenburnmarket and install its sync daemon. A connected host with a current daemon is not changed. `DOTFILES_SKIP_TOKENBURNMARKET=1` skips the setup step. |
 | `./bin/configure-sudo-touch-id --check` | Inspect Touch ID for sudo. `--enable` and `--disable` change it. |
 | `./bin/configure-background-jobs [--dry-run]` | Disable the jobs in `macos/disabled-jobs.txt`. `--check` reports drift, and `--revert` enables them. |
 

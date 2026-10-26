@@ -115,6 +115,16 @@ setup_sudo_steps() {
   step sudo_keepalive local setup_keepalive
 }
 
+# Signs in to tokenburnmarket and installs its sync daemon. It needs the mise
+# inventory, and the sign-in needs the terminal.
+setup_tokenburnmarket_step() {
+  if [[ "${DOTFILES_SKIP_TOKENBURNMARKET:-0}" == 1 ]]; then
+    skip_step tokenburnmarket DOTFILES_SKIP_TOKENBURNMARKET=1
+  else
+    step --optional tokenburnmarket sensitive setup_tokenburnmarket
+  fi
+}
+
 # The first macOS phase installs the tools that need no App Store sign-in and
 # no new terminal permission.
 setup_macos_prepare() {
@@ -170,6 +180,7 @@ setup_macos_continue() {
   step --optional screenshots capture setup_screenshots
   step --optional app_settings sensitive setup_app_settings
   step --optional finder sensitive setup_finder
+  setup_tokenburnmarket_step
   # After every interactive step, so the long Xcode download runs unattended.
   # Before telemetry, so its opt-outs cover the installed mobile tools.
   if [[ "${DOTFILES_SKIP_MOBILE_DEV:-0}" == 1 ]]; then
@@ -206,6 +217,7 @@ setup_linux() {
   # Pi needs Node from the mise inventory.
   step --optional standalone_agents capture setup_standalone_agents
   step --optional final_links capture setup_final_links
+  setup_tokenburnmarket_step
   step --optional --always telemetry capture setup_telemetry
 }
 
