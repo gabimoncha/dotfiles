@@ -202,6 +202,70 @@ container is the boundary, so `bin/link-dotfiles` sets
 `harness update` skips T3, so a `mise install` never restarts the server. An
 update from the app restarts it, and running agent tasks stop.
 
+## NAS agent proxy
+
+Deploy the [official image](https://help.router-for.me/docker/docker-compose.html)
+as a separate Container Manager project. Docker installs and restarts it.
+The NAS keeps its configuration and OAuth files outside `t3-dev`.
+
+1. Copy `local/cliproxyapi.compose.yaml.example` to ignored
+   `local/cliproxyapi/docker-compose.yml`. Copy `local/cliproxyapi.config.yaml.example`
+   to `local/cliproxyapi/config/config.yaml`.
+2. Replace both key placeholders with different keys from your secret manager.
+   Keep the configuration mode 0600 and the config and auth folders mode 0700.
+3. Set `NAS_DEV_NETWORK` in this folder's private `.env` to the existing Docker
+   network used by `t3-dev`, as shown in Container Manager.
+4. Upload this private folder to the NAS and create its Container Manager
+   project. Keep `config/` and `auths/` on persistent NAS storage. Use the logs
+   and terminal in Container Manager to debug it. Change the pinned image tag
+   to update it. No changes to the T3 project are needed.
+
+The API port binds to NAS loopback. Use the NAS's existing
+[Tailscale Serve](https://tailscale.com/kb/1312/serve) for HTTPS access from the
+tailnet. On the NAS host, inspect `tailscale serve status` first. If port 8443
+is unused, configure `tailscale serve --bg --https=8443 http://127.0.0.1:8317`.
+These are host commands, not commands inside `t3-dev`. Keep the returned URL
+private. Verify tailnet access before activating clients; NAS Serve setup has
+not been applied by dotfiles. Do not enable public Funnel access.
+The first Serve command can print an approval URL and wait. Open that URL to
+enable Serve before expecting the command or its Task Scheduler email to finish.
+
+Open `/management.html` at that URL and enter the management key. Sign in to
+the OpenAI and Anthropic accounts in the
+[web UI](https://help.router-for.me/management/webui.html), using its callback
+URL submission for remote logins. Only the API port needs publishing.
+Use credential prefixes such as `work` and `personal` and select the matching
+model name in each agent to choose an account group. Unprefixed requests can
+use any eligible account; priority alone does not prevent fallback.
+
+Configure only Codex and Claude Code after the proxy is reachable:
+
+On Macs, use the private Tailscale HTTPS URL. In `t3-dev`, use
+`http://cliproxyapi:8317` through the shared Docker network.
+
+| Client | Private settings on each machine |
+| --- | --- |
+| Codex | Set `model_provider = "cliproxyapi"` and `model_providers.cliproxyapi.base_url` to the URL plus `/v1` in `~/.codex/config.toml`. Set both together. Supply the proxy client key as `CLIPROXYAPI_API_KEY` in the process environment. |
+| Claude Code | In `~/.claude/settings.json`, set `env.ANTHROPIC_BASE_URL` to the URL, `env.ANTHROPIC_AUTH_TOKEN` to the client key, and `env.CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY` to `"1"`. |
+
+The tracked Codex provider uses native `env_key` authentication. Remove an old
+`model_providers.cliproxyapi.auth` block before using it. For GUI and T3 starts,
+the parent process must receive `CLIPROXYAPI_API_KEY`; a terminal export alone
+does not configure a running app. On macOS, a private
+`~/.config/local/cliproxyapi.zsh` supplies the key to interactive shells. A private
+`~/Library/LaunchAgents/local.cliproxyapi.environment.plist` loads that file and
+runs `launchctl setenv` at login for apps opened from the Dock. Reopen an app
+that was already running when the environment changed.
+Remove conflicting Claude auth helpers and cloud-provider overrides. Restart
+clients after configuration.
+`./bin/save-settings` excludes the private URLs, provider selection, and tokens.
+Shared settings still use `./bin/link-dotfiles` and `./bin/save-settings`.
+
+Verify both agents from outside the LAN, including tool calls, account selection,
+and token refresh. After that, remove the old Mac proxy with
+`brew services stop cliproxyapi` and `brew uninstall --formula cliproxyapi`.
+Keep its OAuth files until the migration is complete.
+
 ## Future GCP VM
 
 The VM does not exist yet. `vm` (`mise.vm.toml`) is a reserved, deferred profile.

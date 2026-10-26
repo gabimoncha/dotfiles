@@ -399,9 +399,11 @@ launcher. `./bin/link-t3-command [--dry-run]` repairs the link and keeps any
 other `t3` command. To adopt an existing app bundle, run
 `brew install --cask --adopt t3-code@nightly`.
 
-CLIProxyAPI binds to `127.0.0.1:49156`. `bin/link-dotfiles` links its tracked
-config into HOME and into Homebrew's `etc/cliproxyapi.conf`. Provider OAuth
-files stay local.
+CLIProxyAPI has a separate Docker Compose example for the NAS. Its management
+UI owns provider logins and account selection. Codex uses OpenAI subscriptions,
+and Claude Code uses Anthropic subscriptions. Private client settings select
+the NAS endpoint through Tailscale. Normal dotfiles setup does not deploy the
+server. See [NAS agent proxy](apps/remote-development.md#nas-agent-proxy).
 
 `bin/install-steam` replaces the Intel-only Homebrew cask with Valve's ARM64
 bootstrapper. It checks the checksum, the ARM64 code, Valve's signature, and

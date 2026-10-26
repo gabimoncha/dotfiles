@@ -96,3 +96,8 @@ surface = "#16211a"
 diffAdded = "#a7c080"
 diffRemoved = "#e67e80"
 skill = "#d699b6"
+
+[model_providers.cliproxyapi]
+name = "CLIProxyAPI on NAS"
+wire_api = "responses"
+env_key = "CLIPROXYAPI_API_KEY"

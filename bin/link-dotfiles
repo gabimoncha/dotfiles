@@ -248,27 +248,6 @@ if [[ "$(uname -s)" == Darwin ]]; then
   [[ -n "$account_home_path" && "$(cd "$account_home_path" 2>/dev/null && pwd -P)" == "$home_real" ]] || account_home=0
 fi
 
-# Homebrew's CLIProxyAPI service reads $(brew --prefix)/etc/cliproxyapi.conf.
-link_brew_config() {
-  local config="$HOME/.cli-proxy-api/config.yaml" prefix brew_config
-  prefix="$(brew --prefix 2>/dev/null)" && [[ -e "$config" ]] || return 0
-  brew_config="$prefix/etc/cliproxyapi.conf"
-  [[ ! -L "$brew_config" || "$(readlink "$brew_config")" != "$config" ]] || return 0
-  if [[ "$dry_run" == 1 ]]; then
-    printf 'Would link %s to %s\n' "$brew_config" "$(home_name "$config")"
-    return 0
-  fi
-  if [[ -e "$brew_config" || -L "$brew_config" ]]; then
-    save "$brew_config" "homebrew/etc/cliproxyapi.conf" move || {
-      printf 'link-dotfiles: could not back up %s. It is unchanged.\n' "$brew_config" >&2
-      return 1
-    }
-    rm -f "$brew_config" || return
-  fi
-  mkdir -p "$prefix/etc" || return
-  ln -s "$config" "$brew_config"
-}
-
 if [[ "$dry_run" == 1 ]]; then
   move_old_local_files
   for link in "${retired_links[@]}"; do
@@ -286,10 +265,9 @@ if [[ "$dry_run" == 1 ]]; then
   done
   [[ "$(uname -s)" == Darwin && ${#targets[@]} -eq 0 ]] || exit 0
   if [[ "$account_home" == 0 ]]; then
-    printf 'Would skip the Homebrew and t3 links: HOME is not the home folder of this account.\n'
+    printf 'Would skip the t3 link: HOME is not the home folder of this account.\n'
     exit 0
   fi
-  link_brew_config
   "$repo_root/bin/link-t3-command" --dry-run || true
   exit 0
 fi
@@ -426,13 +404,11 @@ for config in "$repo_root"/mise.toml "$repo_root"/mise.*.toml; do
   repo_mise trust "$config" >/dev/null 2>&1 || true
 done
 
-# The Mac links outside HOME and the t3 command link run on full applies only.
+# The Mac t3 command link runs on full applies only.
 [[ "$(uname -s)" == Darwin && ${#targets[@]} -eq 0 ]] || exit 0
 if [[ "$account_home" == 0 ]]; then
-  printf 'Skipped the Homebrew and t3 links: HOME is not the home folder of this account.\n'
+  printf 'Skipped the t3 link: HOME is not the home folder of this account.\n'
   exit 0
 fi
-# Setup can install Homebrew packages at the same time.
-runtime_with_lock homebrew link_brew_config
 "$repo_root/bin/link-t3-command" ||
   printf 'The t3 command was not linked. Run ./bin/link-t3-command after you fix the conflict.\n' >&2

@@ -30,3 +30,10 @@ private .hooks
 private .permissions.allow
 private .permissions.deny
 private .permissions.ask
+# Proxy activation, private endpoints, and credentials stay on each machine.
+private .apiKeyHelper
+private .env.ANTHROPIC_BASE_URL
+private .env.ANTHROPIC_AUTH_TOKEN
+private .env.ANTHROPIC_API_KEY
+private .env.CLAUDE_CODE_OAUTH_TOKEN
+private .env.CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY
