@@ -10,7 +10,8 @@ automation.
   build. CPU: 4 threads (AMD Ryzen R1600).
 - Kernel 4.4 has no user namespaces, so `bwrap` and the agent sandboxes fail.
   Commands run without a sandbox, and the container is the only boundary.
-- There is no systemd and no Docker. T3 runs under `~/.local/bin/t3-supervise`.
+- There is no systemd and no Docker. T3 runs under `~/.local/bin/t3-supervise`,
+  and the tokenburnmarket daemon under `~/.local/bin/tokenburnmarket-supervise`.
 - Only Linux builds run here. iOS, Xcode, simulators, Android emulators, and
   macOS apps need the Mac.
 

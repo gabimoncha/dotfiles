@@ -66,6 +66,9 @@ services:
         if test -x /home/box/.local/bin/t3-supervise; then
           su - box -c /home/box/.local/bin/t3-supervise &
         fi
+        if test -x /home/box/.local/bin/tokenburnmarket-supervise; then
+          su - box -c /home/box/.local/bin/tokenburnmarket-supervise &
+        fi
         exec /usr/sbin/sshd -D -e -o HostKey=/var/lib/t3-ssh/ssh_host_ed25519_key -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no -o PermitRootLogin=no -o AllowUsers=box -o PrintMotd=no
 volumes:
   dev-home:

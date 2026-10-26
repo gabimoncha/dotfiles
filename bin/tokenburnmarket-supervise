@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# bin/setup-tokenburnmarket installs this as ~/.local/bin/tokenburnmarket-supervise
+# on a Linux host without systemd, such as the NAS container. It does what the
+# unit from `tokenburnmarket daemon install` does: it keeps the daemon running.
+# Each start finds the mise CLI and node again, so a restart follows `mise up`.
+set -eu
+[[ "$(uname -s)" == Linux && "$(id -u)" != 0 ]] || {
+  printf 'Run this supervisor as the non-root Linux development user.\n' >&2
+  exit 1
+}
+umask 077
+export PATH="$HOME/.local/bin:$PATH"
+# The container starts this with bash, which skips the zsh telemetry opt-outs.
+[ ! -r "$HOME/.config/zsh/telemetry.sh" ] || . "$HOME/.config/zsh/telemetry.sh"
+cd "$HOME"
+logs="$HOME/.local/state/tokenburnmarket"
+mkdir -p "$logs"
+exec 9>"$logs/supervisor.lock"
+flock -n 9 || exit 0
+
+log() { printf 'tokenburnmarket-supervise: %s\n' "$1" >> "$logs/daemon.log"; }
+real_tool() { MISE_AUTO_INSTALL=0 "$HOME/.local/bin/mise" which "$1" 2>/dev/null; }
+
+pid=""
+# Background sleeps let the trap run at once instead of after the sleep ends.
+pause() { sleep "$1" & wait $! || true; }
+trap '[[ -z "$pid" ]] || kill -TERM "$pid" 2>/dev/null || true; exit 0' TERM INT HUP
+
+while true; do
+  [[ ! -f "$logs/daemon.log" ]] || [[ "$(wc -c < "$logs/daemon.log")" -lt 1048576 ]] ||
+    mv -f "$logs/daemon.log" "$logs/daemon.log.1"
+  if node="$(real_tool node)" && cli="$(real_tool tokenburnmarket)"; then
+    "$node" "$cli" daemon >> "$logs/daemon.log" 2>&1 &
+    pid=$!
+    wait "$pid" || log "daemon exited with status $?"
+    pid=""
+  else
+    log "mise has no tokenburnmarket or node; run ./bin/setup"
+  fi
+  pause 30
+done

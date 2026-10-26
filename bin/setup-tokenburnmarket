@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 # Connects this machine to tokenburnmarket and keeps its sync daemon current.
-# mise installs the CLI. A connected machine whose service file matches what
-# `daemon install` would write now is left alone. A changed service file, for
-# example after `mise up` moved node or the CLI, is written again without a new
-# sign-in. Exit 20 means deferred: the step needs a terminal or a service manager.
+# mise installs the CLI. macOS and systemd hosts use the service that `daemon
+# install` writes. A connected machine whose service file matches what `daemon
+# install` would write now is left alone. A changed service file, for example
+# after `mise up` moved node or the CLI, is written again without a new sign-in.
+# A Linux host without systemd, such as the NAS container, runs the daemon
+# under bin/tokenburnmarket-supervise instead. Exit 20 means deferred: the step
+# needs a terminal or a user session.
 set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 dry_run=0
@@ -26,15 +29,95 @@ fi
 # The same node and script paths that the shebang and the mise shim give.
 tbm() { (cd "$HOME" && "$node" "$cli" "$@"); }
 
+mode=service
 if [[ "$(uname -s)" == Darwin ]]; then
   service="$HOME/Library/LaunchAgents/com.tokenburnmarket.daemon.plist"
 else
   service="$HOME/.config/systemd/user/tokenburnmarket.service"
   if ! systemctl --user show-environment >/dev/null 2>&1; then
-    echo 'This host has no systemd user session, so the tokenburnmarket daemon cannot run here.' >&2
-    echo 'Use the MCP server in an agent instead: tokenburnmarket mcp setup' >&2
+    if [[ -d /run/systemd/system ]]; then
+      echo 'systemd runs on this host, but this login has no systemd user session.' >&2
+      echo "Log in on a console, or run: sudo loginctl enable-linger $(id -un). Then rerun this script." >&2
+      exit 20
+    fi
+    mode=supervisor
+  fi
+fi
+
+connected=1
+# The check must not ask npm for a newer version. Only status asks, and
+# `daemon install` would copy an exported switch into the service.
+if TBM_NO_UPDATE_CHECK=1 tbm status | grep -q '^Not connected\.'; then connected=0; fi
+
+connect_if_needed() {
+  [[ "$connected" == 0 ]] || return 0
+  if [[ ! -t 0 ]]; then
+    echo 'tokenburnmarket sign-in needs a terminal. Rerun setup interactively, or run ./bin/setup-tokenburnmarket.' >&2
     exit 20
   fi
+  echo 'Connecting this machine to tokenburnmarket. Approve the code in the browser.'
+  tbm connect
+}
+
+if [[ "$mode" == supervisor ]]; then
+  source_supervisor="$repo_root/bin/tokenburnmarket-supervise"
+  supervisor="$HOME/.local/bin/tokenburnmarket-supervise"
+  lock="$HOME/.local/state/tokenburnmarket/supervisor.lock"
+  daemon_pattern="tokenburnmarket daemon\$"
+  supervisor_running() { [[ -f "$lock" ]] && ! flock -n "$lock" true; }
+  # A daemon that runs the current node and CLI, or any other daemon.
+  daemon_current() { pgrep -u "$(id -u)" -x -f "$node $cli daemon" >/dev/null; }
+  daemon_stale() { ! daemon_current && pgrep -u "$(id -u)" -f "$daemon_pattern" >/dev/null; }
+  supervisor_current=0
+  ! cmp -s "$source_supervisor" "$supervisor" || supervisor_current=1
+  # The entrypoint of the container starts the supervisor after a restart.
+  boot_note() {
+    tr '\0' ' ' < /proc/1/cmdline 2>/dev/null | grep -q tokenburnmarket-supervise && return 0
+    echo 'The container does not start the supervisor after a restart. Add its line from'
+    echo 'local/t3-dev.compose.yaml.example to the compose file on the host.'
+  }
+
+  if [[ "$connected" == 1 && "$supervisor_current" == 1 ]] && supervisor_running && ! daemon_stale; then
+    printf 'tokenburnmarket is connected and its supervisor runs: %s\n' "$supervisor"
+    boot_note
+    exit 0
+  fi
+  if [[ "$dry_run" == 1 ]]; then
+    [[ "$connected" == 1 ]] || echo 'Would run tokenburnmarket connect (browser sign-in).'
+    [[ "$supervisor_current" == 1 ]] || printf 'Would install the supervisor: %s\n' "$supervisor"
+    if [[ "$supervisor_current" == 0 ]] && supervisor_running; then
+      echo 'Would restart the supervisor.'
+    elif ! supervisor_running; then
+      echo 'Would start the supervisor.'
+    elif daemon_stale; then
+      echo 'Would stop the daemon that runs an old version. The supervisor starts the new one.'
+    fi
+    exit 0
+  fi
+
+  connect_if_needed
+  if [[ "$supervisor_current" == 0 ]]; then
+    mkdir -p "$(dirname "$supervisor")"
+    install -m 0700 "$source_supervisor" "$supervisor"
+    printf 'Installed %s\n' "$supervisor"
+    if supervisor_running; then
+      pkill -TERM -u "$(id -u)" -f "bash $supervisor\$" || true
+      for _ in $(seq 20); do supervisor_running || break; sleep 0.5; done
+    fi
+  fi
+  if ! supervisor_running; then
+    # setsid detaches the loop from this terminal, so it outlives the login.
+    setsid nohup "$supervisor" >/dev/null 2>&1 < /dev/null &
+    for _ in $(seq 20); do daemon_current && break; sleep 0.5; done
+    if daemon_current; then echo 'Started the tokenburnmarket supervisor and daemon.'
+    else echo "Started the supervisor. Check ~/.local/state/tokenburnmarket/daemon.log if no daemon runs."
+    fi
+  elif daemon_stale; then
+    pkill -TERM -u "$(id -u)" -f "$daemon_pattern" || true
+    echo 'Stopped the daemon that ran an old version. The supervisor starts the new one within 30 seconds.'
+  fi
+  boot_note
+  exit 0
 fi
 
 # The definition between "Save this as PATH" and "Then load it:" or "Then enable it:".
@@ -46,10 +129,6 @@ expected_service() {
     END { for (i = 1; i < n; i++) print lines[i] }'
 }
 
-connected=1
-# The check must not ask npm for a newer version. Only status asks, and
-# `daemon install` would copy an exported switch into the service.
-if TBM_NO_UPDATE_CHECK=1 tbm status | grep -q '^Not connected\.'; then connected=0; fi
 current=''
 [[ ! -f "$service" ]] || current="$(cat "$service")"
 expected="$(expected_service)"
@@ -87,15 +166,7 @@ if [[ "$dry_run" == 1 ]]; then
   exit 0
 fi
 
-if [[ "$connected" == 0 ]]; then
-  if [[ ! -t 0 ]]; then
-    echo 'tokenburnmarket sign-in needs a terminal. Rerun setup interactively, or run ./bin/setup-tokenburnmarket.' >&2
-    exit 20
-  fi
-  echo 'Connecting this machine to tokenburnmarket. Approve the code in the browser.'
-  tbm connect
-fi
-
+connect_if_needed
 if [[ "$current" != "$expected" ]]; then
   tbm daemon install
 fi

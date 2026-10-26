@@ -77,6 +77,12 @@ Install `bin/t3-dev-supervise` there as `~/.local/bin/t3-supervise` (mode 0700).
 container starts it as that user. Changes take effect on a container restart;
 port-mapping changes require a project rebuild. Do not delete persistent volumes.
 
+The tokenburnmarket sync daemon also needs a supervisor here. The setup step
+`tokenburnmarket` signs in, installs `bin/tokenburnmarket-supervise` as
+`~/.local/bin/tokenburnmarket-supervise`, and starts it. The example compose
+file starts it after a container restart. Copy that line into the compose file
+on the NAS. The daemon logs to `~/.local/state/tokenburnmarket/daemon.log`.
+
 ### T3 install and updates
 
 Install T3 with the official script, not the `t3` npm package:
