@@ -32,7 +32,7 @@ NSAutomaticQuoteSubstitutionEnabled = true
 NSAutomaticSpellingCorrectionEnabled = false
 KB_SpellingLanguage = { KB_SpellingLanguageIsAutomatic = true }
 NSSpellCheckerAutomaticallyIdentifiesLanguages = true
-"com.apple.keyboard.fnState" = true
+"com.apple.keyboard.fnState" = false
 "com.apple.mouse.scaling" = 3.0
 "com.apple.scrollwheel.scaling" = 1.7
 "com.apple.swipescrolldirection" = true
