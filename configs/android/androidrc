@@ -1,0 +1,2 @@
+# Android CLI reads one option per line. sdkmanager 23 and later runs through it.
+--no-metrics

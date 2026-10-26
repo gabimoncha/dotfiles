@@ -16,6 +16,7 @@ The environment values are in [telemetry.sh](../configs/zsh/telemetry.sh). The e
 
 | Tool | Setup action | Evidence |
 | --- | --- | --- |
+| android-cli | `--no-metrics` in ~/.androidrc, linked from configs/android/androidrc. sdkmanager 23 and later runs through the Android CLI. | [Official source](https://developer.android.com/tools/agents/android-cli) |
 | bun | `DO_NOT_TRACK=1` | [Official source](https://bun.sh/docs/runtime/environment-variables) |
 | cargo-binstall | `BINSTALL_DISABLE_TELEMETRY=true` | [Official source](https://github.com/cargo-bins/cargo-binstall/blob/main/README.md) |
 | claude-code | `DISABLE_TELEMETRY=1`, `DISABLE_ERROR_REPORTING=1`, `CLAUDE_CODE_ENABLE_TELEMETRY=0`, `CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=1`; The same values in the `env` key of ~/.claude/settings.json, merged from configs/claude/settings.json. | [Official source](https://code.claude.com/docs/en/data-usage#telemetry-services) |

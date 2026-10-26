@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Install the Xcode, iOS, and Android toolchain. Each step skips finished work,
+# Install the Xcode, iOS, and Android toolchain, including the Android SDK
+# packages in apps/android-sdk.txt. Each step skips finished work,
 # so a rerun continues after a failure. It runs without prompts while a sudo
 # timestamp is valid (see bin/sudo-grant) and the App Store is signed in.
 
@@ -105,6 +106,80 @@ install_android_studio() {
   run runtime_with_lock homebrew brew install --cask android-studio
 }
 
+# Google's Command Line Tools 23.0 (build 16111833), checked by SHA-256. They
+# only bootstrap: sdkmanager then installs its own copy into ANDROID_HOME, so
+# the SDK has one location. Homebrew's cask would keep a second SDK root.
+android_bootstrap_zip() {
+  case "$(uname -m)" in
+    arm64) printf 'commandlinetools-mac_arm64-16111833_latest.zip 58da8f215781cc0208743e88b65ae259780c55e7eb40e50373d377cf369232d6\n' ;;
+    x86_64) printf 'commandlinetools-mac_x86_64-16111833_latest.zip 7e601c04e7173754b3d051a87bb4c3a8243c65a9d7bfa9356ed6499fb8953fa3\n' ;;
+    *) return 1 ;;
+  esac
+}
+
+# Prints the path of a usable sdkmanager. Callers remove the bootstrap folder.
+android_sdkmanager() {
+  local zip sha256 actual
+  if [[ -x "$mobile_sdkmanager" ]]; then
+    printf '%s\n' "$mobile_sdkmanager"
+    return 0
+  fi
+  read -r zip sha256 < <(android_bootstrap_zip) || return 1
+  log "Downloading the Android Command Line Tools to bootstrap sdkmanager" >&2
+  curl -fsSL --retry 3 -o "${android_bootstrap_dir}/${zip}" "https://dl.google.com/android/repository/${zip}" || return 1
+  actual="$(shasum -a 256 "${android_bootstrap_dir}/${zip}" | awk '{ print $1 }')"
+  if [[ "$actual" != "$sha256" ]]; then
+    warn "${zip} has SHA-256 ${actual}, not ${sha256}."
+    return 1
+  fi
+  unzip -q "${android_bootstrap_dir}/${zip}" -d "$android_bootstrap_dir" || return 1
+  printf '%s\n' "${android_bootstrap_dir}/cmdline-tools/bin/sdkmanager"
+}
+
+install_android_sdk() {
+  local package sdkmanager missing=() status=0
+
+  while IFS= read -r package; do
+    mobile_android_package_installed "$package" || missing+=("$package")
+  done < <(mobile_android_packages)
+  if [[ "${#missing[@]}" -eq 0 ]] && mobile_android_license_accepted; then
+    log "Android SDK packages in apps/android-sdk.txt are installed"
+    return 0
+  fi
+  if [[ ! -x "${mobile_java_home}/bin/java" ]]; then
+    warn "sdkmanager needs Java at ${mobile_java_home}. Install the zulu@17 cask from the Brewfile."
+    return 1
+  fi
+  if ! mobile_android_metrics_off && [[ "$dry_run" -eq 0 ]]; then
+    warn "~/.androidrc does not turn off Android CLI metrics. Run ./bin/link-dotfiles first."
+    return 1
+  fi
+  if [[ "$dry_run" -eq 1 ]]; then
+    log "dry-run: would accept the Android SDK licenses and install into ${mobile_android_sdk_root}: ${missing[*]:-none}"
+    return 0
+  fi
+  android_bootstrap_dir="$(mktemp -d)"
+  if ! sdkmanager="$(android_sdkmanager)"; then
+    warn "Could not bootstrap sdkmanager. Check the network, then rerun ./bin/install-mobile-dev."
+    rm -rf "$android_bootstrap_dir"
+    return 1
+  fi
+  mkdir -p "$mobile_android_sdk_root"
+  log "Accepting the Android SDK licenses"
+  # yes stops with SIGPIPE when sdkmanager exits, so ignore its status.
+  { yes 2>/dev/null || true; } |
+    JAVA_HOME="$mobile_java_home" ANDROID_HOME="$mobile_android_sdk_root" \
+      "$sdkmanager" --sdk_root="$mobile_android_sdk_root" --licenses >/dev/null || status=1
+  if [[ "$status" -eq 0 && "${#missing[@]}" -gt 0 ]]; then
+    log "Installing Android SDK packages: ${missing[*]}"
+    JAVA_HOME="$mobile_java_home" ANDROID_HOME="$mobile_android_sdk_root" \
+      "$sdkmanager" --sdk_root="$mobile_android_sdk_root" --install "${missing[@]}" || status=1
+  fi
+  rm -rf "$android_bootstrap_dir"
+  [[ "$status" -eq 0 ]] || warn "sdkmanager failed. Rerun ./bin/install-mobile-dev; it skips installed packages."
+  return "$status"
+}
+
 install_formulae() {
   local formula missing=0
 
@@ -142,7 +217,7 @@ if [[ "$dry_run" -eq 0 ]] && sudo -n true 2>/dev/null; then
   (while kill -0 "$owner" 2>/dev/null && sudo -n true; do sleep 60; done) >/dev/null 2>&1 &
 fi
 
-# Later Xcode steps need the earlier ones. Android Studio does not need Xcode.
+# Later Xcode steps need the earlier ones. The Android steps do not need Xcode.
 if install_xcode && configure_xcode; then
   install_ios_platform || status=1
   install_formulae || status=1
@@ -150,6 +225,7 @@ else
   status=1
 fi
 install_android_studio || status=1
+install_android_sdk || status=1
 
 if [[ "$dry_run" -eq 1 ]]; then
   exit "$status"

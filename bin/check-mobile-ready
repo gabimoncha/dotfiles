@@ -44,6 +44,40 @@ else
   fail "Android Studio is not installed"
 fi
 
+if [[ -x "${mobile_java_home}/bin/java" ]]; then
+  pass "JDK for Android builds: ${mobile_java_home}"
+else
+  fail "no JDK at ${mobile_java_home}"
+fi
+while IFS= read -r package; do
+  if mobile_android_package_installed "$package"; then
+    pass "Android SDK package ${package} is installed"
+  else
+    fail "Android SDK package ${package} is not in ${mobile_android_sdk_root}"
+  fi
+done < <(mobile_android_packages)
+if mobile_android_metrics_off; then
+  pass "Android CLI metrics are off in ~/.androidrc"
+else
+  fail "~/.androidrc does not turn off Android CLI metrics"
+fi
+if mobile_android_license_accepted; then
+  pass "Android SDK license is accepted"
+else
+  fail "Android SDK license is not accepted"
+fi
+if adb_version="$("$mobile_adb" version 2>/dev/null | head -n 1)" && [[ -n "$adb_version" ]]; then
+  pass "adb runs: ${adb_version}"
+else
+  fail "adb does not run from ${mobile_adb}"
+fi
+# A second adb, such as Homebrew's android-platform-tools, fights over the
+# device server. Skip this when the SDK is not on PATH, as in setup.
+adb_on_path="$(command -v adb 2>/dev/null || true)"
+if [[ -n "$adb_on_path" && "$adb_on_path" != "$mobile_adb" ]]; then
+  fail "adb on PATH is ${adb_on_path}, not ${mobile_adb}"
+fi
+
 if command -v brew >/dev/null 2>&1; then
   while IFS= read -r formula; do
     if mobile_formula_installed "$formula"; then
