@@ -90,7 +90,7 @@ log "Applying display sleep defaults"
 sudo pmset -b displaysleep 0
 sudo pmset -c displaysleep 0
 
-log "Activating the Spotlight shortcut changes for Raycast"
+log "Activating the Spotlight, Minimize, and Arrange shortcut changes"
 apply_symbolic_hotkey_changes
 
 log "Reloading affected macOS services"
