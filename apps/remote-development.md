@@ -245,7 +245,7 @@ On Macs, use the private Tailscale HTTPS URL. In `t3-dev`, use
 
 | Client | Private settings on each machine |
 | --- | --- |
-| Codex | Set `model_provider = "cliproxyapi"` and `model_providers.cliproxyapi.base_url` to the URL plus `/v1` in `~/.codex/config.toml`. Set both together. Supply the proxy client key as `CLIPROXYAPI_API_KEY` in the process environment. |
+| Codex in T3 | Set `model_providers.cliproxyapi.base_url` to the URL plus `/v1` in `~/.codex/config.toml`. Supply the proxy client key as `CLIPROXYAPI_API_KEY` in the T3 process environment. The shared T3 launch arguments select the proxy. |
 | Claude Code | In `~/.claude/settings.json`, set `env.ANTHROPIC_BASE_URL` to the URL, `env.ANTHROPIC_AUTH_TOKEN` to the client key, and `env.CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY` to `"1"`. |
 
 The tracked Codex provider uses native `env_key` authentication. Remove an old
@@ -258,8 +258,24 @@ runs `launchctl setenv` at login for apps opened from the Dock. Reopen an app
 that was already running when the environment changed.
 Remove conflicting Claude auth helpers and cloud-provider overrides. Restart
 clients after configuration.
-`./bin/save-settings` excludes the private URLs, provider selection, and tokens.
+`./bin/save-settings` excludes the private URLs and tokens.
 Shared settings still use `./bin/link-dotfiles` and `./bin/save-settings`.
+
+T3's shared settings target `~/.t3/userdata/settings.json` on macOS and Linux.
+They preserve `-c thread_unload_delay_secs=60` and add
+`-c 'model_provider="cliproxyapi"'`. The global Codex provider is `openai` so
+the desktop app can use ChatGPT sign-in. To migrate an existing host, first
+apply the T3 settings, then the Codex settings:
+
+```bash
+./bin/link-dotfiles --dry-run ~/.t3/userdata/settings.json ~/.codex/config.toml
+./bin/link-dotfiles ~/.t3/userdata/settings.json
+./bin/link-dotfiles ~/.codex/config.toml
+```
+
+Apply while no one edits T3 settings. Start a fresh T3 provider process and
+reopen the desktop app after the migration. For a terminal Codex session that
+needs the proxy, use `codex -c 'model_provider="cliproxyapi"'`.
 
 Verify both agents from outside the LAN, including tool calls, account selection,
 and token refresh. After that, remove the old Mac proxy with

@@ -14,7 +14,7 @@ before changing ownership, bootstrap boundaries, or other design decisions.
 | Entries for every host | `mise.toml` |
 | Entries for one platform | `mise.macos.toml` or `mise.linux.toml` |
 | Entries for one machine | the profile file: `mise.pro.toml`, `mise.air.toml`, `mise.container.toml`, or `mise.vm.toml` |
-| Agent settings that sync between machines | the merge sources in `configs/claude/` and `configs/codex/`; save them with `./bin/save-settings` |
+| Agent and T3 settings that sync between machines | the merge sources in `configs/claude/`, `configs/codex/`, and `configs/t3/`; save them with `./bin/save-settings` |
 | Which agent settings sync | `configs/<app>/sync-keys`: one `public` rule per setting, including each key of the merge source, and `private` rules for sections |
 | Agent rules for every host | `configs/agents/instructions.md` |
 | Agent rules for one host | `configs/agents/<profile>.md` |

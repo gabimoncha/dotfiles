@@ -1,0 +1,10 @@
+{
+  "providerInstances": {
+    "codex": {
+      "driver": "codex",
+      "config": {
+        "launchArgs": "-c thread_unload_delay_secs=60 -c 'model_provider=\"cliproxyapi\"'"
+      }
+    }
+  }
+}

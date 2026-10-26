@@ -1,0 +1,7 @@
+# Only these T3 settings return to Git through bin/save-settings.
+# Each public rule names one setting. Unlisted settings are not saved.
+public .providerInstances.codex.driver
+public .providerInstances.codex.config.launchArgs
+private .providerInstances.codex.config.binaryPath
+private .providerInstances.codex.config.homePath
+private .providerInstances.codex.config.shadowHomePath

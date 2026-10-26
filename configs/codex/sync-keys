@@ -4,6 +4,7 @@
 # public rule. Settings on neither list are counted, not saved: run
 # ./bin/save-settings --show-new to list them.
 public .model
+public .model_provider
 public .model_reasoning_effort
 public .service_tier
 public .approval_policy
@@ -74,8 +75,7 @@ private .sandbox_mode
 public .model_providers.cliproxyapi.name
 public .model_providers.cliproxyapi.wire_api
 public .model_providers.cliproxyapi.env_key
-# Select the proxy only after its private endpoint and credential are available.
-private .model_provider
+# T3 selects the proxy through its launch arguments. Its connection stays local.
 private .model_providers.cliproxyapi.base_url
 private .model_providers.cliproxyapi.http_headers
 private .model_providers.cliproxyapi.env_http_headers

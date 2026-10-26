@@ -22,9 +22,9 @@ nvim/                 the Neovim config, a separate repository
 
 Most files in `configs/` are links in HOME, so an app's change to its file is a
 change in this repository. Commit it to share it with your other machines.
-Agent settings are the exception. The agents write private paths into
-`~/.claude/settings.json` and `~/.codex/config.toml`, so mise merges the keys
-of `configs/claude/settings.json` and `configs/codex/config.toml` into them.
+Agent and T3 settings are the exception. These apps write private data into
+their settings, so mise merges selected keys from `configs/claude/`,
+`configs/codex/`, and `configs/t3/` into the live files.
 `./bin/save-settings` copies your changes back without the private keys. See
 [Agent settings](#agent-settings).
 
@@ -69,23 +69,22 @@ and `doctor`. For example, run `mise run dot:apply -- --dry-run`.
 
 ### Agent settings
 
-Claude Code and Codex write private data into `~/.claude/settings.json` and
-`~/.codex/config.toml`: project paths, hook state, and MCP server details. So
-these files are merges, not links. After you change a setting in one of
-these apps, save it into the repository and review the result:
+Claude Code, Codex, and T3 keep private data in `~/.claude/settings.json`,
+`~/.codex/config.toml`, and `~/.t3/userdata/settings.json`. These files are
+merges, not links. After you change a shared setting in an app, save it into
+the repository and review the result:
 
 ```bash
 ./bin/save-settings --dry-run
 ./bin/save-settings
-git diff configs/claude configs/codex
+git diff configs/claude configs/codex configs/t3
 ```
 
 `configs/<app>/sync-keys` marks settings `public` or `private`. A public rule
 names one setting, such as `.theme`. A private rule can name a whole section,
 such as `.projects`. Each key in the repository file needs a public rule, so
-add one when you add a key to `configs/claude/settings.json` or
-`configs/codex/config.toml`. `bin/save-settings` saves only the public
-settings. It counts the settings that are on neither list and does not save
+add one when you add a key to a shared settings source. `bin/save-settings`
+saves only the public settings. It counts settings on neither list and does not save
 them. Run `./bin/save-settings --show-new` to list them, add each one to the
 list, then save again.
 
@@ -99,6 +98,18 @@ before you change a setting: `bin/save-settings` refuses to save until this
 machine has merged the current repository file. A merge never removes a key.
 A key that you delete in an app stays on the other machines, and a later save
 from one of them puts it back. Delete it on every machine, or mark it private.
+
+T3 shares only the default Codex instance's driver and launch arguments.
+The arguments keep the 60-second unload delay and select CLIProxyAPI. The
+global Codex provider stays `openai`, so the desktop app can use ChatGPT
+sign-in. Configure each host's private proxy URL and key before starting
+Codex in T3. See [the proxy setup](apps/remote-development.md#nas-agent-proxy).
+
+T3's `launchArgs` is one string. A merge replaces the complete string, so keep
+all shared arguments in it. Apply settings while no one changes them in T3.
+T3 reloads the file, but existing Codex processes keep their startup arguments.
+Start a fresh provider process to use changed arguments. The merge targets
+the default T3 home; a custom `T3CODE_HOME` needs a matching file entry.
 
 ## Update a machine
 

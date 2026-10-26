@@ -39,9 +39,10 @@ min_version = { soft = "2026.10.19" }
 "~/bin/harness" = { source = "configs/harness/harness", mode = "symlink" }
 "~/.claude/CLAUDE.md" = { source = "configs/agents/instructions.md", mode = "symlink" }
 "~/.codex/AGENTS.md" = { source = "configs/agents/instructions.md", mode = "symlink" }
-# The agents rewrite these files. mise sets only the keys in the source files.
+# These apps rewrite their settings. mise sets only the keys in the sources.
 "~/.claude/settings.json/dotfiles" = { source = "configs/claude/settings.json", merge = true }
 "~/.codex/config.toml/dotfiles" = { source = "configs/codex/config.toml", merge = true }
+"~/.t3/userdata/settings.json/dotfiles" = { source = "configs/t3/settings.json", merge = true }
 
 [bootstrap.repos]
 "~/.oh-my-zsh" = { url = "https://github.com/ohmyzsh/ohmyzsh.git", depth = 1 }

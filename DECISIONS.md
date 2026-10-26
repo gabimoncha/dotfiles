@@ -140,14 +140,15 @@ link where a real file is, and one refused entry stops the whole apply.
   in `bin/configure-telemetry` run only when `$HOME` is the account's home
   folder, so a test with a temporary HOME cannot change them.
 
-Agent settings remain regular files because the agents rewrite them, and they
+Agent and T3 settings remain regular files because the apps rewrite them and
 write private data into them: project paths, hook state, and MCP server
 details. A link would publish that data with the next commit. A Git filter
 cannot fix that either: each pull would overwrite the live file and lose the
 machine's own keys. So the sync has two directions. `bin/link-dotfiles` merges
-the keys of `configs/claude/settings.json` and `configs/codex/config.toml` into
-the live files and keeps every other key. `bin/save-settings` copies the
-settings that `configs/<app>/sync-keys` marks public back into the source.
+the keys of `configs/claude/settings.json`, `configs/codex/config.toml`, and
+`configs/t3/settings.json` into the live files and keeps every other key.
+`bin/save-settings` copies the settings that `configs/<app>/sync-keys` marks
+public back into the source.
 mise 2026.10.18 cannot do this step: `mise dot add` refuses a merged file, and
 `mise dot track` saves whole files, private keys included, to its own history. A
 list of public settings, not a list of private ones, decides what is saved:
@@ -308,9 +309,12 @@ The Compose example publishes only on NAS loopback and joins the existing
 development network for `t3-dev` clients. The NAS's existing Tailscale Serve
 provides remote HTTPS access. Dotfiles keeps public provider
 settings and deployment examples. Private client URLs, keys, and the live
-server configuration stay outside Git. Codex uses `env_key` for its proxy key;
-its provider selection and URL stay local. Claude uses private native `env`
-settings. See [NAS agent proxy](apps/remote-development.md#nas-agent-proxy).
+server configuration stay outside Git. Codex uses `env_key` for its proxy key.
+T3's shared launch arguments select the proxy. The global Codex provider stays
+`openai` so the desktop app can use ChatGPT sign-in. T3 shares only the default
+Codex instance's driver and launch arguments; its other state stays local.
+Claude uses private native `env` settings.
+See [NAS agent proxy](apps/remote-development.md#nas-agent-proxy).
 
 ## Portable state
 
