@@ -302,11 +302,11 @@ Neovim is a separate submodule. Its plugins install at editor startup.
 
 CLIProxyAPI uses the official image in a separate NAS Compose project. Docker
 owns installation, restarts, and logs. Separate mounts keep provider OAuth
-files outside `t3-dev`, where coding agents have passwordless sudo. Proxy
+files outside `nasbox`, where coding agents have passwordless sudo. Proxy
 updates do not require a restart of the development container.
 
 The Compose example publishes only on NAS loopback and joins the existing
-development network for `t3-dev` clients. The NAS's existing Tailscale Serve
+development network for `nasbox` clients. The NAS's existing Tailscale Serve
 provides remote HTTPS access. Dotfiles keeps public provider
 settings and deployment examples. Private client URLs, keys, and the live
 server configuration stay outside Git. Codex uses `env_key` for its proxy key.

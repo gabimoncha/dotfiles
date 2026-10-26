@@ -64,8 +64,8 @@ review subsequent edits first. Remove the copied key only if nothing else uses i
 
 ## NAS T3 container
 
-`local/t3-dev.compose.yaml.example` is a sanitized deployment example.
-Keep the machine-specific copy under ignored `local/t3-dev/` and
+`local/nasbox.compose.yaml.example` is a sanitized deployment example.
+Keep the machine-specific copy under ignored `local/nasbox/` and
 upload its `compose.yaml` to the existing NAS Container Manager project folder.
 Replace the documentation-only LAN address and public-key placeholder first.
 Do not commit actual host addresses, identities, keys, or pairing links.
@@ -82,6 +82,15 @@ The tokenburnmarket sync daemon also needs a supervisor here. The setup step
 `~/.local/bin/tokenburnmarket-supervise`, and starts it. The example compose
 file starts it after a container restart. Copy that line into the compose file
 on the NAS. The daemon logs to `~/.local/state/tokenburnmarket/daemon.log`.
+
+A restart keeps the container and its system packages. A build makes a new
+container from the image, which removes what apt installed. At each start, the
+entrypoint runs `bin/container-system-packages` in the background. In a new
+container, it installs the setup prerequisites and the packages in
+`[bootstrap.packages]`, and sets the zsh login shell. A marker in
+`/var/lib/dotfiles/` makes a restart skip it, and a failed run tries again at
+the next start. It logs to `~/.local/state/dotfiles/container-system-packages.log`.
+Add a system package to `mise.container.toml`, not with a manual `apt-get`.
 
 ### T3 install and updates
 
@@ -148,8 +157,13 @@ without auditing existing launchers and settings.
 Use `User box` in the local SSH alias. Until that local setting is updated,
 `ssh box@HOST_ALIAS` overrides the old username. T3's direct routes do not use
 an SSH username; any manually configured SSH route also needs the new user.
-The container/project remain `t3-dev`, and the base image remains Node.js on
-Debian. This account rename does not change installed runtimes or privileges.
+The container and its hostname are `nasbox`. The Container Manager project and
+its folder `/volume1/docker/t3-dev` keep the old name, so the volumes
+`t3-dev_dev-home` and `t3-dev_ssh-host-keys` and the project network keep it
+too. The image is `node:latest` with `pull_policy: always`, so each build gets
+the newest Node.js image on the current Debian release. The box does not run
+the image's Node. This account rename does not change installed runtimes or
+privileges.
 
 ### Passwordless sudo inside the container
 
@@ -212,7 +226,7 @@ update from the app restarts it, and running agent tasks stop.
 
 Deploy the [official image](https://help.router-for.me/docker/docker-compose.html)
 as a separate Container Manager project. Docker installs and restarts it.
-The NAS keeps its configuration and OAuth files outside `t3-dev`.
+The NAS keeps its configuration and OAuth files outside `nasbox`.
 
 1. Copy `local/cliproxyapi.compose.yaml.example` to ignored
    `local/cliproxyapi/docker-compose.yml`. Copy `local/cliproxyapi.config.yaml.example`
@@ -220,7 +234,7 @@ The NAS keeps its configuration and OAuth files outside `t3-dev`.
 2. Replace both key placeholders with different keys from your secret manager.
    Keep the configuration mode 0600 and the config and auth folders mode 0700.
 3. Set `NAS_DEV_NETWORK` in this folder's private `.env` to the existing Docker
-   network used by `t3-dev`, as shown in Container Manager.
+   network of the `t3-dev` project, as shown in Container Manager.
 4. Upload this private folder to the NAS and create its Container Manager
    project. Keep `config/` and `auths/` on persistent NAS storage. Use the logs
    and terminal in Container Manager to debug it. Change the pinned image tag
@@ -230,7 +244,7 @@ The API port binds to NAS loopback. Use the NAS's existing
 [Tailscale Serve](https://tailscale.com/kb/1312/serve) for HTTPS access from the
 tailnet. On the NAS host, inspect `tailscale serve status` first. If port 8443
 is unused, configure `tailscale serve --bg --https=8443 http://127.0.0.1:8317`.
-These are host commands, not commands inside `t3-dev`. Keep the returned URL
+These are host commands, not commands inside `nasbox`. Keep the returned URL
 private. Verify tailnet access before activating clients; NAS Serve setup has
 not been applied by dotfiles. Do not enable public Funnel access.
 The first Serve command can print an approval URL and wait. Open that URL to
@@ -246,7 +260,7 @@ use any eligible account; priority alone does not prevent fallback.
 
 Configure only Codex and Claude Code after the proxy is reachable:
 
-On Macs, use the private Tailscale HTTPS URL. In `t3-dev`, use
+On Macs, use the private Tailscale HTTPS URL. In `nasbox`, use
 `http://cliproxyapi:8317` through the shared Docker network.
 
 | Client | Private settings on each machine |

@@ -1,6 +1,6 @@
 # Host: NAS development container
 
-You are on `t3-dev`, a Debian 12 Docker container on a Synology NAS. The owner's
+You are on `nasbox`, a Debian Docker container on a Synology NAS. The owner's
 Mac is the main machine. This box is for code generation, review, and
 automation.
 
@@ -12,6 +12,8 @@ automation.
   Commands run without a sandbox, and the container is the only boundary.
 - There is no systemd and no Docker. T3 runs under `~/.local/bin/t3-supervise`,
   and the tokenburnmarket daemon under `~/.local/bin/tokenburnmarket-supervise`.
+- A rebuild makes a new container and removes what apt installed. Add system
+  packages to `mise.container.toml` in the dotfiles, not with `apt-get` alone.
 - Only Linux builds run here. iOS, Xcode, simulators, Android emulators, and
   macOS apps need the Mac.
 

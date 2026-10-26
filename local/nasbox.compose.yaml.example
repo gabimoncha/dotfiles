@@ -1,9 +1,14 @@
 # Copy to a private compose.yaml; replace documentation-only address and public key.
+# The Container Manager project and its folder keep the name t3-dev, so the
+# volumes and the network keep their t3-dev_ names.
 services:
   dev:
-    image: node:24-bookworm
-    container_name: t3-dev
-    hostname: t3-dev
+    # mise installs Node in the home volume. The image gives Debian and build tools.
+    image: node:latest
+    # A build pulls the newest image. A restart keeps the current one.
+    pull_policy: always
+    container_name: nasbox
+    hostname: nasbox
     restart: unless-stopped
     init: true
     dns:
@@ -63,6 +68,9 @@ services:
         su - box -c 'sudo -n id -u' | grep -qx 0
         printf '%s\n' 'box passwordless sudo verified'
         test -f /var/lib/t3-ssh/ssh_host_ed25519_key || ssh-keygen -q -t ed25519 -N '' -f /var/lib/t3-ssh/ssh_host_ed25519_key
+        if test -x /home/box/development/dotfiles/bin/container-system-packages; then
+          su - box -c /home/box/development/dotfiles/bin/container-system-packages &
+        fi
         if test -x /home/box/.local/bin/t3-supervise; then
           su - box -c /home/box/.local/bin/t3-supervise &
         fi

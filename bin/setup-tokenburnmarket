@@ -74,7 +74,7 @@ if [[ "$mode" == supervisor ]]; then
   boot_note() {
     tr '\0' ' ' < /proc/1/cmdline 2>/dev/null | grep -q tokenburnmarket-supervise && return 0
     echo 'The container does not start the supervisor after a restart. Add its line from'
-    echo 'local/t3-dev.compose.yaml.example to the compose file on the host.'
+    echo 'local/nasbox.compose.yaml.example to the compose file on the host.'
   }
 
   if [[ "$connected" == 1 && "$supervisor_current" == 1 ]] && supervisor_running && ! daemon_stale; then

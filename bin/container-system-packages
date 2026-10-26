@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Restores the system packages and the login shell in a new NAS container.
+# The container entrypoint starts this as box. A rebuild or a new image makes a
+# new container, which loses what apt installed: the setup prerequisites, the
+# packages in [bootstrap.packages], and the zsh login shell. The home volume
+# keeps the mise tools. A marker in the container's own file system makes a
+# restart skip this. A failed run writes no marker, so the next start retries.
+set -euo pipefail
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+marker=/var/lib/dotfiles/container-system-packages
+case "${1:-}" in
+  --dry-run)
+    if [[ -f "$marker" ]]; then echo "This container has its system packages: $marker"
+    else echo 'Would install the setup prerequisites, the bootstrap packages, and the login shell.'
+    fi
+    exit 0 ;;
+  '') ;;
+  *) echo 'Usage: container-system-packages [--dry-run]' >&2; exit 2 ;;
+esac
+[[ "$(uname -s)" == Linux && "$(id -u)" != 0 ]] || {
+  echo 'Run this as the non-root Linux development user.' >&2
+  exit 1
+}
+[[ ! -f "$marker" ]] || exit 0
+
+logs="$HOME/.local/state/dotfiles"
+mkdir -p "$logs"
+exec >> "$logs/container-system-packages.log" 2>&1
+printf '%s: restoring system packages\n' "$(date -u '+%Y-%m-%d %H:%M:%S')"
+"$repo_root/bin/linux-prerequisites"
+"$repo_root/bin/repo-mise" bootstrap --only packages,user --yes
+sudo -n install -d -m 0755 "$(dirname "$marker")"
+sudo -n touch "$marker"
+printf '%s: done\n' "$(date -u '+%Y-%m-%d %H:%M:%S')"

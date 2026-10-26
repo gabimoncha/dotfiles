@@ -25,4 +25,4 @@ services:
 networks:
   development:
     external: true
-    name: ${NAS_DEV_NETWORK:?Set NAS_DEV_NETWORK to the existing t3-dev Docker network}
+    name: ${NAS_DEV_NETWORK:?Set NAS_DEV_NETWORK to the existing network of the t3-dev project}

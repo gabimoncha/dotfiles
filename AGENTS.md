@@ -50,7 +50,7 @@ run, and the mise tool list. A change that works only on the Mac breaks Linux.
   GNU tools. Where the tools differ (`sed -i`, `stat`, `date`, `shasum` and
   `sha256sum`), branch on `uname -s`, as `standalone_sha256` in
   `bin/lib/standalone.sh` does. Setup's Ruby helpers run on `/usr/bin/ruby`:
-  2.6 on macOS and 3.1 on Debian 12.
+  2.6 on macOS, 3.1 on Debian 12, and 3.3 on Debian 13.
 - Gate macOS-only behavior: `$OSTYPE == darwin*` in zsh, `uname -s` in Bash,
   `os = "macos"` on a mise tool, and `mise.macos.toml` for file entries.
 - Linux hosts have no Homebrew, GUI apps, launchd, or Keychain. A container

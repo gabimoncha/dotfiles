@@ -1,4 +1,4 @@
-# Profile: the NAS development container (Debian 12, user box). It has no
+# Profile: the NAS development container nasbox (Debian, user box). It has no
 # systemd, and its kernel cannot start the agent sandboxes.
 
 [bootstrap.packages]
