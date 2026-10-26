@@ -1740,20 +1740,20 @@ url = "https://github.com/coollabsio/coolify-cli/releases/download/v1.10.0/cooli
 url_api = "https://api.github.com/repos/coollabsio/coolify-cli/releases/assets/631674188"
 
 [[tools."github:entireio/cli"]]
-version = "0.11.6"
+version = "0.12.0"
 backend = "github:entireio/cli"
 specifiers = ["latest"]
 
 [tools."github:entireio/cli"."platforms.linux-x64"]
-checksum = "sha256:1272cf16a81d30678dd9cf2597e9298dbf6481ada9b81215dc746afb0e79cab0"
-checksum_source = "mise-versions"
-url = "https://github.com/entireio/cli/releases/download/v0.11.6/entire_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/entireio/cli/releases/assets/660493045"
+checksum = "sha256:28aa1664a990507c7063a9437aa896f3b1930447d03d3711a7d04629299bea18"
+url = "https://github.com/entireio/cli/releases/download/v0.12.0/entire_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/entireio/cli/releases/assets/663186338"
 
 [tools."github:entireio/cli"."platforms.macos-arm64"]
-checksum = "sha256:bdb3406e393047b6d251b10d95cbaa75eda1617e8052b8150ceeb8ec72f2b1ec"
-url = "https://github.com/entireio/cli/releases/download/v0.11.6/entire_darwin_arm64.tar.gz"
-url_api = "https://api.github.com/repos/entireio/cli/releases/assets/660493112"
+checksum = "sha256:bb56210fc3474b707eeeda1ccbefceab75d955844a1a8de9c570d9eb62c3d741"
+checksum_source = "mise-versions"
+url = "https://github.com/entireio/cli/releases/download/v0.12.0/entire_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/entireio/cli/releases/assets/663186409"
 
 [[tools."github:flowcopilot/aether"]]
 version = "0.2.9"
@@ -2207,7 +2207,7 @@ backend = "npm:agent-device"
 specifiers = ["latest"]
 
 [[tools."npm:cf"]]
-version = "1.0.0-beta.21"
+version = "1.0.0-beta.23"
 backend = "npm:cf"
 specifiers = ["latest"]
 
@@ -2217,7 +2217,7 @@ backend = "npm:ctx7"
 specifiers = ["latest"]
 
 [[tools."npm:eas-cli"]]
-version = "25.3.0"
+version = "26.0.0"
 backend = "npm:eas-cli"
 specifiers = ["latest"]
 
@@ -2550,7 +2550,7 @@ signer = "sigstore-oidc:https://github.com/max-sixty/worktrunk/.github/workflows
 repository_ids = { repository = "1078528927" }
 
 [[tools.wrangler]]
-version = "4.151.3"
+version = "4.152.0"
 backend = "npm:wrangler"
 specifiers = ["latest"]
 
