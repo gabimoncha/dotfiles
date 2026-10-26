@@ -8,7 +8,9 @@ pnpm = "latest"
 npm = "12.2.1"
 node = "26.12.1"
 rust = "latest"
-cargo-binstall = "1.26.0"
+# Security exception to the four-day delay: 1.26.1 updates gix and
+# rustls-webpki for GHSA-q54r-jf2p-rfr2 and CVE-2026-111943.
+cargo-binstall = "1.26.1"
 sccache = "latest"
 direnv = "latest"
 bun = "1.4.4"
