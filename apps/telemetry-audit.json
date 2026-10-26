@@ -3397,6 +3397,25 @@
       "setup_actions": {}
     },
     {
+      "id": "android_cli",
+      "tool": "android-cli",
+      "source": "setup",
+      "kind": "cli",
+      "research": {
+        "tool": "Android CLI (sdkmanager 23 and later)",
+        "status": "supported",
+        "mechanism": "Pass --no-metrics to disable metrics and crash reports. ~/.androidrc supplies default options, one per line; lines that start with # are skipped. A --no-metrics line applies to every run, including sdkmanager, which delegates to the Android CLI.",
+        "sources": [
+          "https://developer.android.com/tools/agents/android-cli"
+        ],
+        "notes": "The ~/.androidrc parsing was read from the Android CLI bundle main.jar (AndroidDefaultValueProvider), because the documentation does not say that --no-metrics works there. sdkmanager from Command Line Tools 23.0 downloads the Android CLI into ~/.android/bin and ~/.android/cli on first use, with metrics on by default. SDK downloads and the CLI update check are separate traffic. Android Studio usage sharing is a separate manual control.",
+        "checked_date": "2026-10-26"
+      },
+      "setup_actions": {
+        "file_merge": "--no-metrics in ~/.androidrc, linked from configs/android/androidrc."
+      }
+    },
+    {
       "id": "xcode",
       "tool": "xcode",
       "source": "setup",

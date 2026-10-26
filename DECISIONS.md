@@ -241,6 +241,19 @@ its read-only check. `apps/mobile.Brewfile` lists the formulae that need full
 Xcode. Mobile setup is on by default. The skip flag does not remove mobile
 tools from the common mise inventory.
 
+The Android SDK has one location, `ANDROID_HOME`. The mobile step downloads
+Google's Command Line Tools at a pinned SHA-256 into a temporary folder. That
+copy of `sdkmanager` accepts the licenses and installs the packages in
+`apps/android-sdk.txt`, including its own `cmdline-tools;latest`. The
+`android-commandlinetools` cask is not used, because its `sdkmanager` uses the
+cask folder as a second SDK root. Android Studio uses the same SDK, and builds
+from the command line need no Studio first launch.
+
+From Command Line Tools 23.0, `sdkmanager` downloads the Android CLI into
+`~/.android` and runs through it. That CLI sends usage metrics unless it gets
+`--no-metrics`. The linked `~/.androidrc` sets that option for every run, and
+the mobile step stops before `sdkmanager` when the option is missing.
+
 ## Temporary sudo grant
 
 After the first `sudo -v`, setup installs `/etc/sudoers.d/dotfiles-setup`. The

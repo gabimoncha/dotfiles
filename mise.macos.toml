@@ -10,6 +10,7 @@
 "~/Documents/superwhisper/settings/settings.json" = { source = "configs/superwhisper/settings.json", mode = "symlink" }
 "~/.cli-proxy-api/config.yaml" = { source = "configs/cliproxyapi/config.yaml", mode = "symlink" }
 "~/.mackup.cfg" = { source = "configs/mackup/mackup.cfg", mode = "symlink" }
+"~/.androidrc" = { source = "configs/android/androidrc", mode = "symlink" }
 # The login script that gives GUI apps the telemetry opt-outs.
 "~/bin/dotfiles-telemetry-env" = { source = "macos/dotfiles-telemetry-env", mode = "symlink" }
 

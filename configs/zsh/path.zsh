@@ -17,6 +17,7 @@ if [[ "$OSTYPE" == darwin* ]]; then
     "$HOME/scripts"
     "$android_sdk_home/emulator"
     "$android_sdk_home/platform-tools"
+    "$android_sdk_home/cmdline-tools/latest/bin"
     "/usr/bin"
     "/bin"
     "/usr/sbin"

@@ -1,0 +1,11 @@
+# sdkmanager packages for command-line Android builds. bin/install-mobile-dev
+# installs them into ANDROID_HOME, and bin/check-mobile-ready checks them.
+# The versions match React Native 0.88 (gradle/libs.versions.toml: compileSdk,
+# buildTools, ndkVersion) and the default CMake of Android Gradle plugin 9.2.1.
+# API 37 has no "platforms;android-37" package. Its first release is 37.0.
+cmdline-tools;latest
+platform-tools
+platforms;android-37.0
+build-tools;37.0.0
+ndk;27.1.12297006
+cmake;3.22.1

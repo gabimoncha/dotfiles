@@ -95,7 +95,23 @@ error in its output:
 - **A `sudo` step fails after a long Xcode download.** The script keeps the
   `sudo` timestamp valid only if `sudo -n true` worked when it started. Ask the
   user to run `./bin/sudo-grant --enable`, then rerun the script.
+- **`~/.androidrc` does not turn off Android CLI metrics.** Run
+  `./bin/link-dotfiles`, then rerun the script.
+- **sdkmanager needs Java.** Install the `zulu@17` cask from the Brewfile, then
+  rerun the script.
+- **The Command Line Tools download fails, or its SHA-256 differs.** Check the
+  network and rerun. If Google replaced the file, find the new build in
+  https://dl.google.com/android/repository/repository2-3.xml, compare its SHA-1
+  with the download, and ask the user before you change the pin in
+  `bin/install-mobile-dev`.
+- **An Android SDK package fails to install.** Rerun the script. It installs
+  only the missing packages from `apps/android-sdk.txt`.
+- **adb on PATH is not the SDK copy.** Another install, such as the
+  `android-platform-tools` cask, is ahead on PATH. Ask the user before you
+  remove it. Keep `ANDROID_HOME` as the only SDK.
 
-When the check passes, tell the user to finish these steps in Android Studio:
-install SDK Platform 35, Sources for Android 35, Android SDK Build-Tools, and
-Android Emulator, and create a virtual device.
+To change an Android SDK version, edit `apps/android-sdk.txt`. Take the versions
+from the app's generated Gradle files, or from React Native's
+`gradle/libs.versions.toml` (`compileSdk`, `buildTools`, `ndkVersion`). Do not
+install Android SDK packages with Homebrew. An emulator is optional: install
+`emulator` and a system image with `sdkmanager`, or in Android Studio.

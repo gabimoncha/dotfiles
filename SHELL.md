@@ -99,8 +99,12 @@ remote session.
 ## Android
 
 On macOS, the configuration sets `JAVA_HOME` to Zulu 17 and `ANDROID_HOME` to
-`~/Library/Android/sdk`; it adds JDK, emulator and platform-tools paths.
-Android Studio installs SDK packages and creates emulator images.
+`~/Library/Android/sdk`. It adds the JDK, emulator, platform-tools, and
+`cmdline-tools/latest/bin` paths, so `adb` and `sdkmanager` come from the SDK.
+`./bin/install-mobile-dev` installs the packages in
+[android-sdk.txt](apps/android-sdk.txt). Install an emulator and its system
+images with `sdkmanager` or in Android Studio. `sdkmanager` runs through the
+Android CLI (`android`), and `~/.androidrc` turns off its metrics.
 To inspect the debug signing SHA-1:
 
 ```bash
