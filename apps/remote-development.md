@@ -158,18 +158,20 @@ without auditing existing launchers and settings.
 Use `User box` in the local SSH alias. Until that local setting is updated,
 `ssh box@HOST_ALIAS` overrides the old username. T3's direct routes do not use
 an SSH username; any manually configured SSH route also needs the new user.
-The project, the container, the hostname, and the network are `nasbox`. The
-volumes keep the names of the first project: `t3-dev_dev-home` and
-`t3-dev_ssh-host-keys`. Docker cannot rename a volume, so the Compose file
-names them with `external: true`. Compose then never makes or deletes them,
-even when the project is deleted. The image is `node:latest` with `pull_policy: always`, so each build gets
-the newest Node.js image on the current Debian release. The box does not run
+The project, the container, the hostname, the network, and the volumes
+`nasbox_dev-home` and `nasbox_ssh-host-keys` use the name `nasbox`. The Compose
+file names the volumes with `external: true`, so Compose never makes or deletes
+them, even when the project is deleted. Docker cannot rename a volume. To move
+data to a new volume, stop the box and copy it with `cp -a` in a temporary
+container that mounts the old volume read-only. The image is `node:latest` with
+`pull_policy: always`, so each build gets the newest Node.js image on the
+current Debian release. The box does not run
 the image's Node. This account rename does not change installed runtimes or
 privileges.
 
 ### Passwordless sudo inside the container
 
-Compose startup installs `sudo` and creates `/etc/sudoers.d/90-t3-box`, owned
+Compose startup installs `sudo` and creates `/etc/sudoers.d/90-nasbox-box`, owned
 by root with mode 0440, containing `box ALL=(ALL:ALL) NOPASSWD: ALL`.
 It validates the rule and complete sudo configuration with `visudo`, then tests
 `sudo -n id -u` as `box` before starting services. The container log prints

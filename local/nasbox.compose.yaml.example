@@ -21,7 +21,7 @@ services:
     volumes:
       - dev-home:/home/box
       - ./workspace:/workspace
-      - ssh-host-keys:/var/lib/t3-ssh
+      - ssh-host-keys:/var/lib/nasbox-ssh
     working_dir: /workspace
     command:
       - /bin/bash
@@ -50,7 +50,7 @@ services:
           fi
           ln -s /home/box /home/node
         fi
-        mkdir -p /run/sshd /home/box/.ssh /workspace /var/lib/t3-ssh
+        mkdir -p /run/sshd /home/box/.ssh /workspace /var/lib/nasbox-ssh
         touch /home/box/.ssh/authorized_keys
         grep -q 'REPLACE_WITH_YOUR_ED25519_PUBLIC_KEY_BASE64' /home/box/.ssh/authorized_keys || echo 'ssh-ed25519 REPLACE_WITH_YOUR_ED25519_PUBLIC_KEY_BASE64 nasbox' >> /home/box/.ssh/authorized_keys
         chmod 700 /home/box/.ssh
@@ -58,15 +58,15 @@ services:
         chown -R box:box /home/box /workspace
         passwd -d box
         install -d -m 0755 /etc/sudoers.d
-        printf '%s\n' 'box ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/.90-t3-box.tmp
-        chown root:root /etc/sudoers.d/.90-t3-box.tmp
-        chmod 0440 /etc/sudoers.d/.90-t3-box.tmp
-        visudo -cf /etc/sudoers.d/.90-t3-box.tmp
-        mv -f /etc/sudoers.d/.90-t3-box.tmp /etc/sudoers.d/90-t3-box
+        printf '%s\n' 'box ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/.90-nasbox-box.tmp
+        chown root:root /etc/sudoers.d/.90-nasbox-box.tmp
+        chmod 0440 /etc/sudoers.d/.90-nasbox-box.tmp
+        visudo -cf /etc/sudoers.d/.90-nasbox-box.tmp
+        mv -f /etc/sudoers.d/.90-nasbox-box.tmp /etc/sudoers.d/90-nasbox-box
         visudo -c
         su - box -c 'sudo -n id -u' | grep -qx 0
         printf '%s\n' 'box passwordless sudo verified'
-        test -f /var/lib/t3-ssh/ssh_host_ed25519_key || ssh-keygen -q -t ed25519 -N '' -f /var/lib/t3-ssh/ssh_host_ed25519_key
+        test -f /var/lib/nasbox-ssh/ssh_host_ed25519_key || ssh-keygen -q -t ed25519 -N '' -f /var/lib/nasbox-ssh/ssh_host_ed25519_key
         if test -x /home/box/development/dotfiles/bin/container-system-packages; then
           su - box -c /home/box/development/dotfiles/bin/container-system-packages &
         fi
@@ -76,16 +76,15 @@ services:
         if test -x /home/box/.local/bin/tokenburnmarket-supervise; then
           su - box -c /home/box/.local/bin/tokenburnmarket-supervise &
         fi
-        exec /usr/sbin/sshd -D -e -o HostKey=/var/lib/t3-ssh/ssh_host_ed25519_key -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no -o PermitRootLogin=no -o AllowUsers=box -o PrintMotd=no
-# The volumes keep the names of the first project, t3-dev. Docker cannot
-# rename a volume. external keeps Compose from making or deleting them.
+        exec /usr/sbin/sshd -D -e -o HostKey=/var/lib/nasbox-ssh/ssh_host_ed25519_key -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no -o PermitRootLogin=no -o AllowUsers=box -o PrintMotd=no
+# external keeps Compose from making or deleting the volumes.
 volumes:
   dev-home:
     external: true
-    name: t3-dev_dev-home
+    name: nasbox_dev-home
   ssh-host-keys:
     external: true
-    name: t3-dev_ssh-host-keys
+    name: nasbox_ssh-host-keys
 # CLIProxyAPI joins this network to serve agents on the box.
 networks:
   default:
