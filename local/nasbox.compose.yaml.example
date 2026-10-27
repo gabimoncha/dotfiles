@@ -53,7 +53,7 @@ services:
         fi
         mkdir -p /run/sshd /home/box/.ssh /workspace /var/lib/t3-ssh
         touch /home/box/.ssh/authorized_keys
-        grep -q 'REPLACE_WITH_YOUR_ED25519_PUBLIC_KEY_BASE64' /home/box/.ssh/authorized_keys || echo 'ssh-ed25519 REPLACE_WITH_YOUR_ED25519_PUBLIC_KEY_BASE64 t3-nas-dev' >> /home/box/.ssh/authorized_keys
+        grep -q 'REPLACE_WITH_YOUR_ED25519_PUBLIC_KEY_BASE64' /home/box/.ssh/authorized_keys || echo 'ssh-ed25519 REPLACE_WITH_YOUR_ED25519_PUBLIC_KEY_BASE64 nasbox' >> /home/box/.ssh/authorized_keys
         chmod 700 /home/box/.ssh
         chmod 600 /home/box/.ssh/authorized_keys
         chown -R box:box /home/box /workspace
