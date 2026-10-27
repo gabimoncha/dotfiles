@@ -2182,12 +2182,12 @@ checksum = "blake3:b38b043f13b44b58ff4bf223c3345e3b23ee72347aa1a60a2b1d1f669b922
 url = "https://registry.npmjs.org/npm/-/npm-12.2.1.tgz"
 
 [[tools."npm:@agentclientprotocol/claude-agent-acp"]]
-version = "0.95.0"
+version = "0.97.0"
 backend = "npm:@agentclientprotocol/claude-agent-acp"
 specifiers = ["latest"]
 
 [[tools."npm:@agentclientprotocol/codex-acp"]]
-version = "2.2.2"
+version = "2.3.0"
 backend = "npm:@agentclientprotocol/codex-acp"
 specifiers = ["latest"]
 
@@ -2339,7 +2339,7 @@ url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/662173343"
 provenance = "github-attestations"
 
 [[tools.portless]]
-version = "0.15.8"
+version = "0.15.9"
 backend = "npm:portless"
 specifiers = ["latest"]
 
@@ -2524,7 +2524,7 @@ url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/664335803"
 provenance = "github-attestations"
 
 [[tools.vercel]]
-version = "65.0.0"
+version = "65.2.0"
 backend = "npm:vercel"
 specifiers = ["latest"]
 
