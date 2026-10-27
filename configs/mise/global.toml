@@ -31,7 +31,9 @@ zoxide = "latest"
 neovim = "latest"
 "npm:sfw" = "latest"
 "npm:tree-sitter-cli" = "latest"
-python = "3.15.1"
+# Security exception to the four-day delay: 3.15.2 fixes CVE-2026-115557
+# and CVE-2026-114583.
+python = "3.15.2"
 ruby = "3.4.12"
 age = "latest"
 "github:entireio/cli" = "latest"
