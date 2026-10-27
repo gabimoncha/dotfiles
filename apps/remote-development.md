@@ -62,6 +62,22 @@ machine-specific host details outside this repository. To undo the config edit,
 restore the indicated backup (or remove only the added block if no config existed);
 review subsequent edits first. Remove the copied key only if nothing else uses it.
 
+## SSH from Ghostty
+
+The Ghostty config enables `ssh-env` and `ssh-terminfo`. In Ghostty 1.4 and
+later, shell integration makes `ssh HOST_ALIAS` use `ghostty +ssh`. The wrapper
+installs Ghostty's terminfo on the remote host and caches successful installs.
+If installation fails, for example because the remote host has no `tic`, the
+connection continues with `TERM=xterm-256color`.
+
+The wrapper also requests forwarding of `COLORTERM`, `TERM_PROGRAM`, and
+`TERM_PROGRAM_VERSION`. The remote SSH server must allow these variables with
+`AcceptEnv` to receive them. `TERM` does not need that setting.
+
+After a config change, reload Ghostty's config and open a new terminal.
+Use `command ssh HOST_ALIAS` to bypass the wrapper for one connection.
+See [Ghostty's SSH guide](https://ghostty.org/docs/features/ssh) for details.
+
 ## NAS T3 container
 
 `local/nasbox.compose.yaml.example` is a sanitized deployment example.

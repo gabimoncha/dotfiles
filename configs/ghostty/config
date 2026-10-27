@@ -2,6 +2,7 @@ font-family = "Geist Mono"
 font-size = 14
 font-feature = -liga
 background-opacity = 1
+shell-integration-features = ssh-env,ssh-terminfo
 keybind = super+up=scroll_page_up
 keybind = super+down=scroll_page_down
 keybind = shift+enter=text:\x1b\r
