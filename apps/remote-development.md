@@ -66,7 +66,8 @@ review subsequent edits first. Remove the copied key only if nothing else uses i
 
 `local/nasbox.compose.yaml.example` is a sanitized deployment example.
 Keep the machine-specific copy under ignored `local/nasbox/` and
-upload its `compose.yaml` to the existing NAS Container Manager project folder.
+upload its `compose.yaml` to the Container Manager project `nasbox` in
+`/volume1/docker/nasbox`.
 Replace the documentation-only LAN address and public-key placeholder first.
 Do not commit actual host addresses, identities, keys, or pairing links.
 
@@ -157,10 +158,11 @@ without auditing existing launchers and settings.
 Use `User box` in the local SSH alias. Until that local setting is updated,
 `ssh box@HOST_ALIAS` overrides the old username. T3's direct routes do not use
 an SSH username; any manually configured SSH route also needs the new user.
-The container and its hostname are `nasbox`. The Container Manager project and
-its folder `/volume1/docker/t3-dev` keep the old name, so the volumes
-`t3-dev_dev-home` and `t3-dev_ssh-host-keys` and the project network keep it
-too. The image is `node:latest` with `pull_policy: always`, so each build gets
+The project, the container, the hostname, and the network are `nasbox`. The
+volumes keep the names of the first project: `t3-dev_dev-home` and
+`t3-dev_ssh-host-keys`. Docker cannot rename a volume, so the Compose file
+names them with `external: true`. Compose then never makes or deletes them,
+even when the project is deleted. The image is `node:latest` with `pull_policy: always`, so each build gets
 the newest Node.js image on the current Debian release. The box does not run
 the image's Node. This account rename does not change installed runtimes or
 privileges.
@@ -233,12 +235,14 @@ The NAS keeps its configuration and OAuth files outside `nasbox`.
    to `local/cliproxyapi/config/config.yaml`.
 2. Replace both key placeholders with different keys from your secret manager.
    Keep the configuration mode 0600 and the config and auth folders mode 0700.
-3. Set `NAS_DEV_NETWORK` in this folder's private `.env` to the existing Docker
-   network of the `t3-dev` project, as shown in Container Manager.
-4. Upload this private folder to the NAS and create its Container Manager
-   project. Keep `config/` and `auths/` on persistent NAS storage. Use the logs
-   and terminal in Container Manager to debug it. Change the pinned image tag
-   to update it. No changes to the T3 project are needed.
+3. Upload this private folder to the NAS and create its Container Manager
+   project. It joins the `nasbox` network, so create the `nasbox` project first.
+   Keep `config/` and `auths/` on persistent NAS storage. Use the logs and
+   terminal in Container Manager to debug it.
+4. The image is `latest` with `pull_policy: always`. Build the project again
+   to update it. The build stops the proxy for about a minute, and the clients
+   that use it fail during that time. No changes to the `nasbox` project are
+   needed.
 
 The API port binds to NAS loopback. Use the NAS's existing
 [Tailscale Serve](https://tailscale.com/kb/1312/serve) for HTTPS access from the

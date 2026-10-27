@@ -1,6 +1,5 @@
 # Copy to a private compose.yaml; replace documentation-only address and public key.
-# The Container Manager project and its folder keep the name t3-dev, so the
-# volumes and the network keep their t3-dev_ names.
+# Deploy as the Container Manager project nasbox in /volume1/docker/nasbox.
 services:
   dev:
     # mise installs Node in the home volume. The image gives Debian and build tools.
@@ -78,6 +77,16 @@ services:
           su - box -c /home/box/.local/bin/tokenburnmarket-supervise &
         fi
         exec /usr/sbin/sshd -D -e -o HostKey=/var/lib/t3-ssh/ssh_host_ed25519_key -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no -o PermitRootLogin=no -o AllowUsers=box -o PrintMotd=no
+# The volumes keep the names of the first project, t3-dev. Docker cannot
+# rename a volume. external keeps Compose from making or deleting them.
 volumes:
   dev-home:
+    external: true
+    name: t3-dev_dev-home
   ssh-host-keys:
+    external: true
+    name: t3-dev_ssh-host-keys
+# CLIProxyAPI joins this network to serve agents on the box.
+networks:
+  default:
+    name: nasbox
