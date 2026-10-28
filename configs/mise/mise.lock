@@ -2545,9 +2545,9 @@ signer = "sigstore-oidc:https://github.com/max-sixty/worktrunk/.github/workflows
 repository_ids = { repository = "1078528927" }
 
 [[tools.wrangler]]
-version = "4.152.0"
+version = "4.153.0"
 backend = "npm:wrangler"
-specifiers = ["latest"]
+specifiers = ["4.153.0"]
 
 [tools.wrangler.options]
 allow_builds = '["esbuild", "sharp", "workerd"]'
