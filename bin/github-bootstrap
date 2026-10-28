@@ -26,7 +26,7 @@ bootstrap_dir="$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-gh.XXXXXX")"
 mkdir -p "$bootstrap_dir/home" "$bootstrap_dir/config" "$bootstrap_dir/system" || return 1
 cat > "$bootstrap_dir/config/config.toml" <<'CONFIG'
 [tools]
-gh = "2.103.0"
+gh = "2.103.3"
 [settings]
 minimum_release_age = "4d"
 [settings.github]
@@ -44,7 +44,7 @@ if ! env -i HOME="$bootstrap_dir/home" PATH="/usr/bin:/bin:/usr/sbin:/sbin" \
   MISE_GLOBAL_CONFIG_FILE="$bootstrap_dir/config/config.toml" \
   MISE_OVERRIDE_CONFIG_FILENAMES=dotfiles-bootstrap-only.toml \
   MISE_OVERRIDE_TOOL_VERSIONS_FILENAMES=none MISE_HTTP_TIMEOUT=30 MISE_HTTP_RETRIES=0 \
-  MISE_YES=1 "$mise_path" install gh@2.103.0; then
+  MISE_YES=1 "$mise_path" install gh@2.103.3; then
   printf 'Isolated gh acquisition failed; no other tools were requested. Check network/API quota before retrying.\n' >&2
   return 1
 fi
