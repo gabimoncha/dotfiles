@@ -9,6 +9,8 @@
   },
   "autoUpdatesChannel": "latest",
   "autoCompactEnabled": true,
+  "promptCacheTtl": "1h",
+  "subagentPromptCacheTtl": "1h",
   "autoMemoryEnabled": false,
   "askUserQuestionTimeout": "never",
   "dialogExpiry": "never",

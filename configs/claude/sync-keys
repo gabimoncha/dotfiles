@@ -9,6 +9,8 @@ public .tui
 public .modelSettings."claude-opus-5-5".effortLevel
 public .autoUpdatesChannel
 public .autoCompactEnabled
+public .promptCacheTtl
+public .subagentPromptCacheTtl
 public .autoMemoryEnabled
 public .askUserQuestionTimeout
 public .dialogExpiry
