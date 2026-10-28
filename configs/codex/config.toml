@@ -1,9 +1,12 @@
-model = "gpt-6-astra"
+model = "gpt-6.1-sol"
 model_provider = "openai"
+model_context_window = 500000
+model_auto_compact_token_limit = 450000
 model_reasoning_effort = "medium"
 service_tier = "priority"
 approval_policy = "on-request"
 approvals_reviewer = "user"
+sandbox_mode = "workspace-write"
 
 [features]
 memories = false
@@ -102,3 +105,4 @@ skill = "#d699b6"
 name = "CLIProxyAPI on NAS"
 wire_api = "responses"
 env_key = "CLIPROXYAPI_API_KEY"
+supports_websockets = true
