@@ -2201,11 +2201,6 @@ version = "0.39.2"
 backend = "npm:agent-browser"
 specifiers = ["latest"]
 
-[[tools."npm:agent-device"]]
-version = "0.21.31"
-backend = "npm:agent-device"
-specifiers = ["latest"]
-
 [[tools."npm:cf"]]
 version = "1.0.0-beta.23"
 backend = "npm:cf"
