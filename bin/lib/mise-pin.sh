@@ -6,10 +6,11 @@
 # release's install.sh digest in GitHub's release metadata. Pick a release that
 # passes the four-day minimum_release_age, unless a needed feature or an
 # explicitly requested release is newer.
-# Security exception to the four-day delay: 2026.10.19 fixes trust and
-# checksum bypasses and includes ctutils 0.4.5 for RUSTSEC-2026-0385.
-pinned_mise_version=2026.10.19
-pinned_installer_sha256=82d35715f9d54b9ca4ff5b909ebeb4f4ded457d4fae15814db2fe6da5b943e1f
+# Security exception to the four-day delay: 2026.10.22 removes vulnerable
+# zip versions (GHSA-m665-v7pm-7grj) and updates pulldown-cmark for
+# RUSTSEC-2026-0414.
+pinned_mise_version=2026.10.22
+pinned_installer_sha256=0c1d8462b47aa4c5f81f4c6c153ea6d66c1bad03b38c08d205f90f1fa2ac7b24
 
 # An older mise can refuse the current global config, so read only its version.
 mise_installed_version() {

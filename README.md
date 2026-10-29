@@ -119,7 +119,7 @@ git pull --ff-only
 ./bin/link-dotfiles
 ```
 
-The repository's mise commands need mise 2026.10.19. If `bin/repo-mise`
+The repository's mise commands need mise 2026.10.22. If `bin/repo-mise`
 reports an older mise, run `./bin/install-standalone mise` first. After a pull
 that moves files, `bin/link-dotfiles` points the old links at the new sources.
 It also moves local files from the old layout, such as
