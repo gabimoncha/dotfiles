@@ -113,7 +113,9 @@ error in its output:
 
 To change an Android SDK version, edit `apps/android-sdk.txt`. Take the versions
 from the app's generated Gradle files, or from React Native's
-`gradle/libs.versions.toml` (`compileSdk`, `buildTools`, `ndkVersion`). Do not
-install Android SDK packages with Homebrew. Keep `emulator` in the list,
+`gradle/libs.versions.toml` (`compileSdk`, `buildTools`, `ndkVersion`). Also
+keep the Build Tools and CMake defaults of the app's Android Gradle plugin
+(`DEFAULT_BUILD_TOOLS_REVISION` in its `builder` jar). Modules that set no
+`buildToolsVersion` use them. Do not install Android SDK packages with Homebrew. Keep `emulator` in the list,
 because the T3 Code device hub offers Android only when the SDK has it. Setup
 installs no system image. Install one with `sdkmanager`, or in Android Studio.
