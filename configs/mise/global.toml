@@ -78,7 +78,9 @@ gcloud = { version = "589.0.0", os = "macos" }
 flyctl = { version = "0.4.120", os = "macos" }
 mkcert = { version = "latest", os = "macos" }
 hub = { version = "latest", os = "macos" }
-act = { version = "latest", os = "macos" }
+# Security exception to the four-day delay: 0.2.92 fixes
+# GHSA-7x4h-3p32-rrc3 (workflow container options override runner controls).
+act = { version = "0.2.92", os = "macos" }
 ollama = { version = "0.40.8", os = "macos" }
 pandoc = { version = "latest", os = "macos" }
 typst = { version = "latest", os = "macos" }
