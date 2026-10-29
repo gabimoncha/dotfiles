@@ -126,7 +126,7 @@ use_versions_host_track = false
 disable_tools = ["codex", "aqua:openai/codex", "npm:@openai/codex"]
 minimum_release_age = "4d"
 # Entries match a full backend ID, a registry short name, or a backend wildcard.
-minimum_release_age_excludes = ["npm:agent-browser", "npm:agent-device", "npm:eas-cli", "npm:@agentclientprotocol/codex-acp", "npm:@agentclientprotocol/claude-agent-acp", "npm:cf", "github:flowcopilot/aether", "npm:tokenburnmarket"]
+minimum_release_age_excludes = ["npm:agent-browser", "npm:agent-device", "npm:eas-cli", "npm:@agentclientprotocol/codex-acp", "npm:@agentclientprotocol/claude-agent-acp", "npm:cf", "github:flowcopilot/aether", "npm:tokenburnmarket", "npm:t3"]
 
 [settings.npm]
 package_manager = "bun"

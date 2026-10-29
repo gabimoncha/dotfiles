@@ -1,0 +1,5 @@
+[install]
+linker = "isolated"
+minimumReleaseAge = 345600
+minimumReleaseAgeExcludes = ["oh-my-t3code", "agent-browser", "agent-device", "t3"]
+globalStore = true

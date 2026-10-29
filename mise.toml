@@ -28,6 +28,8 @@ min_version = { soft = "2026.10.22" }
 
 "~/.tmux.conf" = { source = "configs/tmux/tmux.conf", mode = "symlink" }
 "~/.rgrc" = { source = "configs/ripgrep/rgrc", mode = "symlink" }
+"~/.config/.bunfig.toml" = { source = "configs/bun/bunfig.toml", mode = "symlink" }
+"~/.config/pnpm/config.yaml/dotfiles" = { source = "configs/pnpm/config.yaml", merge = true }
 "~/.config/tsrs/tsgo" = { source = "configs/tsrs/tsgo", mode = "symlink" }
 "~/.config/nvim" = { source = "nvim", mode = "symlink" }
 

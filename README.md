@@ -22,9 +22,9 @@ nvim/                 the Neovim config, a separate repository
 
 Most files in `configs/` are links in HOME, so an app's change to its file is a
 change in this repository. Commit it to share it with your other machines.
-Agent and T3 settings are the exception. These apps write private data into
-their settings, so mise merges selected keys from `configs/claude/`,
-`configs/codex/`, and `configs/t3/` into the live files.
+Agent, T3, and pnpm settings are the exception. These apps write private data
+into their settings, so mise merges selected keys from `configs/claude/`,
+`configs/codex/`, `configs/t3/`, and `configs/pnpm/` into the live files.
 `./bin/save-settings` copies your changes back without the private keys. See
 [Agent settings](#agent-settings).
 
@@ -66,6 +66,28 @@ These mise tasks run the same scripts from any folder, for the checkout in
 `$DOTFILES_ROOT` or `~/development/dotfiles`: `dot:status`, `dot:diff`,
 `dot:apply`, `dot:save`, `setup`, `update`, `packages`, `backup`, `restore`,
 and `doctor`. For example, run `mise run dot:apply -- --dry-run`.
+
+### Package manager defaults
+
+Bun and pnpm require a four-day release age, except for `oh-my-t3code`,
+`agent-browser`, `agent-device`, and `t3`. Bun uses seconds (`345600`), and pnpm
+uses minutes (`5760`). Project settings can override these global defaults.
+
+Bun defaults to `linker = "isolated"` so
+[`globalStore = true`](https://bun.sh/docs/pm/global-store) takes effect.
+A project can override the linker; the hoisted linker does not use the global
+store. pnpm's
+[`virtualStoreType: global`](https://pnpm.io/settings/node-modules#virtualstoretype)
+shares its virtual store across projects. pnpm uses
+the isolated linker by default; a project with the hoisted linker does not
+use a virtual store.
+
+The shell sets `XDG_CONFIG_HOME` to `~/.config` unless it is already set.
+Bun reads `~/.config/.bunfig.toml`, and pnpm reads
+`~/.config/pnpm/config.yaml` with this default. pnpm's config is a regular
+file because pnpm can write credentials into it. `./bin/link-dotfiles` merges
+the public defaults, and `./bin/save-settings` saves only the keys in
+`configs/pnpm/sync-keys`.
 
 ### Agent settings
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copy the public keys of agent settings from HOME back into this repository.
+# Copy the public keys of app settings from HOME back into this repository.
 # bin/link-dotfiles merges these files into the live settings. This script
 # runs the other way, so a setting that you change in an app can reach your
 # other machines. Review the diff before you commit it.
@@ -83,7 +83,7 @@ while IFS=$'\t' read -r target source; do
   [[ -n "${target:-}" ]] || continue
   name="${source#"$repo_root"/}"
   case "$source" in
-    *.json|*.toml) ;;
+    *.json|*.toml|*.yaml|*.yml) ;;
     *) printf 'save-settings: %s has no known format. Skipped.\n' "$name" >&2; status=1; continue ;;
   esac
   sync_keys="$(dirname "$source")/sync-keys"
@@ -105,17 +105,19 @@ while IFS=$'\t' read -r target source; do
   fi
   live="$target"
   saved="$source"
-  if [[ "$source" == *.toml ]]; then
+  if [[ "$source" != *.json ]]; then
+    format="${source##*.}"
+    [[ "$format" != yml ]] || format=yaml
     live="$work/live.json"
     saved="$work/saved.json"
     # yq can quote the file in an error, so its errors stay hidden.
-    if ! (cd / && "$yq" -p toml -o json "$target") > "$live" 2>/dev/null; then
-      printf 'save-settings: %s is not valid TOML. Skipped.\n' "$(home_name "$target")" >&2
+    if ! (cd / && "$yq" -p "$format" -o json "$target") > "$live" 2>/dev/null; then
+      printf 'save-settings: %s is not valid %s. Skipped.\n' "$(home_name "$target")" "$format" >&2
       status=1
       continue
     fi
-    if ! (cd / && "$yq" -p toml -o json "$source") > "$saved" 2>/dev/null; then
-      printf 'save-settings: %s is not valid TOML. Skipped.\n' "$name" >&2
+    if ! (cd / && "$yq" -p "$format" -o json "$source") > "$saved" 2>/dev/null; then
+      printf 'save-settings: %s is not valid %s. Skipped.\n' "$name" "$format" >&2
       status=1
       continue
     fi
@@ -129,9 +131,9 @@ while IFS=$'\t' read -r target source; do
   output="$work/${source##*/}"
   case "$source" in
     *.json) cp "$selected" "$output" ;;
-    *.toml)
-      if ! (cd / && "$yq" -p json -o toml "$selected") > "$output" 2>/dev/null; then
-        printf 'save-settings: could not write %s as TOML. Nothing saved.\n' "$name" >&2
+    *.toml|*.yaml|*.yml)
+      if ! (cd / && "$yq" -p json -o "$format" "$selected") > "$output" 2>/dev/null; then
+        printf 'save-settings: could not write %s as %s. Nothing saved.\n' "$name" "$format" >&2
         status=1
         continue
       fi

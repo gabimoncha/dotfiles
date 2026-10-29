@@ -189,7 +189,7 @@ if [[ ${#file_targets[@]} -gt 0 ]]; then
   fi
 fi
 if [[ ${#merge_targets[@]} -gt 0 ]] && ! repo_mise dot apply --dry-run --yes "${merge_targets[@]}" >/dev/null 2>&1; then
-  printf 'link-dotfiles: mise cannot merge into %s. Check that they are valid JSON or TOML. Nothing changed.\n' \
+  printf 'link-dotfiles: mise cannot merge into %s. Check that they are valid JSON, TOML, or YAML. Nothing changed.\n' \
     "${merge_targets[*]}" >&2
   exit 1
 fi
@@ -391,7 +391,7 @@ if [[ ${#merge_targets[@]} -gt 0 ]]; then
     # The files that this run created hold no settings yet.
     for target in ${created[@]+"${created[@]}"}; do rm -f "$target"; done
     printf 'link-dotfiles: mise could not merge the settings. Output omitted; it can contain private values.\n' >&2
-    printf 'Check these files are valid JSON or TOML, then rerun: %s\n' "${merge_targets[*]}" >&2
+    printf 'Check these files are valid JSON, TOML, or YAML, then rerun: %s\n' "${merge_targets[*]}" >&2
     exit 1
   fi
   printf 'Merged settings in %s\n' "${merge_targets[*]}"
