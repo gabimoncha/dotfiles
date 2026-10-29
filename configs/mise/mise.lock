@@ -174,17 +174,17 @@ checksum = "sha256:bf9fdebf55d8bc99d83531cdffda00703f4dc5f93a1a956768c147362c72f
 url = "https://conda.anaconda.org/conda-forge/linux-64/libavif16-1.4.2-h3ef1eba_4.conda"
 checksum = "sha256:f4c7dbdff93bc62e4aa4a94635c4a139cd4b1e8deb753af5892a8f1ee6456b4d"
 
-[conda-packages.linux-x64."libbrotlicommon-1.2.0-h39a168f_4"]
-url = "https://conda.anaconda.org/conda-forge/linux-64/libbrotlicommon-1.2.0-h39a168f_4.conda"
-checksum = "sha256:c4e9854c585f3ee1785f651287ecdf8c28f30a2ea1b159a513005f8a0f6453a3"
+[conda-packages.linux-x64."libbrotlicommon-1.2.1-h39a168f_0"]
+url = "https://conda.anaconda.org/conda-forge/linux-64/libbrotlicommon-1.2.1-h39a168f_0.conda"
+checksum = "sha256:8eccfbfdb8ecba32eabfb6ee92f70e818e5f3a35a01c507f7b6bd56e00e4c617"
 
-[conda-packages.linux-x64."libbrotlidec-1.2.0-ha411449_4"]
-url = "https://conda.anaconda.org/conda-forge/linux-64/libbrotlidec-1.2.0-ha411449_4.conda"
-checksum = "sha256:d5ed24da3e583a92227fe77280978b7933f07a39a2b60156c5ad95e5c76733fa"
+[conda-packages.linux-x64."libbrotlidec-1.2.1-ha411449_0"]
+url = "https://conda.anaconda.org/conda-forge/linux-64/libbrotlidec-1.2.1-ha411449_0.conda"
+checksum = "sha256:4b4bda6f70ad511bdff95fdd958dca74b6e0534ae335ddcb1d8c6569774d2429"
 
-[conda-packages.linux-x64."libbrotlienc-1.2.0-h018ffa1_4"]
-url = "https://conda.anaconda.org/conda-forge/linux-64/libbrotlienc-1.2.0-h018ffa1_4.conda"
-checksum = "sha256:b9f3cb510337655485c2e79ce5f7dd468991b19ad29723ffa1175a0aed1b69ae"
+[conda-packages.linux-x64."libbrotlienc-1.2.1-h018ffa1_0"]
+url = "https://conda.anaconda.org/conda-forge/linux-64/libbrotlienc-1.2.1-h018ffa1_0.conda"
+checksum = "sha256:61974cf9bb07115ed6725dacf83d0d985443d78dd123cc4f2758856fda5376ec"
 
 [conda-packages.linux-x64."libcups-2.3.3-h7a8fb5f_6"]
 url = "https://conda.anaconda.org/conda-forge/linux-64/libcups-2.3.3-h7a8fb5f_6.conda"
@@ -730,17 +730,17 @@ checksum = "sha256:c97aa17d16d2ac332ba9f184e82ce8f72dcb10e9a10c5f299030be2d44e19
 url = "https://conda.anaconda.org/conda-forge/osx-arm64/libavif16-1.4.2-hfc01230_4.conda"
 checksum = "sha256:7146368013999a4b610cc4eaf4dcc518b8119ae5b75ebebdc2a81d087aee3901"
 
-[conda-packages.macos-arm64."libbrotlicommon-1.2.0-h1dcdb26_4"]
-url = "https://conda.anaconda.org/conda-forge/osx-arm64/libbrotlicommon-1.2.0-h1dcdb26_4.conda"
-checksum = "sha256:8a6e4789a6049dabb41c6fcaf6719232245484d81dfeb199b5abdb95c84c9fc2"
+[conda-packages.macos-arm64."libbrotlicommon-1.2.1-h1dcdb26_0"]
+url = "https://conda.anaconda.org/conda-forge/osx-arm64/libbrotlicommon-1.2.1-h1dcdb26_0.conda"
+checksum = "sha256:4ee2413810c5ef07e29a4c2a39d11f08f27d17ecee3577541e4dad06f635b375"
 
-[conda-packages.macos-arm64."libbrotlidec-1.2.0-h5295a6a_4"]
-url = "https://conda.anaconda.org/conda-forge/osx-arm64/libbrotlidec-1.2.0-h5295a6a_4.conda"
-checksum = "sha256:4e1f5989561de4546209b42c935795a41fa4265e0b670861480f1adffec623a8"
+[conda-packages.macos-arm64."libbrotlidec-1.2.1-h5295a6a_0"]
+url = "https://conda.anaconda.org/conda-forge/osx-arm64/libbrotlidec-1.2.1-h5295a6a_0.conda"
+checksum = "sha256:d77356267bf34639265ec79b217efe0b32fc2e91f4ca7a04263a5169cb156458"
 
-[conda-packages.macos-arm64."libbrotlienc-1.2.0-h2ddc9cb_4"]
-url = "https://conda.anaconda.org/conda-forge/osx-arm64/libbrotlienc-1.2.0-h2ddc9cb_4.conda"
-checksum = "sha256:4d2da97825b221054a39f492e4dffe361e1931c8381d0367f1e0598a50d02f34"
+[conda-packages.macos-arm64."libbrotlienc-1.2.1-h2ddc9cb_0"]
+url = "https://conda.anaconda.org/conda-forge/osx-arm64/libbrotlienc-1.2.1-h2ddc9cb_0.conda"
+checksum = "sha256:5572a16f08a527f7b952d125be3c3215b4b0a1c8163efcb6fd052c8895fcc8ee"
 
 [conda-packages.macos-arm64."libcxx-23.1.3-h55c6f16_0"]
 url = "https://conda.anaconda.org/conda-forge/osx-arm64/libcxx-23.1.3-h55c6f16_0.conda"
@@ -1913,9 +1913,9 @@ conda_deps = [
     "rav1e-0.8.1-h1fbca29_0",
     "x265-3.5-h73f68a7_4",
     "libdav1d7-1.5.4-hebe6cf0_4",
-    "libbrotlienc-1.2.0-h018ffa1_4",
-    "libbrotlicommon-1.2.0-h39a168f_4",
-    "libbrotlidec-1.2.0-ha411449_4",
+    "libbrotlienc-1.2.1-h018ffa1_0",
+    "libbrotlicommon-1.2.1-h39a168f_0",
+    "libbrotlidec-1.2.1-ha411449_0",
     "libhwy-1.4.0-h57c4cff_2",
     "jasper-4.2.9-hd038ad9_2",
     "libharfbuzz-14.6.0-h23af247_2",
@@ -2038,9 +2038,9 @@ conda_deps = [
     "libavif16-1.4.2-hfc01230_4",
     "rav1e-0.8.1-h8246384_0",
     "x265-3.5-h55d2f36_4",
-    "libbrotlienc-1.2.0-h2ddc9cb_4",
-    "libbrotlicommon-1.2.0-h1dcdb26_4",
-    "libbrotlidec-1.2.0-h5295a6a_4",
+    "libbrotlienc-1.2.1-h2ddc9cb_0",
+    "libbrotlicommon-1.2.1-h1dcdb26_0",
+    "libbrotlidec-1.2.1-h5295a6a_0",
     "libhwy-1.4.0-hd2bdd19_2",
     "jasper-4.2.9-hc111fee_2",
     "libharfbuzz-14.6.0-hcda0f7c_2",
