@@ -3,8 +3,8 @@
   "scope": "Tracked mise/Brewfile/app inventories, explicit setup tools, and managed shell/tmux plugins. Excludes project dependencies, other plugins, nvim repository dependencies, and unrelated manually installed tools.",
   "verification": "Official documentation and upstream source reviews; fake-command tests only. No live installations, account changes, personal settings edits, or network-capture tests.",
   "coverage": {
-    "total": 185,
-    "reviewed": 185,
+    "total": 184,
+    "reviewed": 184,
     "pending": 0
   },
   "limitations": [
@@ -570,34 +570,6 @@
           "CLOUDSDK_CORE_DISABLE_USAGE_REPORTING": "true"
         },
         "command": "gcloud config set core/disable_usage_reporting true",
-        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
-      }
-    },
-    {
-      "id": "flyctl",
-      "tool": "flyctl",
-      "source": "mise",
-      "kind": "cli",
-      "research": {
-        "tool": "Fly.io flyctl CLI",
-        "status": "supported",
-        "mechanism": "Set FLY_SEND_METRICS=false to disable CLI analytics. Set FLY_SYNTHETICS_AGENT=false to disable the separate synthetic monitoring agent. These environment values override the saved config. The supported persistent commands are fly settings analytics disable and fly settings synthetics disable. Prefer the commands to a whole-file replacement; the config can contain access tokens.",
-        "sources": [
-          "https://fly.io/docs/flyctl/settings-analytics-disable/",
-          "https://fly.io/docs/flyctl/settings-synthetics-disable/",
-          "https://raw.githubusercontent.com/superfly/flyctl/master/internal/command/settings/analytics.go",
-          "https://raw.githubusercontent.com/superfly/flyctl/master/internal/config/config.go",
-          "https://raw.githubusercontent.com/superfly/flyctl/master/internal/env/env.go",
-          "https://fly.io/docs/flyctl/settings-autoupdate-disable/"
-        ],
-        "notes": "Analytics and synthetic monitoring have separate controls. Upstream config supports YAML send_metrics and synthetics_agent booleans and explicit nonempty false environment overrides. Fly API, Machines API, registry, authentication, deployment, and app-log traffic are service traffic. Automatic updates have a separate control; disabling analytics does not establish that update checks stop. Apply environment controls to the agent process as well as the CLI; already running agents can retain their previous environment. No tool was run and no live settings were read.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {
-        "environment": {
-          "FLY_SEND_METRICS": "false"
-        },
-        "command": "flyctl settings analytics disable",
         "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },

@@ -159,7 +159,6 @@ telemetry_command vercel telemetry disable
 telemetry_command gcloud config set core/disable_usage_reporting true
 telemetry_command eas analytics off
 telemetry_command wrangler telemetry disable
-telemetry_command flyctl settings analytics disable
 telemetry_command turbo telemetry disable
 if [[ -d "${DOTFILES_APPLICATIONS_DIR:-/Applications}/Cursor.app" ]]; then
   telemetry_file cursor "$HOME/Library/Application Support/Cursor/User/settings.json" "$repo_root/configs/cursor/telemetry-settings.json"

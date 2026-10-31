@@ -75,7 +75,6 @@ fastfetch = { version = "latest", os = "macos" }
 xcodes = { version = "latest", os = "macos" }
 awscli = { version = "2.38.4", os = "macos" }
 gcloud = { version = "589.0.0", os = "macos" }
-flyctl = { version = "0.4.120", os = "macos" }
 mkcert = { version = "latest", os = "macos" }
 hub = { version = "latest", os = "macos" }
 # Security exception to the four-day delay: 0.2.92 fixes

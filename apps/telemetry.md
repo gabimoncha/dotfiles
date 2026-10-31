@@ -1,6 +1,6 @@
 # Telemetry controls
 
-Reviewed on 2026-10-03. Coverage: 185 of 185 tracked entries.
+Reviewed on 2026-10-03. Coverage: 184 of 184 tracked entries.
 
 Setup exports the supported environment controls before installers run. It applies saved preferences after foundation installation, and again at the end of continuation after restores. A failed setter makes the step fail; other installed tools are still configured.
 
@@ -24,7 +24,6 @@ The environment values are in [telemetry.sh](../configs/zsh/telemetry.sh). The e
 | codex | analytics.enabled=false; OTel exporter, metrics_exporter and trace_exporter=none; log_user_prompt=false in ~/.codex/config.toml, merged from configs/codex/config.toml. | [Official source](https://learn.chatgpt.com/docs/config-file/config-advanced#metrics) |
 | cursor | telemetry.telemetryLevel=off in Cursor User/settings.json; enable-crash-reporter=false in ~/.cursor/argv.json. Merge only these inherited controls, preserving JSONC comments and unrelated values. Cursor-specific telemetry is not established as fully disabled. | [Official source](https://forum.cursor.com/t/critical-terminal-sandbox-fails-on-orbstack-vms-breaking-agent-and-remote-ssh-workflow/167586/13) |
 | docker-cli | Unset `DOCKER_CLI_OTEL_EXPORTER_OTLP_ENDPOINT` | [Official source](https://docs.docker.com/engine/cli/otel/) |
-| flyctl | `FLY_SEND_METRICS=false`; Saved preference: `flyctl settings analytics disable` | [Official source](https://fly.io/docs/flyctl/settings-analytics-disable/) |
 | gcloud | `CLOUDSDK_CORE_DISABLE_USAGE_REPORTING=true`; Saved preference: `gcloud config set core/disable_usage_reporting true` | [Official source](https://docs.cloud.google.com/sdk/docs/usage-statistics) |
 | gem:fastlane | `FASTLANE_OPT_OUT_USAGE=YES` | [Official source](https://docs.fastlane.tools/index.html#metrics) |
 | gh | `GH_TELEMETRY=false`; Saved preference: `gh config set telemetry disabled`; After successful login and API checks in auth-setup. | [Official source](https://docs.github.com/en/github-cli/github-cli/github-cli-telemetry) |
