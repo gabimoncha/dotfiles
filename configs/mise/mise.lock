@@ -1815,21 +1815,6 @@ checksum = "sha256:7f4a8a739968fbeb77deca29b2b85e1fe9f4a8993cda85d3139fa36a2a6de
 url = "https://github.com/mislav/hub/releases/download/v2.14.2/hub-darwin-amd64-2.14.2.tgz"
 url_api = "https://api.github.com/repos/mislav/hub/releases/assets/18499942"
 
-[[tools.hunk]]
-version = "0.24.0"
-backend = "aqua:modem-dev/hunk"
-specifiers = ["latest"]
-
-[tools.hunk."platforms.linux-x64"]
-checksum = "sha256:7656402a8ebbd5117ad24e12bda1af045fc9c85c3b40e72dbfde4dea79b60c69"
-url = "https://github.com/modem-dev/hunk/releases/download/v0.24.0/hunkdiff-linux-x64.tar.gz"
-url_api = "https://api.github.com/repos/modem-dev/hunk/releases/assets/656237340"
-
-[tools.hunk."platforms.macos-arm64"]
-checksum = "sha256:f876f1e86d6ba88e120937eb79f63889762a29fed951236d6de69ce3ff967819"
-url = "https://github.com/modem-dev/hunk/releases/download/v0.24.0/hunkdiff-darwin-arm64.tar.gz"
-url_api = "https://api.github.com/repos/modem-dev/hunk/releases/assets/656237354"
-
 [[tools.imagemagick]]
 version = "7.1.2_31"
 backend = "conda:imagemagick"

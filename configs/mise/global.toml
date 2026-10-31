@@ -110,7 +110,6 @@ mas = { version = "latest", os = "macos" }
 "npm:@agentclientprotocol/codex-acp" = { version = "latest", os = "macos" }
 "npm:@agentclientprotocol/claude-agent-acp" = { version = "latest", os = "macos" }
 herdr = { version = "latest", os = "macos" }
-hunk = { version = "latest", os = "macos" }
 "github:flowcopilot/aether" = { version = "0.2.9", os = "macos" }
 xcodegen = { version = "latest", os = "macos" }
 

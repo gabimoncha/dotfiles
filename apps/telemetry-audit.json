@@ -1672,31 +1672,6 @@
       "setup_actions": {}
     },
     {
-      "id": "hunk",
-      "tool": "hunk",
-      "source": "mise",
-      "kind": "cli",
-      "research": {
-        "tool": "hunk (modem-dev/hunk, mise install)",
-        "status": "uncertain",
-        "mechanism": "Upstream install.sh supports HUNK_DISABLE_ANALYTICS=1 or DO_NOT_TRACK=1 to bypass https://updates.hunk.dev/v1/curl/latest and resolve releases directly from GitHub. The bounded research did not verify an equivalent general CLI analytics, crash-reporting, or error-upload control for the mise-installed binary.",
-        "sources": [
-          "https://github.com/modem-dev/hunk",
-          "https://github.com/modem-dev/hunk/blob/main/install.sh",
-          "https://github.com/modem-dev/hunk/blob/main/CHANGELOG.md"
-        ],
-        "notes": "The exact installer controls affect aggregate release discovery, not all update/download traffic: GitHub fallback still runs. The README says mise installs use the owning tool for updates. Changelog 0.22.0 describes analytics opt-outs for curl-install release checks, but CLI scope could not be established within this bounded audit. No documented separate automatic crash/error upload opt-out found. Local session daemon defaults to loopback; GitHub PR access, extension downloads and optional remote session traffic are separate. Do not infer absence of telemetry.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {
-        "environment": {
-          "DO_NOT_TRACK": "1"
-        },
-        "scope": "Installer aggregate release reporting only; CLI collection remains unverified.",
-        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
-      }
-    },
-    {
       "id": "github_flowcopilot_aether",
       "tool": "github:flowcopilot/aether",
       "source": "mise",

@@ -30,7 +30,6 @@ The environment values are in [telemetry.sh](../configs/zsh/telemetry.sh). The e
 | gh | `GH_TELEMETRY=false`; Saved preference: `gh config set telemetry disabled`; After successful login and API checks in auth-setup. | [Official source](https://docs.github.com/en/github-cli/github-cli/github-cli-telemetry) |
 | github:entireio/cli | `ENTIRE_TELEMETRY_OPTOUT=1` | [Official source](https://github.com/entireio/cli/blob/main/docs/security-and-privacy.md) |
 | homebrew | `HOMEBREW_NO_ANALYTICS=1`; Saved preference: `brew analytics off` | [Official source](https://docs.brew.sh/Analytics) |
-| hunk | `DO_NOT_TRACK=1`; Installer aggregate release reporting only; CLI collection remains unverified. | [Official source](https://github.com/modem-dev/hunk) |
 | mise | `MISE_USE_VERSIONS_HOST_TRACK=false`, `MISE_OTEL_ENABLED=false`, `MISE_OTEL_LOGS=false`; use_versions_host_track=false in tracked global mise configuration. | [Official source](https://mise.jdx.dev/configuration/settings.html#use_versions_host_track) |
 | npm:cf | `CF_SEND_TELEMETRY=false`, `DO_NOT_TRACK=1` | [Official source](https://developers.cloudflare.com/cf/environment-variables/) |
 | npm:ctx7 | `CTX7_TELEMETRY_DISABLED=1` | [Official source](https://github.com/upstash/context7/blob/master/packages/cli/README.md) |
@@ -74,7 +73,6 @@ Turborepo’s optional experimental OTLP exporter can be disabled with `experime
 | npm:sfw | Free edition telemetry cannot be disabled. | [Official source](https://docs.socket.dev/docs/socket-firewall-free) |
 | cloudflared | No documented supported control for automatic Sentry error reporting was found. | [Official source](https://raw.githubusercontent.com/cloudflare/cloudflared/master/cmd/cloudflared/main.go) |
 | infisical | The advertised --telemetry=false flag is unverified: source initializes the client before normal flag parsing. No persistent control was established. | [Official source](https://github.com/Infisical/cli/blob/main/packages/cmd/root.go) |
-| hunk | Only installer release-discovery reporting was verified; the CLI binary remains unverified. | [Official source](https://github.com/modem-dev/hunk) |
 | TestFlight | Beta-app crash and usage reports cannot be opted out while testing. Device analytics switches do not override this. | [Official source](https://www.apple.com/legal/internet-services/itunes/testflight/) |
 | tailscale-app | The daemon --no-logs-no-support option does not apply to the macOS GUI app. | [Official source](https://tailscale.com/docs/features/logging?tab=macos) |
 | notion-calendar | General Notion docs mention a support-based analytics opt-out, but Calendar-specific scope and crash reporting remain unverified. No automatic setting was established. | [Official source](https://www.notion.com/help/notion-calendar-security-practices) |
