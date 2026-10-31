@@ -51,7 +51,6 @@ mas "The Unarchiver", id: 425424353
 mas "WhatsApp", id: 310633997
 mas "Telegram", id: 747648890
 mas "Transporter", id: 1450874784
-mas "Portal", id: 1436994560
 
 cask "nikitabobko/tap/aerospace"
 cask "blackhole-2ch"

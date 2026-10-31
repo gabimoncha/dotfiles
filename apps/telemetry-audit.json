@@ -2203,25 +2203,6 @@
       "setup_actions": {}
     },
     {
-      "id": "portal",
-      "tool": "Portal",
-      "source": "mas",
-      "kind": "app",
-      "research": {
-        "tool": "Portal - Escape Into Nature (macOS)",
-        "status": "none_found",
-        "mechanism": "No documented app-specific persistent analytics or crash-reporting opt-out found. No supported preference key or configuration schema was established; preserve Portal settings, memberships, downloaded content, and smart-light connections.",
-        "sources": [
-          "https://portal.app/privacy",
-          "https://portal.app/campfire/why-you-might-not-need-in-app-analytics",
-          "https://apps.apple.com/us/app/portal-escape-into-nature/id1436994560?platform=mac"
-        ],
-        "notes": "Tracked MAS identity is 1436994560, Portal Labs Ltd. Official documentation says Firebase Analytics, Crashlytics, and Remote Config experiments were removed and Apple opt-in aggregated crash reports remain useful. That historic article is not a current binary inspection. The June 13, 2023 policy describes IP processing for audio/video delivery and security and Plausible website analytics; content downloads, membership transactions, updates, and website analytics are separate from desktop usage telemetry. AirPods Motion & Fitness access enables spatial audio and is not analytics. Privacy-page open timed out but its indexed official policy and app listing were accessible. No live settings were read or changed.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {}
-    },
-    {
       "id": "nikitabobko_tap_aerospace",
       "tool": "nikitabobko/tap/aerospace",
       "source": "cask",
