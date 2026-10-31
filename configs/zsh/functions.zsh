@@ -2,6 +2,10 @@ dotfiles() {
   cd "${DOTFILES_ROOT:-$HOME/development/dotfiles}" || return
 }
 
+code() {
+  cd "$HOME/code" || return
+}
+
 dotfiles-update() {
   "${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/dotfiles-update" "$@"
 }
@@ -566,6 +570,7 @@ use-my-mac() {
   selected="$(
     command cat <<'EOF' | fzf --height=80% --border --prompt="Search commands: " --header="enter: copy command, ctrl-e: copy command, esc: quit" --preview='echo {}' --preview-window=up:3:wrap --bind='ctrl-e:execute-silent(echo {} | sed "s/[[:space:]][[:space:]]*- .*//" | pbcopy)+abort'
 dotfiles                         - cd to the dotfiles repo
+code                             - cd to ~/code
 dotfiles-update                  - pull dotfiles and reapply setup; not a full package upgrade
 ./bin/setup                      - prepare foundation tools, then stop for terminal restart
 ./bin/setup --continue           - continue with authentication, packages and restore offers
