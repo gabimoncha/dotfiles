@@ -1,5 +1,17 @@
 [install]
 linker = "isolated"
 minimumReleaseAge = 345600
-minimumReleaseAgeExcludes = ["oh-my-t3code", "agent-browser", "agent-desktop", "agent-device", "t3"]
+# mise installs npm: tools with bun, so bun's delay also applies to them.
+# Keep this list equal to the npm: entries of minimum_release_age_excludes in
+# configs/mise/global.toml. A package that only mise excludes fails in mise up.
+# bun has no scope wildcards, so the new dependencies of eas-cli and cf are
+# listed after each one. When a release adds another, mise up fails with
+# "<name>@<version> failed to resolve". Add that name here.
+minimumReleaseAgeExcludes = [
+  "oh-my-t3code", "agent-browser", "agent-desktop", "agent-device", "t3",
+  "@agentclientprotocol/codex-acp", "@agentclientprotocol/claude-agent-acp",
+  "tokenburnmarket", "omt3",
+  "eas-cli", "@expo/eas-build-job", "@expo/eas-json", "@expo/logger", "@expo/steps", "@expo/turtle-spawn",
+  "cf", "@cloudflare/build-output-utils", "@cloudflare/config", "@cloudflare/runtime-types", "miniflare",
+]
 globalStore = true

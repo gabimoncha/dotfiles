@@ -70,6 +70,12 @@ run, and the mise tool list. A change that works only on the Mac breaks Linux.
 - Steam uses `bin/install-steam` for Valve's verified ARM64 bootstrapper.
   Preserve its update channel and quarantine. Keep Rosetta installation manual.
 - Keep Brewfile entries alphabetized within sections unless deliberately grouped.
+- mise installs `npm:` tools with Bun, and Bun applies its own release delay.
+  When you add or remove an `npm:<package>` entry in `minimum_release_age_excludes`
+  in `configs/mise/global.toml`, make the same change for `<package>` in
+  `minimumReleaseAgeExcludes` in `configs/bun/bunfig.toml`. If `mise up` then
+  fails with `<name>@<version> failed to resolve`, add that dependency to the
+  Bun list too.
 - Keep local companions under ignored `local/`; only examples belong in Git.
 - Keep the profile checks in `bin/lib/dotfiles-profile.sh` before setup writes.
   The Air and VM profiles stay deferred.
