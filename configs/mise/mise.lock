@@ -2198,11 +2198,6 @@ version = "0.5.0"
 backend = "npm:oh-my-t3code"
 specifiers = ["latest"]
 
-[[tools."npm:repomix"]]
-version = "1.18.1"
-backend = "npm:repomix"
-specifiers = ["latest"]
-
 [[tools."npm:sfw"]]
 version = "2.0.6"
 backend = "npm:sfw"

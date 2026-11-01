@@ -71,7 +71,8 @@ and `doctor`. For example, run `mise run dot:apply -- --dry-run`.
 
 Bun and pnpm require a four-day release age, except for `oh-my-t3code`,
 `agent-browser`, `agent-device`, and `t3`. Bun uses seconds (`345600`), and pnpm
-uses minutes (`5760`). Project settings can override these global defaults.
+uses minutes (`5760`). Bun also excludes `agent-desktop`. Project settings can
+override these global defaults.
 
 Bun defaults to `linker = "isolated"` so
 [`globalStore = true`](https://bun.sh/docs/pm/global-store) takes effect.
