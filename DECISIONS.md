@@ -57,7 +57,7 @@ small cases in that script:
 - mise lives at `~/.local/bin/mise`. Its pinned installer is checksum-verified.
   Setup replaces a mise older than the pin, because the repo's mise files need
   that release. The global config sets `self_update.auto`, so mise updates
-  itself between setup runs. Setup sets `MISE_SELF_UPDATE_AUTO=0`, so the binary
+  itself between setup runs, without the four-day release delay. Setup sets `MISE_SELF_UPDATE_AUTO=0`, so the binary
   does not change during a run.
 - The T3 Code nightly cask owns the app and its `~/.t3/bin/t3` launcher, and
   the app updates both. Setup only links Homebrew's `bin/t3` to that launcher,

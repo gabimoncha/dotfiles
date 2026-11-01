@@ -1,6 +1,6 @@
-# An older mise cannot parse [settings.self_update]. With this floor it stops
-# with an upgrade message. Run ./bin/install-standalone mise to install the pin.
-min_version = "2026.10.4"
+# An older mise cannot parse self_update.minimum_release_age. With this floor it
+# stops with an upgrade message. Run ./bin/install-standalone mise to install the pin.
+min_version = "2026.10.22"
 
 [tools]
 # Mac and Linux. pnpm stays before node, so Corepack wrappers do not shadow it.
@@ -147,6 +147,9 @@ use_git_credentials = true
 
 [settings.self_update]
 auto = true
+# mise updates itself to each new release at once. minimum_release_age applies
+# to the tools only.
+minimum_release_age = "0s"
 
 [settings.task]
 run_auto_install = false

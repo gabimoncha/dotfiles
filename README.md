@@ -314,8 +314,8 @@ permission step, rerun `./bin/setup`. After that step, use
 `./bin/setup --continue`. Setup reuses existing links and installs. Homebrew
 installs use `--no-upgrade`. Setup replaces a mise older than the pin, and it
 does not update a newer one. Between setup runs, mise updates itself because
-the runtime config sets `self_update.auto`. Setup turns that off for its own
-run.
+the runtime config sets `self_update.auto`. The four-day release delay does not
+apply to mise itself. Setup turns self-update off for its own run.
 
 Each run prints its private `.local/setup-runs/<run-id>/` folder:
 
