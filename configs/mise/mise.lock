@@ -2193,6 +2193,11 @@ version = "1.12.2"
 backend = "npm:ios-deploy"
 specifiers = ["latest"]
 
+[[tools."npm:oh-my-t3code"]]
+version = "0.5.0"
+backend = "npm:oh-my-t3code"
+specifiers = ["latest"]
+
 [[tools."npm:repomix"]]
 version = "1.18.1"
 backend = "npm:repomix"
