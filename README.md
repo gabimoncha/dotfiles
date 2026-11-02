@@ -417,10 +417,13 @@ its versions.
 After an interactive `mise install` or `mise up`, and after `mise run update`,
 `./bin/save-lock` commits a changed lockfile and pushes it to `main`, so the
 other machines get the same versions at their next pull. The commit holds only
-the lock files. The script does nothing on another branch. It stops when
-`origin/main` changed the lock too, and prints the commands that take that
-lock. `DOTFILES_SAVE_LOCK=0` turns it off. Every lock entry has a checksum for
-both platforms, so a plain `mise install` leaves the lock unchanged.
+the lock files that HEAD already tracks and their pipx sidecar files. The
+script stops without a commit when a lock file is new or when the lock paths
+have staged changes, so commit a lock layout change yourself. The script does
+nothing on another branch. It stops when `origin/main` changed the lock too,
+and prints the commands that take that lock. `DOTFILES_SAVE_LOCK=0` turns it
+off. Every lock entry has a checksum for both platforms, so a plain
+`mise install` leaves the lock unchanged.
 
 `./bin/install-standalone` installs and repairs the vendor-installed tools and
 reuses healthy installs. Run it for one tool, for example

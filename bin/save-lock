@@ -6,14 +6,18 @@
 #
 # Usage: save-lock [--dry-run]
 #
-# The commit holds only configs/mise/mise.lock and the pipx lock folder;
-# other changes stay as they are. The script does nothing on another branch,
-# and it stops without a commit when origin/main changed the lock too. It
-# pushes only when the lock commit is the only unpushed commit.
+# The commit holds only the lock files that HEAD already tracks in configs/mise,
+# and the sidecar files in its .mise/locks folder. Other changes stay as they
+# are. The script stops without a commit when a lock file is new, when these
+# paths have staged changes, or when origin/main changed the lock too. A new
+# lock file comes from a lock layout change, which you commit yourself. The
+# script does nothing on another branch. It pushes only when the lock commit is
+# the only unpushed commit.
 # DOTFILES_SAVE_LOCK=0 turns it off.
 set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
-paths=(configs/mise/mise.lock configs/mise/.mise/locks)
+sidecars=configs/mise/.mise/locks
+paths=(configs/mise/mise.lock "$sidecars")
 dry_run=0
 case "${1:-}" in
   "") ;;
@@ -32,6 +36,20 @@ if [[ "$branch" != main ]]; then
   say "the mise lock changed on ${branch:-a detached HEAD}. Commit it yourself."
   exit 0
 fi
+# A staged change here comes from someone else's work, not from mise.
+if ! git diff --cached --quiet HEAD -- "${paths[@]}"; then
+  say 'the mise lock paths have staged changes. Commit or unstage them yourself.'
+  exit 1
+fi
+# mise adds a sidecar folder for a new pipx version. Any other new file here
+# is a new lock file, which HEAD does not track.
+if git cat-file -e "HEAD:$sidecars" 2>/dev/null; then sidecars_tracked=1; else sidecars_tracked=0; fi
+while IFS= read -r file; do
+  if [[ "$file" != "$sidecars"/* || "$sidecars_tracked" == 0 ]]; then
+    say "$file is not in HEAD. Commit the lock layout change yourself."
+    exit 1
+  fi
+done < <(git ls-files --others --exclude-standard -- "${paths[@]}")
 if ! git fetch --quiet origin main; then
   say 'could not fetch origin/main. The lock change is not saved.'
   exit 1
