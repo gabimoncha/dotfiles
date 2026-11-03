@@ -62,6 +62,8 @@ yamlfmt = "latest"
 wrangler = { version = "4.153.0", allow_builds = ["esbuild", "sharp", "workerd"] }
 # Git hooks for repos with an hk.pkl, including this one.
 hk = "latest"
+# Formats Markdown in repos whose hk.pkl runs it, including this one.
+"npm:oxfmt" = "latest"
 shellcheck = "latest"
 shfmt = "latest"
 # TypeScript checks and the editor language server (~/.config/tsrs/tsgo).

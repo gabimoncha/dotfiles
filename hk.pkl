@@ -43,6 +43,10 @@ local hookSteps = new Mapping<String, Step> {
     check = "shfmt -d -i 2 -ci -ln zsh {{files}}"
     fix = "shfmt -w -i 2 -ci -ln zsh {{files}}"
   }
+  // oxfmt keeps line breaks in prose and pads tables so their columns line up.
+  ["oxfmt"] = (Builtins.oxfmt) {
+    glob = List("**/*.md")
+  }
   // Fails only on errors for now. Raise the severity in a later change.
   ["shellcheck"] {
     glob = shellFiles
