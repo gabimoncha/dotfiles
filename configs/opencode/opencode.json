@@ -1,0 +1,21 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "fs": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "FS via CLIProxyAPI",
+      "options": {
+        "apiKey": "{env:CLIPROXYAPI_API_KEY}"
+      },
+      "models": {
+        "sol-low": { "id": "fs/gpt-6.1-sol-low", "name": "Sol Low" },
+        "sol-medium": { "id": "fs/gpt-6.1-sol-medium", "name": "Sol Medium" },
+        "sol-high": { "id": "fs/gpt-6.1-sol-high", "name": "Sol High" },
+        "sol-xhigh": { "id": "fs/gpt-6.1-sol-xhigh", "name": "Sol XHigh" },
+        "argon-low": { "id": "fs/gemini-4-argon-low", "name": "Argon Low" },
+        "argon-medium": { "id": "fs/gemini-4-argon-medium", "name": "Argon Medium" },
+        "argon-high": { "id": "fs/gemini-4-argon-high", "name": "Argon High" }
+      }
+    }
+  }
+}

@@ -45,6 +45,7 @@ min_version = { soft = "2026.10.22" }
 "~/.claude/settings.json/dotfiles" = { source = "configs/claude/settings.json", merge = true }
 "~/.codex/config.toml/dotfiles" = { source = "configs/codex/config.toml", merge = true }
 "~/.t3/userdata/settings.json/dotfiles" = { source = "configs/t3/settings.json", merge = true }
+"~/.config/opencode/opencode.json/dotfiles" = { source = "configs/opencode/opencode.json", merge = true }
 
 [bootstrap.repos]
 "~/.oh-my-zsh" = { url = "https://github.com/ohmyzsh/ohmyzsh.git", depth = 1 }
