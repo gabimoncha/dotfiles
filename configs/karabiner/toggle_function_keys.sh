@@ -1,4 +1,4 @@
- #!/bin/bash
+#!/bin/bash
 
  current_state=$(defaults read -g com.apple.keyboard.fnState)
 
@@ -8,4 +8,4 @@
       defaults write -g com.apple.keyboard.fnState -bool false
  fi
 
- killall SystemUIServer     
+ killall SystemUIServer
