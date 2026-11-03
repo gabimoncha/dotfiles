@@ -26,7 +26,8 @@ before changing ownership, bootstrap boundaries, or other design decisions.
 | Setup steps | `bin/` |
 
 Apply file changes with `./bin/link-dotfiles`. Preview them first with
-`./bin/link-dotfiles --dry-run`. Run other mise commands for this repository
+`./bin/link-dotfiles --dry-run`. Apply them only from the main checkout,
+after the change merges. Run other mise commands for this repository
 through `./bin/repo-mise`, which loads the selected profile and the pinned mise.
 
 ## Add a config file
@@ -37,7 +38,8 @@ through `./bin/repo-mise`, which loads the selected profile and the pinned mise.
    when the app also writes the file, and add a `sync-keys` list next to the
    source. Agent settings are merges, because the agents write private paths
    into them. `./bin/save-settings` copies only the public keys back.
-3. Run `./bin/link-dotfiles --dry-run`, then `./bin/link-dotfiles`.
+3. Run `./bin/link-dotfiles --dry-run`. Run `./bin/link-dotfiles` from the
+   main checkout after the change merges.
 4. Run `./bin/preflight`. It fails when a file in `configs/` has no entry.
 
 ## Platforms
@@ -59,6 +61,10 @@ run, and the mise tool list. A change that works only on the Mac breaks Linux.
 ## Editing
 
 - Edit tracked sources here, not live files under HOME.
+- Edit only in a worktree, never in the main checkout
+  (`~/development/dotfiles`). The links in HOME point to the main checkout, so
+  an edit there changes the live setup at once, and `bin/save-lock` commits
+  from it and pushes to `main`.
 - Keep setup rerunnable. Preserve link backups and existing user state.
 - `bin/setup` lists the setup steps in order: two phases on macOS, one on
   Linux. The step functions are in `bin/lib/setup-steps.sh`. Mark a step
