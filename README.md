@@ -10,7 +10,7 @@ each setting lives. [DECISIONS.md](DECISIONS.md) explains the design.
 mise.toml             file links and shell checkouts for every host
 mise.macos.toml       Mac file links and macOS preferences
 mise.linux.toml       apt packages and the login shell for Linux
-mise.<profile>.toml   one file per machine: pro, air, container, vm
+mise.<profile>.toml   one file per machine: macowl, air, container, vm
 configs/<app>/        the settings files, one folder per app
 Brewfile              Homebrew formulae, casks, taps, and App Store apps
 apps/                 the app manifest, vendor-installed tools, login items
@@ -32,17 +32,17 @@ into their settings, so mise merges selected keys from `configs/claude/`,
 
 | Profile | Machine | Status |
 | --- | --- | --- |
-| `pro` | MacBook Pro | Set up. |
+| `macowl` | MacBook Pro | Set up. |
 | `air` | MacBook Air | Not set up yet. Setup stops before it changes anything. |
 | `container` | NAS development container | Set up. |
 | `vm` | Linux VM, planned on GCP | Not set up yet. Setup stops before it changes anything. |
 
 Save the machine's profile in the ignored `.miserc.local.toml`. A Linux
-container without this file uses `container`. `DOTFILES_PROFILE=pro` selects a
+container without this file uses `container`. `DOTFILES_PROFILE=macowl` selects a
 profile for one command.
 
 ```bash
-printf 'env = ["pro"]\n' > .miserc.local.toml
+printf 'env = ["macowl"]\n' > .miserc.local.toml
 ```
 
 ## Change a setting
@@ -169,7 +169,7 @@ retry. Setup does not install OS updates or change beta enrollment.
 mkdir -p ~/development
 git clone https://github.com/gabimoncha/dotfiles.git ~/development/dotfiles
 cd ~/development/dotfiles
-printf 'env = ["pro"]\n' > .miserc.local.toml
+printf 'env = ["macowl"]\n' > .miserc.local.toml
 ./bin/setup
 ```
 

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # The machine profile selects one mise.<profile>.toml file at the repository
-# root: pro and air on macOS, container and vm on Linux. Bash 3.2 compatible.
+# root: macowl and air on macOS, container and vm on Linux. Bash 3.2 compatible.
 
 # Accept the profile names that older versions of this repository used.
 dotfiles_profile_normalize() {
   case "${1:-}" in
-    macos/pro) printf 'pro\n' ;;
+    macos/pro|pro) printf 'macowl\n' ;;
     macos/air) printf 'air\n' ;;
     linux/container|linux-container) printf 'container\n' ;;
     linux/vm-gcp|linux-vm|vm-gcp) printf 'vm\n' ;;
@@ -17,7 +17,7 @@ dotfiles_profile_normalize() {
 dotfiles_profile_validate() {
   local profile="${1:-}" system="${2:-$(uname -s)}"
   case "$profile" in
-    pro|air)
+    macowl|air)
       [[ "$system" == Darwin ]] || {
         printf 'dotfiles: profile %s requires macOS.\n' "$profile" >&2
         return 2
@@ -29,7 +29,7 @@ dotfiles_profile_validate() {
         return 2
       }
       ;;
-    *) printf 'dotfiles: unsupported profile: %s. Use pro, air, container, or vm.\n' "$profile" >&2; return 2 ;;
+    *) printf 'dotfiles: unsupported profile: %s. Use macowl, air, container, or vm.\n' "$profile" >&2; return 2 ;;
   esac
   case "$profile" in
     air|vm)
@@ -63,7 +63,7 @@ dotfiles_profile() {
       fi
     done < "$saved"
     [[ -n "$profile" ]] || {
-      printf 'dotfiles: .miserc.local.toml has no profile. Add a line such as env = ["pro"].\n' >&2
+      printf 'dotfiles: .miserc.local.toml has no profile. Add a line such as env = ["macowl"].\n' >&2
       return 2
     }
   fi
@@ -71,7 +71,7 @@ dotfiles_profile() {
     if [[ "$system" == Linux && ( -f /.dockerenv || -f /run/.containerenv ) ]]; then
       profile=container
     else
-      printf 'dotfiles: select a profile. Save env = ["pro"] in %s, or set DOTFILES_PROFILE.\n' "$saved" >&2
+      printf 'dotfiles: select a profile. Save env = ["macowl"] in %s, or set DOTFILES_PROFILE.\n' "$saved" >&2
       return 2
     fi
   fi

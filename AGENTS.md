@@ -13,7 +13,7 @@ before changing ownership, bootstrap boundaries, or other design decisions.
 | Where a file goes in HOME | the `[dotfiles]` entry in a root mise file |
 | Entries for every host | `mise.toml` |
 | Entries for one platform | `mise.macos.toml` or `mise.linux.toml` |
-| Entries for one machine | the profile file: `mise.pro.toml`, `mise.air.toml`, `mise.container.toml`, or `mise.vm.toml` |
+| Entries for one machine | the profile file: `mise.macowl.toml`, `mise.air.toml`, `mise.container.toml`, or `mise.vm.toml` |
 | Agent and T3 settings that sync between machines | the merge sources in `configs/claude/`, `configs/codex/`, and `configs/t3/`; save them with `./bin/save-settings` |
 | Which agent settings sync | `configs/<app>/sync-keys`: one `public` rule per setting, including each key of the merge source, and `private` rules for sections |
 | Agent rules for every host | `configs/agents/instructions.md` |

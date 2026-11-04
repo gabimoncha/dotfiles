@@ -84,9 +84,9 @@ project:
 - `mise.toml` has the entries for every host.
 - `mise.macos.toml` and `mise.linux.toml` have the platform entries. The root
   `.miserc.toml` sets `auto_env`, so mise loads the platform file by itself.
-- `mise.pro.toml`, `mise.air.toml`, `mise.container.toml`, and `mise.vm.toml`
+- `mise.macowl.toml`, `mise.air.toml`, `mise.container.toml`, and `mise.vm.toml`
   are the profiles. The ignored `.miserc.local.toml` selects one, for example
-  `env = ["pro"]`. A profile file can replace an entry of the shared file, as
+  `env = ["macowl"]`. A profile file can replace an entry of the shared file, as
   the container does for `~/.codex/AGENTS.md`.
 
 Each `[dotfiles]` entry names its source in `configs/<app>/`. An earlier layout
