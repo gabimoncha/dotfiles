@@ -174,7 +174,14 @@ an ordinary key can hold a credential, such as an authorization header, and a
 section can gain new fields, such as exporter headers. So a public rule names
 one setting, and a setting on neither list is counted until you mark it. A
 setting can be a list of records, such as T3 model favorites. A record can
-also gain new fields, so the save checks every key and text in each record. Each
+also gain new fields, so the save checks every key and text in each record.
+On macowl, the source of the shared T3 settings, a login job runs
+`bin/autosave-t3-settings` each minute. It calls `bin/save-settings` only when
+the live T3 file changed, so a change in T3 reaches the repository without a
+manual save. It never commits: the owner reviews each diff before the other
+machines get it. mise LaunchAgents have no file watch, so the job checks on a
+timer. The save keeps its rule that the machine must first merge the current
+source. After a pull, the job reports a failure until `bin/link-dotfiles` runs. Each
 key in the source needs a public rule, so that a save cannot delete a key that
 nobody listed. The messages of `bin/save-settings` name only paths from the
 list and the source, because a key name can be private too. The save converts

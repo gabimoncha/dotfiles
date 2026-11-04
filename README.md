@@ -132,6 +132,17 @@ usage source and management key, project overrides, sharing and linked
 environments, and device and Keychain settings. `configs/t3/sync-keys` lists
 each setting.
 
+On macowl, a login job saves T3's public settings for you. Each minute, it
+checks `~/.t3/userdata/settings.json`. When the file changed, it runs
+`./bin/save-settings ~/.t3/userdata/settings.json`, which updates
+`configs/t3/settings.json`. The job never commits. Review `git diff configs/t3`
+and commit when you want the other machines to get the change. When a save
+fails, macOS shows a notification, and `.local/settings-sync/t3-autosave.log`
+has the reason. Settings on neither list are only counted in that log. Run
+`./bin/save-settings --show-new` to see them. To install the job, run
+`./bin/link-dotfiles ~/bin/dotfiles-t3-autosave`, then
+`./bin/repo-mise bootstrap macos launchd-agents apply --yes`.
+
 The Codex launch arguments keep the 60-second unload delay and select CLIProxyAPI. The
 global Codex provider stays `openai`, so the desktop app can use ChatGPT
 sign-in. Configure each host's private proxy URL and key before starting

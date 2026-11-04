@@ -4,7 +4,7 @@
 # runs the other way, so a setting that you change in an app can reach your
 # other machines. Review the diff before you commit it.
 #
-# Usage: save-settings [--dry-run] [--show-new]
+# Usage: save-settings [--dry-run] [--show-new] [TARGET...]
 #        save-settings --record TARGET...   (bin/link-dotfiles runs this)
 #
 # configs/<app>/sync-keys marks each setting public or private. Only public
@@ -19,7 +19,7 @@
 set -euo pipefail
 # mise reports resolved paths, so the root must be resolved too.
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
-usage() { printf 'Usage: save-settings [--dry-run] [--show-new]\n'; }
+usage() { printf 'Usage: save-settings [--dry-run] [--show-new] [TARGET...]\n'; }
 dry_run=0
 show_new=""
 record_only=0
@@ -31,7 +31,7 @@ for argument in "$@"; do
     --record) record_only=1 ;;
     -h|--help) usage; exit 0 ;;
     -*) usage >&2; exit 2 ;;
-    *) [[ "$record_only" == 1 ]] || { usage >&2; exit 2; }; record_targets+=("$argument") ;;
+    *) record_targets+=("$argument") ;;
   esac
 done
 
@@ -75,12 +75,24 @@ case "$yq" in
   /*/shims/*|'') printf 'save-settings: yq is not installed. Run mise install yq.\n' >&2; exit 1 ;;
 esac
 [[ -n "$rows" ]] || { printf 'No merged settings to save.\n'; exit 0; }
+# With TARGET arguments, save only those live files.
+wanted_targets=()
+for wanted in ${record_targets[@]+"${record_targets[@]}"}; do
+  [[ "$wanted" == "~/"* ]] && wanted="$HOME/${wanted#\~/}"
+  case $'\n'"$rows" in
+    *$'\n'"$wanted"$'\t'*) wanted_targets+=("$wanted") ;;
+    *) printf 'save-settings: %s is not a merged settings file.\n' "$(home_name "$wanted")" >&2; exit 2 ;;
+  esac
+done
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 status=0
 
 while IFS=$'\t' read -r target source; do
   [[ -n "${target:-}" ]] || continue
+  if [[ ${#wanted_targets[@]} -gt 0 && " ${wanted_targets[*]} " != *" $target "* ]]; then
+    continue
+  fi
   name="${source#"$repo_root"/}"
   case "$source" in
     *.json|*.toml|*.yaml|*.yml) ;;

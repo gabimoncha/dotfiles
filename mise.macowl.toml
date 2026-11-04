@@ -1,3 +1,17 @@
 # Profile: macowl, the MacBook Pro. It uses mise.toml and mise.macos.toml as
 # they are. Put settings here that only macowl needs. Its runtime tools are in
 # configs/mise/config/config.macowl.toml.
+
+# This Mac is the source of the shared T3 settings. The login job saves them
+# into configs/t3/settings.json each minute that T3 changes them, and never
+# commits. launchd does not expand ~ or $HOME in a program path, so /bin/sh
+# finds the script.
+[dotfiles]
+"~/bin/dotfiles-t3-autosave" = { source = "bin/autosave-t3-settings", mode = "symlink" }
+
+[bootstrap.macos.launchd.agents.t3-settings-autosave]
+program = "/bin/sh"
+args = ["-c", 'exec "$HOME/bin/dotfiles-t3-autosave"']
+run_at_load = true
+start_interval = 60
+process_type = "Background"
