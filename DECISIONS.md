@@ -322,7 +322,11 @@ training with `launchctl disable`. It runs only when you invoke it. SIP blocks
 `bootout` of Apple jobs, so a running job stops at the next login. The list
 excludes Siri and Apple Intelligence jobs, which share services on macOS 27. It
 also excludes Spotlight, because mas reads installed App Store apps from the
-Spotlight index. `--revert` enables the jobs again.
+Spotlight index. `--revert` enables the jobs again. The macOS 27.2 update
+removed these overrides, so run `--check` after a macOS update. Live Text is
+also off in the global defaults (`AppleLiveTextEnabled`). Without it, Safari
+makes the text in a paused video selectable, and a click selects text instead
+of playing the video.
 
 Neovim is a separate submodule. Its plugins install at editor startup.
 

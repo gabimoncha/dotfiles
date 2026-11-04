@@ -23,6 +23,9 @@ run_at_load = true
 [bootstrap.macos.defaults.NSGlobalDomain]
 AppleLocale = "en_US@currency=RON"
 AppleKeyboardUIMode = 3
+# Language & Region > Live Text. Off, so a paused video in Safari does not turn
+# into selectable text.
+AppleLiveTextEnabled = false
 ApplePressAndHoldEnabled = false
 InitialKeyRepeat = 15
 KeyRepeat = 2
