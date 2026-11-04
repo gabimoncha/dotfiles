@@ -1,2 +1,3 @@
 # Profile: macowl, the MacBook Pro. It uses mise.toml and mise.macos.toml as
-# they are. Put settings here that only macowl needs.
+# they are. Put settings here that only macowl needs. Its runtime tools are in
+# configs/mise/config/config.macowl.toml.

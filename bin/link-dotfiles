@@ -224,6 +224,20 @@ move_old_local_files() {
   done
 }
 
+# ~/.config/mise/miserc.local.toml links to this file, so mise loads the
+# profile's config in every folder. A container can run setup without the file,
+# so save the profile that dotfiles_profile selected.
+save_profile() {
+  local file="$repo_root/.miserc.local.toml"
+  [[ ! -e "$file" && ! -L "$file" ]] || return 0
+  if [[ "$dry_run" == 1 ]]; then
+    printf 'Would save env = ["%s"] in .miserc.local.toml\n' "$DOTFILES_PROFILE"
+    return 0
+  fi
+  printf 'env = ["%s"]\n' "$DOTFILES_PROFILE" > "$file"
+  printf 'Saved env = ["%s"] in .miserc.local.toml\n' "$DOTFILES_PROFILE"
+}
+
 # Links that older versions of this repository made. Remove each one only
 # while it still points into this repository.
 retired_links=(
@@ -250,6 +264,7 @@ fi
 
 if [[ "$dry_run" == 1 ]]; then
   move_old_local_files
+  save_profile
   for link in "${retired_links[@]}"; do
     [[ -L "$link" && "$(readlink "$link")" == "$repo_root/"* ]] || continue
     printf 'Would remove the old link %s\n' "$(home_name "$link")"
@@ -348,6 +363,7 @@ for row in ${changing_rows[@]+"${changing_rows[@]}"}; do
   }
 done
 move_old_local_files
+save_profile
 
 for row in ${changing_rows[@]+"${changing_rows[@]}"}; do
   entry_mode="${row%%$'\t'*}"

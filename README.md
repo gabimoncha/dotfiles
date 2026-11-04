@@ -259,7 +259,8 @@ Linux runs every step in one run. It has no App Store or restart step.
 3. Setup installs the runtime tools, the agent CLIs, and T3
    (`apps/standalone.tsv`), then links the shared files.
 
-Tools marked `os = "macos"` in `configs/mise/global.toml` stay on the Mac.
+Tools marked `os = "macos"` in `configs/mise/config/config.toml` stay on the
+Mac. Tools for one profile are in `configs/mise/config/config.<profile>.toml`.
 Entries in `mise.macos.toml` do not load on Linux.
 
 Codex reads one global instructions file. On the container, mise renders
@@ -407,12 +408,20 @@ agent CLIs and mise itself are vendor-installed exceptions in
 Scrawl come from their vendor taps, `anomalyco/tap` and `kitlangton/tap`.
 `vscode "publisher.extension"` lines in the Brewfile select Cursor extensions.
 
-`~/.config/mise/mise.lock` links to `configs/mise/mise.lock`. `mise install`
-installs the locked versions, and `mise up` writes newer versions into the
-tracked file. To add a tool, add it to `configs/mise/global.toml`, then run
-`mise lock --global`, then commit the config, the lockfile, and the pipx lock
-folder `configs/mise/.mise/locks/`. An older lockfile moves the tools back to
-its versions.
+`~/.config/mise` links to `configs/mise/config/`, the global mise config
+folder. `mise install` installs the versions in its `mise.lock`, and `mise up`
+writes newer versions into that tracked file. To add a tool, add it to
+`configs/mise/config/config.toml`, then run `mise lock --global`, then commit
+the config, the lockfile, and the sidecar folder `configs/mise/config/.mise/locks/`.
+The sidecars hold the locked dependencies of the pipx tools. An older
+lockfile moves the tools back to its versions.
+
+A tool for one profile goes in `configs/mise/config/config.<profile>.toml`,
+for example agent-device for macowl and container. The folder's
+`miserc.local.toml` links to this repository's `.miserc.local.toml`, so mise
+sets its environment to the profile and loads that file in every folder. mise
+keeps its versions in `mise.<profile>.lock`, so another profile never prunes
+them. A new profile needs only its config file.
 
 After an interactive `mise install` or `mise up`, and after `mise run update`,
 `./bin/save-lock` commits a changed lockfile and pushes it to `main`, so the

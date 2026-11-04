@@ -33,10 +33,10 @@ min_version = { soft = "2026.10.22" }
 "~/.config/tsrs/tsgo" = { source = "configs/tsrs/tsgo", mode = "symlink" }
 "~/.config/nvim" = { source = "nvim", mode = "symlink" }
 
-# The global mise config: runtime tools, their lockfile, and settings.
-"~/.config/mise/config.toml" = { source = "configs/mise/global.toml", mode = "symlink" }
-"~/.config/mise/gemrc" = { source = "configs/mise/gemrc", mode = "symlink" }
-"~/.config/mise/mise.lock" = { source = "configs/mise/mise.lock", mode = "symlink" }
+# The global mise config folder: runtime tools and settings, each profile's
+# config.<profile>.toml, and their locks. Its miserc.local.toml links to this
+# repository's .miserc.local.toml, so mise loads this machine's profile file.
+"~/.config/mise" = { source = "configs/mise/config", mode = "symlink" }
 
 "~/bin/harness" = { source = "configs/harness/harness", mode = "symlink" }
 "~/.claude/CLAUDE.md" = { source = "configs/agents/instructions.md", mode = "symlink" }

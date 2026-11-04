@@ -5,7 +5,7 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 mise_bin_dir="${HOME}/.local/bin"
 shim_dir="${HOME}/.local/share/mise/shims"
-# Commands from the Mac and Linux tool list in configs/mise/global.toml.
+# Commands from the Mac and Linux tool list in configs/mise/config/config.toml.
 smoke_commands=(
   tmux
   gh

@@ -95,16 +95,34 @@ kept one mise file in each app folder. That needed 21 module files, 24 links in
 module files as project config. One file per platform and per profile gives the
 same result without those parts.
 
-`~/.config/mise/config.toml` links to `configs/mise/global.toml`, the runtime
-tool list. mise loads `mise/config.toml` from any folder as project config, so
-the source keeps the name `global.toml`. The runtime list also holds the tasks,
-such as `mise run dot:status`, so they work from every folder.
+`~/.config/mise` links to `configs/mise/config/`, the global config folder.
+It holds the runtime tool list `config.toml`, each profile's
+`config.<profile>.toml`, their locks, and the lock sidecars. The runtime list
+also holds the tasks, such as `mise run dot:status`, so they work from every
+folder. mise loads `mise/config.toml` from any parent folder as project config,
+so the folder is `configs/mise/config/`, not `configs/mise/`. One folder link
+replaces a link per file, and a new profile needs no new link.
 
 `bin/repo-mise` runs the pinned mise from the repository root. It loads only
 this repository's files: no global or system config, and no config file in a
 parent folder. `bin/lib/dotfiles-profile.sh` selects the profile and stops the
-deferred Air and VM profiles before any write. `repo-mise --global` loads only
-the runtime tool list.
+deferred Air and VM profiles before any write. `repo-mise --global` uses
+`configs/mise/config/` as the config folder and sets `MISE_ENV` to the profile,
+so it loads the same files as `~/.config/mise`, and no other global config.
+
+A tool for one profile goes in `configs/mise/config/config.<profile>.toml`. The
+root profile files cannot hold it: their `[tools]` load only inside this
+repository. The folder's `miserc.local.toml` is a tracked link to the ignored
+`.miserc.local.toml`, which holds `env = ["<profile>"]`. mise reads it before
+any config, sets the environment to the profile, and loads the profile's file.
+`bin/link-dotfiles` saves the selected profile in `.miserc.local.toml` when the
+file is missing, as on a container. Each profile has its own lock, because
+`mise install` prunes lock entries that the loaded config does not name: with
+one shared lock, each machine would remove the tools of the other profiles. A
+`conf.d` file has this problem, because it shares the global lock. The
+environment applies in every folder, so a project file named
+`mise.<profile>.toml` also loads. For this reason the Mac profile has the
+machine's name, `macowl`, which no other project uses.
 
 Two settings keep tools working inside the repository. mise refuses an
 untrusted file with `[dotfiles]` entries, and then every shim in this folder
@@ -172,10 +190,10 @@ filter remains because a conflicting checkout stops native repository apply.
 Mac preferences are in `mise.macos.toml`; `macos/defaults.sh` keeps the
 input-source changes, Dock pruning, pmset, and service reloads.
 
-`configs/mise/mise.lock` and its sidecar folder `configs/mise/.mise/locks/`
-preserve the global dependency graphs for macos-arm64 and linux-x64. mise finds
-the sidecars next to the real lockfile, through the `~/.config/mise/mise.lock`
-link. Keep the installed mise at or
+`configs/mise/config/mise.lock` and its sidecar folder
+`configs/mise/config/.mise/locks/` preserve the global dependency graphs for
+macos-arm64 and linux-x64. mise finds the sidecars through the
+`~/.config/mise` link. Keep the installed mise at or
 above the pin before linking or updating the lockfile. Native package support
 does not yet preserve all tap trust, app-presence, sudo, and vendor installer
 rules. Those steps stay in scripts. Shell startup keeps static shims and zsh
@@ -217,6 +235,7 @@ container is the first host. A GCP VM is the next one.
   has no Homebrew and no Nix.
 - One runtime tool list serves both systems. Mac-only tools carry
   `os = "macos"`. The platform and profile files add the file entries.
+  `configs/mise/config/config.<profile>.toml` adds tools for one profile.
 - mise renders Codex's global instructions from the shared rules and the host
   rules in `configs/agents/`. Claude reads the host file from
   `~/.claude/rules/`.

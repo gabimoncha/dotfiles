@@ -124,7 +124,7 @@ standalone_installed_node() {
     version="$(mise_installed_version "$mise_bin")" || return 1
     if mise_version_at_least "$version" "$pinned_mise_version"; then return 1; fi
     node_path="$(
-      MISE_GLOBAL_CONFIG_FILE="$repo_root/configs/mise/global.toml" MISE_ENV= MISE_AUTO_ENV=0 \
+      MISE_GLOBAL_CONFIG_FILE="$repo_root/configs/mise/config/config.toml" MISE_ENV= MISE_AUTO_ENV=0 \
         MISE_AUTO_INSTALL=0 MISE_OFFLINE=1 "$mise_bin" which node 2>/dev/null
     )" || return 1
   }

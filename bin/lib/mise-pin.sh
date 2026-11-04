@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The standalone mise release that setup installs. mise.toml sets the same
-# version as a soft min_version, and configs/mise/global.toml as a hard one.
-# Bash 3.2 compatible.
+# version as a soft min_version, and configs/mise/config/config.toml as a hard
+# one. Bash 3.2 compatible.
 #
 # Change the version and the installer digest together. The digest is the
 # release's install.sh digest in GitHub's release metadata. Raise the pin only

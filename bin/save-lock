@@ -6,18 +6,18 @@
 #
 # Usage: save-lock [--dry-run]
 #
-# The commit holds only the lock files that HEAD already tracks in configs/mise,
-# and the sidecar files in its .mise/locks folder. Other changes stay as they
-# are. The script stops without a commit when a lock file is new, when these
-# paths have staged changes, or when origin/main changed the lock too. A new
-# lock file comes from a lock layout change, which you commit yourself. The
-# script does nothing on another branch. It pushes only when the lock commit is
-# the only unpushed commit.
+# The commit holds only the lock files that HEAD already tracks in
+# configs/mise/config, and the sidecar files in its .mise/locks folder. Other
+# changes stay as they are. The script stops without a commit when a lock file
+# is new, when these paths have staged changes, or when origin/main changed the
+# lock too. A new lock file comes from a lock layout change, which you commit
+# yourself. The script does nothing on another branch. It pushes only when the
+# lock commit is the only unpushed commit.
 # DOTFILES_SAVE_LOCK=0 turns it off.
 set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
-sidecars=configs/mise/.mise/locks
-paths=(configs/mise/mise.lock "$sidecars")
+sidecars=configs/mise/config/.mise/locks
+paths=('configs/mise/config/*.lock' "$sidecars")
 dry_run=0
 case "${1:-}" in
   "") ;;

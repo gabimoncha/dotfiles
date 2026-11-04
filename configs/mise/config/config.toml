@@ -3,6 +3,7 @@
 min_version = "2026.10.22"
 
 [tools]
+# Tools for one profile only are in config.<profile>.toml in this folder.
 # Mac and Linux. pnpm stays before node, so Corepack wrappers do not shadow it.
 pnpm = "latest"
 npm = "12.2.1"
@@ -91,7 +92,6 @@ portless = { version = "latest", os = "macos" }
 vercel = { version = "latest", os = "macos" }
 turbo = { version = "latest", os = "macos" }
 mas = { version = "latest", os = "macos" }
-"npm:agent-device" = { version = "latest", os = "macos" }
 "npm:agent-browser" = { version = "latest", os = "macos" }
 "npm:agent-desktop" = { version = "latest", os = "macos" }
 "npm:@yaakapp/cli" = { version = "latest", os = "macos" }

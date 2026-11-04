@@ -711,19 +711,21 @@ url = "https://github.com/cloudflare/cloudflared/releases/download/2026.10.2/clo
 url_api = "https://api.github.com/repos/cloudflare/cloudflared/releases/assets/658837930"
 
 [[tools.cmake]]
-version = "4.4.4"
+version = "4.4.5"
 backend = "aqua:Kitware/CMake"
 specifiers = ["latest"]
 
 [tools.cmake."platforms.linux-x64"]
-checksum = "sha256:e5bb807f7728cb60cd8b27ebc97a2edb469b68655f21e844a600c3575b76f5bb"
-url = "https://github.com/Kitware/CMake/releases/download/v4.4.4/cmake-4.4.4-linux-x86_64.tar.gz"
-url_api = "https://api.github.com/repos/Kitware/CMake/releases/assets/605992585"
+checksum = "sha256:ed85135c5a5135b45e50423cb406dea04ca3338da0b8ef3c9ede963559680be0"
+checksum_source = "mise-versions"
+url = "https://github.com/Kitware/CMake/releases/download/v4.4.5/cmake-4.4.5-linux-x86_64.tar.gz"
+url_api = "https://api.github.com/repos/Kitware/CMake/releases/assets/682699189"
 
 [tools.cmake."platforms.macos-arm64"]
-checksum = "sha256:4b7b73704b1db9b374e5c9ab8e17ac6148b817b6396ee75cd94a852cbac9d305"
-url = "https://github.com/Kitware/CMake/releases/download/v4.4.4/cmake-4.4.4-macos-universal.tar.gz"
-url_api = "https://api.github.com/repos/Kitware/CMake/releases/assets/605993514"
+checksum = "sha256:679e77a96b9ef9484cc6c1445255fc4f84206b48a65420efbedf16bdab55fbff"
+checksum_source = "mise-versions"
+url = "https://github.com/Kitware/CMake/releases/download/v4.4.5/cmake-4.4.5-macos-universal.tar.gz"
+url_api = "https://api.github.com/repos/Kitware/CMake/releases/assets/682699600"
 
 [[tools.cocoapods]]
 version = "1.17.0"
@@ -1115,30 +1117,32 @@ url = "https://github.com/boyter/scc/releases/download/v4.1.0/scc_Darwin_arm64.t
 url_api = "https://api.github.com/repos/boyter/scc/releases/assets/549478883"
 
 [[tools."github:coollabsio/coolify-cli"]]
-version = "1.10.0"
+version = "1.11.0"
 backend = "github:coollabsio/coolify-cli"
 specifiers = ["latest"]
 
 [tools."github:coollabsio/coolify-cli"."platforms.macos-arm64"]
-checksum = "sha256:510b17db3ddc1c65d302ff1ebce5471edcdfd097511da8811674a91e49d08f11"
-url = "https://github.com/coollabsio/coolify-cli/releases/download/v1.10.0/coolify-cli_1.10.0_darwin_arm64.tar.gz"
-url_api = "https://api.github.com/repos/coollabsio/coolify-cli/releases/assets/631674188"
+checksum = "sha256:4a3e4b8ec28d4f7e982bcf615012836699e94662f72e5a10c6a0a634ce254c32"
+checksum_source = "mise-versions"
+url = "https://github.com/coollabsio/coolify-cli/releases/download/v1.11.0/coolify-cli_1.11.0_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/coollabsio/coolify-cli/releases/assets/678021453"
 
 [[tools."github:entireio/cli"]]
-version = "0.12.0"
+version = "0.12.2"
 backend = "github:entireio/cli"
 specifiers = ["latest"]
 
 [tools."github:entireio/cli"."platforms.linux-x64"]
-checksum = "sha256:28aa1664a990507c7063a9437aa896f3b1930447d03d3711a7d04629299bea18"
-url = "https://github.com/entireio/cli/releases/download/v0.12.0/entire_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/entireio/cli/releases/assets/663186338"
+checksum = "sha256:bfc5c8d5b599f328775b89b735db020c963e307b6a324fc30ce371fe8fa789e8"
+checksum_source = "mise-versions"
+url = "https://github.com/entireio/cli/releases/download/v0.12.2/entire_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/entireio/cli/releases/assets/677973704"
 
 [tools."github:entireio/cli"."platforms.macos-arm64"]
-checksum = "sha256:bb56210fc3474b707eeeda1ccbefceab75d955844a1a8de9c570d9eb62c3d741"
+checksum = "sha256:ec8f8a325e0f8f0b0c17781906273b5e21bc125b0bb6cfbc0c61cad8dfccba4f"
 checksum_source = "mise-versions"
-url = "https://github.com/entireio/cli/releases/download/v0.12.0/entire_darwin_arm64.tar.gz"
-url_api = "https://api.github.com/repos/entireio/cli/releases/assets/663186409"
+url = "https://github.com/entireio/cli/releases/download/v0.12.2/entire_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/entireio/cli/releases/assets/677973791"
 
 [[tools."github:flowcopilot/aether"]]
 version = "0.2.9"
@@ -1394,12 +1398,12 @@ checksum = "blake3:b38b043f13b44b58ff4bf223c3345e3b23ee72347aa1a60a2b1d1f669b922
 url = "https://registry.npmjs.org/npm/-/npm-12.2.1.tgz"
 
 [[tools."npm:@agentclientprotocol/claude-agent-acp"]]
-version = "0.97.0"
+version = "0.99.1"
 backend = "npm:@agentclientprotocol/claude-agent-acp"
 specifiers = ["latest"]
 
 [[tools."npm:@agentclientprotocol/codex-acp"]]
-version = "2.3.0"
+version = "2.5.0"
 backend = "npm:@agentclientprotocol/codex-acp"
 specifiers = ["latest"]
 
@@ -1409,7 +1413,7 @@ backend = "npm:@yaakapp/cli"
 specifiers = ["latest"]
 
 [[tools."npm:agent-browser"]]
-version = "0.39.2"
+version = "0.41.1"
 backend = "npm:agent-browser"
 specifiers = ["latest"]
 
@@ -1418,23 +1422,18 @@ version = "1.0.2"
 backend = "npm:agent-desktop"
 specifiers = ["latest"]
 
-[[tools."npm:agent-device"]]
-version = "0.21.32"
-backend = "npm:agent-device"
-specifiers = ["latest"]
-
 [[tools."npm:cf"]]
-version = "1.0.0-beta.23"
+version = "1.0.0-beta.26"
 backend = "npm:cf"
 specifiers = ["latest"]
 
 [[tools."npm:ctx7"]]
-version = "0.8.1"
+version = "0.8.2"
 backend = "npm:ctx7"
 specifiers = ["latest"]
 
 [[tools."npm:eas-cli"]]
-version = "26.0.0"
+version = "27.2.0"
 backend = "npm:eas-cli"
 specifiers = ["latest"]
 
@@ -1474,14 +1473,14 @@ url = "https://github.com/ollama/ollama/releases/download/v0.40.8/ollama-darwin.
 url_api = "https://api.github.com/repos/ollama/ollama/releases/assets/663837940"
 
 [[tools.pandoc]]
-version = "3.12.1"
+version = "3.13"
 backend = "github:jgm/pandoc"
 specifiers = ["latest"]
 
 [tools.pandoc."platforms.macos-arm64"]
-checksum = "sha256:c2146cf33a583f3ac93eccddf1bb662371d5cfcce1aad1c87ad860cca1435d46"
-url = "https://github.com/jgm/pandoc/releases/download/3.12.1/pandoc-3.12.1-arm64-macOS.zip"
-url_api = "https://api.github.com/repos/jgm/pandoc/releases/assets/620377370"
+checksum = "sha256:f436d18bebbfb3ddd326597686dacab9fac5dc23bd060495020f35a28a43a7c3"
+url = "https://github.com/jgm/pandoc/releases/download/3.13/pandoc-3.13-arm64-macOS.zip"
+url_api = "https://api.github.com/repos/jgm/pandoc/releases/assets/679543143"
 provenance = "github-attestations"
 
 [[tools.perl]]
@@ -1517,24 +1516,24 @@ specifiers = ["latest"]
 uv = { path = ".mise/locks/pipx-tldr/3.4.4", digest = "sha256:c06b755b1f873d2ce1b5aa6305ca0e0f064e09846ce43d9739bdd738afd70ada" }
 
 [[tools.pnpm]]
-version = "12.15.0"
+version = "12.16.1"
 backend = "aqua:pnpm/pnpm"
 specifiers = ["latest"]
 
 [tools.pnpm."platforms.linux-x64"]
-checksum = "sha256:55b5ed0092bd11176c1669598e231ae52e7cedac59de6efd0d415730f37d0598"
-url = "https://github.com/pnpm/pnpm/releases/download/v12.15.0/pnpm-linux-x64.tar.gz"
-url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/662173360"
+checksum = "sha256:565ff81174a14f6f7bd5d84c1b17e51031a80230d370a1fe24be5d16bd02a825"
+url = "https://github.com/pnpm/pnpm/releases/download/v12.16.1/pnpm-linux-x64.tar.gz"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/681916059"
 provenance = "github-attestations"
 
 [tools.pnpm."platforms.macos-arm64"]
-checksum = "sha256:6a41a2877773e97f19832067187cc6fc82e186d8a2cf91fec4b4c1a5fbd6ef27"
-url = "https://github.com/pnpm/pnpm/releases/download/v12.15.0/pnpm-darwin-arm64.tar.gz"
-url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/662173343"
+checksum = "sha256:6661212a6ec725634b0d3268e5bc9408e3152506dab5997891e38fa1ef22bf9c"
+url = "https://github.com/pnpm/pnpm/releases/download/v12.16.1/pnpm-darwin-arm64.tar.gz"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/681916062"
 provenance = "github-attestations"
 
 [[tools.portless]]
-version = "0.15.9"
+version = "0.15.12"
 backend = "npm:portless"
 specifiers = ["latest"]
 
@@ -1622,19 +1621,21 @@ backend = "core:rust"
 specifiers = ["latest"]
 
 [[tools.sccache]]
-version = "0.18.0"
+version = "0.19.0"
 backend = "aqua:mozilla/sccache"
 specifiers = ["latest"]
 
 [tools.sccache."platforms.linux-x64"]
-checksum = "sha256:45f1447fbe231e3037bde351ef70677dd212216c8d62ae7ca409fecc4d6acc89"
-url = "https://github.com/mozilla/sccache/releases/download/v0.18.0/sccache-v0.18.0-x86_64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/mozilla/sccache/releases/assets/563130201"
+checksum = "sha256:aa73c7270c997894038c0d8f0d297865f57569e1687883322bc431713d4bb9dd"
+checksum_source = "mise-versions"
+url = "https://github.com/mozilla/sccache/releases/download/v0.19.0/sccache-v0.19.0-x86_64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/mozilla/sccache/releases/assets/671951070"
 
 [tools.sccache."platforms.macos-arm64"]
-checksum = "sha256:308184519b646f5125289e8515b36f6ca65a13a041923994aebe702348674e8e"
-url = "https://github.com/mozilla/sccache/releases/download/v0.18.0/sccache-v0.18.0-aarch64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/mozilla/sccache/releases/assets/563129740"
+checksum = "sha256:a35a0b7d622618774bc1bb8102d72562dfb21e619f88b153b370d7f89bc286af"
+checksum_source = "mise-versions"
+url = "https://github.com/mozilla/sccache/releases/download/v0.19.0/sccache-v0.19.0-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/mozilla/sccache/releases/assets/671950630"
 
 [[tools.shellcheck]]
 version = "0.11.0"
@@ -1714,7 +1715,7 @@ url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/664335803"
 provenance = "github-attestations"
 
 [[tools.vercel]]
-version = "65.2.0"
+version = "65.5.0"
 backend = "npm:vercel"
 specifiers = ["latest"]
 

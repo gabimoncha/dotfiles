@@ -18,7 +18,8 @@ before changing ownership, bootstrap boundaries, or other design decisions.
 | Which agent settings sync | `configs/<app>/sync-keys`: one `public` rule per setting, including each key of the merge source, and `private` rules for sections |
 | Agent rules for every host | `configs/agents/instructions.md` |
 | Agent rules for one host | `configs/agents/<profile>.md` |
-| Runtime tools and mise tasks | `configs/mise/global.toml` |
+| Runtime tools and mise tasks | `configs/mise/config/config.toml` |
+| Runtime tools for one profile | `configs/mise/config/config.<profile>.toml` |
 | Homebrew formulae, casks, and App Store apps | `Brewfile` |
 | Apt packages | `mise.linux.toml` or the profile file |
 | macOS preferences | `[bootstrap.macos]` in `mise.macos.toml`, and `macos/defaults.sh` |
@@ -72,7 +73,7 @@ run, and the mise tool list. A change that works only on the Mac breaks Linux.
 - Keep Brewfile entries alphabetized within sections unless deliberately grouped.
 - mise installs `npm:` tools with Bun, and Bun applies its own release delay.
   When you add or remove an `npm:<package>` entry in `minimum_release_age_excludes`
-  in `configs/mise/global.toml`, make the same change for `<package>` in
+  in `configs/mise/config/config.toml`, make the same change for `<package>` in
   `minimumReleaseAgeExcludes` in `configs/bun/bunfig.toml`. If `mise up` then
   fails with `<name>@<version> failed to resolve`, add that dependency to the
   Bun list too.

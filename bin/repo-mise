@@ -5,7 +5,8 @@
 #     Loads mise.toml, mise.macos.toml or mise.linux.toml, and the profile's
 #     mise.<profile>.toml from the repository root. Example: dot status
 #   ./bin/repo-mise --global <mise arguments...>
-#     Loads only the runtime tool list, configs/mise/global.toml.
+#     Uses configs/mise/config as the config folder, as ~/.config/mise does:
+#     config.toml and the profile's config.<profile>.toml, when it exists.
 #     Example: --global install
 set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -19,7 +20,11 @@ if [[ $# -lt 1 ]]; then
   printf 'Usage: repo-mise [--global] <mise arguments...>\n' >&2
   exit 2
 fi
-if [[ "$scope" == project ]]; then
+. "${repo_root}/bin/lib/dotfiles-profile.sh"
+if [[ "$scope" == global ]]; then
+  # Without a valid profile, as before setup selects one, only config.toml loads.
+  profile="$(dotfiles_profile "$repo_root" 2>/dev/null)" || profile=""
+else
   for argument in "$@"; do
     [[ "$argument" == -- ]] && break
     case "$argument" in
@@ -29,7 +34,6 @@ if [[ "$scope" == project ]]; then
         ;;
     esac
   done
-  . "${repo_root}/bin/lib/dotfiles-profile.sh"
   profile="$(dotfiles_profile "$repo_root")" || exit
 fi
 mise_bin="${MISE_INSTALL_PATH:-${HOME}/.local/bin/mise}"
@@ -38,15 +42,15 @@ if [[ ! -x "$mise_bin" ]]; then
   exit 127
 fi
 standalone_mise_isolate
-# `mise self-update` can stop below the pin because of minimum_release_age.
+# self_update.auto can be off, or mise can be older than this checkout.
 if ! mise_at_pin "$mise_bin"; then
   printf 'repo-mise: %s is older than the pinned mise %s. Run ./bin/install-standalone mise.\n' \
     "$mise_bin" "$pinned_mise_version" >&2
   exit 1
 fi
 if [[ "$scope" == global ]]; then
-  MISE_GLOBAL_CONFIG_FILE="${repo_root}/configs/mise/global.toml" MISE_ENV= MISE_AUTO_ENV=0 \
-    exec "$mise_bin" "$@"
+  # MISE_ENV wins over miserc.local.toml, which can be missing before setup.
+  MISE_CONFIG_DIR="${repo_root}/configs/mise/config" MISE_ENV="$profile" MISE_AUTO_ENV=0 exec "$mise_bin" "$@"
 fi
 cd "$repo_root"
 # The ceiling stops mise from loading a config file in a parent folder. mise
