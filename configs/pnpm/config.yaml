@@ -1,8 +1,9 @@
 minimumReleaseAge: 5760
 minimumReleaseAgeExclude:
-  - oh-my-t3code
+  - t3
+  - omt3
+  - oh-my-t3
   - agent-browser
   - agent-desktop
   - agent-device
-  - t3
 virtualStoreType: global

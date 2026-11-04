@@ -8,10 +8,25 @@ minimumReleaseAge = 345600
 # listed after each one. When a release adds another, mise up fails with
 # "<name>@<version> failed to resolve". Add that name here.
 minimumReleaseAgeExcludes = [
-  "oh-my-t3code", "agent-browser", "agent-desktop", "agent-device", "t3",
-  "@agentclientprotocol/codex-acp", "@agentclientprotocol/claude-agent-acp",
-  "tokenburnmarket", "omt3",
-  "eas-cli", "@expo/eas-build-job", "@expo/eas-json", "@expo/logger", "@expo/steps", "@expo/turtle-spawn",
-  "cf", "@cloudflare/build-output-utils", "@cloudflare/config", "@cloudflare/runtime-types", "miniflare",
+  "cf",
+  "t3",
+  "omt3",
+  "oh-my-t3",
+  "agent-browser",
+  "agent-desktop",
+  "agent-device",
+  "@agentclientprotocol/codex-acp",
+  "@agentclientprotocol/claude-agent-acp",
+  "tokenburnmarket",
+  "eas-cli",
+  "@expo/eas-build-job",
+  "@expo/eas-json",
+  "@expo/logger",
+  "@expo/steps",
+  "@expo/turtle-spawn",
+  "@cloudflare/build-output-utils",
+  "@cloudflare/config",
+  "@cloudflare/runtime-types",
+  "miniflare",
 ]
 globalStore = true
