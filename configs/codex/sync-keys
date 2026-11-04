@@ -5,10 +5,13 @@
 # ./bin/save-settings --show-new to list them.
 public .model
 public .model_provider
+public .model_context_window
+public .model_auto_compact_token_limit
 public .model_reasoning_effort
 public .service_tier
 public .approval_policy
 public .approvals_reviewer
+public .sandbox_mode
 public .features.memories
 public .features.chronicle
 public .features.plugins
@@ -70,11 +73,10 @@ private .mcp_servers
 private .notify
 private .marketplaces
 private .tui
-# The container profile sets this key in configs/codex/container.toml.
-private .sandbox_mode
 public .model_providers.cliproxyapi.name
 public .model_providers.cliproxyapi.wire_api
 public .model_providers.cliproxyapi.env_key
+public .model_providers.cliproxyapi.supports_websockets
 # T3 selects the proxy through its launch arguments. Its connection stays local.
 private .model_providers.cliproxyapi.base_url
 private .model_providers.cliproxyapi.http_headers
