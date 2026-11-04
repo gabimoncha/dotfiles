@@ -1442,6 +1442,11 @@ version = "1.12.2"
 backend = "npm:ios-deploy"
 specifiers = ["latest"]
 
+[[tools."npm:oh-my-t3"]]
+version = "0.6.1"
+backend = "npm:oh-my-t3"
+specifiers = ["0.6.1"]
+
 [[tools."npm:sfw"]]
 version = "2.0.6"
 backend = "npm:sfw"

@@ -111,6 +111,7 @@ mas = { version = "latest", os = "macos" }
 herdr = { version = "latest", os = "macos" }
 "github:flowcopilot/aether" = { version = "0.2.9", os = "macos" }
 xcodegen = { version = "latest", os = "macos" }
+"npm:oh-my-t3" = "0.6.1"
 
 [settings]
 experimental = true
@@ -126,7 +127,20 @@ minimum_release_age = "4d"
 # Entries match a full backend ID, a registry short name, or a backend wildcard.
 # bun installs the npm: tools and has its own delay. Add each npm: entry to
 # minimumReleaseAgeExcludes in configs/bun/bunfig.toml too.
-minimum_release_age_excludes = ["npm:agent-browser", "npm:agent-desktop", "npm:agent-device", "npm:eas-cli", "npm:@agentclientprotocol/codex-acp", "npm:@agentclientprotocol/claude-agent-acp", "npm:cf", "github:flowcopilot/aether", "npm:tokenburnmarket", "npm:t3"]
+minimum_release_age_excludes = [
+  "npm:cf",
+  "npm:eas-cli",
+  "npm:agent-browser",
+  "npm:agent-desktop",
+  "npm:agent-device",
+  "npm:@agentclientprotocol/codex-acp",
+  "npm:@agentclientprotocol/claude-agent-acp",
+  "npm:tokenburnmarket",
+  "npm:oh-my-t3",
+  "npm:omt3",
+  "npm:t3",
+  "github:flowcopilot/aether",
+]
 
 [settings.npm]
 package_manager = "bun"
