@@ -324,6 +324,24 @@ and token refresh. After that, remove the old Mac proxy with
 `brew services stop cliproxyapi` and `brew uninstall --formula cliproxyapi`.
 Keep its OAuth files until the migration is complete.
 
+### Proxy routing
+
+The server example enables session affinity for one hour. New sessions use
+round-robin selection. A session keeps its account while that account remains
+available, and child sessions inherit the parent's account. Failover remains
+enabled. The affinity duration does not set Claude's prompt-cache duration.
+The shared Codex provider enables Responses WebSockets. Start a fresh T3
+provider process after applying the Codex settings.
+
+For an existing hub, merge the `routing` and `observability` sections from
+`local/cliproxyapi.config.yaml.example` into its private configuration. Preserve
+its keys, accounts, and other settings. CLIProxyAPI hot-reloads configuration.
+Updating the example alone does not change the deployed NAS configuration.
+
+Full request logging and debug logging stay off. Docker retains application
+stdout with its existing rotation limits. Error log files can still contain
+request content. Keep those files private and inspect them before sharing.
+
 ## Future GCP VM
 
 The VM does not exist yet. `vm` (`mise.vm.toml`) is a reserved, deferred profile.
