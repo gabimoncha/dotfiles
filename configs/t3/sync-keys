@@ -1,7 +1,80 @@
 # Only these T3 settings return to Git through bin/save-settings.
 # Each public rule names one setting. Unlisted settings are not saved.
+
+# Models and providers
+public .favorites
+public .defaultModelSelection.instanceId
+public .defaultModelSelection.model
+public .textGenerationModelSelection.instanceId
+public .textGenerationModelSelection.model
+public .providerModelPreferences.codex.hiddenModels
+public .providerModelPreferences.codex.modelOrder
+public .providerModelPreferences.claudeAgent.hiddenModels
+public .providerModelPreferences.claudeAgent.modelOrder
+public .providerModelPreferences.cursor.hiddenModels
+public .providerModelPreferences.cursor.modelOrder
+public .providerModelPreferences.pi.hiddenModels
+public .providerModelPreferences.pi.modelOrder
+public .providerModelPreferences.opencode.hiddenModels
+public .providerModelPreferences.opencode.modelOrder
+public .providerModelPreferences.fs_lab.hiddenModels
+public .providerModelPreferences.fs_lab.modelOrder
 public .providerInstances.codex.driver
 public .providerInstances.codex.config.launchArgs
+public .providerInstances.codex.config.customModels
+public .providerInstances.claudeAgent.driver
+public .providerInstances.claudeAgent.config.customModels
+public .providerInstances.cursor.driver
+public .providerInstances.cursor.displayName
+public .providerInstances.cursor.enabled
+public .providerInstances.pi.driver
+public .providerInstances.pi.displayName
+public .providerInstances.pi.enabled
+public .providerInstances.opencode.driver
+public .providerInstances.opencode.displayName
+public .providerInstances.opencode.enabled
 private .providerInstances.codex.config.binaryPath
 private .providerInstances.codex.config.homePath
 private .providerInstances.codex.config.shadowHomePath
+
+# Threads, worktrees, and Git
+public .defaultThreadEnvMode
+public .defaultAutoPull
+public .automaticGitFetchInterval
+public .pullRequestMergeMethod
+public .sourceControlWritingStyle.mode
+public .storageCleanup.worktreeAfterDays
+public .storageCleanup.worktreeSettledAfterDays
+public .storageCleanup.worktreeOnMerge
+public .storageCleanup.worktreeOnDelete
+public .storageCleanup.worktreeUnchanged
+public .compactIdleThreads
+public .idleCompaction
+public .snoozeLimitedThreads
+public .autoResumeLimitedThreads
+public .snoozePresets
+public .sidebarAutoSettleAfterDays
+public .sidebarAutoSettleKeepPullRequests
+public .projectSettingsFolded
+
+# Background work
+public .backgroundActivity.schemaVersion
+public .backgroundActivity.profile
+public .backgroundActivityProfile
+public .providerHealthRefreshInterval
+private .backgroundActivity.overrides
+
+# Private: the proxy URL and its management key.
+private .usageLimitSources
+# Private: project IDs and commands differ on each machine.
+private .projectScriptOverrides
+private .projectSettingsOverrides
+# Private: who can reach this server.
+private .guestSharingEnabled
+private .linkedEnvironmentsEnabled
+# Private: settings for the devices and the system of each machine.
+private .enableAgentDeviceAccess
+private .enableDeviceSupport
+private .deviceOnboardingCompleted
+private .cursorKeychainUsageEnabled
+private .environmentIcon

@@ -7,8 +7,9 @@
 # SOURCE_JSON and LIVE_JSON hold it and the live file as JSON. The sync-keys
 # file next to SOURCE has one rule per line: "public PATH" or "private PATH",
 # where PATH is a key path such as .model or .env."NAME". A public rule names
-# one setting: a string, a number, a boolean, or a list of those. A private
-# rule can name a whole section. Settings under no rule are counted, not
+# one setting: a string, a number, a boolean, or a list. A list can hold
+# records; each key and text in them gets the same checks as the setting. A
+# private rule can name a whole section. Settings under no rule are counted, not
 # saved; --show-new prints their paths. Each setting in SOURCE needs a public
 # rule, so that a save cannot delete it. Saved values must not hold a local
 # path, a credential, or an email address. Messages print only paths from
@@ -76,6 +77,15 @@ def leaves(node, keys = [], &block)
   end
 end
 
+# Collects every key name and every text inside a value, at any depth.
+def parts(node, names, texts)
+  case node
+  when Hash then node.each { |key, value| names << key; parts(value, names, texts) }
+  when Array then node.each { |item| parts(item, names, texts) }
+  when String then texts << node
+  end
+end
+
 def read_map(file, name)
   data = begin
     JSON.parse(File.read(file))
@@ -114,21 +124,18 @@ public_rules.each do |keys|
   next if private_rules.any? { |rule| prefix?(rule, keys) }
   found, value = lookup(live, keys)
   next unless found
-  case value
-  when Hash
+  if value.is_a?(Hash)
     # A section can gain new fields, such as exporter headers.
     problems << "#{show(keys)} is now a section, not one setting. Give its settings their own rules in #{sync_file}, or mark it private"
     next
-  when Array
-    unless value.all? { |item| item.is_a?(String) || item.is_a?(Numeric) || item == true || item == false }
-      problems << "#{show(keys)} is a list of sections. Mark it private in #{sync_file}"
-      next
-    end
   end
-  texts = value.is_a?(Array) ? value : [value]
-  if texts.any? { |item| item.is_a?(String) && item.match?(PRIVATE_TEXT) }
+  # A record in a list can gain new fields too, so every field is checked.
+  names = []
+  texts = []
+  parts(value, names, texts)
+  if (texts + names).any? { |text| text.match?(PRIVATE_TEXT) }
     problems << "#{show(keys)} holds a local path, a credential, or an email address. Mark it private in #{sync_file}"
-  elsif keys.any? { |key| key.match?(SECRET_NAME) }
+  elsif (keys + names).any? { |key| key.match?(SECRET_NAME) }
     problems << "#{show(keys)} has a secret-like name. Mark it private in #{sync_file}"
   else
     store(output, keys, value)

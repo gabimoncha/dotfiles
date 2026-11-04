@@ -111,6 +111,9 @@ saves only the public settings. It counts settings on neither list and does not 
 them. Run `./bin/save-settings --show-new` to list them, add each one to the
 list, then save again.
 
+A public setting can also be a list of records, such as T3's model favorites.
+`bin/save-settings` checks every key and text in each record.
+
 `bin/save-settings` leaves a file unchanged when one of its keys has no public
 rule, or when a public setting has become a section or holds a local path, a
 credential, or an email address. Its messages never show a value.
@@ -122,8 +125,14 @@ machine has merged the current repository file. A merge never removes a key.
 A key that you delete in an app stays on the other machines, and a later save
 from one of them puts it back. Delete it on every machine, or mark it private.
 
-T3 shares only the default Codex instance's driver and launch arguments.
-The arguments keep the 60-second unload delay and select CLIProxyAPI. The
+T3 shares its model and provider choices: favorites, default models, hidden
+models, custom models, and the provider instances. It also shares the thread,
+worktree, Git, and background work settings. Each machine keeps its own proxy
+usage source and management key, project overrides, sharing and linked
+environments, and device and Keychain settings. `configs/t3/sync-keys` lists
+each setting.
+
+The Codex launch arguments keep the 60-second unload delay and select CLIProxyAPI. The
 global Codex provider stays `openai`, so the desktop app can use ChatGPT
 sign-in. Configure each host's private proxy URL and key before starting
 Codex in T3. See [the proxy setup](apps/remote-development.md#nas-agent-proxy).
