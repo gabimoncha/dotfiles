@@ -40,9 +40,18 @@ This check reads file metadata only. It does not download or restore files.
 EOF
   for kind in Mackup Raycast Codex; do
     case "$kind" in
-      Mackup) pattern='*'; printf '\nMackup: download the entire folder (includes Cursor and other allowlisted app settings).\n' ;;
-      Raycast) pattern='*.rayconfig'; printf '\nRaycast: download the newest .rayconfig export; import it in Raycast with its password.\n' ;;
-      Codex) pattern='codex-state-*.tar.gz.age'; printf '\nCodex: download codex-state-latest.tar.gz.age, or the newest dated archive; its passphrase is required.\n' ;;
+      Mackup)
+        pattern='*'
+        printf '\nMackup: download the entire folder (includes Cursor and other allowlisted app settings).\n'
+        ;;
+      Raycast)
+        pattern='*.rayconfig'
+        printf '\nRaycast: download the newest .rayconfig export; import it in Raycast with its password.\n'
+        ;;
+      Codex)
+        pattern='codex-state-*.tar.gz.age'
+        printf '\nCodex: download codex-state-latest.tar.gz.age, or the newest dated archive; its passphrase is required.\n'
+        ;;
     esac
     setup_backup_location "$primary/$kind" "$pattern"
     setup_backup_location "$secondary/$kind" "$pattern"

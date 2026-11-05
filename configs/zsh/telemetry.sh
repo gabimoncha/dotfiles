@@ -44,7 +44,7 @@ while [ -n "$_dotfiles_crs_remaining" ]; do
       ;;
   esac
   case "$_dotfiles_crs_property" in
-    enable|enable=*) ;;
+    enable | enable=*) ;;
     *) _dotfiles_crs_kept=${_dotfiles_crs_kept:+$_dotfiles_crs_kept,}$_dotfiles_crs_property ;;
   esac
 done

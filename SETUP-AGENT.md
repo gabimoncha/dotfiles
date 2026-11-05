@@ -42,31 +42,31 @@ run outside that directory before repeated repair attempts if you need its logs.
 4. When the scripts for all failed steps exit 0, run
    `./bin/setup --continue`. The setup reuses finished work.
 
-| Step | Script |
-| --- | --- |
-| `preflight` | `./bin/preflight` |
-| `touch_id` | `./bin/configure-sudo-touch-id --enable` |
-| `sudo_grant` | `./bin/sudo-grant --enable` (the user runs it in a terminal) |
-| `mise` | `./bin/install-standalone mise` |
-| `install_gh` | `./bin/github-bootstrap install-gh` |
-| `authenticate_api` | `./bin/auth-setup --api-only` |
-| `authenticate_ssh` | `./bin/auth-setup --ssh-only` |
-| `configure_git` (Linux) | `./bin/auth-setup --git-only` |
-| `verify_mise_access` | `./bin/auth-setup --verify-mise` |
-| `links`, `final_links` | `./bin/link-dotfiles` |
-| `shell` | `./bin/setup --continue` reruns it. Check with `./bin/repo-mise bootstrap repos status`. For a `conflict`, ask the user before you move the path aside. |
-| `defaults` | `./macos/defaults.sh` |
-| `manifest_apps` | `./bin/install-apps` |
-| `mise_inventory` | `./bin/repo-mise --global install`, then `./bin/check-mise-tools` |
-| `standalone_agents` | `./bin/install-standalone` (`--first-only` in the first phase) |
-| `system_packages` (Linux) | `./bin/repo-mise bootstrap --only packages,user --yes`; check with `bootstrap packages status` |
-| Linux prerequisites | `./bin/linux-prerequisites` (bin/setup runs it before the runtime starts) |
-| `telemetry` | `./bin/configure-telemetry` |
-| `app_settings` | `./bin/configure-app-settings` |
-| `screenshots` | `./bin/configure-screenshots` |
-| `finder` | `./bin/finder-sidebar-favorites` |
-| `tokenburnmarket` | `./bin/setup-tokenburnmarket` (the user runs it in a terminal for the browser sign-in) |
-| `mobile_setup` | `./bin/install-mobile-dev` |
+| Step                      | Script                                                                                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `preflight`               | `./bin/preflight`                                                                                                                                       |
+| `touch_id`                | `./bin/configure-sudo-touch-id --enable`                                                                                                                |
+| `sudo_grant`              | `./bin/sudo-grant --enable` (the user runs it in a terminal)                                                                                            |
+| `mise`                    | `./bin/install-standalone mise`                                                                                                                         |
+| `install_gh`              | `./bin/github-bootstrap install-gh`                                                                                                                     |
+| `authenticate_api`        | `./bin/auth-setup --api-only`                                                                                                                           |
+| `authenticate_ssh`        | `./bin/auth-setup --ssh-only`                                                                                                                           |
+| `configure_git` (Linux)   | `./bin/auth-setup --git-only`                                                                                                                           |
+| `verify_mise_access`      | `./bin/auth-setup --verify-mise`                                                                                                                        |
+| `links`, `final_links`    | `./bin/link-dotfiles`                                                                                                                                   |
+| `shell`                   | `./bin/setup --continue` reruns it. Check with `./bin/repo-mise bootstrap repos status`. For a `conflict`, ask the user before you move the path aside. |
+| `defaults`                | `./macos/defaults.sh`                                                                                                                                   |
+| `manifest_apps`           | `./bin/install-apps`                                                                                                                                    |
+| `mise_inventory`          | `./bin/repo-mise --global install`, then `./bin/check-mise-tools`                                                                                       |
+| `standalone_agents`       | `./bin/install-standalone` (`--first-only` in the first phase)                                                                                          |
+| `system_packages` (Linux) | `./bin/repo-mise bootstrap --only packages,user --yes`; check with `bootstrap packages status`                                                          |
+| Linux prerequisites       | `./bin/linux-prerequisites` (bin/setup runs it before the runtime starts)                                                                               |
+| `telemetry`               | `./bin/configure-telemetry`                                                                                                                             |
+| `app_settings`            | `./bin/configure-app-settings`                                                                                                                          |
+| `screenshots`             | `./bin/configure-screenshots`                                                                                                                           |
+| `finder`                  | `./bin/finder-sidebar-favorites`                                                                                                                        |
+| `tokenburnmarket`         | `./bin/setup-tokenburnmarket` (the user runs it in a terminal for the browser sign-in)                                                                  |
+| `mobile_setup`            | `./bin/install-mobile-dev`                                                                                                                              |
 
 The other steps run functions in `bin/lib/setup-steps.sh`. To retry one of
 them, repair the cause from its output, then run `./bin/setup --continue`.

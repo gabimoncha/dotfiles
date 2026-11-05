@@ -27,10 +27,19 @@ record_targets=()
 for argument in "$@"; do
   case "$argument" in
     --dry-run) dry_run=1 ;;
-    --show-new) show_new=--show-new; dry_run=1 ;;
+    --show-new)
+      show_new=--show-new
+      dry_run=1
+      ;;
     --record) record_only=1 ;;
-    -h|--help) usage; exit 0 ;;
-    -*) usage >&2; exit 2 ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    -*)
+      usage >&2
+      exit 2
+      ;;
     *) record_targets+=("$argument") ;;
   esac
 done
@@ -41,7 +50,10 @@ export DOTFILES_PROFILE
 state_dir="$repo_root/.local/settings-sync"
 home_name() { printf '~/%s' "${1#"$HOME"/}"; }
 digest() { /usr/bin/ruby -rdigest -e 'print Digest::SHA256.file(ARGV[0]).hexdigest' "$1"; }
-record_file() { local name="${1#"$HOME"/}"; printf '%s/%s.sha256' "$state_dir" "${name//\//_}"; }
+record_file() {
+  local name="${1#"$HOME"/}"
+  printf '%s/%s.sha256' "$state_dir" "${name//\//_}"
+}
 
 # One line per merge that mise.toml declares: the live file and its source.
 entries="$("$repo_root/bin/repo-mise" dot status --json)" || exit
@@ -64,24 +76,33 @@ if [[ "$record_only" == 1 ]]; then
     for wanted in ${record_targets[@]+"${record_targets[@]}"}; do
       [[ "$wanted" == "~/"* ]] && wanted="$HOME/${wanted#\~/}"
       [[ "$wanted" == "$target" ]] || continue
-      digest "$source" > "$(record_file "$target")"
+      digest "$source" >"$(record_file "$target")"
     done
-  done <<< "$rows"
+  done <<<"$rows"
   exit 0
 fi
 
 yq="$("$repo_root/bin/repo-mise" --global which yq 2>/dev/null)" || yq=""
 case "$yq" in
-  /*/shims/*|'') printf 'save-settings: yq is not installed. Run mise install yq.\n' >&2; exit 1 ;;
+  /*/shims/* | '')
+    printf 'save-settings: yq is not installed. Run mise install yq.\n' >&2
+    exit 1
+    ;;
 esac
-[[ -n "$rows" ]] || { printf 'No merged settings to save.\n'; exit 0; }
+[[ -n "$rows" ]] || {
+  printf 'No merged settings to save.\n'
+  exit 0
+}
 # With TARGET arguments, save only those live files.
 wanted_targets=()
 for wanted in ${record_targets[@]+"${record_targets[@]}"}; do
   [[ "$wanted" == "~/"* ]] && wanted="$HOME/${wanted#\~/}"
   case $'\n'"$rows" in
     *$'\n'"$wanted"$'\t'*) wanted_targets+=("$wanted") ;;
-    *) printf 'save-settings: %s is not a merged settings file.\n' "$(home_name "$wanted")" >&2; exit 2 ;;
+    *)
+      printf 'save-settings: %s is not a merged settings file.\n' "$(home_name "$wanted")" >&2
+      exit 2
+      ;;
   esac
 done
 work="$(mktemp -d)"
@@ -95,8 +116,12 @@ while IFS=$'\t' read -r target source; do
   fi
   name="${source#"$repo_root"/}"
   case "$source" in
-    *.json|*.toml|*.yaml|*.yml) ;;
-    *) printf 'save-settings: %s has no known format. Skipped.\n' "$name" >&2; status=1; continue ;;
+    *.json | *.toml | *.yaml | *.yml) ;;
+    *)
+      printf 'save-settings: %s has no known format. Skipped.\n' "$name" >&2
+      status=1
+      continue
+      ;;
   esac
   sync_keys="$(dirname "$source")/sync-keys"
   if [[ ! -f "$sync_keys" ]]; then
@@ -123,12 +148,12 @@ while IFS=$'\t' read -r target source; do
     live="$work/live.json"
     saved="$work/saved.json"
     # yq can quote the file in an error, so its errors stay hidden.
-    if ! (cd / && "$yq" -p "$format" -o json "$target") > "$live" 2>/dev/null; then
+    if ! (cd / && "$yq" -p "$format" -o json "$target") >"$live" 2>/dev/null; then
       printf 'save-settings: %s is not valid %s. Skipped.\n' "$(home_name "$target")" "$format" >&2
       status=1
       continue
     fi
-    if ! (cd / && "$yq" -p "$format" -o json "$source") > "$saved" 2>/dev/null; then
+    if ! (cd / && "$yq" -p "$format" -o json "$source") >"$saved" 2>/dev/null; then
       printf 'save-settings: %s is not valid %s. Skipped.\n' "$name" "$format" >&2
       status=1
       continue
@@ -143,8 +168,8 @@ while IFS=$'\t' read -r target source; do
   output="$work/${source##*/}"
   case "$source" in
     *.json) cp "$selected" "$output" ;;
-    *.toml|*.yaml|*.yml)
-      if ! (cd / && "$yq" -p json -o "$format" "$selected") > "$output" 2>/dev/null; then
+    *.toml | *.yaml | *.yml)
+      if ! (cd / && "$yq" -p json -o "$format" "$selected") >"$output" 2>/dev/null; then
         printf 'save-settings: could not write %s as %s. Nothing saved.\n' "$name" "$format" >&2
         status=1
         continue
@@ -157,9 +182,9 @@ while IFS=$'\t' read -r target source; do
     printf 'Would save %s:\n' "$name"
     diff -u "$source" "$output" || true
   else
-    cat "$output" > "$source"
-    digest "$source" > "$record"
+    cat "$output" >"$source"
+    digest "$source" >"$record"
     printf 'Saved %s. Review git diff, then commit.\n' "$name"
   fi
-done <<< "$rows"
+done <<<"$rows"
 exit "$status"

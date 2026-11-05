@@ -14,7 +14,10 @@ restore_app=0
 runtime_started=0
 
 log() { printf '==> %s\n' "$1"; }
-die() { printf '!! %s\n' "$1" >&2; exit 1; }
+die() {
+  printf '!! %s\n' "$1" >&2
+  exit 1
+}
 
 verify_app() {
   local bundle="$1" executable details
@@ -27,8 +30,8 @@ verify_app() {
   done
   /usr/bin/codesign --verify --deep --strict "$bundle" || return 1
   details="$(/usr/bin/codesign -dv "$bundle" 2>&1)" || return 1
-  /usr/bin/grep -qx 'TeamIdentifier=MXGJJ98X76' <<< "$details" || return 1
-  /usr/bin/grep -qx 'Identifier=com.valvesoftware.steam' <<< "$details" || return 1
+  /usr/bin/grep -qx 'TeamIdentifier=MXGJJ98X76' <<<"$details" || return 1
+  /usr/bin/grep -qx 'Identifier=com.valvesoftware.steam' <<<"$details" || return 1
   /usr/sbin/spctl --assess --type execute "$bundle" || return 1
 }
 
@@ -80,15 +83,15 @@ prepare_download() {
       print file, sha
     }
   ' "$work_dir/manifest")" || die "Cannot read Valve's bootstrapper package metadata."
-  read -r package digest <<< "$metadata"
+  read -r package digest <<<"$metadata"
   [[ "$package" =~ ^appdmg_osx\.zip\.[0-9a-f]{40}$ ]] || die "Unexpected package filename in Valve's manifest."
   [[ "$digest" =~ ^[0-9a-f]{64}$ ]] || die "Invalid SHA-256 digest in Valve's manifest."
   log "Downloading Valve package $package"
   download "$cdn/$package" "$work_dir/package.zip"
   actual="$(/usr/bin/shasum -a 256 "$work_dir/package.zip")"
   [[ "${actual%% *}" == "$digest" ]] || die "Valve package checksum does not match."
-  /usr/bin/unzip -p "$work_dir/package.zip" SteamMacBootstrapper.tar.gz > "$work_dir/bootstrap.tar.gz"
-  /usr/bin/tar -tzf "$work_dir/bootstrap.tar.gz" > "$work_dir/entries"
+  /usr/bin/unzip -p "$work_dir/package.zip" SteamMacBootstrapper.tar.gz >"$work_dir/bootstrap.tar.gz"
+  /usr/bin/tar -tzf "$work_dir/bootstrap.tar.gz" >"$work_dir/entries"
   /usr/bin/awk '
     $0 !~ /^Steam\.app\// || $0 ~ /(^|\/)\.\.(\/|$)/ { bad=1 }
     END { exit (bad || NR == 0) }
@@ -103,7 +106,7 @@ prepare_download() {
 }
 
 [[ $# -le 1 ]] || die "Usage: ./bin/install-steam [--dry-run | --verify-download | --check]"
-case "$mode" in install|--dry-run|--verify-download|--check) ;; *) die "Unknown option: $mode" ;; esac
+case "$mode" in install | --dry-run | --verify-download | --check) ;; *) die "Unknown option: $mode" ;; esac
 [[ "$(uname -s)" == Darwin && "$(uname -m)" == arm64 ]] || die "Steam setup requires an Apple Silicon Mac."
 
 if [[ "$mode" == --check ]]; then
@@ -147,12 +150,15 @@ runtime_acquire_lock homebrew
 [[ ! -e "$support_app" || -d "$support_app" ]] || die "Steam.AppBundle is not a directory."
 brew_bin=""
 for candidate in "${HOMEBREW_PREFIX:-/opt/homebrew}/bin/brew" /opt/homebrew/bin/brew /usr/local/bin/brew; do
-  if [[ -x "$candidate" ]]; then brew_bin="$candidate"; break; fi
+  if [[ -x "$candidate" ]]; then
+    brew_bin="$candidate"
+    break
+  fi
 done
 cask_installed=0
 if [[ -n "$brew_bin" ]]; then
   casks="$(HOMEBREW_NO_AUTO_UPDATE=1 "$brew_bin" list --cask)"
-  if /usr/bin/grep -qx steam <<< "$casks"; then cask_installed=1; fi
+  if /usr/bin/grep -qx steam <<<"$casks"; then cask_installed=1; fi
 fi
 native_installed=0
 if verify_app "$app" >/dev/null 2>&1; then native_installed=1; fi

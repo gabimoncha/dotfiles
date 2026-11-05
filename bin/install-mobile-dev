@@ -208,8 +208,14 @@ install_formulae() {
 case "${1:-}" in
   "") ;;
   --dry-run) dry_run=1 ;;
-  -h | --help) printf 'Usage: ./bin/install-mobile-dev [--dry-run]\n'; exit 0 ;;
-  *) printf 'Usage: ./bin/install-mobile-dev [--dry-run]\n' >&2; exit 1 ;;
+  -h | --help)
+    printf 'Usage: ./bin/install-mobile-dev [--dry-run]\n'
+    exit 0
+    ;;
+  *)
+    printf 'Usage: ./bin/install-mobile-dev [--dry-run]\n' >&2
+    exit 1
+    ;;
 esac
 
 if [[ "${EUID}" -eq 0 ]]; then

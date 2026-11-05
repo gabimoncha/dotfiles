@@ -21,7 +21,11 @@ restore_offer() {
   fi
   printf 'Review executable configs, extensions, skills and automations before restoring.\nRestore %s now? [y/N] ' "$kind"
   read -r response || response=n
-  case "$response" in y|Y|yes|YES) ;; *) runtime_record_deferred "restore.$kind" "declined"; return 0 ;; esac
+  case "$response" in y | Y | yes | YES) ;; *)
+    runtime_record_deferred "restore.$kind" "declined"
+    return 0
+    ;;
+  esac
   "${repo_root}/bin/file-restore" "$kind" "$@" || status=$?
   if [[ "$status" != 0 ]]; then
     runtime_record_failure recoverable "restore.$kind" "restore failed" "" "Review the archive and retry explicitly."
@@ -36,7 +40,10 @@ restore_offer() {
 setup_restores() {
   local tool backup="" candidate archive status=0
   for candidate in "${HOME}/Library/CloudStorage/SynologyDrive-personal/MacBackups/Mackup" "${HOME}/Library/Mobile Documents/com~apple~CloudDocs/Mackup"; do
-    if restore_hydrated_tree "$candidate"; then backup="$candidate"; break; fi
+    if restore_hydrated_tree "$candidate"; then
+      backup="$candidate"
+      break
+    fi
   done
   if tool="$(setup_real_tool mackup)" && "$tool" --version >/dev/null 2>&1 && [[ -n "$backup" ]]; then
     PATH="$(dirname "$tool"):$PATH" restore_offer mackup || status=1

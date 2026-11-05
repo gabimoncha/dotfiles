@@ -11,15 +11,15 @@ while IFS= read -r line; do
     'export '*)
       definition=${line#export }
       name=${definition%%=*}
-      case "$name" in ''|*[!A-Z0-9_]*) exit 2 ;; esac
+      case "$name" in '' | *[!A-Z0-9_]*) exit 2 ;; esac
       value=$(/usr/bin/printenv "$name")
       launchctl setenv "$name" "$value"
       ;;
     'unset _dotfiles_'*) ;; # Internal shell cleanup has no launchd keys.
     'unset '*)
       name=${line#unset }
-      case "$name" in ''|*[!A-Z0-9_]*) exit 2 ;; esac
+      case "$name" in '' | *[!A-Z0-9_]*) exit 2 ;; esac
       launchctl unsetenv "$name"
       ;;
   esac
-done < "$settings"
+done <"$settings"

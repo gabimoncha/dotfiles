@@ -6,9 +6,15 @@ dry_run=0
 case "${1:-}" in
   --dry-run) dry_run=1 ;;
   '') ;;
-  *) usage; exit 2 ;;
+  *)
+    usage
+    exit 2
+    ;;
 esac
-[[ $# -le 1 ]] || { usage; exit 2; }
+[[ $# -le 1 ]] || {
+  usage
+  exit 2
+}
 app="${DOTFILES_APPLICATIONS_DIR:-/Applications}/T3 Code (Nightly).app"
 launcher="${HOME}/.t3/bin/t3"
 if [[ ! -d "$app" ]]; then

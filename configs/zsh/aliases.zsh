@@ -1,7 +1,7 @@
 # Replace a system command only when the replacement is installed.
-if (( $+commands[rg] )); then alias grep='rg'; fi
-if (( $+commands[bat] )); then alias cat='bat'; fi
-if (( $+commands[eza] )); then
+if (($+commands[rg])); then alias grep='rg'; fi
+if (($+commands[bat])); then alias cat='bat'; fi
+if (($+commands[eza])); then
   alias ls='eza'
   alias ll='eza -la --git'
   alias la='eza -a'

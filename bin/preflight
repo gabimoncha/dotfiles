@@ -191,14 +191,14 @@ check_script_syntax() {
   local script first shell
   while IFS= read -r script; do
     [[ -f "${repo_root}/${script}" && ! -L "${repo_root}/${script}" ]] || continue
-    IFS= read -r first < "${repo_root}/${script}" || first=""
+    IFS= read -r first <"${repo_root}/${script}" || first=""
     case "$first" in
       '#!'*zsh*) shell=zsh ;;
       '#!'*bash*) shell=bash ;;
       '#!'*/sh) shell=sh ;;
       *)
         case "$script" in
-          configs/zsh/*.zsh|configs/zsh/zshrc|configs/zsh/zshenv|configs/zsh/zprofile) shell=zsh ;;
+          configs/zsh/*.zsh | configs/zsh/zshrc | configs/zsh/zshenv | configs/zsh/zprofile) shell=zsh ;;
           *.sh) shell=bash ;;
           *) continue ;;
         esac
@@ -229,15 +229,18 @@ check_layout() {
       fail "a mise file names a missing source: ${source}"
       missing=1
     fi
-  done <<< "$sources"
+  done <<<"$sources"
   [[ "$missing" == 1 ]] || pass "every source in the mise files exists"
   while IFS= read -r file; do
     used=0
     while IFS= read -r source; do
       [[ -n "$source" ]] || continue
-      if [[ "$file" == "$source" || "$file" == "$source/"* ]]; then used=1; break; fi
-    done <<< "$sources"
-    case "$file" in configs/cursor/telemetry-*.json|configs/*/sync-keys) used=1 ;; esac
+      if [[ "$file" == "$source" || "$file" == "$source/"* ]]; then
+        used=1
+        break
+      fi
+    done <<<"$sources"
+    case "$file" in configs/cursor/telemetry-*.json | configs/*/sync-keys) used=1 ;; esac
     [[ "$used" == 1 ]] && continue
     fail "no mise file uses ${file}"
     unused=1

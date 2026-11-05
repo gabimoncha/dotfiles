@@ -27,7 +27,7 @@ runtime_stream_output() {
   while IFS= read -r line || [[ -n "$line" ]]; do
     printf '[%s] %s\n' "$2" "$line" >&3
     printf '[%s] %s\n' "$2" "$line"
-  done 3>> "$1"
+  done 3>>"$1"
 }
 runtime_log() { printf '==> %s\n' "$1"; }
 runtime_warn() { printf '!! %s\n' "$1" >&2; }
@@ -87,14 +87,19 @@ runtime_init() {
   DOTFILES_RUNTIME_CLEANED=0
   DOTFILES_RUNTIME_LOCK_ROOT="${DOTFILES_RUNTIME_LOCK_ROOT:-${TMPDIR:-/tmp}/dotfiles-locks-${UID}}"
   DOTFILES_RUNTIME_HELD_LOCKS=()
-  DOTFILES_JOB_PIDS=(); DOTFILES_JOB_NAMES=(); DOTFILES_JOB_SEVERITIES=(); DOTFILES_JOB_FIXES=(); DOTFILES_JOB_STARTS=(); DOTFILES_JOB_FAILED=0
+  DOTFILES_JOB_PIDS=()
+  DOTFILES_JOB_NAMES=()
+  DOTFILES_JOB_SEVERITIES=()
+  DOTFILES_JOB_FIXES=()
+  DOTFILES_JOB_STARTS=()
+  DOTFILES_JOB_FAILED=0
   umask 077
   # A helper that setup runs writes into the folder of that setup run.
   if [[ -z "${DOTFILES_SETUP_LOG_DIR:-}" ]]; then
     local root="${DOTFILES_SETUP_RUN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/.local/setup-runs}"
     mkdir -p "$root"
     DOTFILES_SETUP_LOG_DIR="$(mktemp -d "$root/$(date -u +%Y%m%dT%H%M%SZ)-XXXXXX")"
-    printf '%s\n' "$DOTFILES_RUNTIME_PID" > "$DOTFILES_SETUP_LOG_DIR/.owner-pid"
+    printf '%s\n' "$DOTFILES_RUNTIME_PID" >"$DOTFILES_SETUP_LOG_DIR/.owner-pid"
     DOTFILES_RUNTIME_OWNS_LOG_DIR=1
     DOTFILES_SETUP_SUMMARY_FILE="$DOTFILES_SETUP_LOG_DIR/summary.txt"
     DOTFILES_SETUP_LOG="$DOTFILES_SETUP_LOG_DIR/setup.log"
@@ -112,7 +117,7 @@ runtime_init() {
     commit="$(git -C "$metadata_root" rev-parse HEAD 2>/dev/null || printf unknown)"
     dirty="$( (git -C "$metadata_root" status --porcelain --untracked-files=normal 2>/dev/null || true) | wc -l | tr -d ' ')"
     printf '%s started %s in %s mode, commit %s, %s changed files\n' \
-      "$DOTFILES_RUNTIME_SCRIPT" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$DOTFILES_RUN_MODE" "$commit" "$dirty" >> "$DOTFILES_SETUP_LOG"
+      "$DOTFILES_RUNTIME_SCRIPT" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$DOTFILES_RUN_MODE" "$commit" "$dirty" >>"$DOTFILES_SETUP_LOG"
   fi
   trap 'runtime_signal INT 130' INT
   trap 'runtime_signal TERM 143' TERM
@@ -124,7 +129,7 @@ runtime_init() {
 # Usage: runtime_record KIND NAME [REASON] [LOG] [FIX]. KIND is completed,
 # planned, deferred, blocked, recoverable, failed, critical, or cancelled.
 runtime_record() {
-  printf '%s\t%s\t%s\t%s\t%s\n' "$1" "$2" "${3:-}" "${4:-}" "${5:-}" | runtime_sanitize >> "$DOTFILES_SETUP_SUMMARY_FILE"
+  printf '%s\t%s\t%s\t%s\t%s\n' "$1" "$2" "${3:-}" "${4:-}" "${5:-}" | runtime_sanitize >>"$DOTFILES_SETUP_SUMMARY_FILE"
 }
 runtime_record_completed() { runtime_record completed "$1" "${2:-completed}"; }
 runtime_record_deferred() { runtime_record deferred "$1" "${2:-deferred}" "" "${3:-}"; }
@@ -133,22 +138,25 @@ runtime_acquire_lock() {
   local lock_name="$1" lock_dir="${DOTFILES_RUNTIME_LOCK_ROOT}/$1.lock" pid=""
   mkdir -p "$DOTFILES_RUNTIME_LOCK_ROOT"
   if ! mkdir "$lock_dir" 2>/dev/null; then
-    [[ -f "$lock_dir/pid" ]] && read -r pid < "$lock_dir/pid"
+    [[ -f "$lock_dir/pid" ]] && read -r pid <"$lock_dir/pid"
     if [[ "$pid" =~ ^[0-9]+$ ]] && ! kill -0 "$pid" 2>/dev/null; then
-      rm -f "$lock_dir/pid"; rmdir "$lock_dir" 2>/dev/null || return 1
+      rm -f "$lock_dir/pid"
+      rmdir "$lock_dir" 2>/dev/null || return 1
       mkdir "$lock_dir" 2>/dev/null || return 1
     else
       runtime_record_failure critical "${2:-$1}" "another process holds $lock_dir"
       return 1
     fi
   fi
-  printf '%s\n' "${DOTFILES_RUNTIME_PID:-$$}" > "$lock_dir/pid"
+  printf '%s\n' "${DOTFILES_RUNTIME_PID:-$$}" >"$lock_dir/pid"
   DOTFILES_RUNTIME_HELD_LOCKS+=("$lock_dir")
 }
 runtime_release_lock() {
   local target="${DOTFILES_RUNTIME_LOCK_ROOT}/$1.lock" held next=()
   for held in "${DOTFILES_RUNTIME_HELD_LOCKS[@]:-}"; do
-    if [[ "$held" == "$target" ]]; then rm -f "$held/pid"; rmdir "$held" 2>/dev/null || true
+    if [[ "$held" == "$target" ]]; then
+      rm -f "$held/pid"
+      rmdir "$held" 2>/dev/null || true
     elif [[ -n "$held" ]]; then next+=("$held"); fi
   done
   DOTFILES_RUNTIME_HELD_LOCKS=("${next[@]:-}")
@@ -158,7 +166,8 @@ runtime_release_locks() {
   local held
   for held in "${DOTFILES_RUNTIME_HELD_LOCKS[@]:-}"; do
     [[ -n "$held" ]] || continue
-    rm -f "$held/pid"; rmdir "$held" 2>/dev/null || true
+    rm -f "$held/pid"
+    rmdir "$held" 2>/dev/null || true
   done
   DOTFILES_RUNTIME_HELD_LOCKS=()
 }
@@ -181,7 +190,10 @@ runtime_cleanup_jobs() {
     owned="${DOTFILES_JOB_PIDS[*]:-}"
   fi
   for pid in $owned; do kill -STOP "$pid" 2>/dev/null || true; done
-  for pid in $owned; do kill -TERM "$pid" 2>/dev/null || true; kill -CONT "$pid" 2>/dev/null || true; done
+  for pid in $owned; do
+    kill -TERM "$pid" 2>/dev/null || true
+    kill -CONT "$pid" 2>/dev/null || true
+  done
   for attempts in 1 2 3 4 5; do
     local alive=0
     for pid in $owned; do kill -0 "$pid" 2>/dev/null && alive=1; done
@@ -193,9 +205,12 @@ runtime_cleanup_jobs() {
   local lock owner_pid
   for lock in "$DOTFILES_RUNTIME_LOCK_ROOT"/*.lock; do
     [[ -f "$lock/pid" ]] || continue
-    read -r owner_pid < "$lock/pid"
+    read -r owner_pid <"$lock/pid"
     for pid in "$owner" $owned; do
-      if [[ "$owner_pid" == "$pid" ]]; then rm -f "$lock/pid"; rmdir "$lock" 2>/dev/null || true; fi
+      if [[ "$owner_pid" == "$pid" ]]; then
+        rm -f "$lock/pid"
+        rmdir "$lock" 2>/dev/null || true
+      fi
     done
   done
   DOTFILES_JOB_PIDS=()
@@ -228,7 +243,7 @@ runtime_on_exit() {
   runtime_cleanup
   if [[ "${DOTFILES_RUNTIME_OWNS_LOG_DIR:-0}" == 1 && -f "$DOTFILES_SETUP_LOG_DIR/.owner-pid" ]]; then
     local owner
-    read -r owner < "$DOTFILES_SETUP_LOG_DIR/.owner-pid"
+    read -r owner <"$DOTFILES_SETUP_LOG_DIR/.owner-pid"
     if [[ "$owner" == "$(exec sh -c 'echo "$PPID"')" ]]; then
       rm -- "$DOTFILES_SETUP_LOG_DIR/.owner-pid"
     fi
@@ -243,9 +258,13 @@ runtime_run_job() {
   [[ "${DOTFILES_RUNTIME_CANCELLED:-0}" == 0 ]] || return "$DOTFILES_RUNTIME_CANCELLED"
   runtime_log "Starting $name (log: $log_file)"
   (
-    DOTFILES_RUNTIME_HELD_LOCKS=(); DOTFILES_JOB_PIDS=(); DOTFILES_RUNTIME_CLEANED=0; export DOTFILES_RUNTIME_CHILD=1
+    DOTFILES_RUNTIME_HELD_LOCKS=()
+    DOTFILES_JOB_PIDS=()
+    DOTFILES_RUNTIME_CLEANED=0
+    export DOTFILES_RUNTIME_CHILD=1
     DOTFILES_RUNTIME_PID="$(exec sh -c 'echo "$PPID"')"
-    trap 'runtime_signal INT 130' INT; trap 'runtime_signal TERM 143' TERM
+    trap 'runtime_signal INT 130' INT
+    trap 'runtime_signal TERM 143' TERM
     trap 'runtime_on_exit $?' EXIT
     set -o pipefail
     if [[ "${DOTFILES_JOB_IDLE_TIMEOUT_SECONDS:-0}" == 0 ]]; then
@@ -259,12 +278,12 @@ runtime_run_job() {
       "$@" 2>&1 | runtime_sanitize | tee -a "$activity" | runtime_stream_output "$log_file" "$name" &
       pipeline_pid=$!
       while kill -0 "$pipeline_pid" 2>/dev/null; do
-        size="$(wc -c < "$activity")"
+        size="$(wc -c <"$activity")"
         if [[ "$size" -ne "$previous_size" ]]; then
           last_output=$SECONDS
           previous_size="$size"
         fi
-        if (( SECONDS-last_output >= DOTFILES_JOB_IDLE_TIMEOUT_SECONDS )); then
+        if ((SECONDS - last_output >= DOTFILES_JOB_IDLE_TIMEOUT_SECONDS)); then
           runtime_warn "$name timed out after ${DOTFILES_JOB_IDLE_TIMEOUT_SECONDS}s without output; stopping update (log: $log_file)"
           rm -f "$activity"
           runtime_cleanup_jobs
@@ -277,7 +296,11 @@ runtime_run_job() {
       exit "$status"
     fi
   ) &
-  DOTFILES_JOB_PIDS+=("$!"); DOTFILES_JOB_NAMES+=("$name"); DOTFILES_JOB_SEVERITIES+=("$severity"); DOTFILES_JOB_FIXES+=("$fix"); DOTFILES_JOB_STARTS+=("$SECONDS")
+  DOTFILES_JOB_PIDS+=("$!")
+  DOTFILES_JOB_NAMES+=("$name")
+  DOTFILES_JOB_SEVERITIES+=("$severity")
+  DOTFILES_JOB_FIXES+=("$fix")
+  DOTFILES_JOB_STARTS+=("$SECONDS")
   return 0
 }
 # Waits for job INDEX and records its result.
@@ -285,14 +308,14 @@ runtime_wait_job() {
   local i="$1" status=0 pid="${DOTFILES_JOB_PIDS[$1]}" elapsed=0 next="${DOTFILES_PROGRESS_INTERVAL:-15}" size=0 previous_size=0
   [[ -n "$pid" ]] || return 0
   while kill -0 "$pid" 2>/dev/null; do
-    elapsed=$((SECONDS-${DOTFILES_JOB_STARTS[$i]}))
-    if (( elapsed >= next )); then
-      size="$(wc -c < "$DOTFILES_SETUP_LOG" 2>/dev/null || printf 0)"
+    elapsed=$((SECONDS - ${DOTFILES_JOB_STARTS[$i]}))
+    if ((elapsed >= next)); then
+      size="$(wc -c <"$DOTFILES_SETUP_LOG" 2>/dev/null || printf 0)"
       if [[ "$size" -eq "$previous_size" ]]; then
         runtime_log "${DOTFILES_JOB_NAMES[$i]} still running (${elapsed}s; no new output; log: $DOTFILES_SETUP_LOG)"
       fi
       previous_size="$size"
-      next=$((elapsed+${DOTFILES_PROGRESS_INTERVAL:-15}))
+      next=$((elapsed + ${DOTFILES_PROGRESS_INTERVAL:-15}))
     fi
     sleep 0.2
   done
@@ -312,13 +335,18 @@ runtime_wait_job() {
     fi
     runtime_record_failure "${DOTFILES_JOB_SEVERITIES[$i]}" "${DOTFILES_JOB_NAMES[$i]}" "$reason" "$DOTFILES_SETUP_LOG" "${DOTFILES_JOB_FIXES[$i]}"
   fi
-  runtime_log "${DOTFILES_JOB_NAMES[$i]}: $outcome ($((SECONDS-${DOTFILES_JOB_STARTS[$i]}))s; exit $status)"
+  runtime_log "${DOTFILES_JOB_NAMES[$i]}: $outcome ($((SECONDS - ${DOTFILES_JOB_STARTS[$i]}))s; exit $status)"
   return "$status"
 }
 runtime_wait_jobs() {
   local i failed="$DOTFILES_JOB_FAILED"
-  for ((i=0; i<${#DOTFILES_JOB_PIDS[@]}; i++)); do runtime_wait_job "$i" || failed=1; done
-  DOTFILES_JOB_PIDS=(); DOTFILES_JOB_NAMES=(); DOTFILES_JOB_SEVERITIES=(); DOTFILES_JOB_FIXES=(); DOTFILES_JOB_STARTS=(); DOTFILES_JOB_FAILED=0
+  for ((i = 0; i < ${#DOTFILES_JOB_PIDS[@]}; i++)); do runtime_wait_job "$i" || failed=1; done
+  DOTFILES_JOB_PIDS=()
+  DOTFILES_JOB_NAMES=()
+  DOTFILES_JOB_SEVERITIES=()
+  DOTFILES_JOB_FIXES=()
+  DOTFILES_JOB_STARTS=()
+  DOTFILES_JOB_FAILED=0
   return "$failed"
 }
 # Usage: runtime_execute_stage ID MODE COMMAND... and records the result.
@@ -329,7 +357,7 @@ runtime_execute_stage() {
   local id="$1" mode="$2" status=0 index fix="Repair the cause, then rerun ${DOTFILES_SETUP_RERUN:-./bin/setup}."
   shift 2
   case "$mode" in
-    probe|capture)
+    probe | capture)
       index="${#DOTFILES_JOB_PIDS[@]}"
       runtime_run_job "$id" recoverable "$fix" "$@"
       # runtime_wait_job records the result.
@@ -343,18 +371,27 @@ runtime_execute_stage() {
       # foreground command would delay the signal trap until it ends.
       (
         DOTFILES_RUNTIME_PID="$(exec sh -c 'echo "$PPID"')"
-        DOTFILES_RUNTIME_HELD_LOCKS=(); DOTFILES_JOB_PIDS=(); DOTFILES_RUNTIME_CLEANED=0; export DOTFILES_RUNTIME_CHILD=1
-        trap 'runtime_signal INT 130' INT; trap 'runtime_signal TERM 143' TERM
+        DOTFILES_RUNTIME_HELD_LOCKS=()
+        DOTFILES_JOB_PIDS=()
+        DOTFILES_RUNTIME_CLEANED=0
+        export DOTFILES_RUNTIME_CHILD=1
+        trap 'runtime_signal INT 130' INT
+        trap 'runtime_signal TERM 143' TERM
         trap 'runtime_on_exit $?' EXIT
         "$@"
       ) <&0 &
       wait "$!" || status=$?
       runtime_log "$id finished (exit $status)"
       ;;
-    *) runtime_warn "Unknown step mode $mode for $id"; return 2 ;;
+    *)
+      runtime_warn "Unknown step mode $mode for $id"
+      return 2
+      ;;
   esac
-  if [[ "$status" == 20 ]]; then runtime_record_deferred "$id"
-  elif [[ "$status" == 0 ]]; then runtime_record_completed "$id"
+  if [[ "$status" == 20 ]]; then
+    runtime_record_deferred "$id"
+  elif [[ "$status" == 0 ]]; then
+    runtime_record_completed "$id"
   else runtime_record_failure recoverable "$id" "exited with status $status" "" "$fix"; fi
   return "$status"
 }
@@ -364,8 +401,9 @@ runtime_print_section() {
   printf '\n%s\n' "$title"
   while IFS=$'\t' read -r record_kind name reason log_file fix || [[ -n "${record_kind:-}" ]]; do
     [[ "$kinds" == *" ${record_kind:-none} "* ]] || continue
-    found=1; printf -- '- %s: %s\n' "$name" "$reason"
-  done < "$DOTFILES_SETUP_SUMMARY_FILE"
+    found=1
+    printf -- '- %s: %s\n' "$name" "$reason"
+  done <"$DOTFILES_SETUP_SUMMARY_FILE"
   [[ "$found" == 1 ]] || printf -- '- none\n'
 }
 runtime_print_summary() {
@@ -379,7 +417,10 @@ runtime_print_summary() {
   runtime_print_section critical 'Critical failure'
 }
 runtime_has_failures() { LC_ALL=C grep -Eq '^(critical|recoverable|failed|blocked|cancelled)[[:space:]]' "$DOTFILES_SETUP_SUMMARY_FILE"; }
-runtime_exit_status() { if runtime_has_failures; then return 1; fi; return 0; }
+runtime_exit_status() {
+  if runtime_has_failures; then return 1; fi
+  return 0
+}
 
 runtime_owner_is_ancestor() {
   local owner="$1" current="${DOTFILES_RUNTIME_PID:-$$}"
@@ -396,20 +437,27 @@ runtime_with_lock() {
   [[ "$resource" =~ ^[A-Za-z0-9_-]+$ ]] || return 2
   variable="DOTFILES_RESOURCE_$(printf '%s' "$resource" | tr '[:lower:]-' '[:upper:]_')_OWNER"
   eval 'value=${'"$variable"':-}'
-  if [[ "$value" =~ ^[0-9]+$ ]] && kill -0 "$value" 2>/dev/null && runtime_owner_is_ancestor "$value"; then "$@"; return $?; fi
+  if [[ "$value" =~ ^[0-9]+$ ]] && kill -0 "$value" 2>/dev/null && runtime_owner_is_ancestor "$value"; then
+    "$@"
+    return $?
+  fi
   local dir="$DOTFILES_RUNTIME_LOCK_ROOT/$resource.lock"
   mkdir -p "$DOTFILES_RUNTIME_LOCK_ROOT"
   until mkdir "$dir" 2>/dev/null; do
     local held_pid=""
-    [[ -f "$dir/pid" ]] && read -r held_pid < "$dir/pid"
+    [[ -f "$dir/pid" ]] && read -r held_pid <"$dir/pid"
     if [[ "$held_pid" =~ ^[0-9]+$ ]] && ! kill -0 "$held_pid" 2>/dev/null; then
-      rm -f "$dir/pid"; rmdir "$dir" 2>/dev/null || true
+      rm -f "$dir/pid"
+      rmdir "$dir" 2>/dev/null || true
       continue
     fi
-    [[ "$((SECONDS-started))" -lt "${DOTFILES_LOCK_TIMEOUT:-600}" ]] || { runtime_record_failure recoverable "$resource lock" "timed out waiting for package writer"; return 1; }
+    [[ "$((SECONDS - started))" -lt "${DOTFILES_LOCK_TIMEOUT:-600}" ]] || {
+      runtime_record_failure recoverable "$resource lock" "timed out waiting for package writer"
+      return 1
+    }
     sleep 0.2
   done
-  printf '%s\n' "${DOTFILES_RUNTIME_PID:-$$}" > "$dir/pid"
+  printf '%s\n' "${DOTFILES_RUNTIME_PID:-$$}" >"$dir/pid"
   DOTFILES_RUNTIME_HELD_LOCKS+=("$dir")
   export "$variable=${DOTFILES_RUNTIME_PID:-$$}"
   "$@" || status=$?

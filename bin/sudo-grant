@@ -49,7 +49,7 @@ enable_grant() {
   fi
 
   temp_file="$(mktemp)"
-  render_dropin "$user" > "$temp_file"
+  render_dropin "$user" >"$temp_file"
   if ! visudo -cf "$temp_file" >/dev/null; then
     warn "visudo rejected the generated drop-in; nothing was installed."
     return 1
@@ -91,5 +91,8 @@ case "${1:-}" in
   --disable) disable_grant ;;
   --check) check_grant ;;
   -h | --help) usage ;;
-  *) usage; exit 1 ;;
+  *)
+    usage
+    exit 1
+    ;;
 esac

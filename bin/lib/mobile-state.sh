@@ -67,7 +67,7 @@ mobile_android_packages() {
   local line
   while IFS= read -r line || [[ -n "$line" ]]; do
     [[ -z "$line" || "$line" == \#* ]] || printf '%s\n' "$line"
-  done < "${repo_root}/apps/android-sdk.txt"
+  done <"${repo_root}/apps/android-sdk.txt"
   return 0
 }
 
@@ -90,7 +90,7 @@ mobile_formulae() {
   local line
   while IFS= read -r line || [[ -n "$line" ]]; do
     [[ "$line" =~ ^brew[[:space:]]+\"([^\"]+)\" ]] && printf '%s\n' "${BASH_REMATCH[1]##*/}"
-  done < "${repo_root}/apps/mobile.Brewfile"
+  done <"${repo_root}/apps/mobile.Brewfile"
   return 0
 }
 

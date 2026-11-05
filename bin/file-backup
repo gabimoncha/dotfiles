@@ -144,7 +144,7 @@ Excluded by policy:
 .codex/computer-use
 *.sqlite*
 EOF
-  } > "$manifest"
+  } >"$manifest"
 }
 
 codex_backup() {
@@ -268,9 +268,9 @@ codex_backup() {
   chmod 600 "$archive_path" "$latest_path"
 
   if [[ -n "$secondary_output_dir" ]]; then
-    if mkdir -p "$secondary_output_dir" && \
-      cp -f "$archive_path" "${secondary_output_dir}/$(basename "$archive_path")" && \
-      cp -f "$latest_path" "${secondary_output_dir}/$(basename "$latest_path")" && \
+    if mkdir -p "$secondary_output_dir" &&
+      cp -f "$archive_path" "${secondary_output_dir}/$(basename "$archive_path")" &&
+      cp -f "$latest_path" "${secondary_output_dir}/$(basename "$latest_path")" &&
       chmod 600 "${secondary_output_dir}/$(basename "$archive_path")" "${secondary_output_dir}/$(basename "$latest_path")"; then
       :
     else
@@ -340,40 +340,40 @@ codex_entry_is_excluded() {
 
   case "$entry" in
     .codex/auth.json | \
-    .codex/history.jsonl | \
-    .codex/installation_id | \
-    .codex/models_cache.json | \
-    .codex/version.json | \
-    .codex/session_index.jsonl | \
-    .codex/automations/.run-jitter-salt | \
-    .codex/automations/*/memory.md | \
-    .codex/app-server-daemon | .codex/app-server-daemon/* | \
-    .codex/app-server-control | .codex/app-server-control/* | \
-    .codex/attachments | .codex/attachments/* | \
-    .codex/browser | .codex/browser/* | \
-    .codex/cache | .codex/cache/* | \
-    .codex/chrome-native-hosts-v2.json | \
-    .codex/connections | .codex/connections/* | \
-    .codex/connectors | .codex/connectors/* | \
-    .codex/log | .codex/log/* | \
-    .codex/logs | .codex/logs/* | \
-    .codex/node_repl | .codex/node_repl/* | \
-    .codex/packages | .codex/packages/* | \
-    .codex/pets | .codex/pets/* | \
-    .codex/plugins | .codex/plugins/* | \
-    .codex/process_manager | .codex/process_manager/* | \
-    .codex/projects | .codex/projects/* | \
-    .codex/archived_sessions | .codex/archived_sessions/* | \
-    .codex/sessions | .codex/sessions/* | \
-    .codex/shell_snapshots | .codex/shell_snapshots/* | \
-    .codex/skills | .codex/skills/* | \
-    .codex/sqlite | .codex/sqlite/* | \
-    .codex/vendor_imports | .codex/vendor_imports/* | \
-    .codex/worktrees | .codex/worktrees/* | \
-    .codex/.tmp | .codex/.tmp/* | \
-    .codex/tmp | .codex/tmp/* | \
-    .codex/computer-use | .codex/computer-use/* | \
-    *.sqlite | *.sqlite-shm | *.sqlite-wal)
+      .codex/history.jsonl | \
+      .codex/installation_id | \
+      .codex/models_cache.json | \
+      .codex/version.json | \
+      .codex/session_index.jsonl | \
+      .codex/automations/.run-jitter-salt | \
+      .codex/automations/*/memory.md | \
+      .codex/app-server-daemon | .codex/app-server-daemon/* | \
+      .codex/app-server-control | .codex/app-server-control/* | \
+      .codex/attachments | .codex/attachments/* | \
+      .codex/browser | .codex/browser/* | \
+      .codex/cache | .codex/cache/* | \
+      .codex/chrome-native-hosts-v2.json | \
+      .codex/connections | .codex/connections/* | \
+      .codex/connectors | .codex/connectors/* | \
+      .codex/log | .codex/log/* | \
+      .codex/logs | .codex/logs/* | \
+      .codex/node_repl | .codex/node_repl/* | \
+      .codex/packages | .codex/packages/* | \
+      .codex/pets | .codex/pets/* | \
+      .codex/plugins | .codex/plugins/* | \
+      .codex/process_manager | .codex/process_manager/* | \
+      .codex/projects | .codex/projects/* | \
+      .codex/archived_sessions | .codex/archived_sessions/* | \
+      .codex/sessions | .codex/sessions/* | \
+      .codex/shell_snapshots | .codex/shell_snapshots/* | \
+      .codex/skills | .codex/skills/* | \
+      .codex/sqlite | .codex/sqlite/* | \
+      .codex/vendor_imports | .codex/vendor_imports/* | \
+      .codex/worktrees | .codex/worktrees/* | \
+      .codex/.tmp | .codex/.tmp/* | \
+      .codex/tmp | .codex/tmp/* | \
+      .codex/computer-use | .codex/computer-use/* | \
+      *.sqlite | *.sqlite-shm | *.sqlite-wal)
       return 0
       ;;
   esac
@@ -404,7 +404,7 @@ codex_validate_entries() {
       warn "Archive contains excluded path: ${raw_entry}"
       failures=$((failures + 1))
     fi
-  done < "$entries_file"
+  done <"$entries_file"
 
   [[ "$failures" -eq 0 ]]
 }
@@ -590,7 +590,7 @@ codex_restore() {
   log "Decrypting ${archive_path}"
   age -d -o "${codex_restore_tmp_dir}/payload.tar.gz" "$archive_path"
 
-  tar -tzf "${codex_restore_tmp_dir}/payload.tar.gz" > "${codex_restore_tmp_dir}/entries.txt"
+  tar -tzf "${codex_restore_tmp_dir}/payload.tar.gz" >"${codex_restore_tmp_dir}/entries.txt"
 
   if ! codex_validate_entries "${codex_restore_tmp_dir}/entries.txt"; then
     warn "Archive failed allowlist validation; refusing to restore."
@@ -672,7 +672,7 @@ EOF
       /^\[/ { skip = 0 }
       !skip { print }
     ' "$mackup_config"
-  } > "$mackup_temp_config"
+  } >"$mackup_temp_config"
 }
 
 mackup_using_dry_run() {
@@ -945,7 +945,10 @@ raycast_backup() {
     fi
   fi
 
-  [[ -d "${DOTFILES_APPLICATIONS_DIR:-/Applications}/Raycast.app" ]] || { warn "Raycast is not installed"; return 20; }
+  [[ -d "${DOTFILES_APPLICATIONS_DIR:-/Applications}/Raycast.app" ]] || {
+    warn "Raycast is not installed"
+    return 20
+  }
   open -a Raycast
   open "$synology_dir" 2>/dev/null || true
 
@@ -1048,7 +1051,10 @@ EOF
     exit 1
   fi
 
-  [[ -d "${DOTFILES_APPLICATIONS_DIR:-/Applications}/Raycast.app" ]] || { warn "Raycast is not installed"; return 20; }
+  [[ -d "${DOTFILES_APPLICATIONS_DIR:-/Applications}/Raycast.app" ]] || {
+    warn "Raycast is not installed"
+    return 20
+  }
   open -a Raycast
   open "$rayconfig"
 

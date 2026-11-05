@@ -29,7 +29,7 @@ unset brew_bin
 # So each tmux window on the Mac that runs ssh keeps its own session. SSH
 # commands, `ssh -t HOST zsh`, and T3 terminals have no login shell with
 # SSH_TTY, so they skip it. If tmux fails, the normal shell starts.
-if [[ -n "${SSH_TTY-}" && -z "${TMUX-}" && -o login && -o interactive ]] && (( $+commands[tmux] )); then
+if [[ -n "${SSH_TTY-}" && -z "${TMUX-}" && -o login && -o interactive ]] && (($+commands[tmux])); then
   () {
     local line free="" has_main=0
     for line in ${(f)"$(tmux list-sessions -F '#{session_attached}:#{session_name}' 2>/dev/null)"}; do
@@ -40,7 +40,7 @@ if [[ -n "${SSH_TTY-}" && -z "${TMUX-}" && -o login && -o interactive ]] && (( $
     done
     if [[ -n "$free" ]]; then
       tmux attach-session -t "=$free" && exit
-    elif (( has_main )); then
+    elif ((has_main)); then
       tmux new-session && exit
     else
       tmux new-session -s main && exit
@@ -55,7 +55,7 @@ _dotfiles_real_tool() {
   local mise_root="${MISE_DATA_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/mise}"
   [[ -n "$candidate" && -x "$candidate" ]] || return 1
   case "$candidate" in
-    */mise/shims/*|"$mise_root"/shims/*)
+    */mise/shims/* | "$mise_root"/shims/*)
       local installed=("$mise_root"/installs/*/*/bin/"$1"(N-om))
       candidate=""
       local executable

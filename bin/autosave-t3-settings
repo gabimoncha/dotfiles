@@ -35,19 +35,19 @@ current="$(/usr/bin/ruby -rdigest -e 'print Digest::SHA256.file(ARGV[0]).hexdige
 [[ "$current" != "$(cat "$saved_stamp" 2>/dev/null)" ]] || exit 0
 
 # Keep the log short. The messages name only setting paths, not values.
-if [[ -f "$log" && "$(wc -l < "$log")" -gt 400 ]]; then
-  tail -n 200 "$log" > "$log.new" && mv "$log.new" "$log"
+if [[ -f "$log" && "$(wc -l <"$log")" -gt 400 ]]; then
+  tail -n 200 "$log" >"$log.new" && mv "$log.new" "$log"
 fi
-printf '%s\n' "$(date '+%Y-%m-%d %H:%M:%S')" >> "$log"
-if "$repo_root/bin/save-settings" "$live" >> "$log" 2>&1; then
-  printf '%s' "$current" > "$saved_stamp"
+printf '%s\n' "$(date '+%Y-%m-%d %H:%M:%S')" >>"$log"
+if "$repo_root/bin/save-settings" "$live" >>"$log" 2>&1; then
+  printf '%s' "$current" >"$saved_stamp"
   rm -f "$failed_stamp"
   exit 0
 fi
 
 # One notification for each failed version of the file.
 if [[ "$current" != "$(cat "$failed_stamp" 2>/dev/null)" ]]; then
-  printf '%s' "$current" > "$failed_stamp"
+  printf '%s' "$current" >"$failed_stamp"
   /usr/bin/osascript -e 'display notification "Could not save the T3 settings. See .local/settings-sync/t3-autosave.log in the dotfiles repository." with title "dotfiles"' >/dev/null 2>&1 || true
 fi
 exit 1

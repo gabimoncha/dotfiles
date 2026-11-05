@@ -5,10 +5,10 @@
 # Accept the profile names that older versions of this repository used.
 dotfiles_profile_normalize() {
   case "${1:-}" in
-    macos/pro|pro) printf 'macowl\n' ;;
+    macos/pro | pro) printf 'macowl\n' ;;
     macos/air) printf 'air\n' ;;
-    linux/container|linux-container) printf 'container\n' ;;
-    linux/vm-gcp|linux-vm|vm-gcp) printf 'vm\n' ;;
+    linux/container | linux-container) printf 'container\n' ;;
+    linux/vm-gcp | linux-vm | vm-gcp) printf 'vm\n' ;;
     *) printf '%s\n' "${1:-}" ;;
   esac
 }
@@ -17,22 +17,25 @@ dotfiles_profile_normalize() {
 dotfiles_profile_validate() {
   local profile="${1:-}" system="${2:-$(uname -s)}"
   case "$profile" in
-    macowl|air)
+    macowl | air)
       [[ "$system" == Darwin ]] || {
         printf 'dotfiles: profile %s requires macOS.\n' "$profile" >&2
         return 2
       }
       ;;
-    container|vm)
+    container | vm)
       [[ "$system" == Linux ]] || {
         printf 'dotfiles: profile %s requires Linux.\n' "$profile" >&2
         return 2
       }
       ;;
-    *) printf 'dotfiles: unsupported profile: %s. Use macowl, air, container, or vm.\n' "$profile" >&2; return 2 ;;
+    *)
+      printf 'dotfiles: unsupported profile: %s. Use macowl, air, container, or vm.\n' "$profile" >&2
+      return 2
+      ;;
   esac
   case "$profile" in
-    air|vm)
+    air | vm)
       printf 'dotfiles: profile %s is not set up yet. No changes were made.\n' "$profile" >&2
       return 2
       ;;
@@ -61,14 +64,14 @@ dotfiles_profile() {
       if [[ "$line" =~ $pattern ]]; then
         profile="${BASH_REMATCH[1]}"
       fi
-    done < "$saved"
+    done <"$saved"
     [[ -n "$profile" ]] || {
       printf 'dotfiles: .miserc.local.toml has no profile. Add a line such as env = ["macowl"].\n' >&2
       return 2
     }
   fi
   if [[ -z "$profile" ]]; then
-    if [[ "$system" == Linux && ( -f /.dockerenv || -f /run/.containerenv ) ]]; then
+    if [[ "$system" == Linux && (-f /.dockerenv || -f /run/.containerenv) ]]; then
       profile=container
     else
       printf 'dotfiles: select a profile. Save env = ["macowl"] in %s, or set DOTFILES_PROFILE.\n' "$saved" >&2

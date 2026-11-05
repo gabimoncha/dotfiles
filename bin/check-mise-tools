@@ -122,7 +122,7 @@ for command_name in "${smoke_commands[@]}"; do
     continue
   fi
   check_status=0
-  bounded_check "$resolved" "$( [[ "$command_name" == tmux ]] && printf -- -V || printf -- --version )" >/dev/null 2>&1 || check_status=$?
+  bounded_check "$resolved" "$([[ "$command_name" == tmux ]] && printf -- -V || printf -- --version)" >/dev/null 2>&1 || check_status=$?
   if [[ "$check_status" != 0 ]]; then
     if [[ "$check_status" == 124 ]]; then
       warn "Version check timed out after ${check_timeout}s: ${command_name}"

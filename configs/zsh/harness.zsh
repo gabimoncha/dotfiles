@@ -7,7 +7,7 @@
 _dotfiles_mise_prune_global() {
   local -a tools
   tools=(${${(f)"$(command mise ls --global --no-header 2>/dev/null)"}%% *})
-  (( ${#tools} )) || return 0
+  ((${#tools})) || return 0
   command mise prune --tools --yes --quiet -- "${(@u)tools}" ||
     print -u2 'mise prune failed; rerun: mise prune --tools <tool>'
 }
@@ -15,10 +15,10 @@ _dotfiles_mise_prune_global() {
 mise() {
   local subcommand="${1:-}" argument prune=1
   case "$subcommand" in
-    install|i|up|upgrade)
+    install | i | up | upgrade)
       for argument in "$@"; do
         case "$argument" in
-          --dry-run|--dry-run-code|-n|--help|-h)
+          --dry-run | --dry-run-code | -n | --help | -h)
             command mise "$@"
             return $?
             ;;
@@ -32,7 +32,7 @@ mise() {
           [[ "$argument" == -* ]] || prune=0
         done
       fi
-      if (( prune )); then
+      if ((prune)); then
         _dotfiles_mise_prune_global
       fi
       "$HOME/bin/harness" update --installed-only
