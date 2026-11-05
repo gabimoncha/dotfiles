@@ -285,10 +285,10 @@ Configure only Codex and Claude Code after the proxy is reachable:
 On Macs, use the private Tailscale HTTPS URL. In `nasbox`, use
 `http://cliproxyapi:8317` through the shared Docker network.
 
-| Client | Private settings on each machine |
-| --- | --- |
+| Client      | Private settings on each machine                                                                                                                                                                                                 |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Codex in T3 | Set `model_providers.cliproxyapi.base_url` to the URL plus `/v1` in `~/.codex/config.toml`. Supply the proxy client key as `CLIPROXYAPI_API_KEY` in the T3 process environment. The shared T3 launch arguments select the proxy. |
-| Claude Code | In `~/.claude/settings.json`, set `env.ANTHROPIC_BASE_URL` to the URL, `env.ANTHROPIC_AUTH_TOKEN` to the client key, and `env.CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY` to `"1"`. |
+| Claude Code | In `~/.claude/settings.json`, set `env.ANTHROPIC_BASE_URL` to the URL, `env.ANTHROPIC_AUTH_TOKEN` to the client key, and `env.CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY` to `"1"`.                                              |
 
 The tracked Codex provider uses native `env_key` authentication. Remove an old
 `model_providers.cliproxyapi.auth` block before using it. For GUI and T3 starts,

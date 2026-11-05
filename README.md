@@ -30,12 +30,12 @@ into their settings, so mise merges selected keys from `configs/claude/`,
 
 ## Profiles
 
-| Profile | Machine | Status |
-| --- | --- | --- |
-| `macowl` | MacBook Pro | Set up. |
-| `air` | MacBook Air | Not set up yet. Setup stops before it changes anything. |
-| `container` | NAS development container | Set up. |
-| `vm` | Linux VM, planned on GCP | Not set up yet. Setup stops before it changes anything. |
+| Profile     | Machine                   | Status                                                  |
+| ----------- | ------------------------- | ------------------------------------------------------- |
+| `macowl`    | MacBook Pro               | Set up.                                                 |
+| `air`       | MacBook Air               | Not set up yet. Setup stops before it changes anything. |
+| `container` | NAS development container | Set up.                                                 |
+| `vm`        | Linux VM, planned on GCP  | Not set up yet. Setup stops before it changes anything. |
 
 Save the machine's profile in the ignored `.miserc.local.toml`. A Linux
 container without this file uses `container`. `DOTFILES_PROFILE=macowl` selects a
@@ -240,9 +240,9 @@ Reopen apps after setup.
 [telemetry guide](apps/telemetry.md) lists every control, the manual settings,
 and the tools without an opt-out.
 
-| Option | Effect |
-| --- | --- |
-| `--dry-run` | Run the preflight check and write private logs. List the other steps without running them. Add `--continue` to preview that phase. |
+| Option              | Effect                                                                                                                                                                    |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--dry-run`         | Run the preflight check and write private logs. List the other steps without running them. Add `--continue` to preview that phase.                                        |
 | `--skip-mobile-dev` | Skip Xcode, iOS support, Android Studio, the Android SDK, and `apps/mobile.Brewfile`. On Linux, skip the Android SDK. Mobile tools in the shared mise list still install. |
 
 [bin/setup](bin/setup) lists the steps in order, and they run one at a time.
@@ -357,33 +357,33 @@ later run can remove it. Normal runs, dry runs, and helper commands share this
 limit. Copy logs elsewhere before more runs if you need them longer.
 Authentication output is omitted. Review logs before you share them.
 
-| Command | Use |
-| --- | --- |
-| `./bin/preflight` | Check macOS updates and the repository prerequisites. |
-| `./bin/link-dotfiles [--status \| --diff \| --dry-run]` | Apply, check, or preview the managed files. |
-| `./bin/repo-mise bootstrap repos status` | Check the Oh My Zsh, plugin, and TPM checkouts. |
-| `./bin/repo-mise bootstrap macos defaults status` | Compare macOS preferences with `mise.macos.toml`. |
-| `./macos/defaults.sh` | Apply macOS preferences, input sources, the Dock, and display sleep. |
-| `./bin/github-bootstrap install-gh` | Repair the isolated GitHub CLI install. |
-| `./bin/auth-setup --api-only` | Repair the GitHub API login. |
-| `./bin/auth-setup --ssh-only` | Repair the Git identity and SSH access. |
-| `./bin/auth-setup --git-only` | Linux: repair the Git identity and Git over HTTPS. |
-| `./bin/auth-setup --verify-mise` | Check the direct credential helper. |
-| `./bin/check-mise-tools` | Check the installed tools without installing any. |
-| `./bin/install-apps [--dry-run]` | Retry or preview the app manifest. |
-| `./bin/install-standalone status` | Report the vendor-installed tools in `apps/standalone.tsv`. |
-| `./bin/install-standalone [NAME...]` | Install or repair those tools. `--dry-run` previews. |
-| `./bin/install-steam [--dry-run]` | Install Valve's verified ARM64 Steam bootstrapper. |
-| `./bin/check-mobile-ready` | Check Xcode, iOS, Android Studio, the Android SDK and `adb`, and `apps/mobile.Brewfile`. On Linux, check only the Android SDK, the JDK, and `adb`. |
-| `./bin/install-mobile-dev [--dry-run]` | Install or repair Xcode, iOS support, Android Studio, the Android SDK, and the mobile formulae. On Linux, install only the Android SDK. |
-| `./bin/sudo-grant --check` | Report a leftover sudo grant. `--enable` and `--disable` change it. |
-| `./bin/setup-tmux` | Install missing TPM plugins and reload a running server. |
-| `./bin/configure-app-settings` | Retry the login-item setup. |
-| `./bin/configure-telemetry [--dry-run]` | Apply the telemetry opt-outs to installed tools. |
-| `./bin/configure-screenshots` | Repair the PNG destination at `~/Screenshots`. |
-| `./bin/finder-sidebar-favorites` | Retry the `development` and `screenshots` favorites. |
-| `./bin/setup-tokenburnmarket [--dry-run]` | Sign in to tokenburnmarket and install its sync daemon. A Linux host without systemd runs the daemon under `bin/tokenburnmarket-supervise`. A connected host with a current daemon is not changed. `DOTFILES_SKIP_TOKENBURNMARKET=1` skips the setup step. |
-| `./bin/configure-sudo-touch-id --check` | Inspect Touch ID for sudo. `--enable` and `--disable` change it. |
+| Command                                                 | Use                                                                                                                                                                                                                                                        |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `./bin/preflight`                                       | Check macOS updates and the repository prerequisites.                                                                                                                                                                                                      |
+| `./bin/link-dotfiles [--status \| --diff \| --dry-run]` | Apply, check, or preview the managed files.                                                                                                                                                                                                                |
+| `./bin/repo-mise bootstrap repos status`                | Check the Oh My Zsh, plugin, and TPM checkouts.                                                                                                                                                                                                            |
+| `./bin/repo-mise bootstrap macos defaults status`       | Compare macOS preferences with `mise.macos.toml`.                                                                                                                                                                                                          |
+| `./macos/defaults.sh`                                   | Apply macOS preferences, input sources, the Dock, and display sleep.                                                                                                                                                                                       |
+| `./bin/github-bootstrap install-gh`                     | Repair the isolated GitHub CLI install.                                                                                                                                                                                                                    |
+| `./bin/auth-setup --api-only`                           | Repair the GitHub API login.                                                                                                                                                                                                                               |
+| `./bin/auth-setup --ssh-only`                           | Repair the Git identity and SSH access.                                                                                                                                                                                                                    |
+| `./bin/auth-setup --git-only`                           | Linux: repair the Git identity and Git over HTTPS.                                                                                                                                                                                                         |
+| `./bin/auth-setup --verify-mise`                        | Check the direct credential helper.                                                                                                                                                                                                                        |
+| `./bin/check-mise-tools`                                | Check the installed tools without installing any.                                                                                                                                                                                                          |
+| `./bin/install-apps [--dry-run]`                        | Retry or preview the app manifest.                                                                                                                                                                                                                         |
+| `./bin/install-standalone status`                       | Report the vendor-installed tools in `apps/standalone.tsv`.                                                                                                                                                                                                |
+| `./bin/install-standalone [NAME...]`                    | Install or repair those tools. `--dry-run` previews.                                                                                                                                                                                                       |
+| `./bin/install-steam [--dry-run]`                       | Install Valve's verified ARM64 Steam bootstrapper.                                                                                                                                                                                                         |
+| `./bin/check-mobile-ready`                              | Check Xcode, iOS, Android Studio, the Android SDK and `adb`, and `apps/mobile.Brewfile`. On Linux, check only the Android SDK, the JDK, and `adb`.                                                                                                         |
+| `./bin/install-mobile-dev [--dry-run]`                  | Install or repair Xcode, iOS support, Android Studio, the Android SDK, and the mobile formulae. On Linux, install only the Android SDK.                                                                                                                    |
+| `./bin/sudo-grant --check`                              | Report a leftover sudo grant. `--enable` and `--disable` change it.                                                                                                                                                                                        |
+| `./bin/setup-tmux`                                      | Install missing TPM plugins and reload a running server.                                                                                                                                                                                                   |
+| `./bin/configure-app-settings`                          | Retry the login-item setup.                                                                                                                                                                                                                                |
+| `./bin/configure-telemetry [--dry-run]`                 | Apply the telemetry opt-outs to installed tools.                                                                                                                                                                                                           |
+| `./bin/configure-screenshots`                           | Repair the PNG destination at `~/Screenshots`.                                                                                                                                                                                                             |
+| `./bin/finder-sidebar-favorites`                        | Retry the `development` and `screenshots` favorites.                                                                                                                                                                                                       |
+| `./bin/setup-tokenburnmarket [--dry-run]`               | Sign in to tokenburnmarket and install its sync daemon. A Linux host without systemd runs the daemon under `bin/tokenburnmarket-supervise`. A connected host with a current daemon is not changed. `DOTFILES_SKIP_TOKENBURNMARKET=1` skips the setup step. |
+| `./bin/configure-sudo-touch-id --check`                 | Inspect Touch ID for sudo. `--enable` and `--disable` change it.                                                                                                                                                                                           |
 
 Tool checks and version probes stop after 10 seconds. Set
 `DOTFILES_TOOL_CHECK_TIMEOUT_SECONDS` to change that. The macOS update probe
