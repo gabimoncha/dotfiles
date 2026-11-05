@@ -1,3 +1,4 @@
+# shellcheck shell=sh
 # Supported telemetry controls. Sources and coverage: apps/telemetry-audit.json.
 # POSIX shell: used by setup, installers, zsh, and the GUI login job.
 export HOMEBREW_NO_ANALYTICS=1
