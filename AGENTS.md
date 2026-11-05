@@ -4,6 +4,8 @@ This repository owns setup, tool inventories, and selected app settings for
 the owner's Macs and for Linux hosts: Docker containers and VMs. Read
 [README.md](README.md) for the workflow and [DECISIONS.md](DECISIONS.md)
 before changing ownership, bootstrap boundaries, or other design decisions.
+For mise behavior, the source of truth is the mise documentation at
+<https://mise.jdx.dev>, for the mise version that this repository pins.
 
 ## Where things live
 
@@ -89,6 +91,28 @@ run, and the mise tool list. A change that works only on the Mac breaks Linux.
   when found; distinguish current behavior from proposed fixes.
 - Write every PR body from `.github/pull_request_template.md`. Delete the
   sections that do not apply. `gh pr create --body` skips the template.
+
+## Backup and sync
+
+Sync and back up before a setup test, a restore, or a new Mac. Then the
+repository and the backups hold this machine's current state. Each step is a
+mise task in `configs/mise/config/config.toml`; `mise tasks` lists them.
+
+1. Sync the repository. `mise run dot:save` copies the public agent and T3
+   settings into `configs/`. `mise run dot:drift` reports the installed apps
+   and tools that differ from `Brewfile` and the mise lists. The user's
+   commits are pushed.
+2. Back up portable state with `mise run backup`: Mackup app settings, an
+   encrypted Codex archive, and a Raycast export. The user types the
+   passwords and completes the Raycast export in its window.
+3. The backup is done when the new files are in the Synology or iCloud
+   folders of [MACKUP.md](MACKUP.md). A zero exit status does not prove it.
+
+`mise run restore` restores this state. `./bin/file-restore --debug` shows the
+storage folders.
+
+When you add, rename, or remove a backup or sync script, update its mise task
+and this section in the same change.
 
 ## Setup repairs
 
