@@ -22,6 +22,12 @@ services:
       - dev-home:/home/box
       - ./workspace:/workspace
       - ssh-host-keys:/var/lib/nasbox-ssh
+      # USB phones for adb, agent-device, and the T3 device hub. The bind
+      # mount also shows phones that you connect after the container starts.
+      - /dev/bus/usb:/dev/bus/usb
+    # 189 is the Linux major number of USB device nodes.
+    device_cgroup_rules:
+      - "c 189:* rwm"
     working_dir: /workspace
     command:
       - /bin/bash
