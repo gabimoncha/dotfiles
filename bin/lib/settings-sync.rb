@@ -12,7 +12,8 @@
 # private rule can name a whole section. Settings under no rule are counted, not
 # saved; --show-new prints their paths. Each setting in SOURCE needs a public
 # rule, so that a save cannot delete it. Saved values must not hold a local
-# path, a credential, or an email address. Messages print only paths from
+# path, a credential, or an email address. A setting with a secret-like name
+# stays private unless its value is an "{env:NAME}" reference. Messages print only paths from
 # sync-keys and SOURCE.
 require 'json'
 
@@ -36,6 +37,9 @@ PRIVATE_TEXT = Regexp.union(
   /[\r\n]/
 )
 SECRET_NAME = /(?:\A|[_.-])(?:api_?key|secret|password|passwd|passphrase|private_?key|credentials?|(?:auth|access|refresh|bearer|session)_?token|token|headers?)\z|\A(?:authorization|cookie)\z/i
+# OpenCode reads "{env:NAME}" from the environment, so the value names a
+# variable and holds no secret.
+ENV_REFERENCE = /\A\{env:[A-Za-z_][A-Za-z0-9_]*\}\z/
 
 def fail!(message)
   warn "save-settings: #{message}"
@@ -140,7 +144,7 @@ public_rules.each do |keys|
   parts(value, names, texts)
   if (texts + names).any? { |text| text.match?(PRIVATE_TEXT) }
     problems << "#{show(keys)} holds a local path, a credential, or an email address. Mark it private in #{sync_file}"
-  elsif (keys + names).any? { |key| key.match?(SECRET_NAME) }
+  elsif (keys + names).any? { |key| key.match?(SECRET_NAME) } && !(value.is_a?(String) && value.match?(ENV_REFERENCE))
     problems << "#{show(keys)} has a secret-like name. Mark it private in #{sync_file}"
   else
     store(output, keys, value)

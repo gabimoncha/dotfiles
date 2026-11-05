@@ -3,10 +3,23 @@
 # private rule can name a whole section. Each key in configs/opencode/opencode.json
 # needs a public rule. Settings on neither list are counted, not saved: run
 # ./bin/save-settings --show-new to list them.
-public .$schema
+public ."$schema"
 public .provider.fs.npm
 public .provider.fs.name
 public .provider.fs.options.apiKey
-public .provider.fs.models
+public .provider.fs.models.sol-low.id
+public .provider.fs.models.sol-low.name
+public .provider.fs.models.sol-medium.id
+public .provider.fs.models.sol-medium.name
+public .provider.fs.models.sol-high.id
+public .provider.fs.models.sol-high.name
+public .provider.fs.models.sol-xhigh.id
+public .provider.fs.models.sol-xhigh.name
+public .provider.fs.models.argon-low.id
+public .provider.fs.models.argon-low.name
+public .provider.fs.models.argon-medium.id
+public .provider.fs.models.argon-medium.name
+public .provider.fs.models.argon-high.id
+public .provider.fs.models.argon-high.name
 # The proxy URL is private. Set it in the live file on each machine.
 private .provider.fs.options.baseURL
