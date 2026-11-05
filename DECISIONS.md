@@ -190,8 +190,11 @@ become a section or holds a local path, a credential, or an email address. It
 also stops until this machine has merged the current source, so an older live
 value cannot replace a newer save from another machine. A merge never removes
 a key, so a key deleted in an app stays on the
-other machines. The container adds its sandbox key in a second merge, and the
-Codex list keeps that key private. The Codex target remains
+other machines. The shared Codex sandbox default is `workspace-write`. The
+container overrides it with `danger-full-access` in a second merge because
+its kernel cannot run the sandbox. A settings save on the container preserves
+the shared source's sandbox value, so the host override cannot reach other
+machines. The Codex target remains
 `~/.codex/config.toml`, independent of `CODEX_HOME`.
 
 The shell checkout declarations are in `mise.toml`. The existing missing-path
