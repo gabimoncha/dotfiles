@@ -1,4 +1,5 @@
 # Formulae that need full Xcode selected. bin/check-mobile-ready reads this list.
-tap "facebook/fb", trusted: true
-brew "facebook/fb/idb-companion"
+# Facebook's tap moved to meta/fb, the same repository under a new owner.
+tap "meta/fb", trusted: true
+brew "meta/fb/idb-companion"
 brew "sourcekitten"
