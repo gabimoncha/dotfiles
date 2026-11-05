@@ -366,9 +366,9 @@ checksum = "sha256:6d9d2db2c8a645f63073553e9497ea266507c940de42800f2f0faddbf0014
 url = "https://conda.anaconda.org/conda-forge/osx-arm64/libintl-0.25.1-hae62183_2.conda"
 checksum = "sha256:b43c6645e668f86d04d5c06d6dc17efe921bbd9244be4b77946d56fb950a3fcc"
 
-[conda-packages.macos-arm64."libjpeg-turbo-3.2.0-h84a0fba_1"]
-url = "https://conda.anaconda.org/conda-forge/osx-arm64/libjpeg-turbo-3.2.0-h84a0fba_1.conda"
-checksum = "sha256:05006418f9392c9b723e8428808db106de0350a497832f95f921b85ff1072310"
+[conda-packages.macos-arm64."libjpeg-turbo-3.2.1-hb001647_0"]
+url = "https://conda.anaconda.org/conda-forge/osx-arm64/libjpeg-turbo-3.2.1-hb001647_0.conda"
+checksum = "sha256:957469c69b3b9c9e6ae48dc1267c5c9dfe0db9e1aefa5fa9abf9798224aa23c9"
 
 [conda-packages.macos-arm64."libjxl-0.12.0-hb71b141_4"]
 url = "https://conda.anaconda.org/conda-forge/osx-arm64/libjxl-0.12.0-hb71b141_4.conda"
@@ -567,15 +567,14 @@ url = "https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hf451053_7.co
 checksum = "sha256:da867f5092eb0cb746d353694f0098031fd9817a4ce7d5743121209ae0f406ca"
 
 [[tools.act]]
-version = "0.2.92"
+version = "0.2.97"
 backend = "aqua:nektos/act"
-specifiers = ["0.2.92"]
+specifiers = ["0.2.97"]
 
 [tools.act."platforms.macos-arm64"]
-checksum = "sha256:fb9594d4ebc589a5bb4a490fbb4abae9964a530b1e6316bbba3b788a754a3919"
-checksum_source = "mise-versions"
-url = "https://github.com/nektos/act/releases/download/v0.2.92/act_Darwin_arm64.tar.gz"
-url_api = "https://api.github.com/repos/nektos/act/releases/assets/685898613"
+checksum = "sha256:6dbb1ef34a7e34bb1ee0db188d1682ea35b82d9d9012626497f6c659e55a7cb5"
+url = "https://github.com/nektos/act/releases/download/v0.2.97/act_Darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/nektos/act/releases/assets/710157431"
 
 [[tools.age]]
 version = "1.3.2"
@@ -1211,7 +1210,7 @@ conda_deps = [
     "fonts-conda-forge-1-hc364b38_1",
     "font-ttf-dejavu-sans-mono-2.37-hab24e00_0",
     "giflib-6.1.3-h74c22ad_2",
-    "libjpeg-turbo-3.2.0-h84a0fba_1",
+    "libjpeg-turbo-3.2.1-hb001647_0",
     "liblzma-5.8.3-h8088a28_1",
     "libtiff-4.7.2-hf67920b_1",
     "lerc-4.2.0-h1eee2c3_0",
@@ -1503,9 +1502,10 @@ provenance = "github-attestations"
 version = "3.2.4"
 backend = "pipx:httpie"
 specifiers = ["latest"]
-uv = { path = "locks/pipx-httpie/3.2.4~2f338564", digest = "sha256:3bfebc47757187e82cf0431dee430eec2e59ecca30c433a312bb7b1e5b721bcf" }
+uv = { path = "locks/pipx-httpie/3.2.4~86d29274", digest = "sha256:667b66c572c9a416e05eaf97e6e366b1bb1446b01f101ba25074f488d3640f91" }
 
 [tools."pipx:httpie".options]
+python = "3.15"
 with = '["certifi==2026.10.19"]'
 
 [[tools."pipx:mackup"]]
@@ -1545,7 +1545,7 @@ specifiers = ["latest"]
 [[tools.python]]
 version = "3.15.2"
 backend = "core:python"
-specifiers = ["3.15.2"]
+specifiers = ["3.15", "3.15.2"]
 
 [tools.python."platforms.linux-x64"]
 checksum = "sha256:7b03163a980c607ba8194709d4a4086735a7a9c488cc475b098157306927b36b"
