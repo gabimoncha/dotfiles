@@ -3,6 +3,6 @@
 lockfile_version = 3
 
 [[tools."npm:agent-device"]]
-version = "0.21.31"
+version = "0.21.36"
 backend = "npm:agent-device"
 specifiers = ["latest"]
