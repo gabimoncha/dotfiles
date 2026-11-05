@@ -22,8 +22,14 @@ dry_run=0
 case "${1:-}" in
   "") ;;
   --dry-run) dry_run=1 ;;
-  -h|--help) printf 'Usage: save-lock [--dry-run]\n'; exit 0 ;;
-  *) printf 'Usage: save-lock [--dry-run]\n' >&2; exit 2 ;;
+  -h | --help)
+    printf 'Usage: save-lock [--dry-run]\n'
+    exit 0
+    ;;
+  *)
+    printf 'Usage: save-lock [--dry-run]\n' >&2
+    exit 2
+    ;;
 esac
 [[ "${DOTFILES_SAVE_LOCK:-1}" != 0 ]] || exit 0
 

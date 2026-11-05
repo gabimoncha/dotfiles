@@ -18,19 +18,22 @@ mkdir -p "$logs"
 exec 9>"$logs/supervisor.lock"
 flock -n 9 || exit 0
 
-log() { printf 'tokenburnmarket-supervise: %s\n' "$1" >> "$logs/daemon.log"; }
+log() { printf 'tokenburnmarket-supervise: %s\n' "$1" >>"$logs/daemon.log"; }
 real_tool() { MISE_AUTO_INSTALL=0 "$HOME/.local/bin/mise" which "$1" 2>/dev/null; }
 
 pid=""
 # Background sleeps let the trap run at once instead of after the sleep ends.
-pause() { sleep "$1" & wait $! || true; }
+pause() {
+  sleep "$1" &
+  wait $! || true
+}
 trap '[[ -z "$pid" ]] || kill -TERM "$pid" 2>/dev/null || true; exit 0' TERM INT HUP
 
 while true; do
-  [[ ! -f "$logs/daemon.log" ]] || [[ "$(wc -c < "$logs/daemon.log")" -lt 1048576 ]] ||
+  [[ ! -f "$logs/daemon.log" ]] || [[ "$(wc -c <"$logs/daemon.log")" -lt 1048576 ]] ||
     mv -f "$logs/daemon.log" "$logs/daemon.log.1"
   if node="$(real_tool node)" && cli="$(real_tool tokenburnmarket)"; then
-    "$node" "$cli" daemon >> "$logs/daemon.log" 2>&1 &
+    "$node" "$cli" daemon >>"$logs/daemon.log" 2>&1 &
     pid=$!
     wait "$pid" || log "daemon exited with status $?"
     pid=""

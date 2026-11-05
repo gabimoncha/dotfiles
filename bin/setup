@@ -19,8 +19,14 @@ for argument in "$@"; do
     --dry-run) DOTFILES_RUN_MODE=dry-run ;;
     --skip-mobile-dev) export DOTFILES_SKIP_MOBILE_DEV=1 ;;
     --continue) DOTFILES_SETUP_PHASE=continue ;;
-    -h|--help) usage; exit 0 ;;
-    *) printf 'Unknown setup argument: %s\n' "$argument" >&2; exit 1 ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      printf 'Unknown setup argument: %s\n' "$argument" >&2
+      exit 1
+      ;;
   esac
 done
 DOTFILES_SETUP_RERUN='./bin/setup --continue'
@@ -79,7 +85,9 @@ step() {
     esac
     shift
   done
-  id="$1"; mode="$2"; shift 2
+  id="$1"
+  mode="$2"
+  shift 2
   step_status=0
   if [[ "$setup_stopped" == 1 && "$always" == 0 ]]; then
     runtime_record blocked "$id" 'an earlier step failed'

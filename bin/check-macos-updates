@@ -43,7 +43,7 @@ timed_out=0
 
 while kill -0 "$softwareupdate_pid" 2>/dev/null; do
   current_time="$(date +%s)"
-  if (( current_time - started_at >= timeout_seconds )); then
+  if ((current_time - started_at >= timeout_seconds)); then
     timed_out=1
     break
   fi

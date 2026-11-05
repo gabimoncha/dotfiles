@@ -7,12 +7,15 @@ dry_run=0
 for argument in "$@"; do
   case "$argument" in
     --dry-run) dry_run=1 ;;
-    --skip-mobile-dev|--continue) ;;
-    -h|--help)
+    --skip-mobile-dev | --continue) ;;
+    -h | --help)
       printf 'Usage: dotfiles-update [--dry-run] [--skip-mobile-dev]\n'
       exit 0
       ;;
-    *) printf 'Unknown update argument: %s\n' "$argument" >&2; exit 2 ;;
+    *)
+      printf 'Unknown update argument: %s\n' "$argument" >&2
+      exit 2
+      ;;
   esac
 done
 . "${repo_root}/bin/lib/dotfiles-profile.sh"

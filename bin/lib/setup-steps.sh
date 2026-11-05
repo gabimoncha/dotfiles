@@ -27,7 +27,7 @@ prepend_mise_shims() {
   local new_path="${mise_bin_dir}:${mise_shim_dir}"
   local path_entries=()
 
-  IFS=':' read -r -a path_entries <<< "$PATH"
+  IFS=':' read -r -a path_entries <<<"$PATH"
   for path_entry in "${path_entries[@]}"; do
     [[ -z "$path_entry" ]] && continue
     case "$path_entry" in
@@ -171,7 +171,7 @@ homebrew_reports_xcode_too_old() {
   fi
 
   doctor_output="$(brew doctor 2>&1 || true)"
-  if grep -q 'Your Xcode .* is too outdated' <<< "$doctor_output"; then
+  if grep -q 'Your Xcode .* is too outdated' <<<"$doctor_output"; then
     homebrew_xcode_too_old=1
     return 0
   fi
@@ -254,7 +254,7 @@ install_mas_apps() {
         status=1
       }
     fi
-  done < "$mas_brewfile"
+  done <"$mas_brewfile"
 
   return "$status"
 }
@@ -293,7 +293,7 @@ install_cursor_extensions() {
     if [[ "$line" =~ ^vscode[[:space:]]+\"([^\"]+)\" ]]; then
       extension_id="${BASH_REMATCH[1]}"
 
-      if grep -Fixq "$extension_id" <<< "$installed_extensions"; then
+      if grep -Fixq "$extension_id" <<<"$installed_extensions"; then
         log "Cursor extension ${extension_id} already installed"
         continue
       fi
@@ -305,7 +305,7 @@ install_cursor_extensions() {
         status=1
       }
     fi
-  done < "$cursor_extensions_brewfile"
+  done <"$cursor_extensions_brewfile"
 
   return "$status"
 }
@@ -355,7 +355,7 @@ repair_legacy_zathura_receipts() {
   warn "Reinstalling zathura plugins to update legacy Homebrew receipt metadata"
   runtime_with_lock homebrew brew reinstall --formula \
     homebrew-zathura/zathura/zathura-cb \
-    homebrew-zathura/zathura/zathura-pdf-mupdf || \
+    homebrew-zathura/zathura/zathura-pdf-mupdf ||
     warn "Could not update zathura plugin receipts; Homebrew may keep warning about the old zegervdv/zathura tap"
 }
 
@@ -374,8 +374,8 @@ filter_brewfile_for_existing_apps() {
       if homebrew_xcode_sensitive_formula "$brew_name"; then
         if homebrew_reports_xcode_too_old; then
           warn "Deferring ${brew_name}; Homebrew requires a newer Xcode app"
-          printf '# Deferred until Homebrew accepts the installed Xcode app: %s\n' "$line" >> "$target_file"
-          printf '%s\n' "$line" >> "$deferred_xcode_file"
+          printf '# Deferred until Homebrew accepts the installed Xcode app: %s\n' "$line" >>"$target_file"
+          printf '%s\n' "$line" >>"$deferred_xcode_file"
           continue
         fi
       fi
@@ -386,7 +386,7 @@ filter_brewfile_for_existing_apps() {
       mas_id="${BASH_REMATCH[2]}"
       mas_bundle="$mas_name"
 
-      printf '# Installed separately by bootstrap: %s\n' "$line" >> "$target_file"
+      printf '# Installed separately by bootstrap: %s\n' "$line" >>"$target_file"
 
       if [[ -d "/Applications/${mas_bundle}.app" ]]; then
         warn "Skipping App Store app ${mas_name}; /Applications/${mas_bundle}.app already exists"
@@ -396,13 +396,13 @@ filter_brewfile_for_existing_apps() {
         continue
       fi
 
-      printf '%s\n' "$line" >> "$mas_file"
+      printf '%s\n' "$line" >>"$mas_file"
       continue
     fi
 
     if [[ "$line" =~ ^vscode[[:space:]]+\"([^\"]+)\" ]]; then
-      printf '# Installed separately by bootstrap: %s\n' "$line" >> "$target_file"
-      printf '%s\n' "$line" >> "$extensions_file"
+      printf '# Installed separately by bootstrap: %s\n' "$line" >>"$target_file"
+      printf '%s\n' "$line" >>"$extensions_file"
       continue
     fi
 
@@ -412,13 +412,13 @@ filter_brewfile_for_existing_apps() {
 
       if [[ -n "$app_name" && -d "/Applications/${app_name}.app" ]]; then
         warn "Skipping cask ${cask_name}; /Applications/${app_name}.app already exists"
-        printf '# Skipped existing app: %s\n' "$line" >> "$target_file"
+        printf '# Skipped existing app: %s\n' "$line" >>"$target_file"
         continue
       fi
     fi
 
-    printf '%s\n' "$line" >> "$target_file"
-  done < "$source_file"
+    printf '%s\n' "$line" >>"$target_file"
+  done <"$source_file"
 }
 
 prepare_brewfiles() {
@@ -427,10 +427,10 @@ prepare_brewfiles() {
   xcode_brewfile="${DOTFILES_SETUP_LOG_DIR}/xcode.Brewfile"
   mas_brewfile="${DOTFILES_SETUP_LOG_DIR}/mas.Brewfile"
   cursor_extensions_brewfile="${DOTFILES_SETUP_LOG_DIR}/cursor-extensions.Brewfile"
-  : > "$temp_brewfile"
-  : > "$xcode_brewfile"
-  : > "$mas_brewfile"
-  : > "$cursor_extensions_brewfile"
+  : >"$temp_brewfile"
+  : >"$xcode_brewfile"
+  : >"$mas_brewfile"
+  : >"$cursor_extensions_brewfile"
   filter_brewfile_for_existing_apps "${repo_root}/Brewfile" "$temp_brewfile" "$xcode_brewfile" "$mas_brewfile" "$cursor_extensions_brewfile"
 }
 
@@ -487,10 +487,10 @@ install_shell_framework() {
       else warn "!! Leaving #{repo["path"]} as it is: #{repo["state"]} #{repo["reason"]}".strip
       end
     end
-  ' <<< "$status_json")" || return
+  ' <<<"$status_json")" || return
   while IFS= read -r path; do
     [[ -n "$path" ]] && missing+=("$path")
-  done <<< "$missing_list"
+  done <<<"$missing_list"
   if [[ ${#missing[@]} -eq 0 ]]; then
     log "Shell framework repositories are present"
     return 0
@@ -538,10 +538,13 @@ setup_real_tool() {
   if [[ -x "${HOME}/.local/bin/mise" ]]; then
     candidate="$(MISE_AUTO_INSTALL=0 "$repo_root/bin/repo-mise" --global which "$tool" 2>/dev/null)" || candidate=""
     case "$candidate" in */shims/*) candidate="" ;; esac
-    if [[ -n "$candidate" && -x "$candidate" ]]; then printf '%s\n' "$candidate"; return; fi
+    if [[ -n "$candidate" && -x "$candidate" ]]; then
+      printf '%s\n' "$candidate"
+      return
+    fi
   fi
   candidate="$(command -v "$tool" 2>/dev/null)" || return 1
-  case "$candidate" in /*/shims/*|*/configs/gh/gh|"$HOME/bin/gh") return 1 ;; esac
+  case "$candidate" in /*/shims/* | */configs/gh/gh | "$HOME/bin/gh") return 1 ;; esac
   [[ "$candidate" == /* && -x "$candidate" ]] || return 1
   printf '%s\n' "$candidate"
 }
@@ -555,7 +558,10 @@ setup_clt() {
   return 1
 }
 setup_touch_id() { "${repo_root}/bin/configure-sudo-touch-id" --enable; }
-setup_sudo() { ensure_admin_user; sudo -v; }
+setup_sudo() {
+  ensure_admin_user
+  sudo -v
+}
 setup_linux_sudo() { sudo -v; }
 # apt packages and the zsh login shell. mise uses sudo for both.
 setup_linux_system() {
@@ -564,7 +570,7 @@ setup_linux_system() {
 setup_sudo_grant() {
   "${repo_root}/bin/sudo-grant" --enable || return
   # bin/setup removes only a grant that this run installed.
-  : > "${DOTFILES_SETUP_LOG_DIR}/sudo-grant-installed"
+  : >"${DOTFILES_SETUP_LOG_DIR}/sudo-grant-installed"
 }
 setup_keepalive() {
   local owner=$$
@@ -649,7 +655,10 @@ setup_skills() {
   node="$(setup_real_tool node)" || return 1
   # Require a reviewed installed skills CLI rather than executing latest code.
   local skills
-  skills="$(setup_real_tool skills)" || { warn 'Install a reviewed skills CLI version explicitly before importing skills.'; return 20; }
+  skills="$(setup_real_tool skills)" || {
+    warn 'Install a reviewed skills CLI version explicitly before importing skills.'
+    return 20
+  }
   PATH="$(dirname "$node"):$PATH" "$skills" --version >/dev/null 2>&1 || return 1
   PATH="$(dirname "$node"):$PATH" "$skills" add "https://github.com/gabimoncha/skills/tree/${source_ref}" -g --skill '*' --agent claude-code cursor codex -y
 }
@@ -661,7 +670,7 @@ setup_verify_apps() {
   while IFS=$'\t' read -r key type token bundle notes || [[ -n "${key:-}" ]]; do
     [[ -n "${key:-}" && "$key" != \#* ]] || continue
     case "$type" in
-      cask|script)
+      cask | script)
         if [[ "$bundle" != - && -n "$bundle" ]]; then
           if [[ ! -d "${DOTFILES_APPLICATIONS_DIR:-/Applications}/${bundle}.app" ]]; then
             runtime_record_failure recoverable "app.$key" "application bundle is unavailable"
@@ -674,6 +683,6 @@ setup_verify_apps() {
         [[ -d "${DOTFILES_APPLICATIONS_DIR:-/Applications}/${bundle}.app" ]] || runtime_record_deferred "app.$key" 'vendor installation requires manual completion'
         ;;
     esac
-  done < "${repo_root}/apps/manifest.tsv"
+  done <"${repo_root}/apps/manifest.tsv"
   return "$status"
 }

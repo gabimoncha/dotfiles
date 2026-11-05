@@ -2,7 +2,11 @@
 set -euo pipefail
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 mode="${1:---apply}"
-case "$mode" in --apply|--dry-run) ;; *) echo 'Usage: configure-app-settings [--apply|--dry-run]' >&2; exit 2 ;; esac
+case "$mode" in --apply | --dry-run) ;; *)
+  echo 'Usage: configure-app-settings [--apply|--dry-run]' >&2
+  exit 2
+  ;;
+esac
 status=0
 while IFS= read -r app; do
   [[ -n "$app" && "$app" != \#* ]] || continue
@@ -18,9 +22,13 @@ while IFS= read -r app; do
     fi
     continue
   fi
-  if [[ ! -d "$app_path" ]]; then printf 'Deferred login item (app missing): %s\n' "$app"; status=1; continue; fi
+  if [[ ! -d "$app_path" ]]; then
+    printf 'Deferred login item (app missing): %s\n' "$app"
+    status=1
+    continue
+  fi
   printf 'Ensuring login item: %s\n' "$app"
-  osascript - "$app_path" "$previous_app_path" <<'APPLESCRIPT' || { status=1; break; }
+  osascript - "$app_path" "$previous_app_path" <<'APPLESCRIPT' || {
 on run argv
   set appPath to item 1 of argv
   set previousAppPath to item 2 of argv
@@ -37,7 +45,10 @@ on run argv
   end timeout
 end run
 APPLESCRIPT
-done < "$repo_root/apps/login-items.txt"
+    status=1
+    break
+  }
+done <"$repo_root/apps/login-items.txt"
 if [[ "$status" != 0 ]]; then
   echo 'Some login items remain incomplete. Install missing apps or allow Automation for System Events, then rerun ./bin/configure-app-settings.' >&2
 fi

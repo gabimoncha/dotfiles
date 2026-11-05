@@ -10,12 +10,18 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 marker=/var/lib/dotfiles/container-system-packages
 case "${1:-}" in
   --dry-run)
-    if [[ -f "$marker" ]]; then echo "This container has its system packages: $marker"
-    else echo 'Would install the setup prerequisites, the bootstrap packages, and the login shell.'
+    if [[ -f "$marker" ]]; then
+      echo "This container has its system packages: $marker"
+    else
+      echo 'Would install the setup prerequisites, the bootstrap packages, and the login shell.'
     fi
-    exit 0 ;;
+    exit 0
+    ;;
   '') ;;
-  *) echo 'Usage: container-system-packages [--dry-run]' >&2; exit 2 ;;
+  *)
+    echo 'Usage: container-system-packages [--dry-run]' >&2
+    exit 2
+    ;;
 esac
 [[ "$(uname -s)" == Linux && "$(id -u)" != 0 ]] || {
   echo 'Run this as the non-root Linux development user.' >&2
@@ -25,7 +31,7 @@ esac
 
 logs="$HOME/.local/state/dotfiles"
 mkdir -p "$logs"
-exec >> "$logs/container-system-packages.log" 2>&1
+exec >>"$logs/container-system-packages.log" 2>&1
 printf '%s: restoring system packages\n' "$(date -u '+%Y-%m-%d %H:%M:%S')"
 "$repo_root/bin/linux-prerequisites"
 "$repo_root/bin/repo-mise" bootstrap --only packages,user --yes

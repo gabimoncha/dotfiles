@@ -9,7 +9,11 @@ usage() {
   printf 'status: print each tool'"'"'s state. Exits 1 when a tool is missing.\n'
 }
 action=install
-case "${1:-}" in install|update|status) action="$1"; shift ;; esac
+case "${1:-}" in install | update | status)
+  action="$1"
+  shift
+  ;;
+esac
 first_only=0
 installed_only=0
 requested=()
@@ -18,8 +22,15 @@ for argument in "$@"; do
     --dry-run) export DOTFILES_RUN_MODE=dry-run ;;
     --first-only) first_only=1 ;;
     --installed-only) installed_only=1 ;;
-    -h|--help) usage; exit 0 ;;
-    -*) printf 'Unknown argument: %s\n' "$argument" >&2; usage >&2; exit 2 ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    -*)
+      printf 'Unknown argument: %s\n' "$argument" >&2
+      usage >&2
+      exit 2
+      ;;
     *) requested+=("$argument") ;;
   esac
 done
@@ -41,7 +52,10 @@ while IFS= read -r name; do known_names+=("$name"); done < <(standalone_names)
 for name in ${requested[@]+"${requested[@]}"}; do
   case " ${known_names[*]} " in
     *" $name "*) ;;
-    *) printf 'Unknown tool for this OS: %s (known: %s)\n' "$name" "${known_names[*]}" >&2; exit 2 ;;
+    *)
+      printf 'Unknown tool for this OS: %s (known: %s)\n' "$name" "${known_names[*]}" >&2
+      exit 2
+      ;;
   esac
 done
 selected() {
@@ -54,12 +68,13 @@ work_dir=""
 pending_command=""
 pending_backup=""
 rollback_command() {
-  if [[ -n "$pending_backup" && ( -e "$pending_backup" || -L "$pending_backup" ) ]]; then
+  if [[ -n "$pending_backup" && (-e "$pending_backup" || -L "$pending_backup") ]]; then
     rm -f "$pending_command"
     mv "$pending_backup" "$pending_command"
     printf 'Restored %s\n' "$pending_command"
   fi
-  pending_command=""; pending_backup=""
+  pending_command=""
+  pending_backup=""
 }
 cleanup() {
   local status=$?
@@ -87,12 +102,12 @@ prepare_mise_installer() {
   fi
   # The installer calls PATH curl for its asset download. Bound those requests
   # too, with the absolute curl so the wrapper cannot call itself.
-  cat > "$work_dir/curl" <<'CURL'
+  cat >"$work_dir/curl" <<'CURL'
 #!/bin/sh
 exec "$DOTFILES_INSTALLER_CURL" --connect-timeout 15 --max-time 300 --retry 2 --retry-max-time 600 "$@"
 CURL
   chmod 700 "$work_dir/curl"
-  printf '%s\n' "$real_curl" > "$work_dir/real-curl"
+  printf '%s\n' "$real_curl" >"$work_dir/real-curl"
 }
 
 run_installer() {
@@ -100,11 +115,11 @@ run_installer() {
   case "$name" in
     mise)
       PATH="$work_dir:$PATH" DOTFILES_INSTALLER_CURL="$(cat "$work_dir/real-curl")" \
-        MISE_VERSION="v${pinned_mise_version}" MISE_INSTALL_PATH="$command" MISE_INSTALL_HELP=0 sh "$installer"
+      MISE_VERSION="v${pinned_mise_version}" MISE_INSTALL_PATH="$command" MISE_INSTALL_HELP=0 sh "$installer"
       ;;
     codex)
       PATH="$(dirname "$command"):$PATH" CODEX_NON_INTERACTIVE=1 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}" \
-        CODEX_INSTALL_DIR="$(dirname "$command")" sh "$installer"
+      CODEX_INSTALL_DIR="$(dirname "$command")" sh "$installer"
       ;;
     claude) bash "$installer" ;;
     cursor) PATH="$(dirname "$command"):$PATH" bash "$installer" ;;
@@ -113,7 +128,10 @@ run_installer() {
     # interactive prompts and prevents it from changing shell profiles.
     pi) PI_LEGACY_INSTALL=0 /usr/bin/ruby -e 'Process.setsid; exec("sh", ARGV.fetch(0))' "$installer" ;;
     t3) T3CODE_CHANNEL=nightly T3CODE_INSTALL_BIN_DIR="$(dirname "$command")" sh "$installer" ;;
-    *) runtime_warn "No installer runner for $name"; return 1 ;;
+    *)
+      runtime_warn "No installer runner for $name"
+      return 1
+      ;;
   esac
 }
 
@@ -162,10 +180,12 @@ install_one() {
   fi
   if [[ "$name" == pi ]]; then
     command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1 || {
-      runtime_warn 'Pi requires installed Node and npm. Install the mise tools first.'; return 1;
+      runtime_warn 'Pi requires installed Node and npm. Install the mise tools first.'
+      return 1
     }
     standalone_probe node -e 'const [a,b] = process.versions.node.split(".").map(Number); process.exit(a > 22 || (a === 22 && b >= 19) ? 0 : 1)' || {
-      runtime_warn 'Pi requires Node 22.19 or newer.'; return 1;
+      runtime_warn 'Pi requires Node 22.19 or newer.'
+      return 1
     }
   fi
   work_dir="$(mktemp -d "${TMPDIR:-/tmp}/install-standalone.XXXXXX")" || return 1
@@ -175,10 +195,13 @@ install_one() {
   else
     download "$installer_url" "$installer" || status=$?
   fi
-  if [[ "$status" == 0 && ( -e "$command" || -L "$command" ) ]]; then
+  if [[ "$status" == 0 && (-e "$command" || -L "$command") ]]; then
     pending_backup="${HOME}/.dotfiles-backups/$(date +%Y%m%d-%H%M%S)-$$/standalone/$name"
     mkdir -p "$(dirname "$pending_backup")"
-    mv "$command" "$pending_backup" || { pending_backup=""; status=1; }
+    mv "$command" "$pending_backup" || {
+      pending_backup=""
+      status=1
+    }
     if [[ -n "$pending_backup" ]]; then
       pending_command="$command"
       printf 'Backed up %s to %s\n' "$command" "$pending_backup"
@@ -191,7 +214,8 @@ install_one() {
     run_installer "$name" "$installer" "$command" </dev/null &
     wait "$!" || status=$?
   fi
-  rm -rf "$work_dir"; work_dir=""
+  rm -rf "$work_dir"
+  work_dir=""
   if [[ "$status" == 0 ]]; then
     standalone_installed "$name" && standalone_probe "$command" --version >/dev/null 2>&1 || status=1
   fi
@@ -200,7 +224,8 @@ install_one() {
     rollback_command
     return "$status"
   fi
-  pending_command=""; pending_backup=""
+  pending_command=""
+  pending_backup=""
   printf 'Installed %s\n' "$name"
   [[ "$name" != mise ]] || remove_homebrew_mise
   [[ "$name" != cursor ]] || repair_cursor_launchd_path "$(dirname "$command")"
@@ -214,10 +239,12 @@ update_one() {
     printf 'Skipping %s: it updates itself\n' "$name"
     return 0
   else
-    read -r -a args <<< "$arguments"
+    read -r -a args <<<"$arguments"
   fi
   if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
-    printf 'Would run: %q' "$command"; printf ' %q' "${args[@]}"; printf '\n'
+    printf 'Would run: %q' "$command"
+    printf ' %q' "${args[@]}"
+    printf '\n'
     return 0
   fi
   case "$name" in
@@ -244,7 +271,7 @@ case "$action" in
     while IFS=$'\t' read -r name phase command root installer update; do
       [[ -n "$name" ]] && selected "$name" || continue
       status_one "$name" "$command" || status=1
-    done <<< "$rows"
+    done <<<"$rows"
     ;;
   install)
     runtime_acquire_lock harness 'standalone tool installation' || exit 1
@@ -252,7 +279,7 @@ case "$action" in
       [[ -n "$name" ]] && selected "$name" || continue
       [[ "$first_only" == 0 || "$phase" == first ]] || continue
       install_one "$name" "$command" "$installer" || status=1
-    done <<< "$rows"
+    done <<<"$rows"
     ;;
   update)
     # Serialize updates against installs and other update runs.
@@ -278,7 +305,7 @@ case "$action" in
       fi
       runtime_run_job "$name" recoverable 'Run ./bin/install-standalone update after fixing the reported error.' \
         update_one "$name" "$command" "$update" </dev/null
-    done <<< "$rows"
+    done <<<"$rows"
     runtime_wait_jobs || status=1
     runtime_print_summary
     ;;

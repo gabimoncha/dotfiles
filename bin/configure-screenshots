@@ -1,9 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 case "${1:-}" in
-  --dry-run) printf 'Would ensure ~/Screenshots exists and reconcile screenshot destination, file target, and PNG preferences.\n'; exit 0 ;;
+  --dry-run)
+    printf 'Would ensure ~/Screenshots exists and reconcile screenshot destination, file target, and PNG preferences.\n'
+    exit 0
+    ;;
   '') ;;
-  *) echo 'Usage: configure-screenshots [--dry-run]' >&2; exit 2 ;;
+  *)
+    echo 'Usage: configure-screenshots [--dry-run]' >&2
+    exit 2
+    ;;
 esac
 mkdir -p "$HOME/Screenshots"
 changed=0

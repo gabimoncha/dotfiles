@@ -56,7 +56,7 @@ standalone_rows() {
     [[ "$row_os" == all || "$row_os" == "$os" ]] || continue
     printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$name" "$phase" \
       "$(standalone_expand "$command")" "$(standalone_expand "$root")" "$installer" "$update"
-  done < "$standalone_manifest"
+  done <"$standalone_manifest"
 }
 
 standalone_names() { standalone_rows | cut -f1; }
@@ -119,7 +119,7 @@ standalone_installed_node() {
     mise_bin="$(standalone_field mise command)" || return 1
     [[ -f "$mise_bin" && -x "$mise_bin" && ! -L "$mise_bin" ]] || return 1
     mise_bin="$(standalone_realpath "$mise_bin")" || return 1
-    case "$mise_bin" in */shims/*|*/Cellar/*) return 1 ;; esac
+    case "$mise_bin" in */shims/* | */Cellar/*) return 1 ;; esac
     standalone_mise_isolate || return
     version="$(mise_installed_version "$mise_bin")" || return 1
     if mise_version_at_least "$version" "$pinned_mise_version"; then return 1; fi
@@ -146,7 +146,7 @@ standalone_prepare_path() {
   if [[ -n "$node_path" ]]; then
     node_path="$(standalone_realpath "$node_path" 2>/dev/null || true)"
   fi
-  IFS=: read -r -a entries <<< "$PATH"
+  IFS=: read -r -a entries <<<"$PATH"
   for entry in "${entries[@]}"; do
     [[ -n "$entry" ]] || continue
     case "$entry" in */shims) continue ;; esac

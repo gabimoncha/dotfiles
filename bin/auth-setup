@@ -130,7 +130,7 @@ ensure_ssh_key() {
 
   if [[ -f "$key_path" && ! -f "${key_path}.pub" ]]; then
     log "Rebuilding SSH public key: ${key_path}.pub"
-    ssh-keygen -y -f "$key_path" > "${key_path}.pub"
+    ssh-keygen -y -f "$key_path" >"${key_path}.pub"
   fi
 
   if [[ -f "$key_path" && -f "${key_path}.pub" ]]; then
@@ -196,15 +196,21 @@ ensure_github_known_host() {
       [[ -n "$line" && "$line" != \#* ]] || continue
       fingerprint="$(printf '%s\n' "$line" | ssh-keygen -lf - -E sha256 2>/dev/null | awk '{print $2}')" || return 1
       case "$fingerprint" in
-        SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s|SHA256:p2QAMXNIC1TJYWeIOttrVc98/R1BUFWu3/LiyKgUfQM|"$expected") ;;
-        *) warn "Existing GitHub host key differs from published fingerprints; review known_hosts manually."; return 1 ;;
+        SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s | SHA256:p2QAMXNIC1TJYWeIOttrVc98/R1BUFWu3/LiyKgUfQM | "$expected") ;;
+        *)
+          warn "Existing GitHub host key differs from published fingerprints; review known_hosts manually."
+          return 1
+          ;;
       esac
-    done <<< "$entries"
+    done <<<"$entries"
     return 0
   fi
   fingerprint="$(printf '%s\n' "$pinned" | ssh-keygen -lf - -E sha256 | awk '{print $2}')" || return 1
   [[ "$fingerprint" == "$expected" ]] || return 1
-  (umask 077; printf '%s\n' "$pinned" >> "$known_hosts")
+  (
+    umask 077
+    printf '%s\n' "$pinned" >>"$known_hosts"
+  )
   chmod 600 "$known_hosts"
 }
 
@@ -357,7 +363,7 @@ verify_github_api() {
     warn "Cannot verify GitHub API quota; fix connectivity/access before downloads."
     return 1
   }
-  IFS=$'\t' read -r remaining reset <<< "$quota"
+  IFS=$'\t' read -r remaining reset <<<"$quota"
   [[ "$remaining" =~ ^[0-9]+$ && "$reset" =~ ^[0-9]+$ ]] || return 1
   if [[ "$remaining" -eq 0 ]]; then
     warn "GitHub API quota exhausted; reset Unix timestamp: $reset. No retry scheduled."
@@ -526,5 +532,8 @@ case "${1:-}" in
       print_manual_followup
     fi
     ;;
-  *) printf 'Usage: auth-setup [--api-only|--ssh-only|--git-only|--verify-mise]\n' >&2; exit 2 ;;
+  *)
+    printf 'Usage: auth-setup [--api-only|--ssh-only|--git-only|--verify-mise]\n' >&2
+    exit 2
+    ;;
 esac

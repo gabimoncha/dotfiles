@@ -40,10 +40,10 @@ _mise_npm_package_manager() {
   fi
 
   case "$manager" in
-    bun|pnpm|aube|auto)
+    bun | pnpm | aube | auto)
       print -r -- "$manager"
       ;;
-    npm|yarn)
+    npm | yarn)
       print -u2 "npx: mise selected '$manager', but this shell wrapper only allows bun, pnpm, aube, or non-npm auto"
       return 1
       ;;

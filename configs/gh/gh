@@ -54,7 +54,7 @@ account_for_context() {
         fi
         ;;
     esac
-  done < "$routing_file"
+  done <"$routing_file"
 
   printf '%s\n' "${account:-$default_account}"
 }

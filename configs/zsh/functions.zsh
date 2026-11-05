@@ -26,9 +26,9 @@ extract() {
   fi
 
   case "$1" in
-    *.tar.bz2|*.tbz2) command tar xjf "$1" ;;
-    *.tar.gz|*.tgz) command tar xzf "$1" ;;
-    *.tar.xz|*.txz) command tar xJf "$1" ;;
+    *.tar.bz2 | *.tbz2) command tar xjf "$1" ;;
+    *.tar.gz | *.tgz) command tar xzf "$1" ;;
+    *.tar.xz | *.txz) command tar xJf "$1" ;;
     *.tar) command tar xf "$1" ;;
     *.bz2) command bunzip2 "$1" ;;
     *.gz) command gunzip "$1" ;;
@@ -86,7 +86,7 @@ serve() {
     return 1
   fi
 
-  if (( $+commands[open] )); then
+  if (($+commands[open])); then
     open "http://localhost:${port}/" >/dev/null 2>&1 &
   fi
   python3 -m http.server "$port"
@@ -116,7 +116,7 @@ dirsize() {
   fi
 
   entries=("$target"/*(N) "$target"/.[!.]*(N) "$target"/..?*(N))
-  if (( ${#entries[@]} == 0 )); then
+  if ((${#entries[@]} == 0)); then
     command du -sh "$target"
     return
   fi
@@ -149,7 +149,7 @@ codesearch() {
 }
 
 commit-ai() {
-  if (( $# != 0 )); then
+  if (($# != 0)); then
     print -u2 "Usage: commit-ai"
     return 1
   fi
@@ -253,7 +253,7 @@ commit-ai() {
 
   message_file="$temp_dir/COMMIT_EDITMSG"
   saved_marker="$temp_dir/saved"
-  if ! print -r -- "$message" > "$message_file"; then
+  if ! print -r -- "$message" >"$message_file"; then
     command rm -rf -- "$temp_dir"
     print -u2 "commit-ai: could not prepare the temporary commit message"
     return 1
@@ -264,7 +264,7 @@ commit-ai() {
     -c 'autocmd BufWritePost <buffer> call writefile(["saved"], $COMMIT_AI_SAVED_MARKER)'
   editor_status=$?
 
-  if (( editor_status != 0 )); then
+  if ((editor_status != 0)); then
     command rm -rf -- "$temp_dir"
     print -u2 "commit-ai: editor closed with an error; commit cancelled"
     return "$editor_status"
@@ -314,7 +314,7 @@ c() {
     return 1
   fi
 
-  if (( $# == 0 )); then
+  if (($# == 0)); then
     command cursor .
   else
     command cursor "$@"
@@ -347,7 +347,7 @@ _infisical_context() {
   fi
 
   case "$subcommand" in
-    run|export|secrets) ;;
+    run | export | secrets) ;;
     *)
       print -u2 "${command_name}: unsupported subcommand '${subcommand}'"
       print -u2 "Supported subcommands: run, export, secrets"
@@ -413,7 +413,7 @@ killport() {
 
   local -a pids
   pids=(${(f)"$(lsof -tiTCP:"$1" -sTCP:LISTEN 2>/dev/null)"})
-  if (( ${#pids[@]} == 0 )); then
+  if ((${#pids[@]} == 0)); then
     print "No listening process found on port $1"
     return 1
   fi
@@ -475,7 +475,7 @@ fix-my-network() {
       _network_fixed "cleared $var for this shell"
     fi
   done
-  if (( proxy_found == 0 )); then
+  if ((proxy_found == 0)); then
     _network_ok "no proxy variables set"
   fi
 
@@ -550,7 +550,7 @@ fix-my-network() {
   _network_ok "open network rows: ${conn_count:-0} (fd limit: $(ulimit -n))"
 
   print
-  if (( issues == 0 )); then
+  if ((issues == 0)); then
     print "${green}Network looks healthy.${reset}"
   else
     print "${yellow}Issues found: $issues; fixes applied: $fixes.${reset}"
@@ -640,7 +640,7 @@ EOF
   [[ -z "$selected" ]] && return 0
 
   command_line="$(print -r -- "$selected" | sed 's/[[:space:]][[:space:]]*- .*//')"
-  if (( $+commands[pbcopy] )); then
+  if (($+commands[pbcopy])); then
     print -n "$command_line" | pbcopy
     print "Copied to clipboard: $command_line"
   else

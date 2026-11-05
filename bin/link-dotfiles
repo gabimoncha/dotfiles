@@ -21,13 +21,22 @@ skip_agents=0
 targets=()
 for argument in "$@"; do
   case "$argument" in
-    --status|--diff|--dry-run)
-      [[ "$mode" == apply ]] || { usage >&2; exit 2; }
+    --status | --diff | --dry-run)
+      [[ "$mode" == apply ]] || {
+        usage >&2
+        exit 2
+      }
       mode="${argument#--}"
       ;;
     --skip-agents) skip_agents=1 ;;
-    -h|--help) usage; exit 0 ;;
-    -*) usage >&2; exit 2 ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    -*)
+      usage >&2
+      exit 2
+      ;;
     *) targets+=("$argument") ;;
   esac
 done
@@ -73,7 +82,7 @@ selected() {
     return 1
   fi
   if [[ "$skip_agents" == 1 ]]; then
-    case "$target" in "$HOME/.claude/"*|"$HOME/.codex/"*) return 1 ;; esac
+    case "$target" in "$HOME/.claude/"* | "$HOME/.codex/"*) return 1 ;; esac
   fi
   return 0
 }
@@ -94,7 +103,7 @@ if [[ "$mode" == diff ]]; then
     else
       diff_targets+=("$target")
     fi
-  done <<< "$rows"
+  done <<<"$rows"
   [[ ${#diff_targets[@]} -eq 0 ]] || repo_mise dot diff "${diff_targets[@]}"
   exit
 fi
@@ -127,8 +136,11 @@ if [[ ${#targets[@]} -gt 0 ]]; then
     [[ "$wanted" == "~/"* ]] && wanted="$HOME/${wanted#\~/}"
     found=0
     while IFS=$'\t' read -r _ _ target; do
-      [[ "$target" != "$wanted" ]] || { found=1; break; }
-    done <<< "$status_rows"
+      [[ "$target" != "$wanted" ]] || {
+        found=1
+        break
+      }
+    done <<<"$status_rows"
     [[ "$found" == 1 ]] || {
       printf 'link-dotfiles: no entry manages %s. Give the full HOME path of an entry.\n' "$wanted" >&2
       exit 2
@@ -167,7 +179,7 @@ while IFS=$'\t' read -r state entry_mode target; do
     [[ "$entry_mode" != template ]] || template_targets+=("$target")
   fi
   [[ "$state" == applied ]] || changing_rows+=("$entry_mode"$'\t'"$target")
-done <<< "$status_rows"
+done <<<"$status_rows"
 
 # Before ~/.config/mise/config.toml is linked, mise's preview of that link
 # warns that the missing file is not trusted. The real apply does not warn.
@@ -234,7 +246,7 @@ save_profile() {
     printf 'Would save env = ["%s"] in .miserc.local.toml\n' "$DOTFILES_PROFILE"
     return 0
   fi
-  printf 'env = ["%s"]\n' "$DOTFILES_PROFILE" > "$file"
+  printf 'env = ["%s"]\n' "$DOTFILES_PROFILE" >"$file"
   printf 'Saved env = ["%s"] in .miserc.local.toml\n' "$DOTFILES_PROFILE"
 }
 
@@ -346,7 +358,7 @@ keep_git_identity() {
     [[ -n "$value" ]] || continue
     git config --file "$local_file" --get "$key" >/dev/null 2>&1 && continue
     if [[ ! -e "$local_file" ]]; then
-      (umask 077 && : > "$local_file") || return
+      (umask 077 && : >"$local_file") || return
     fi
     git config --file "$local_file" "$key" "$value" || return
     printf 'Copied %s to ~/.gitconfig.local\n' "$key"
@@ -394,11 +406,17 @@ if [[ ${#merge_targets[@]} -gt 0 ]]; then
   for target in "${merge_targets[@]}"; do
     [[ ! -e "$target" ]] || continue
     # mise would create the file with mode 0644. Agent settings stay private.
-    mkdir -p "$(dirname "$target")" || { printf 'link-dotfiles: could not create %s.\n' "$(home_name "$target")" >&2; exit 1; }
+    mkdir -p "$(dirname "$target")" || {
+      printf 'link-dotfiles: could not create %s.\n' "$(home_name "$target")" >&2
+      exit 1
+    }
     case "$target" in
-      *.json) (umask 077 && printf '{}\n' > "$target") ;;
-      *) (umask 077 && : > "$target") ;;
-    esac || { printf 'link-dotfiles: could not create %s.\n' "$(home_name "$target")" >&2; exit 1; }
+      *.json) (umask 077 && printf '{}\n' >"$target") ;;
+      *) (umask 077 && : >"$target") ;;
+    esac || {
+      printf 'link-dotfiles: could not create %s.\n' "$(home_name "$target")" >&2
+      exit 1
+    }
     created+=("$target")
   done
   # A parse error from mise can quote a settings file, so its output stays

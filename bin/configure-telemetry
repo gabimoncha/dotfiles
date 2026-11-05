@@ -5,8 +5,14 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 for argument in "$@"; do
   case "$argument" in
     --dry-run) export DOTFILES_RUN_MODE=dry-run ;;
-    -h|--help) printf 'Usage: configure-telemetry [--dry-run]\n'; exit 0 ;;
-    *) printf 'Unknown argument: %s\n' "$argument" >&2; exit 2 ;;
+    -h | --help)
+      printf 'Usage: configure-telemetry [--dry-run]\n'
+      exit 0
+      ;;
+    *)
+      printf 'Unknown argument: %s\n' "$argument" >&2
+      exit 2
+      ;;
   esac
 done
 . "$repo_root/bin/lib/setup-runtime.sh"
@@ -21,7 +27,10 @@ telemetry_tool() {
     candidate="$(MISE_AUTO_INSTALL=0 MISE_OFFLINE=1 standalone_probe "$repo_root/bin/repo-mise" --global which "$name" 2>/dev/null)" || candidate=""
   fi
   case "$candidate" in */shims/*) candidate="" ;; esac
-  if [[ -n "$candidate" && -x "$candidate" ]]; then printf '%s\n' "$candidate"; return 0; fi
+  if [[ -n "$candidate" && -x "$candidate" ]]; then
+    printf '%s\n' "$candidate"
+    return 0
+  fi
   candidate="$(command -v "$name" 2>/dev/null)" || return 1
   case "$candidate" in /*/shims/*) return 1 ;; esac
   [[ "$candidate" == /* && -x "$candidate" ]] || return 1
@@ -34,7 +43,9 @@ telemetry_command() {
   shift
   executable="$(telemetry_tool "$name")" || return 0
   if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
-    printf 'Would configure telemetry: %s' "$name"; printf ' %q' "$@"; printf '\n'
+    printf 'Would configure telemetry: %s' "$name"
+    printf ' %q' "$@"
+    printf '\n'
     return 0
   fi
   standalone_probe "$executable" "$@" >/dev/null 2>&1 || result=$?
@@ -93,7 +104,7 @@ telemetry_gui_environment() {
   while [[ ! -d "$folder" ]]; do folder="$(dirname "$folder")"; done
   folder="$(cd "$folder" && pwd -P)"
   if [[ "$folder/" != "$(cd "$HOME" && pwd -P)/"* || "$folder/" == "$(cd "$repo_root" && pwd -P)/"* ||
-    -L "$new_plist" || -L "$old_plist" ]]; then
+  -L "$new_plist" || -L "$old_plist" ]]; then
     printf 'Could not install the telemetry login job: ~/Library/LaunchAgents must be a folder in HOME, and its job files must not be links.\n' >&2
     status=1
     return
@@ -104,19 +115,33 @@ telemetry_gui_environment() {
   fi
   # Apply only the files of the login script, with the usual backups.
   "$repo_root/bin/link-dotfiles" "$HOME/.config/zsh/telemetry.sh" "$HOME/bin/dotfiles-telemetry-env" ||
-    { status=1; return; }
+    {
+      status=1
+      return
+    }
   # Setup copied its own job definition before mise managed the job.
   if [[ -f "$old_plist" ]]; then
-    launchctl_path="$(telemetry_tool launchctl)" || { status=1; return; }
+    launchctl_path="$(telemetry_tool launchctl)" || {
+      status=1
+      return
+    }
     telemetry_backup "$old_plist" mv ||
-      { printf 'Could not back up the old login job %s.\n' "$old_job" >&2; status=1; return; }
+      {
+        printf 'Could not back up the old login job %s.\n' "$old_job" >&2
+        status=1
+        return
+      }
     standalone_probe "$launchctl_path" bootout "gui/$UID/$old_job" >/dev/null 2>&1 || true
     printf 'Unloaded the old login job %s. Its file is in %s\n' "$old_job" "$telemetry_backup_dir"
   fi
   # mise replaces a job file that differs from its config. Keep a copy first.
   if [[ -f "$new_plist" ]] && ! "$repo_root/bin/repo-mise" bootstrap macos launchd-agents status --missing >/dev/null 2>&1; then
     telemetry_backup "$new_plist" cp ||
-      { printf 'Could not back up the current login job file.\n' >&2; status=1; return; }
+      {
+        printf 'Could not back up the current login job file.\n' >&2
+        status=1
+        return
+      }
     printf 'Copied the current login job file to %s\n' "$telemetry_backup_dir"
   fi
   # The job runs at the next login. The script runs now for this session.

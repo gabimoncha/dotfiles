@@ -4,10 +4,20 @@
 set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 usage() { printf 'Usage: harness update [--dry-run] [--installed-only]\n'; }
-[[ "${1:-}" != --help && "${1:-}" != -h ]] || { usage; exit 0; }
-[[ "${1:-}" == update ]] || { usage >&2; exit 2; }
+[[ "${1:-}" != --help && "${1:-}" != -h ]] || {
+  usage
+  exit 0
+}
+[[ "${1:-}" == update ]] || {
+  usage >&2
+  exit 2
+}
 shift
 for argument in "$@"; do
-  case "$argument" in --dry-run|--installed-only) ;; *) usage >&2; exit 2 ;; esac
+  case "$argument" in --dry-run | --installed-only) ;; *)
+    usage >&2
+    exit 2
+    ;;
+  esac
 done
 exec "$repo_root/bin/install-standalone" update "$@"

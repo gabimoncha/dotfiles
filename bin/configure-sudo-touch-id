@@ -114,18 +114,18 @@ write_new_content() {
   case "$mode" in
     enable)
       if [[ -f "$sudo_local_file" ]]; then
-        render_enabled_file "$sudo_local_file" > "$target"
+        render_enabled_file "$sudo_local_file" >"$target"
       elif [[ -f "$sudo_local_template" ]]; then
-        render_enabled_file "$sudo_local_template" > "$target"
+        render_enabled_file "$sudo_local_template" >"$target"
       else
-        write_default_enabled_file > "$target"
+        write_default_enabled_file >"$target"
       fi
       ;;
     disable)
       if [[ -f "$sudo_local_file" ]]; then
-        render_disabled_file > "$target"
+        render_disabled_file >"$target"
       else
-        : > "$target"
+        : >"$target"
       fi
       ;;
     *)
