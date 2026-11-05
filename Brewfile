@@ -55,6 +55,7 @@ mas "Transporter", id: 1450874784
 
 cask "nikitabobko/tap/aerospace"
 cask "blackhole-2ch"
+cask "chatgpt"
 cask "cursor"
 cask "discord"
 cask "expo-orbit"
