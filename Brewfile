@@ -47,6 +47,8 @@ brew "zlib"
 # Mac App Store
 mas "DevCleaner for Xcode", id: 1388020431
 mas "Endel", id: 1346247457
+mas "Numbers", id: 361304891
+mas "Pages", id: 361309726
 mas "TestFlight", id: 899247664
 mas "The Unarchiver", id: 425424353
 mas "WhatsApp", id: 310633997
