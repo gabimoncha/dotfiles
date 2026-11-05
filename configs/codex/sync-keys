@@ -63,6 +63,7 @@ public .desktop.keepRemoteControlAwakeWhilePluggedIn
 public .desktop.localeOverride
 public .desktop.preventSleepWhileRunning
 public .desktop.composerPlainTextMode
+public .desktop."sidebar-show-projects-in-recents"
 # Local paths, per-host values, and app state stay on each machine.
 private .desktop."open-in-target-preferences"
 private .desktop.appearanceLightChromeTheme.fonts

@@ -76,6 +76,7 @@ keepRemoteControlAwakeWhilePluggedIn = true
 localeOverride = "en-US"
 preventSleepWhileRunning = true
 composerPlainTextMode = true
+sidebar-show-projects-in-recents = true
 
 [desktop.appearanceLightChromeTheme]
 accent = "#53944c"
