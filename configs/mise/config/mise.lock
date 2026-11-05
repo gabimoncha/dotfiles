@@ -1567,7 +1567,10 @@ specifiers = ["latest"]
 [[tools.python]]
 version = "3.15.2"
 backend = "core:python"
-specifiers = ["3.15", "3.15.2"]
+specifiers = [
+    "3.15",
+    "3.15.2",
+]
 
 [tools.python."platforms.linux-x64"]
 checksum = "sha256:7b03163a980c607ba8194709d4a4086735a7a9c488cc475b098157306927b36b"
