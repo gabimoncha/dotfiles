@@ -64,7 +64,7 @@ those files can hold tokens.
 
 These mise tasks run the same scripts from any folder, for the checkout in
 `$DOTFILES_ROOT` or `~/development/dotfiles`: `dot:status`, `dot:diff`,
-`dot:apply`, `dot:save`, `setup`, `update`, `packages`, `backup`, `restore`,
+`dot:apply`, `dot:save`, `dot:drift`, `setup`, `update`, `packages`, `backup`, `restore`,
 and `doctor`. For example, run `mise run dot:apply -- --dry-run`.
 
 ### Package manager defaults
