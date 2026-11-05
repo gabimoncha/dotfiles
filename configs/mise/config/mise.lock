@@ -1503,7 +1503,7 @@ provenance = "github-attestations"
 version = "3.2.4"
 backend = "pipx:httpie"
 specifiers = ["latest"]
-uv = { path = ".mise/locks/pipx-httpie/3.2.4~2f338564", digest = "sha256:3bfebc47757187e82cf0431dee430eec2e59ecca30c433a312bb7b1e5b721bcf" }
+uv = { path = "locks/pipx-httpie/3.2.4~2f338564", digest = "sha256:3bfebc47757187e82cf0431dee430eec2e59ecca30c433a312bb7b1e5b721bcf" }
 
 [tools."pipx:httpie".options]
 with = '["certifi==2026.10.19"]'
@@ -1512,13 +1512,13 @@ with = '["certifi==2026.10.19"]'
 version = "0.11.2"
 backend = "pipx:mackup"
 specifiers = ["latest"]
-uv = { path = ".mise/locks/pipx-mackup/0.11.2", digest = "sha256:c85c4064034e698e0023e939e989fd477aaa3c77f4b5435b5843ca6efa932f15" }
+uv = { path = "locks/pipx-mackup/0.11.2", digest = "sha256:c85c4064034e698e0023e939e989fd477aaa3c77f4b5435b5843ca6efa932f15" }
 
 [[tools."pipx:tldr"]]
 version = "3.4.4"
 backend = "pipx:tldr"
 specifiers = ["latest"]
-uv = { path = ".mise/locks/pipx-tldr/3.4.4", digest = "sha256:c06b755b1f873d2ce1b5aa6305ca0e0f064e09846ce43d9739bdd738afd70ada" }
+uv = { path = "locks/pipx-tldr/3.4.4", digest = "sha256:c06b755b1f873d2ce1b5aa6305ca0e0f064e09846ce43d9739bdd738afd70ada" }
 
 [[tools.pnpm]]
 version = "12.16.1"

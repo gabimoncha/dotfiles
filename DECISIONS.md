@@ -203,7 +203,7 @@ Mac preferences are in `mise.macos.toml`; `macos/defaults.sh` keeps the
 input-source changes, Dock pruning, pmset, and service reloads.
 
 `configs/mise/config/mise.lock` and its sidecar folder
-`configs/mise/config/.mise/locks/` preserve the global dependency graphs for
+`configs/mise/config/locks/` preserve the global dependency graphs for
 macos-arm64 and linux-x64. mise finds the sidecars through the
 `~/.config/mise` link. Keep the installed mise at or
 above the pin before linking or updating the lockfile. Native package support

@@ -162,7 +162,7 @@ git pull --ff-only
 ./bin/link-dotfiles
 ```
 
-The repository's mise commands need mise 2026.10.22. If `bin/repo-mise`
+The repository's mise commands need mise 2026.11.1. If `bin/repo-mise`
 reports an older mise, run `./bin/install-standalone mise` first. After a pull
 that moves files, `bin/link-dotfiles` points the old links at the new sources.
 It also moves local files from the old layout, such as
@@ -438,7 +438,7 @@ Scrawl come from their vendor taps, `anomalyco/tap` and `kitlangton/tap`.
 folder. `mise install` installs the versions in its `mise.lock`, and `mise up`
 writes newer versions into that tracked file. To add a tool, add it to
 `configs/mise/config/config.toml`, then run `mise lock --global`, then commit
-the config, the lockfile, and the sidecar folder `configs/mise/config/.mise/locks/`.
+the config, the lockfile, and the sidecar folder `configs/mise/config/locks/`.
 The sidecars hold the locked dependencies of the pipx tools. An older
 lockfile moves the tools back to its versions.
 

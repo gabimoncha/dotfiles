@@ -1,6 +1,6 @@
 # An older mise cannot parse self_update.minimum_release_age. With this floor it
 # stops with an upgrade message. Run ./bin/install-standalone mise to install the pin.
-min_version = "2026.10.22"
+min_version = "2026.11.1"
 
 [tools]
 # Tools for one profile only are in config.<profile>.toml in this folder.

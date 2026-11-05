@@ -7,8 +7,8 @@
 # release's install.sh digest in GitHub's release metadata. Raise the pin only
 # when this repository needs a newer release. mise updates itself without the
 # four-day delay, so the installed mise is often newer than the pin.
-pinned_mise_version=2026.10.22
-pinned_installer_sha256=0c1d8462b47aa4c5f81f4c6c153ea6d66c1bad03b38c08d205f90f1fa2ac7b24
+pinned_mise_version=2026.11.1
+pinned_installer_sha256=55ac56863078539ec6bf5146e269a927481335edd3478477be7dfc84a22c2be7
 
 # An older mise can refuse the current global config, so read only its version.
 mise_installed_version() {
