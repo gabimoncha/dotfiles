@@ -69,7 +69,7 @@ and `doctor`. For example, run `mise run dot:apply -- --dry-run`.
 
 ### Package manager defaults
 
-Bun and pnpm require a four-day release age, except for `oh-my-t3code`,
+Bun and pnpm require a four-day release age, except for `oh-my-t3`,
 `agent-browser`, `agent-desktop`, `agent-device`, and `t3`. Bun uses seconds
 (`345600`), and pnpm uses minutes (`5760`). Project settings can override these
 global defaults.
