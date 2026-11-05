@@ -330,8 +330,7 @@ fails does. A failed, blocked, or deferred step makes setup return nonzero. A
 step that you turn off, with `--skip-mobile-dev` or a `DOTFILES_SKIP_*`
 setting, does not.
 `./bin/app-state-doctor` checks the managed app links, tmux plugins, Raycast,
-Spotlight hotkeys, Touch ID, and disabled background jobs. It is not a complete
-installation test.
+Spotlight hotkeys, and Touch ID. It is not a complete installation test.
 
 ## Recovery
 
@@ -385,7 +384,6 @@ Authentication output is omitted. Review logs before you share them.
 | `./bin/finder-sidebar-favorites` | Retry the `development` and `screenshots` favorites. |
 | `./bin/setup-tokenburnmarket [--dry-run]` | Sign in to tokenburnmarket and install its sync daemon. A Linux host without systemd runs the daemon under `bin/tokenburnmarket-supervise`. A connected host with a current daemon is not changed. `DOTFILES_SKIP_TOKENBURNMARKET=1` skips the setup step. |
 | `./bin/configure-sudo-touch-id --check` | Inspect Touch ID for sudo. `--enable` and `--disable` change it. |
-| `./bin/configure-background-jobs [--dry-run]` | Disable the jobs in `macos/disabled-jobs.txt`. `--check` reports drift, and `--revert` enables them. |
 
 Tool checks and version probes stop after 10 seconds. Set
 `DOTFILES_TOOL_CHECK_TIMEOUT_SECONDS` to change that. The macOS update probe
