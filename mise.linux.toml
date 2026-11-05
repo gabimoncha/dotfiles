@@ -5,8 +5,10 @@
 "apt:zsh" = "latest"
 # C compiler and make: Rust crates, Neovim parsers, and node-gyp builds.
 "apt:build-essential" = "latest"
-# Neovim plugin installers unpack zip archives.
+# Neovim plugin installers and bin/install-mobile-dev unpack zip archives.
 "apt:unzip" = "latest"
+# The JDK for sdkmanager and Android builds. It links /usr/lib/jvm/default-java.
+"apt:default-jdk-headless" = "latest"
 
 [bootstrap.user]
 # A full path: a bare name would take the first zsh on PATH.

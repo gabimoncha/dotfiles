@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Install the Xcode, iOS, and Android toolchain, including the Android SDK
-# packages in apps/android-sdk.txt. Each step skips finished work,
-# so a rerun continues after a failure. It runs without prompts while a sudo
-# timestamp is valid (see bin/sudo-grant) and the App Store is signed in.
+# packages in apps/android-sdk.txt. Linux gets only the Android SDK. Each step
+# skips finished work, so a rerun continues after a failure. On macOS it runs
+# without prompts while a sudo timestamp is valid (see bin/sudo-grant) and the
+# App Store is signed in.
 
 set -euo pipefail
 
@@ -10,6 +11,8 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=bin/lib/mobile-state.sh
 . "${repo_root}/bin/lib/mobile-state.sh"
 . "${repo_root}/bin/lib/setup-runtime.sh"
+# For standalone_sha256, which works with the BSD and GNU tools.
+. "${repo_root}/bin/lib/standalone.sh"
 dry_run=0
 status=0
 
@@ -110,9 +113,11 @@ install_android_studio() {
 # only bootstrap: sdkmanager then installs its own copy into ANDROID_HOME, so
 # the SDK has one location. Homebrew's cask would keep a second SDK root.
 android_bootstrap_zip() {
-  case "$(uname -m)" in
-    arm64) printf 'commandlinetools-mac_arm64-16111833_latest.zip 58da8f215781cc0208743e88b65ae259780c55e7eb40e50373d377cf369232d6\n' ;;
-    x86_64) printf 'commandlinetools-mac_x86_64-16111833_latest.zip 7e601c04e7173754b3d051a87bb4c3a8243c65a9d7bfa9356ed6499fb8953fa3\n' ;;
+  case "$(uname -s)/$(uname -m)" in
+    Darwin/arm64) printf 'commandlinetools-mac_arm64-16111833_latest.zip 58da8f215781cc0208743e88b65ae259780c55e7eb40e50373d377cf369232d6\n' ;;
+    Darwin/x86_64) printf 'commandlinetools-mac_x86_64-16111833_latest.zip 7e601c04e7173754b3d051a87bb4c3a8243c65a9d7bfa9356ed6499fb8953fa3\n' ;;
+    # Google publishes Linux SDK packages, such as platform-tools, only for x86_64.
+    Linux/x86_64) printf 'commandlinetools-linux-16111833_latest.zip 0877a1d048fe4a24efe2eff536ca4223f7adeb58648bb81909d33c446918cfa8\n' ;;
     *) return 1 ;;
   esac
 }
@@ -124,10 +129,13 @@ android_sdkmanager() {
     printf '%s\n' "$mobile_sdkmanager"
     return 0
   fi
-  read -r zip sha256 < <(android_bootstrap_zip) || return 1
+  if ! read -r zip sha256 < <(android_bootstrap_zip); then
+    warn "Google has no Android SDK for $(uname -s) on $(uname -m)."
+    return 1
+  fi
   log "Downloading the Android Command Line Tools to bootstrap sdkmanager" >&2
   curl -fsSL --retry 3 -o "${android_bootstrap_dir}/${zip}" "https://dl.google.com/android/repository/${zip}" || return 1
-  actual="$(shasum -a 256 "${android_bootstrap_dir}/${zip}" | awk '{ print $1 }')"
+  actual="$(standalone_sha256 "${android_bootstrap_dir}/${zip}")" || return 1
   if [[ "$actual" != "$sha256" ]]; then
     warn "${zip} has SHA-256 ${actual}, not ${sha256}."
     return 1
@@ -147,7 +155,11 @@ install_android_sdk() {
     return 0
   fi
   if [[ ! -x "${mobile_java_home}/bin/java" ]]; then
-    warn "sdkmanager needs Java at ${mobile_java_home}. Install the zulu@17 cask from the Brewfile."
+    if [[ "$(uname -s)" == Darwin ]]; then
+      warn "sdkmanager needs Java at ${mobile_java_home}. Install the zulu@17 cask from the Brewfile."
+    else
+      warn "sdkmanager needs Java at ${mobile_java_home}. Run ./bin/setup; mise.linux.toml installs default-jdk-headless."
+    fi
     return 1
   fi
   if ! mobile_android_metrics_off && [[ "$dry_run" -eq 0 ]]; then
@@ -204,7 +216,9 @@ if [[ "${EUID}" -eq 0 ]]; then
   warn "Run ./bin/install-mobile-dev as your normal user, not with sudo."
   exit 1
 fi
-if ! command -v brew >/dev/null 2>&1; then
+macos=0
+[[ "$(uname -s)" != Darwin ]] || macos=1
+if [[ "$macos" -eq 1 ]] && ! command -v brew >/dev/null 2>&1; then
   warn "brew is not on PATH. Run ./bin/setup first."
   exit 1
 fi
@@ -212,19 +226,21 @@ fi
 runtime_init install-mobile-dev
 # The Xcode download can outlast the 30-minute sudo timestamp. Keep it valid
 # while this script runs, also in an agent shell without setup's keepalive.
-if [[ "$dry_run" -eq 0 ]] && sudo -n true 2>/dev/null; then
+if [[ "$macos" -eq 1 && "$dry_run" -eq 0 ]] && sudo -n true 2>/dev/null; then
   owner=$$
   (while kill -0 "$owner" 2>/dev/null && sudo -n true; do sleep 60; done) >/dev/null 2>&1 &
 fi
 
-# Later Xcode steps need the earlier ones. The Android steps do not need Xcode.
-if install_xcode && configure_xcode; then
-  install_ios_platform || status=1
-  install_formulae || status=1
-else
-  status=1
+if [[ "$macos" -eq 1 ]]; then
+  # Later Xcode steps need the earlier ones. The Android steps do not need Xcode.
+  if install_xcode && configure_xcode; then
+    install_ios_platform || status=1
+    install_formulae || status=1
+  else
+    status=1
+  fi
+  install_android_studio || status=1
 fi
-install_android_studio || status=1
 install_android_sdk || status=1
 
 if [[ "$dry_run" -eq 1 ]]; then

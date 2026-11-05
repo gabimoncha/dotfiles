@@ -28,12 +28,16 @@ if [[ "$OSTYPE" == darwin* ]]; then
 else
   # Linux images put tools in /usr/local/bin (the Node image has node and npm),
   # so the mise versions go ahead of it.
+  android_sdk_home="${ANDROID_HOME:-$HOME/Android/Sdk}"
   path=(
     "$HOME/bin"
     "$HOME/.local/bin"
     "$HOME/.local/share/mise/shims"
     "$HOME/.opencode/bin"
     "$HOME/.pi/agent/bin"
+    "$android_sdk_home/emulator"
+    "$android_sdk_home/platform-tools"
+    "$android_sdk_home/cmdline-tools/latest/bin"
     "/usr/local/bin"
     "/usr/local/sbin"
     "/usr/bin"
@@ -42,6 +46,7 @@ else
     "/sbin"
     "$path[@]"
   )
+  unset android_sdk_home
 fi
 
 export PATH="$HOME/.bun/bin:$PATH"

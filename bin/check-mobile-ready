@@ -17,7 +17,13 @@ fail() {
   failures=$((failures + 1))
 }
 
-if xcode_app="$(mobile_selected_xcode_app)"; then
+macos=0
+[[ "$(uname -s)" != Darwin ]] || macos=1
+
+# Linux has no Xcode, Android Studio, or Homebrew; it checks only the Android SDK.
+if [[ "$macos" -eq 0 ]]; then
+  :
+elif xcode_app="$(mobile_selected_xcode_app)"; then
   pass "full Xcode is selected: ${xcode_app}"
   if mobile_xcode_is_public "$xcode_app"; then
     pass "selected Xcode is a public build: $(mobile_xcode_build "$xcode_app")"
@@ -38,7 +44,9 @@ else
   fail "full Xcode is not selected (xcode-select -p: $(xcode-select -p 2>/dev/null || printf none))"
 fi
 
-if mobile_android_studio_ready; then
+if [[ "$macos" -eq 0 ]]; then
+  :
+elif mobile_android_studio_ready; then
   pass "Android Studio is installed"
 else
   fail "Android Studio is not installed"
@@ -78,7 +86,9 @@ if [[ -n "$adb_on_path" && "$adb_on_path" != "$mobile_adb" ]]; then
   fail "adb on PATH is ${adb_on_path}, not ${mobile_adb}"
 fi
 
-if command -v brew >/dev/null 2>&1; then
+if [[ "$macos" -eq 0 ]]; then
+  :
+elif command -v brew >/dev/null 2>&1; then
   while IFS= read -r formula; do
     if mobile_formula_installed "$formula"; then
       pass "formula ${formula} is installed"

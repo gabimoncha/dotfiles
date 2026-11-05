@@ -272,6 +272,13 @@ its read-only check. `apps/mobile.Brewfile` lists the formulae that need full
 Xcode. Mobile setup is on by default. The skip flag does not remove mobile
 tools from the common mise inventory.
 
+On Linux, the mobile step installs only the Android SDK, so an agent on the
+NAS can build Android apps and drive a USB phone. Google publishes the Linux
+SDK packages only for x86_64. `ANDROID_HOME` is `~/Android/Sdk`, where the T3
+device hub and agent-device also look for `adb`. The JDK is Debian's
+`default-jdk-headless`, OpenJDK 21 on Debian 13, because Debian 13 has no
+OpenJDK 17. Android Gradle plugin 9 needs JDK 17 or later.
+
 The Android SDK has one location, `ANDROID_HOME`. The mobile step downloads
 Google's Command Line Tools at a pinned SHA-256 into a temporary folder. That
 copy of `sdkmanager` accepts the licenses and installs the packages in

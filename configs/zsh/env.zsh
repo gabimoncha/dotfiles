@@ -9,8 +9,10 @@ if [[ "$OSTYPE" == darwin* ]]; then
   export JAVA_HOME="${JAVA_HOME:-/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home}"
   export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
 else
+  export JAVA_HOME="${JAVA_HOME:-/usr/lib/jvm/default-java}"
+  export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
   # SSH commands start a non-login shell, which never reads path.zsh.
   typeset -U path
-  path=("$HOME/bin" "$HOME/.local/bin" "$MISE_DATA_DIR/shims" $path)
+  path=("$HOME/bin" "$HOME/.local/bin" "$MISE_DATA_DIR/shims" "$ANDROID_HOME/platform-tools" $path)
 fi
 [ ! -r "$HOME/.config/zsh/telemetry.sh" ] || . "$HOME/.config/zsh/telemetry.sh"

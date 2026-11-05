@@ -243,7 +243,7 @@ and the tools without an opt-out.
 | Option | Effect |
 | --- | --- |
 | `--dry-run` | Run the preflight check and write private logs. List the other steps without running them. Add `--continue` to preview that phase. |
-| `--skip-mobile-dev` | Skip Xcode, iOS support, Android Studio, the Android SDK, and `apps/mobile.Brewfile`. Mobile tools in the shared mise list still install. |
+| `--skip-mobile-dev` | Skip Xcode, iOS support, Android Studio, the Android SDK, and `apps/mobile.Brewfile`. On Linux, skip the Android SDK. Mobile tools in the shared mise list still install. |
 
 [bin/setup](bin/setup) lists the steps in order, and they run one at a time.
 The foundation steps are required: preflight, the Command Line Tools, `sudo`
@@ -278,6 +278,10 @@ Linux runs every step in one run. It has no App Store or restart step.
    and makes zsh the login shell.
 3. Setup installs the runtime tools, the agent CLIs, and T3
    (`apps/standalone.tsv`), then links the shared files.
+4. The mobile step installs the Android SDK packages in
+   [android-sdk.txt](apps/android-sdk.txt) into `~/Android/Sdk` on x86_64. The
+   JDK is Debian's `default-jdk-headless` from `mise.linux.toml`, OpenJDK 21 on
+   Debian 13. The Mac uses Zulu 17. `--skip-mobile-dev` skips this step.
 
 Tools marked `os = "macos"` in `configs/mise/config/config.toml` stay on the
 Mac. Tools for one profile are in `configs/mise/config/config.<profile>.toml`.
@@ -371,8 +375,8 @@ Authentication output is omitted. Review logs before you share them.
 | `./bin/install-standalone status` | Report the vendor-installed tools in `apps/standalone.tsv`. |
 | `./bin/install-standalone [NAME...]` | Install or repair those tools. `--dry-run` previews. |
 | `./bin/install-steam [--dry-run]` | Install Valve's verified ARM64 Steam bootstrapper. |
-| `./bin/check-mobile-ready` | Check Xcode, iOS, Android Studio, the Android SDK and `adb`, and `apps/mobile.Brewfile`. |
-| `./bin/install-mobile-dev [--dry-run]` | Install or repair Xcode, iOS support, Android Studio, the Android SDK, and the mobile formulae. |
+| `./bin/check-mobile-ready` | Check Xcode, iOS, Android Studio, the Android SDK and `adb`, and `apps/mobile.Brewfile`. On Linux, check only the Android SDK, the JDK, and `adb`. |
+| `./bin/install-mobile-dev [--dry-run]` | Install or repair Xcode, iOS support, Android Studio, the Android SDK, and the mobile formulae. On Linux, install only the Android SDK. |
 | `./bin/sudo-grant --check` | Report a leftover sudo grant. `--enable` and `--disable` change it. |
 | `./bin/setup-tmux` | Install missing TPM plugins and reload a running server. |
 | `./bin/configure-app-settings` | Retry the login-item setup. |

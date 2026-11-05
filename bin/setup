@@ -218,6 +218,12 @@ setup_linux() {
   step --optional standalone_agents capture setup_standalone_agents
   step --optional final_links capture setup_final_links
   setup_tokenburnmarket_step
+  # Linux gets only the Android SDK. The download runs after the other steps.
+  if [[ "${DOTFILES_SKIP_MOBILE_DEV:-0}" == 1 ]]; then
+    skip_step mobile_setup --skip-mobile-dev
+  else
+    step --optional mobile_setup capture setup_mobile
+  fi
   step --optional --always telemetry capture setup_telemetry
 }
 
