@@ -45,6 +45,9 @@ min_version = { soft = "2026.11.1" }
 # These apps rewrite their settings. mise sets only the keys in the sources.
 "~/.claude/settings.json/dotfiles" = { source = "configs/claude/settings.json", merge = true }
 "~/.codex/config.toml/dotfiles" = { source = "configs/codex/config.toml", merge = true }
+# A "/defaults" entry sets a key only when the file has none, so a profile can
+# override it. bin/save-settings never saves these sources.
+"~/.codex/config.toml/defaults" = { source = "configs/codex/defaults.toml", merge = "missing" }
 "~/.t3/userdata/settings.json/dotfiles" = { source = "configs/t3/settings.json", merge = true }
 "~/.config/opencode/opencode.json/dotfiles" = { source = "configs/opencode/opencode.json", merge = true }
 

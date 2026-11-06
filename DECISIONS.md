@@ -190,11 +190,13 @@ become a section or holds a local path, a credential, or an email address. It
 also stops until this machine has merged the current source, so an older live
 value cannot replace a newer save from another machine. A merge never removes
 a key, so a key deleted in an app stays on the
-other machines. The shared Codex sandbox default is `workspace-write`. The
-container overrides it with `danger-full-access` in a second merge because
-its kernel cannot run the sandbox. A settings save on the container preserves
-the shared source's sandbox value, so the host override cannot reach other
-machines. The Codex target remains
+other machines. The Codex sandbox is not a shared setting. mise 2026.11 refuses
+two merges that set one key to different values, so the shared default
+`workspace-write` is in `configs/codex/defaults.toml` with `merge = "missing"`.
+It sets the key only when the file has none, and it never conflicts. The
+container sets `danger-full-access` in its own merge, because its kernel cannot
+run the sandbox. `bin/save-settings` never saves a `/defaults` source, and the
+sandbox key is private, so one host's value cannot reach the others. The Codex target remains
 `~/.codex/config.toml`, independent of `CODEX_HOME`.
 
 The shell checkout declarations are in `mise.toml`. The existing missing-path

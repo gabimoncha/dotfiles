@@ -116,11 +116,6 @@ end
 saved = read_map(source_json, source_file)
 live = read_map(live_file, 'the live settings file')
 
-# The container cannot run the sandbox. Its override must not replace the shared default.
-if source_file == 'configs/codex/config.toml' && ENV['DOTFILES_PROFILE'] == 'container' && saved.key?('sandbox_mode')
-  live['sandbox_mode'] = saved['sandbox_mode']
-end
-
 problems = []
 leaves(saved) do |keys|
   next if keys.empty?

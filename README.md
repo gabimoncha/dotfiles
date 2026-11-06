@@ -292,8 +292,9 @@ Codex reads one global instructions file. On the container, mise renders
 `configs/agents/container.md`. Claude reads the host rules from
 `~/.claude/rules/host.md`. The container also turns off the Codex sandbox in
 `configs/codex/container.toml`, because its kernel cannot start it.
-The shared Codex default is `workspace-write`. A settings save on the container
-keeps that shared default instead of saving its `danger-full-access` override.
+On other hosts, `configs/codex/defaults.toml` sets `workspace-write` only when
+`~/.codex/config.toml` has no sandbox value. `./bin/save-settings` does not save
+the sandbox value.
 
 `DOTFILES_SKIP_GITHUB_AUTH=1 ./bin/setup` defers the GitHub login. mise then
 installs tools without a GitHub token. Log in later with `./bin/auth-setup`.
