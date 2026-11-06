@@ -73,6 +73,13 @@ services:
         su - box -c 'sudo -n id -u' | grep -qx 0
         printf '%s\n' 'box passwordless sudo verified'
         test -f /var/lib/nasbox-ssh/ssh_host_ed25519_key || ssh-keygen -q -t ed25519 -N '' -f /var/lib/nasbox-ssh/ssh_host_ed25519_key
+        # The container has no udev, so each phone gets a USB node that only
+        # root can open. Give the nodes to box, so an adb server that box
+        # starts sees the phones. The loop also covers phones connected later.
+        while :; do
+          find /dev/bus/usb -type c \( ! -group box -o ! -perm -0060 \) -exec chgrp box {} + -exec chmod 0660 {} + 2>/dev/null || true
+          sleep 2
+        done &
         if test -x /home/box/development/dotfiles/bin/container-system-packages; then
           su - box -c /home/box/development/dotfiles/bin/container-system-packages &
         fi
