@@ -1,0 +1,3 @@
+# mise sets these keys only when ~/.codex/config.toml has no value for them
+# (merge = "missing"). Codex and the host profile own the value after that.
+sandbox_mode = "workspace-write"

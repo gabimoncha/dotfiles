@@ -11,7 +11,6 @@ public .model_reasoning_effort
 public .service_tier
 public .approval_policy
 public .approvals_reviewer
-public .sandbox_mode
 public .features.memories
 public .features.chronicle
 public .features.plugins
@@ -74,6 +73,8 @@ private .mcp_servers
 private .notify
 private .marketplaces
 private .tui
+# configs/codex/defaults.toml sets the sandbox only once. Each host owns it.
+private .sandbox_mode
 public .model_providers.cliproxyapi.name
 public .model_providers.cliproxyapi.wire_api
 public .model_providers.cliproxyapi.env_key

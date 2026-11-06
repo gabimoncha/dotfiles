@@ -62,6 +62,9 @@ rows="$(printf '%s' "$entries" | /usr/bin/ruby -rjson -e '
   shared = File.realpath(ARGV.fetch(0))
   expand = ->(path) { path.start_with?("~/") ? File.join(home, path[2..-1]) : path }
   JSON.parse($stdin.read).fetch("edits").each do |row|
+    # A "/defaults" entry uses merge = "missing": the app owns the value after
+    # mise sets it once, so its source is never saved.
+    next if row.fetch("edit") == "merge:defaults"
     origin = row.fetch("origin")
     config = expand.(origin.fetch("config"))
     next unless File.exist?(config) && File.realpath(config) == shared

@@ -6,7 +6,6 @@ model_reasoning_effort = "medium"
 service_tier = "priority"
 approval_policy = "on-request"
 approvals_reviewer = "user"
-sandbox_mode = "workspace-write"
 
 [features]
 memories = false
