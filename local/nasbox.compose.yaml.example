@@ -73,11 +73,20 @@ services:
         su - box -c 'sudo -n id -u' | grep -qx 0
         printf '%s\n' 'box passwordless sudo verified'
         test -f /var/lib/nasbox-ssh/ssh_host_ed25519_key || ssh-keygen -q -t ed25519 -N '' -f /var/lib/nasbox-ssh/ssh_host_ed25519_key
-        # The container has no udev, so each phone gets a USB node that only
-        # root can open. Give the nodes to box, so an adb server that box
-        # starts sees the phones. The loop also covers phones connected later.
+        # The container has no udev, so each USB node opens only for root.
+        # Give box the nodes of devices with an adb interface (class ff,
+        # subclass 42, protocol 01), so an adb server that box starts sees the
+        # phones. Other USB devices, such as the NAS's own, stay root-only.
+        # The loop also covers phones connected later. $$ is a literal $ in
+        # Compose.
         while :; do
-          find /dev/bus/usb -type c \( ! -group box -o ! -perm -0060 \) -exec chgrp box {} + -exec chmod 0660 {} + 2>/dev/null || true
+          for interface in /sys/bus/usb/devices/*:*; do
+            test "$$(cat "$$interface/bInterfaceClass" "$$interface/bInterfaceSubClass" "$$interface/bInterfaceProtocol" 2>/dev/null | tr -d '\n')" = ff4201 || continue
+            device="$${interface%:*}"
+            node="$$(printf '/dev/bus/usb/%03d/%03d' "$$(cat "$$device/busnum")" "$$(cat "$$device/devnum")")" || continue
+            test "$$(stat -c %G:%a "$$node" 2>/dev/null)" != box:660 || continue
+            chgrp box "$$node" && chmod 0660 "$$node" || echo "nasbox: cannot give $$node to box" >&2
+          done
           sleep 2
         done &
         if test -x /home/box/development/dotfiles/bin/container-system-packages; then
