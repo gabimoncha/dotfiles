@@ -288,7 +288,13 @@ On Macs, use the private Tailscale HTTPS URL. In `nasbox`, use
 | Client      | Private settings on each machine                                                                                                                                                                                                 |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Codex in T3 | Set `model_providers.cliproxyapi.base_url` to the URL plus `/v1` in `~/.codex/config.toml`. Supply the proxy client key as `CLIPROXYAPI_API_KEY` in the T3 process environment. The shared T3 launch arguments select the proxy. |
-| Claude Code | In `~/.claude/settings.json`, set `env.ANTHROPIC_BASE_URL` to the URL, `env.ANTHROPIC_AUTH_TOKEN` to the client key, and `env.CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY` to `"1"`.                                              |
+| Claude Code | In `~/.claude/settings.json`, set `env.ANTHROPIC_BASE_URL` to the URL and `env.ANTHROPIC_AUTH_TOKEN` to the client key. Do not set `env.CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY`.                                             |
+
+Claude Code shows only its own models. With gateway model discovery, Claude
+Code adds every model of the proxy to its model list, and T3 shows each one
+in the Claude picker. The proxy gives each non-Claude model to Claude clients
+under a changed `claude-…` ID. A provider with a model prefix lists each model
+two times: with the prefix and without it.
 
 The tracked Codex provider uses native `env_key` authentication. Remove an old
 `model_providers.cliproxyapi.auth` block before using it. For GUI and T3 starts,
