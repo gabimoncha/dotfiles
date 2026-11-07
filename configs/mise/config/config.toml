@@ -138,6 +138,7 @@ minimum_release_age_excludes = [
   "npm:agent-browser",
   "npm:agent-desktop",
   "npm:agent-device",
+  "npm:simlock",
   "npm:@agentclientprotocol/codex-acp",
   "npm:@agentclientprotocol/claude-agent-acp",
   "npm:tokenburnmarket",

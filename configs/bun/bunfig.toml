@@ -15,6 +15,7 @@ minimumReleaseAgeExcludes = [
   "agent-browser",
   "agent-desktop",
   "agent-device",
+  "simlock",
   "@agentclientprotocol/codex-acp",
   "@agentclientprotocol/claude-agent-acp",
   "tokenburnmarket",
