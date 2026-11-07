@@ -1966,24 +1966,6 @@
       "setup_actions": {}
     },
     {
-      "id": "proctools",
-      "tool": "proctools",
-      "source": "brew",
-      "kind": "cli",
-      "research": {
-        "tool": "proctools",
-        "status": "none_found",
-        "mechanism": "No documented product analytics or crash-upload opt-out found.",
-        "sources": [
-          "https://proctools.sourceforge.net/pkill.html",
-          "https://proctools.sourceforge.net/pgrep.html"
-        ],
-        "notes": "Local process inspection/signalling utilities for Darwin/OpenBSD. Output is local process metadata. Package-manager/download traffic is separate. Bounded official search/manual review; no processes inspected or signalled.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {}
-    },
-    {
       "id": "smartmontools",
       "tool": "smartmontools",
       "source": "brew",
