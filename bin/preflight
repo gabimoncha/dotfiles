@@ -99,8 +99,11 @@ check_apple_release_policy() {
   macos_build="$(sw_vers -buildVersion 2>/dev/null || true)"
   if [[ -z "$macos_build" ]]; then
     fail "macOS release status is unknown because the build version is not available"
+  elif [[ "$macos_build" == *[[:lower:]] && "${DOTFILES_ALLOW_MACOS_BETA:-0}" == 1 ]]; then
+    # Opt-in for one run: ./bin/setup --allow-macos-beta. Xcode betas still stop.
+    warn "macOS build ${macos_build} appears to be a prerelease; continuing because of --allow-macos-beta"
   elif [[ "$macos_build" == *[[:lower:]] ]]; then
-    fail "macOS build ${macos_build} appears to be a prerelease; turn off Beta Updates and install a public release, then rerun ./bin/setup"
+    fail "macOS build ${macos_build} appears to be a prerelease; turn off Beta Updates and install a public release, then rerun ./bin/setup, or pass --allow-macos-beta"
   else
     pass "macOS appears to use a public release build"
   fi
