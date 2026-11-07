@@ -78,25 +78,35 @@ services:
         # subclass 42, protocol 01), so an adb server that box starts sees the
         # phones. Other USB devices, such as the NAS's own, stay root-only.
         # The loop also covers phones connected later. A container gets no USB
-        # plug events, so a running adb server never sees a new phone. After
-        # the loop gives box a new phone, it restarts the server as box, and
-        # the new server finds all phones. $$ is a literal $ in Compose.
+        # plug events, so a running adb server never sees a new phone. When a
+        # phone node is not in the known list, the loop restarts the server as
+        # box, and the new server finds all phones. The list changes only
+        # after a restart works, so a failed restart, or an SDK that setup has
+        # not installed yet, is retried. $$ is a literal $ in Compose.
         adb=/home/box/Android/Sdk/platform-tools/adb
+        known=
         while :; do
-          changed=0
+          nodes=
           for interface in /sys/bus/usb/devices/*:*; do
             test "$$(cat "$$interface/bInterfaceClass" "$$interface/bInterfaceSubClass" "$$interface/bInterfaceProtocol" 2>/dev/null | tr -d '\n')" = ff4201 || continue
             device="$${interface%:*}"
             node="$$(printf '/dev/bus/usb/%03d/%03d' "$$(cat "$$device/busnum")" "$$(cat "$$device/devnum")")" || continue
+            nodes="$$nodes $$node"
             test "$$(stat -c %G:%a "$$node" 2>/dev/null)" != box:660 || continue
-            if chgrp box "$$node" && chmod 0660 "$$node"; then
-              changed=1
-            else
-              echo "nasbox: cannot give $$node to box" >&2
-            fi
+            chgrp box "$$node" && chmod 0660 "$$node" || echo "nasbox: cannot give $$node to box" >&2
           done
-          if test "$$changed" = 1 && test -x "$$adb"; then
-            su box -s /bin/sh -c "$$adb kill-server; $$adb start-server" >/dev/null 2>&1 || echo 'nasbox: cannot restart adb' >&2
+          new=0
+          for node in $$nodes; do
+            case "$$known " in *" $$node "*) ;; *) new=1 ;; esac
+          done
+          if test "$$new" = 0; then
+            known=$$nodes
+          elif test -x "$$adb"; then
+            if su box -s /bin/sh -c "$$adb kill-server >/dev/null 2>&1; $$adb start-server" >/dev/null 2>&1; then
+              known=$$nodes
+            else
+              echo 'nasbox: cannot restart adb' >&2
+            fi
           fi
           sleep 2
         done &
