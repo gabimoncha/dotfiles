@@ -132,6 +132,7 @@ judgment only.
 Use only public macOS, Xcode, iOS and simulator releases. Setup must stop when
 macOS updates are available, update status is unknown, or macOS/Xcode appears
 to be a prerelease. Do not install OS updates or change beta enrollment.
+Pass `--allow-macos-beta` only when the user asks for it.
 Direct the user to System Settings, restart if needed, and rerun setup.
 
 ## Validation

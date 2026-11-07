@@ -18,7 +18,8 @@ as completed.
 - Use only public releases of macOS, Xcode, iOS, and simulator runtimes. If
   `./bin/preflight` reports a macOS update or a prerelease, stop. Tell the user
   to update in **System Settings > General > Software Update**, restart if
-  needed, and rerun `./bin/setup`.
+  needed, and rerun `./bin/setup`. Use `--allow-macos-beta` only when the user
+  asks for it.
 - Ask the user before you delete an app, a simulator runtime, or user data.
 - Run commands from the repository root as the normal user.
 - If a step fails twice with the same error, stop. Report the command, the

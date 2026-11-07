@@ -322,7 +322,9 @@ tools or looks up credentials.
 
 Setup uses public Apple releases only. Preflight stops on an offered macOS
 update, an unknown update status, or an apparent prerelease. Setup never
-installs OS updates or changes beta enrollment.
+installs OS updates or changes beta enrollment. `--allow-macos-beta` is the one
+exception: the user opts in for a run on a macOS beta build. It does not cover a
+pending update or a prerelease Xcode.
 
 App privacy permissions are manual. Setup does not grant TCC consent or edit
 its database. Touch ID for sudo and login items are automatic. Login items are

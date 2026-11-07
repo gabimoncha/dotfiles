@@ -183,7 +183,7 @@ available before you erase the old Mac. See [backup and restore](MACKUP.md).
 Use a public macOS release. Setup stops if the active Apple or MDM catalog
 offers a macOS update, the update check is inconclusive, or macOS or Xcode
 appears to be a prerelease. Update in System Settings, restart if needed, and
-retry. Setup does not install OS updates or change beta enrollment.
+retry. On a macOS beta, `--allow-macos-beta` lets one run continue. Setup does not install OS updates or change beta enrollment.
 
 ```bash
 mkdir -p ~/development
@@ -240,10 +240,11 @@ Reopen apps after setup.
 [telemetry guide](apps/telemetry.md) lists every control, the manual settings,
 and the tools without an opt-out.
 
-| Option              | Effect                                                                                                                                                                    |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--dry-run`         | Run the preflight check and write private logs. List the other steps without running them. Add `--continue` to preview that phase.                                        |
-| `--skip-mobile-dev` | Skip Xcode, iOS support, Android Studio, the Android SDK, and `apps/mobile.Brewfile`. On Linux, skip the Android SDK. Mobile tools in the shared mise list still install. |
+| Option               | Effect                                                                                                                                                                    |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--dry-run`          | Run the preflight check and write private logs. List the other steps without running them. Add `--continue` to preview that phase.                                        |
+| `--allow-macos-beta` | Continue on a macOS beta build. Off by default. A pending macOS update and a prerelease Xcode still stop setup.                                                           |
+| `--skip-mobile-dev`  | Skip Xcode, iOS support, Android Studio, the Android SDK, and `apps/mobile.Brewfile`. On Linux, skip the Android SDK. Mobile tools in the shared mise list still install. |
 
 [bin/setup](bin/setup) lists the steps in order, and they run one at a time.
 The foundation steps are required: preflight, the Command Line Tools, `sudo`

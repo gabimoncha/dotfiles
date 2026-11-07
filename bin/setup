@@ -7,7 +7,7 @@
 set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 usage() {
-  printf 'Usage: ./bin/setup [--continue] [--dry-run] [--skip-mobile-dev]\n'
+  printf 'Usage: ./bin/setup [--continue] [--dry-run] [--skip-mobile-dev] [--allow-macos-beta]\n'
   printf 'Default: prepare foundation tools, then stop for permissions and terminal restart.\n'
   printf -- '--continue: run remaining setup after reviewing permissions and restarting the terminal.\n'
   printf 'Linux runs every step in one run; --continue has no effect there.\n'
@@ -18,6 +18,7 @@ for argument in "$@"; do
   case "$argument" in
     --dry-run) DOTFILES_RUN_MODE=dry-run ;;
     --skip-mobile-dev) export DOTFILES_SKIP_MOBILE_DEV=1 ;;
+    --allow-macos-beta) export DOTFILES_ALLOW_MACOS_BETA=1 ;;
     --continue) DOTFILES_SETUP_PHASE=continue ;;
     -h | --help)
       usage
