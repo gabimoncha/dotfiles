@@ -6,3 +6,8 @@ lockfile_version = 3
 version = "0.21.36"
 backend = "npm:agent-device"
 specifiers = ["latest"]
+
+[[tools."npm:simlock"]]
+version = "0.6.0"
+backend = "npm:simlock"
+specifiers = ["latest"]
