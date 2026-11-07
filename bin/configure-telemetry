@@ -63,9 +63,9 @@ telemetry_file() {
     return 0
   fi
   if /usr/bin/ruby "$repo_root/bin/lib/telemetry-config.rb" jsonc "$target" "$source"; then
-    printf 'Configured %s telemetry\n' "$name"
+    printf 'Configured %s telemetry in %s\n' "$name" "${target##*/}"
   else
-    printf 'Could not configure %s telemetry; existing settings were preserved.\n' "$name" >&2
+    printf 'Could not configure %s telemetry in %s; existing settings were preserved.\n' "$name" "$target" >&2
     status=1
   fi
 }

@@ -64,10 +64,7 @@ run, and the mise tool list. A change that works only on the Mac breaks Linux.
 ## Editing
 
 - Edit tracked sources here, not live files under HOME.
-- Edit only in a worktree, never in the main checkout
-  (`~/development/dotfiles`). The links in HOME point to the main checkout, so
-  an edit there changes the live setup at once, and `bin/save-lock` commits
-  from it and pushes to `main`.
+- Edit only in a worktree or on a branch, never on `main`.
 - Keep setup rerunnable. Preserve link backups and existing user state.
 - `bin/setup` lists the setup steps in order: two phases on macOS, one on
   Linux. The step functions are in `bin/lib/setup-steps.sh`. Mark a step
