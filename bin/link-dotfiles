@@ -189,13 +189,16 @@ drop_first_link_warning() {
     { skip = 0; print }'
 }
 
+# The check prints the same success line as the real apply. Keep one.
+drop_check_success() { drop_first_link_warning | grep -vx "mise files: all files are applied"; }
+
 # Check the whole selection before the first change. A merge error or a
 # template error can quote a settings file, so those checks print nothing.
 if [[ ${#file_targets[@]} -gt 0 ]]; then
   if [[ "$dry_run" == 1 ]]; then
     # --force previews the result after the backups remove the conflicts.
     repo_mise dot apply --dry-run --force --yes "${file_targets[@]}" 2> >(drop_first_link_warning >&2)
-  elif ! repo_mise dot apply --dry-run --force --yes "${file_targets[@]}" >/dev/null 2> >(drop_first_link_warning >&2); then
+  elif ! repo_mise dot apply --dry-run --force --yes "${file_targets[@]}" >/dev/null 2> >(drop_check_success >&2); then
     printf 'link-dotfiles: mise cannot apply the selection. Nothing changed.\n' >&2
     exit 1
   fi
