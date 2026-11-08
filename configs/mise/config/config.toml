@@ -193,7 +193,7 @@ description = "Save agent settings into the repository, without private keys"
 run = '"${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/save-settings"'
 
 [tasks."dot:drift"]
-description = "Report installed apps and tools that differ from the Brewfile and mise lists"
+description = "Report installed apps and tools that differ from the Brewfiles and mise lists"
 run = '"${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/prepare-sync"'
 
 [tasks.setup]

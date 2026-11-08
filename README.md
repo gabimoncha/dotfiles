@@ -170,7 +170,7 @@ It also moves local files from the old layout, such as
 `dotfiles-update` pulls, then runs the setup continuation without the general
 macOS defaults. It does not upgrade every installed package. The shell's daily
 background check only reports new commits. `./bin/prepare-sync` compares the
-live inventory with the repository and saves a Brewfile copy under
+live inventory with `Brewfile`, `apps/mobile.Brewfile`, and the mise lists, and saves a copy of both Brewfiles under
 `.sync-backups/`.
 
 ## Set up a new Mac

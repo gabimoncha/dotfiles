@@ -103,7 +103,7 @@ mise task in `configs/mise/config/config.toml`; `mise tasks` lists them.
 
 1. Sync the repository. `mise run dot:save` copies the public agent and T3
    settings into `configs/`. `mise run dot:drift` reports the installed apps
-   and tools that differ from `Brewfile` and the mise lists. The user's
+   and tools that differ from `Brewfile`, `apps/mobile.Brewfile`, and the mise lists. The user's
    commits are pushed.
 2. Back up portable state with `mise run backup`: Mackup app settings, an
    encrypted Codex archive, and a Raycast export. The user types the

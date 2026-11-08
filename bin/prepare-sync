@@ -19,11 +19,43 @@ log() {
 
 mkdir -p "$backup_dir"
 
+# Compares the entries of the Brewfiles (all but the last file) with the dump
+# of the installed state (the last file). Order and comments do not count.
+# Formulae and casks match by short name, so "borders" matches
+# "felixkratz/formulae/borders". App Store apps match by id.
+compare_brewfiles() {
+  awk -v installed_file="${!#}" '
+    function entry_key(name, id) {
+      if (!match($0, /"[^"]*"/)) return ""
+      name = substr($0, RSTART + 1, RLENGTH - 2)
+      if ($1 == "mas" && match($0, /id: *[0-9]+/)) {
+        id = substr($0, RSTART, RLENGTH)
+        sub(/id: */, "", id)
+        return "mas " id
+      }
+      if ($1 == "brew" || $1 == "cask") sub(/.*\//, "", name)
+      return $1 " " tolower(name)
+    }
+    $1 !~ /^(tap|brew|cask|mas|vscode)$/ { next }
+    { key = entry_key() }
+    key == "" { next }
+    FILENAME != installed_file { listed[key] = $0; next }
+    { installed[key] = 1; if (!(key in listed)) print "+ " $0 }
+    END { for (key in listed) if (!(key in installed)) print "- " listed[key] }
+  ' "$@" | sort
+}
+
 if command -v brew >/dev/null 2>&1; then
   log "Capturing current Homebrew bundle to a temp file"
   brew bundle dump --file "$temp_brewfile" --force
-  cp "${repo_root}/Brewfile" "${backup_dir}/Brewfile"
-  git --no-pager diff --no-index "${repo_root}/Brewfile" "$temp_brewfile" || true
+  cp "${repo_root}/Brewfile" "${repo_root}/apps/mobile.Brewfile" "$backup_dir/"
+  drift="$(compare_brewfiles "${repo_root}/Brewfile" "${repo_root}/apps/mobile.Brewfile" "$temp_brewfile")"
+  if [[ -z "$drift" ]]; then
+    log "Installed Homebrew entries match Brewfile and apps/mobile.Brewfile"
+  else
+    log "Homebrew drift (+ installed, not in a Brewfile; - in a Brewfile, not installed)"
+    printf '%s\n' "$drift"
+  fi
 else
   log "Homebrew is not available; skipping the Brewfile comparison"
 fi
