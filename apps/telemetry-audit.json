@@ -47,10 +47,7 @@
         "tool": "node",
         "status": "none_found",
         "mechanism": "No documented opt-out found for runtime usage analytics or remote crash/error reporting in the official Node.js command-line and diagnostic-report references.",
-        "sources": [
-          "https://nodejs.org/api/cli.html",
-          "https://nodejs.org/api/report.html"
-        ],
+        "sources": ["https://nodejs.org/api/cli.html", "https://nodejs.org/api/report.html"],
         "notes": "Node.js is a JavaScript runtime. Its documented diagnostic reports write to local files or standard streams; report triggers on fatal errors, signals, and uncaught exceptions default to false. Application code can also request reports. Report output paths do not accept URLs. Report-exclusion flags reduce local report content and are not telemetry opt-outs. Network requests made by applications and packages, and package-manager or installer update traffic, have separate behavior. No installed runtime or live settings were tested.",
         "checked_date": "2026-10-03"
       },
@@ -65,9 +62,7 @@
         "tool": "perl",
         "status": "none_found",
         "mechanism": "No documented opt-out found for Perl interpreter usage analytics or remote crash/error reporting in the official runtime command-switch and environment-variable reference.",
-        "sources": [
-          "https://perldoc.perl.org/perlrun"
-        ],
+        "sources": ["https://perldoc.perl.org/perlrun"],
         "notes": "Perl is a language interpreter. Documented debugging controls such as PERLIO_DEBUG, PERL_MEM_LOG, and PERL_DEBUG_MSTATS produce local file, file-descriptor, or standard-stream output; they are not telemetry opt-outs. Executed scripts, loaded modules, custom distribution hooks, CPAN clients, and installer/update services have separate behavior. This documentation check does not prove the absence of all network activity. No installed interpreter or live settings were tested.",
         "checked_date": "2026-10-03"
       },
@@ -161,9 +156,7 @@
         "tool": "ccache",
         "status": "none_found",
         "mechanism": "No documented opt-out found for usage analytics or remote crash/error reporting in the official ccache manual.",
-        "sources": [
-          "https://ccache.dev/manual/latest.html"
-        ],
+        "sources": ["https://ccache.dev/manual/latest.html"],
         "notes": "The manual documents cache statistics stored locally, including when remote storage is used. stats=false disables these local counters and automatic cleanup; it is not a remote telemetry control. CCACHE_STATSLOG writes a selected local statistics file. Configured remote storage transfers compilation results/manifests as a cache service feature. Compiler wrappers, storage helpers, compilers, and installer/update tools have separate behavior. No installed CLI or live settings were tested.",
         "checked_date": "2026-10-03"
       },
@@ -376,9 +369,7 @@
         "tool": "fzf",
         "status": "none_found",
         "mechanism": "No documented opt-out found for fzf usage analytics or remote crash/error reporting in the official CLI manual.",
-        "sources": [
-          "https://raw.githubusercontent.com/junegunn/fzf/master/man/man1/fzf.1"
-        ],
+        "sources": ["https://raw.githubusercontent.com/junegunn/fzf/master/man/man1/fzf.1"],
         "notes": "fzf is an interactive fuzzy finder. --history stores search history in an explicitly selected local file. --listen starts an explicitly selected HTTP or Unix-socket control interface; this is a service feature, not telemetry. Preview, execute, reload, and default input commands can run other tools with their own network behavior. Installer and package-manager updates are separate traffic. This bounded check does not prove the absence of all network activity. No installed CLI or live settings were tested.",
         "checked_date": "2026-10-03"
       },
@@ -429,9 +420,7 @@
         "tool": "fd",
         "status": "none_found",
         "mechanism": "No documented opt-out found for fd CLI usage analytics or remote crash/error reporting in the official command manual.",
-        "sources": [
-          "https://raw.githubusercontent.com/sharkdp/fd/master/doc/fd.1"
-        ],
+        "sources": ["https://raw.githubusercontent.com/sharkdp/fd/master/doc/fd.1"],
         "notes": "fd searches file-system entries. Its documented options configure search scope, output, and explicitly selected child commands. Child commands, remote-mounted file systems, shell/editor integrations, and package-manager installation/update traffic have separate behavior. Manual bug submission is distinct from automatic error reporting. This bounded documentation check does not prove the absence of all network activity. No installed CLI or live settings were tested.",
         "checked_date": "2026-10-03"
       },
@@ -463,9 +452,7 @@
         "tool": "tmux",
         "status": "none_found",
         "mechanism": "No documented opt-out found for tmux usage analytics or remote crash/error reporting in the official command manual.",
-        "sources": [
-          "https://raw.githubusercontent.com/tmux/tmux/master/tmux.1"
-        ],
+        "sources": ["https://raw.githubusercontent.com/tmux/tmux/master/tmux.1"],
         "notes": "tmux is a terminal multiplexer whose clients communicate with its server through a socket. Verbose diagnostics are local log output, not a remote reporting control. Programs inside panes, configured shell commands/hooks, plugins, SSH sessions, and package-manager installation/update traffic have separate behavior. This bounded documentation check does not prove the absence of all network activity. No installed CLI or live settings were tested.",
         "checked_date": "2026-10-03"
       },
@@ -498,9 +485,7 @@
         "tool": "jq",
         "status": "none_found",
         "mechanism": "No documented opt-out found in the official CLI manual reviewed.",
-        "sources": [
-          "https://jqlang.org/manual/"
-        ],
+        "sources": ["https://jqlang.org/manual/"],
         "notes": "jq processes JSON from stdin and files. The manual documents debug, stderr, and halt_error as local output; these are not remote reporting controls. Applications that embed libjq can supply different debug behavior. Shell pipelines, network-backed files, package downloads, and the separate web playground are outside the jq CLI telemetry scope. Bounded documentation review; no live execution or network validation.",
         "checked_date": "2026-10-03"
       },
@@ -533,9 +518,7 @@
         "tool": "gh (GitHub CLI)",
         "status": "supported",
         "mechanism": "Persist export GH_TELEMETRY=false before gh starts. Alternatives: gh config set telemetry disabled (persistent CLI configuration), or export DO_NOT_TRACK=true. Environment controls take precedence over stored configuration.",
-        "sources": [
-          "https://docs.github.com/en/github-cli/github-cli/github-cli-telemetry"
-        ],
+        "sources": ["https://docs.github.com/en/github-cli/github-cli/github-cli-telemetry"],
         "notes": "GitHub CLI documents pseudonymous events sent to GitHub analytics, including commands, flag names, versions, device/invocation IDs, platform, and contextual skill data. Extensions and GitHub Copilot have separate telemetry controls. API operations and update checks are separate traffic and remain enabled. Telemetry is not collected for GitHub Enterprise Server targets/authentication. No separate crash-reporting control was documented in this bounded review.",
         "checked_date": "2026-10-03"
       },
@@ -602,9 +585,7 @@
         "tool": "mkcert",
         "status": "none_found",
         "mechanism": "No documented opt-out found in the official README reviewed.",
-        "sources": [
-          "https://raw.githubusercontent.com/FiloSottile/mkcert/master/README.md"
-        ],
+        "sources": ["https://raw.githubusercontent.com/FiloSottile/mkcert/master/README.md"],
         "notes": "The documented CLI creates a local certificate authority and certificates and manages local trust stores. CAROOT changes the CA file location and TRUST_STORES selects trust stores; neither is a telemetry control. Certificate copying or serving, package-manager traffic, and release downloads are separate operations. Bounded documentation review; no live execution or network validation.",
         "checked_date": "2026-10-03"
       },
@@ -619,9 +600,7 @@
         "tool": "hub GitHub client",
         "status": "none_found",
         "mechanism": "No documented opt-out found in the official configuration and environment-variable reference reviewed.",
-        "sources": [
-          "https://hub.github.com/hub.1.html"
-        ],
+        "sources": ["https://hub.github.com/hub.1.html"],
         "notes": "HUB_VERBOSE enables logging to stderr; it is not a remote reporting control. GitHub API authentication, repository transfers, requested Gist uploads, and browser commands are service functionality. HUB_CONFIG selects the local configuration file. Package installation and release downloads are separate traffic. Bounded documentation review; no live execution or network validation.",
         "checked_date": "2026-10-03"
       },
@@ -654,9 +633,7 @@
         "tool": "cmake",
         "status": "none_found",
         "mechanism": "No documented product analytics or crash-upload opt-out found.",
-        "sources": [
-          "https://cmake.org/cmake/help/latest/manual/cmake.1.html"
-        ],
+        "sources": ["https://cmake.org/cmake/help/latest/manual/cmake.1.html"],
         "notes": "Build-system generator. Local trace/profiling output is separate from CTest/CDash submissions and project scripts. Bounded official search/manual review.",
         "checked_date": "2026-10-03"
       },
@@ -707,9 +684,7 @@
         "tool": "ffmpeg",
         "status": "none_found",
         "mechanism": "No documented product analytics or crash-upload opt-out found.",
-        "sources": [
-          "https://ffmpeg.org/ffmpeg.html"
-        ],
+        "sources": ["https://ffmpeg.org/ffmpeg.html"],
         "notes": "Media tools/libraries. Logs, progress and reports are local command output; network inputs/outputs are service functions. Applications embedding FFmpeg and package-manager telemetry are separate. Bounded official search/manual review.",
         "checked_date": "2026-10-03"
       },
@@ -796,9 +771,7 @@
         "tool": "pandoc",
         "status": "none_found",
         "mechanism": "No documented product analytics or crash-upload opt-out found.",
-        "sources": [
-          "https://pandoc.org/MANUAL.html"
-        ],
+        "sources": ["https://pandoc.org/MANUAL.html"],
         "notes": "Document converter library/CLI. Requested remote inputs, assets, filters, external PDF engines and package downloads are separate. Logs are output, not an identified analytics service. Bounded official search/manual review.",
         "checked_date": "2026-10-03"
       },
@@ -849,9 +822,7 @@
         "tool": "Neovim core CLI",
         "status": "none_found",
         "mechanism": "No documented opt-out found in the official core CLI/startup documentation reviewed.",
-        "sources": [
-          "https://neovim.io/doc/user/starting/"
-        ],
+        "sources": ["https://neovim.io/doc/user/starting/"],
         "notes": "Startup timing and verbose logs write to specified local files or local output. ShaDa and swap files support local state and crash recovery, not remote reporting. Disabling these changes editor functionality. Plugins, language servers, user scripts, remote editing/RPC, and package downloads have separate behavior and were not audited. No nvim repository edits, live execution, or network validation.",
         "checked_date": "2026-10-03"
       },
@@ -866,17 +837,12 @@
         "tool": "Docker CLI",
         "status": "supported",
         "mechanism": "Keep DOCKER_CLI_OTEL_EXPORTER_OTLP_ENDPOINT unset; remove any managed export and use unset DOCKER_CLI_OTEL_EXPORTER_OTLP_ENDPOINT before docker starts if necessary. Docker CLI OpenTelemetry metric export is disabled by default and is enabled by this collector-endpoint variable.",
-        "sources": [
-          "https://docs.docker.com/engine/cli/otel/",
-          "https://github.com/docker/cli"
-        ],
+        "sources": ["https://docs.docker.com/engine/cli/otel/", "https://github.com/docker/cli"],
         "notes": "Official docs describe opt-in command-duration metrics with command name/status and terminal attributes, sent to the user-selected collector. This audit covers the standalone Docker CLI, not Docker Desktop or plugins. No separate usage/crash-reporting opt-out was documented in this bounded review. Docker daemon/registry operations are required service traffic; package updates are separate.",
         "checked_date": "2026-10-03"
       },
       "setup_actions": {
-        "unset_environment": [
-          "DOCKER_CLI_OTEL_EXPORTER_OTLP_ENDPOINT"
-        ],
+        "unset_environment": ["DOCKER_CLI_OTEL_EXPORTER_OTLP_ENDPOINT"],
         "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
     },
@@ -909,9 +875,7 @@
         "tool": "imagemagick",
         "status": "none_found",
         "mechanism": "No documented product analytics or crash-upload opt-out found.",
-        "sources": [
-          "https://imagemagick.org/command-line-options/"
-        ],
+        "sources": ["https://imagemagick.org/command-line-options/"],
         "notes": "Image CLI/library. MAGICK_DEBUG and +debug control diagnostic output; they are not identified remote analytics settings. URL inputs, delegates and package-manager traffic are separate. Bounded official search/options review.",
         "checked_date": "2026-10-03"
       },
@@ -1039,9 +1003,7 @@
         "tool": "mas (Mac App Store CLI)",
         "status": "none_found",
         "mechanism": "No documented opt-out found in the official README and CLI documentation reviewed.",
-        "sources": [
-          "https://raw.githubusercontent.com/mas-cli/mas/main/README.md"
-        ],
+        "sources": ["https://raw.githubusercontent.com/mas-cli/mas/main/README.md"],
         "notes": "App Store searches, app metadata, authentication, downloads, purchases, and requested update checks support the CLI's service functions. Output-format and minimum-OS check settings are not telemetry controls. Apple service/OS analytics and package-manager downloads have separate scope. Bounded documentation review; no live execution, App Store access, or network validation.",
         "checked_date": "2026-10-03"
       },
@@ -1222,9 +1184,7 @@
         "tool": "github:ryanoasis/nerd-fonts",
         "status": "not_applicable",
         "mechanism": "No standalone telemetry control found for installed font assets.",
-        "sources": [
-          "https://github.com/ryanoasis/nerd-fonts"
-        ],
+        "sources": ["https://github.com/ryanoasis/nerd-fonts"],
         "notes": "Project distributes glyph/font assets and patcher/installation scripts. Installed fonts have no independent app preferences; package-manager/download traffic and font-using applications are separate. Bounded official search and README review.",
         "checked_date": "2026-10-03"
       },
@@ -1276,9 +1236,7 @@
         "tool": "github:CoastalFuturist/ytcli",
         "status": "none_found",
         "mechanism": "No documented opt-out found in the official README and CLI flags reviewed.",
-        "sources": [
-          "https://github.com/CoastalFuturist/ytcli"
-        ],
+        "sources": ["https://github.com/CoastalFuturist/ytcli"],
         "notes": "ytcli is a wrapper around yt-dlp and ffmpeg. Its documented flags select media mode, clipping, output, metadata, optional Apple Music import, and version output. Media downloads and optional Music import serve requested functions. Underlying tools, Apple Music, and package/release downloads have separate behavior; yt-dlp has its own audit. The GitHub README was readable although the raw main-branch URL failed. No live execution or network validation.",
         "checked_date": "2026-10-03"
       },
@@ -1319,10 +1277,7 @@
         "tool": "pipx:httpie CLI",
         "status": "none_found",
         "mechanism": "No documented opt-out found for HTTPie CLI usage analytics, automatic crash reports, or error-report uploads in the official CLI documentation and bounded upstream search.",
-        "sources": [
-          "https://httpie.io/docs/cli",
-          "https://github.com/httpie/cli"
-        ],
+        "sources": ["https://httpie.io/docs/cli", "https://github.com/httpie/cli"],
         "notes": "HTTPie Desktop and website analytics are separate products and are outside this CLI result. User-requested HTTP traffic, plugin downloads, the explicit httpie cli check-updates command, and pipx/package updates are separate from telemetry. The documented debug output is local diagnostic output. This result does not establish that the CLI sends no telemetry; plugins require separate review.",
         "checked_date": "2026-10-03"
       },
@@ -1355,9 +1310,7 @@
         "tool": "npm:ios-deploy",
         "status": "none_found",
         "mechanism": "No documented opt-out found in the official README and CLI options reviewed.",
-        "sources": [
-          "https://raw.githubusercontent.com/ios-control/ios-deploy/master/README.md"
-        ],
+        "sources": ["https://raw.githubusercontent.com/ios-control/ios-deploy/master/README.md"],
         "notes": "The CLI installs and debugs applications on connected iOS devices and can transfer files or retrieve device information. Debugger output and device process crashes are local development functions. --no-wifi changes device transport, not telemetry. Deployed apps, Apple system frameworks/OS reporting, Xcode, and npm package installation have separate behavior. Bounded documentation review; no device access, live execution, or network validation.",
         "checked_date": "2026-10-03"
       },
@@ -1372,9 +1325,7 @@
         "tool": "github:boyter/scc",
         "status": "none_found",
         "mechanism": "No documented opt-out found in the official README and CLI configuration documentation reviewed.",
-        "sources": [
-          "https://raw.githubusercontent.com/boyter/scc/master/README.md"
-        ],
+        "sources": ["https://raw.githubusercontent.com/boyter/scc/master/README.md"],
         "notes": "The CLI counts source files and can analyze local Git history. Console statistics and JSON, HTML, OpenMetrics, or file reports are output formats, not remote usage reporting. Other products powered by scc, the planned Enterprise service, library embeddings, network-backed file access, and installation/release downloads have separate behavior. Bounded documentation review; no live execution or network validation.",
         "checked_date": "2026-10-03"
       },
@@ -1442,9 +1393,7 @@
         "tool": "conda:bfg",
         "status": "none_found",
         "mechanism": "No documented product analytics or crash-upload opt-out found.",
-        "sources": [
-          "https://rtyley.github.io/bfg-repo-cleaner/"
-        ],
+        "sources": ["https://rtyley.github.io/bfg-repo-cleaner/"],
         "notes": "Local Git-history cleaning tool. Requested Git clone/push operations, JVM/OS crash reporting and Conda downloads have separate scope. Bounded official documentation check; tool was not run.",
         "checked_date": "2026-10-03"
       },
@@ -1459,9 +1408,7 @@
         "tool": "conda:sox",
         "status": "none_found",
         "mechanism": "No documented product analytics or crash-upload opt-out found.",
-        "sources": [
-          "https://sourceforge.net/projects/sox/"
-        ],
+        "sources": ["https://sourceforge.net/projects/sox/"],
         "notes": "Command-line audio conversion/effects utility. Official HTML manual could not be retrieved. Package-manager/download-site analytics and audio-consuming applications are separate. Bounded official search/project-page check.",
         "checked_date": "2026-10-03"
       },
@@ -1476,10 +1423,7 @@
         "tool": "conda:tig",
         "status": "none_found",
         "mechanism": "No documented product analytics or crash-upload opt-out found.",
-        "sources": [
-          "https://jonas.github.io/tig/",
-          "https://jonas.github.io/tig/doc/tig.1.html"
-        ],
+        "sources": ["https://jonas.github.io/tig/", "https://jonas.github.io/tig/doc/tig.1.html"],
         "notes": "Text-mode Git interface/pager. User-defined commands and Git operations are separate. Conda/download telemetry has separate scope. Bounded official documentation check.",
         "checked_date": "2026-10-03"
       },
@@ -1494,9 +1438,7 @@
         "tool": "conda:tree",
         "status": "none_found",
         "mechanism": "No documented product analytics or crash-upload opt-out found.",
-        "sources": [
-          "https://gitlab.com/OldManProgrammer/unix-tree"
-        ],
+        "sources": ["https://gitlab.com/OldManProgrammer/unix-tree"],
         "notes": "Directory listing utility. Official indexed README reviewed; direct GitLab page returned limited project metadata. Output/report counts are local. Conda/download telemetry has separate scope.",
         "checked_date": "2026-10-03"
       },
@@ -1671,10 +1613,7 @@
         "tool": "apktool",
         "status": "none_found",
         "mechanism": "No documented product analytics or crash-upload opt-out found.",
-        "sources": [
-          "https://apktool.org/",
-          "https://apktool.org/docs/2.x/install/"
-        ],
+        "sources": ["https://apktool.org/", "https://apktool.org/docs/2.x/install/"],
         "notes": "APK disassembly/build CLI. Official indexed pages describe local resource work; guessed CLI-reference URL returned 404. JVM/OS crash reporting and package-manager downloads are separate. Bounded official search/project review.",
         "checked_date": "2026-10-03"
       },
@@ -1745,10 +1684,7 @@
         "tool": "curl",
         "status": "none_found",
         "mechanism": "No documented product telemetry opt-out found; upstream explicitly states curl features no telemetry.",
-        "sources": [
-          "https://curl.se/docs/survey/2025/",
-          "https://curl.se/docs/manpage.html"
-        ],
+        "sources": ["https://curl.se/docs/survey/2025/", "https://curl.se/docs/manpage.html"],
         "notes": "Requested URL transfer, optional local tracing and package-manager traffic are separate. This is an upstream documentation statement, not a live network verification.",
         "checked_date": "2026-10-03"
       },
@@ -1781,10 +1717,7 @@
         "tool": "git",
         "status": "none_found",
         "mechanism": "No documented general product analytics or crash-upload opt-out found.",
-        "sources": [
-          "https://git-scm.com/docs/git",
-          "https://git-scm.com/docs/git/2.53.0.html"
-        ],
+        "sources": ["https://git-scm.com/docs/git", "https://git-scm.com/docs/git/2.53.0.html"],
         "notes": "Trace2 is explicitly configured diagnostic output to streams, files or local Unix sockets, not an identified default analytics service. Git remote operations, hooks, helpers and package-manager traffic are separate. Bounded official search/reference review.",
         "checked_date": "2026-10-03"
       },
@@ -1818,10 +1751,7 @@
         "tool": "glyph (seatedro ASCII image/video renderer)",
         "status": "none_found",
         "mechanism": "No documented opt-out found in the identified upstream README and CLI options reviewed.",
-        "sources": [
-          "https://formulae.brew.sh/formula/glyph",
-          "https://github.com/seatedro/glyph"
-        ],
+        "sources": ["https://formulae.brew.sh/formula/glyph", "https://github.com/seatedro/glyph"],
         "notes": "The official Homebrew formula identifies seatedro/glyph, formerly asciigen. Its CLI renders input media into terminal text or output files and uses FFmpeg codecs. Rendering options and codec settings are not remote reporting controls. Network media inputs, codec dependencies, and Homebrew installation/update/analytics traffic have separate behavior. Privacy settings of unrelated Glyph apps do not apply. Bounded documentation review; no live execution or network validation.",
         "checked_date": "2026-10-03"
       },
@@ -1836,9 +1766,7 @@
         "tool": "grpc",
         "status": "not_applicable",
         "mechanism": "No standalone product-analytics opt-out found. Application code selects the OpenTelemetry plugin, MeterProvider and export configuration.",
-        "sources": [
-          "https://grpc.io/docs/guides/opentelemetry-metrics/"
-        ],
+        "sources": ["https://grpc.io/docs/guides/opentelemetry-metrics/"],
         "notes": "Homebrew entry is an RPC library, not an independent desktop/CLI product. Built-in observability instruments belong to application-controlled plugins; do not alter application exporters from dotfiles. Service RPCs are distinct from product telemetry.",
         "checked_date": "2026-10-03"
       },
@@ -1853,9 +1781,7 @@
         "tool": "homebrew-zathura/zathura/zathura-cb",
         "status": "not_applicable",
         "mechanism": "No documented standalone analytics/crash opt-out found. This is a comic-book format plugin for Zathura.",
-        "sources": [
-          "https://pwmt.org/projects/zathura-cb/"
-        ],
+        "sources": ["https://pwmt.org/projects/zathura-cb/"],
         "notes": "Plugin loaded by document viewer, not a separate app/service. Viewer and package-manager behavior have separate scope. Bounded official documentation check.",
         "checked_date": "2026-10-03"
       },
@@ -1870,9 +1796,7 @@
         "tool": "homebrew-zathura/zathura/zathura-pdf-mupdf",
         "status": "not_applicable",
         "mechanism": "No documented standalone analytics/crash opt-out found. This is a PDF rendering plugin for Zathura.",
-        "sources": [
-          "https://pwmt.org/projects/zathura-pdf-mupdf/"
-        ],
+        "sources": ["https://pwmt.org/projects/zathura-pdf-mupdf/"],
         "notes": "Plugin loaded by document viewer, not a separate app/service. Viewer and package-manager behavior have separate scope. Bounded official documentation check.",
         "checked_date": "2026-10-03"
       },
@@ -1887,9 +1811,7 @@
         "tool": "minisign",
         "status": "none_found",
         "mechanism": "No documented product analytics or crash-upload opt-out found.",
-        "sources": [
-          "https://jedisct1.github.io/minisign/"
-        ],
+        "sources": ["https://jedisct1.github.io/minisign/"],
         "notes": "Local file signature CLI. Keys/signature comments and quiet output are local functional state. Package-manager/download traffic is separate. Bounded official search/usage reference review.",
         "checked_date": "2026-10-03"
       },
@@ -1904,9 +1826,7 @@
         "tool": "mole (tw93 open-source mo CLI)",
         "status": "none_found",
         "mechanism": "No documented remote telemetry opt-out found in the official CLI README reviewed.",
-        "sources": [
-          "https://raw.githubusercontent.com/tw93/Mole/main/README.md"
-        ],
+        "sources": ["https://raw.githubusercontent.com/tw93/Mole/main/README.md"],
         "notes": "MO_NO_OPLOG=1 disables the local ~/Library/Logs/mole/operations.log, not remote usage/crash reporting. mo status displays local system metrics and --debug produces local diagnostics. Requested maintenance, package-manager cleanup, installation, and mo update have separate behavior. The README explicitly distinguishes the CLI installed by brew install mole from the separate Mole for Mac GUI; GUI privacy claims were not applied. Bounded documentation review; no cleanup, live execution, or network validation.",
         "checked_date": "2026-10-03"
       },
@@ -1939,9 +1859,7 @@
         "tool": "poppler",
         "status": "none_found",
         "mechanism": "No documented product analytics or crash-upload opt-out found in official project documentation.",
-        "sources": [
-          "https://poppler.freedesktop.org/"
-        ],
+        "sources": ["https://poppler.freedesktop.org/"],
         "notes": "PDF rendering library and utilities. Upstream bug reporting requests manual submissions. Package-manager and consumer application telemetry is separate. Bounded documentation check, not a source/network audit.",
         "checked_date": "2026-10-03"
       },
@@ -1974,9 +1892,7 @@
         "tool": "smartmontools",
         "status": "none_found",
         "mechanism": "No documented product analytics or crash-upload opt-out found.",
-        "sources": [
-          "https://www.smartmontools.org/static/doxygen/smartctl_8cpp_source.html"
-        ],
+        "sources": ["https://www.smartmontools.org/static/doxygen/smartctl_8cpp_source.html"],
         "notes": "Storage health inspection/monitoring utilities. Drive SMART logs and local device statistics are functional data, not identified vendor analytics. Configured notifications, drive database updates and package downloads are separate. Bounded official search/CLI source documentation review.",
         "checked_date": "2026-10-03"
       },
@@ -2046,10 +1962,7 @@
         "tool": "zlib",
         "status": "not_applicable",
         "mechanism": "No documented opt-out found; zlib exposes compression APIs, not an independent product analytics configuration.",
-        "sources": [
-          "https://zlib.net/",
-          "https://zlib.net/manual.html"
-        ],
+        "sources": ["https://zlib.net/", "https://zlib.net/manual.html"],
         "notes": "Homebrew entry is a data-compression library. Stream totals are caller-visible counters. Application, installer and package-manager telemetry is separate. Bounded documentation check, not a source/network audit.",
         "checked_date": "2026-10-03"
       },
@@ -2064,9 +1977,7 @@
         "tool": "DevCleaner for Xcode",
         "status": "none_found",
         "mechanism": "No documented opt-out found for automatic analytics, usage, or crash reporting. No supported persistent preference key or configuration schema was established; preserve existing app settings. The Help menu has optional feedback and report problem actions that send system information and logs; avoid sending these if diagnostic disclosure is unwanted.",
-        "sources": [
-          "https://apps.apple.com/us/app/devcleaner-for-xcode/id1388020431?mt=12"
-        ],
+        "sources": ["https://apps.apple.com/us/app/devcleaner-for-xcode/id1388020431?mt=12"],
         "notes": "The correct One Minute Games app listing declares Data Not Collected; this is developer-supplied and not verified by Apple. Version history documents user-initiated feedback/problem reports. The declaration does not independently prove runtime behavior or supply a persistent telemetry switch. App Store updates and purchases are separate service traffic. No live preferences were read or changed.",
         "checked_date": "2026-10-03"
       },
@@ -2081,9 +1992,7 @@
         "tool": "Endel macOS app",
         "status": "none_found",
         "mechanism": "No documented macOS analytics, usage, or crash-report opt-out found. Official app privacy policy does not provide a supported persistent preference key, environment variable, or exact general diagnostics toggle. Newsletter unsubscribe and withdrawal of push-notification consent have separate scope.",
-        "sources": [
-          "https://endel.io/privacy-policy"
-        ],
+        "sources": ["https://endel.io/privacy-policy"],
         "notes": "Official app policy version 1.5 dated October 15, 2024 describes automatic device/system/IP data, app activity for weekly highlights, Tableau usage analytics, and Crashlytics bug/crash data. It covers the app generally without verifying platform-specific SDK deployment. Generic sound mode and optional health/location permissions are personalization controls, not a general analytics switch. Data management deletion is irreversible and must not be used as an opt-out implementation. Accounts, subscription validation, content/services, notification delivery, and updates are separate activity. Preserve app preferences, account/subscription state, and personal data; no live settings or runtime traffic was inspected.",
         "checked_date": "2026-10-03"
       },
@@ -2367,10 +2276,7 @@
         "tool": "Helium browser (imput, helium-browser)",
         "status": "uncertain",
         "mechanism": "Official policy says browser crash reporting requires explicit user consent. Leave crash-reporting consent disabled or decline it; the exact current macOS UI label, persistent preference key, path, and schema were not verified. No analytics opt-out is documented because the official browser site states no browser analytics. Preserve all existing profiles, bookmarks, passwords, extensions, and settings; do not apply Chrome policies or invent Helium preference keys.",
-        "sources": [
-          "https://helium.computer/privacy",
-          "https://helium.computer/"
-        ],
+        "sources": ["https://helium.computer/privacy", "https://helium.computer/"],
         "notes": "Correct identity is imput Helium browser, distinct from Helium Wallet or the older floating-browser app. Policy revision July 16, 2026 describes optional first-party Crashpad reports, potentially including process-memory fragments, retained up to 30 days. It says browsing data stays local and background service requests require consent/configuration. Browser updates, extension delivery, websites, optional services, and the website Plausible analytics are separate. Exact opt-out automation remains unverified; no installed app/profile was read or changed.",
         "checked_date": "2026-10-03"
       },
@@ -2480,9 +2386,7 @@
         "tool": "NearDrop macOS desktop app",
         "status": "none_found",
         "mechanism": "No documented opt-out found for automatic usage analytics, crash, or error reporting. No supported persistent telemetry preference key, environment variable, configuration schema, or exact UI switch was established. Preserve existing app preferences, login-item state, sharing permissions, and received files.",
-        "sources": [
-          "https://github.com/grishka/NearDrop"
-        ],
+        "sources": ["https://github.com/grishka/NearDrop"],
         "notes": "Official upstream documents an unofficial Nearby Share/Quick Share menu-bar app using the local Wi-Fi LAN for transfers. Network discovery, visibility to peers, Android Quick Share QR/intent URLs, and file transfers are functional traffic, separate from telemetry. Google Android app settings do not establish controls in this independent Mac implementation. Homebrew/GitHub downloads and macOS system diagnostics are separate. Mandatory official telemetry/privacy search returned no results; bounded upstream README review found no documented opt-out and is not a complete source or runtime audit. No live settings or app were accessed.",
         "checked_date": "2026-10-03"
       },
@@ -2554,10 +2458,7 @@
         "tool": "Obsidian",
         "status": "none_found",
         "mechanism": "No documented analytics, usage, or crash-report opt-out found. The official desktop/mobile privacy summary states that Obsidian does not collect telemetry or personal data; no disabling configuration key or environment variable is documented there.",
-        "sources": [
-          "https://obsidian.md/privacy",
-          "https://obsidian.md/security"
-        ],
+        "sources": ["https://obsidian.md/privacy", "https://obsidian.md/security"],
         "notes": "Official privacy summary last updated November 1, 2023. Update checks can be disabled in Settings → About; this is an update control, not telemetry. Plugin/theme downloads, embedded websites, Sync, Publish, accounts, and website analytics are separate network/service activity. Directory policy prohibits client-side plugin telemetry, but this audit did not inspect installed third-party plugins. No runtime traffic or crash implementation was inspected. Preserve vaults and existing app/plugin settings; no file edit is supported by this evidence.",
         "checked_date": "2026-10-03"
       },
@@ -3225,9 +3126,7 @@
         "tool": "Powerlevel10k Zsh theme",
         "status": "none_found",
         "mechanism": "No documented opt-out found in the official theme README and configuration guidance reviewed.",
-        "sources": [
-          "https://raw.githubusercontent.com/romkatv/powerlevel10k/master/README.md"
-        ],
+        "sources": ["https://raw.githubusercontent.com/romkatv/powerlevel10k/master/README.md"],
         "notes": "Powerlevel10k renders shell prompts and uses local cache/background processes, including gitstatus. Gitstatus binary retrieval, font downloads, theme installation, and plugin-manager updates are artifact traffic. Displaying cloud account/profile names or time-tracking state is prompt functionality, not evidence of upstream telemetry. User-defined segments and external commands can have separate behavior. Bounded documentation review; no live shell settings access, execution, or network validation.",
         "checked_date": "2026-10-03"
       },
@@ -3242,9 +3141,7 @@
         "tool": "TPM (tmux-plugins/tpm)",
         "status": "none_found",
         "mechanism": "No documented opt-out found in the official plugin-manager README and documentation reviewed.",
-        "sources": [
-          "https://raw.githubusercontent.com/tmux-plugins/tpm/master/README.md"
-        ],
+        "sources": ["https://raw.githubusercontent.com/tmux-plugins/tpm/master/README.md"],
         "notes": "TPM installs, updates, removes, and sources configured tmux plugins. Git clone/update requests retrieve chosen plugin artifacts, not a developer telemetry control. Local install paths and key bindings configure plugin management. Loaded plugins execute separate code and require their own audits; those were outside this task. Shell/Git hooks, tmux, and installation traffic have separate behavior. Bounded documentation review; no plugin execution, live configuration access, or network validation.",
         "checked_date": "2026-10-03"
       },
@@ -3315,9 +3212,7 @@
         "tool": "Android CLI (sdkmanager 23 and later)",
         "status": "supported",
         "mechanism": "Pass --no-metrics to disable metrics and crash reports. ~/.androidrc supplies default options, one per line; lines that start with # are skipped. A --no-metrics line applies to every run, including sdkmanager, which delegates to the Android CLI.",
-        "sources": [
-          "https://developer.android.com/tools/agents/android-cli"
-        ],
+        "sources": ["https://developer.android.com/tools/agents/android-cli"],
         "notes": "The ~/.androidrc parsing was read from the Android CLI bundle main.jar (AndroidDefaultValueProvider), because the documentation does not say that --no-metrics works there. sdkmanager from Command Line Tools 23.0 downloads the Android CLI into ~/.android/bin and ~/.android/cli on first use, with metrics on by default. SDK downloads and the CLI update check are separate traffic. Android Studio usage sharing is a separate manual control.",
         "checked_date": "2026-10-26"
       },
