@@ -952,25 +952,6 @@ checksum = "sha256:30443c413e74614a53deb90234e9c97661b1041a0f4aca601ceb482a578ae
 url = "https://github.com/direnv/direnv/releases/download/v2.38.2/direnv.darwin-arm64"
 url_api = "https://api.github.com/repos/direnv/direnv/releases/assets/627455431"
 
-[[tools.docker-cli]]
-version = "29.9.2"
-backend = "aqua:docker/cli"
-specifiers = ["latest"]
-
-[tools.docker-cli."platforms.macos-arm64"]
-checksum = "blake3:d10419d5ff12642d628f3cca6661628071b36c73e9f4a452b026f73b4959bff0"
-url = "https://download.docker.com/mac/static/stable/aarch64/docker-29.9.2.tgz"
-
-[[tools.docker-compose]]
-version = "5.6.1"
-backend = "github:docker/compose"
-specifiers = ["latest"]
-
-[tools.docker-compose."platforms.macos-arm64"]
-checksum = "sha256:fcce41226abd2b7b2936094e688bbd61284673dddafea542e08cb9a3b4423a8b"
-url = "https://github.com/docker/compose/releases/download/v5.6.1/docker-compose-darwin-aarch64"
-url_api = "https://api.github.com/repos/docker/compose/releases/assets/661714755"
-
 [[tools.eza]]
 version = "0.23.5"
 backend = "vfox:eza"

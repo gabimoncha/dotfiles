@@ -89,8 +89,6 @@ act = { version = "0.2.97", os = "macos" }
 ollama = { version = "0.40.8", os = "macos" }
 pandoc = { version = "latest", os = "macos" }
 typst = { version = "latest", os = "macos" }
-docker-cli = { version = "latest", os = "macos" }
-docker-compose = { version = "latest", os = "macos" }
 imagemagick = { version = "latest", os = "macos" }
 infisical = { version = "0.44.6", os = "macos" }
 portless = { version = "latest", os = "macos" }
