@@ -21,6 +21,8 @@ minimumReleaseAgeExcludes = [
   "agent-device",
   "@agentclientprotocol/codex-acp",
   "@agentclientprotocol/claude-agent-acp",
+  "@agentclientprotocol/sdk",
+  "@anthropic-ai/claude-agent-sdk",
   "tokenburnmarket",
   "oxlint",
   "oxfmt",
