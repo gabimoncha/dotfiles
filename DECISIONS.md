@@ -337,6 +337,10 @@ aliases (`npm`, `pnpm`, `cargo`, ...) stay there, because `sfw` adds about
 0.4 s and a node process to each call. Agents keep the release-age delays of
 mise, Bun, and pnpm.
 
+A login job on each Mac logs free memory and the busiest processes each minute
+into `~/.local/state/dotfiles/process-log/`, for 7 days. It keeps process names
+and parent names, never command arguments.
+
 ## Apple releases and macOS settings
 
 Setup uses public Apple releases only. Preflight stops on an offered macOS
