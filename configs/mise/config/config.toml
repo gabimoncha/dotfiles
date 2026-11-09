@@ -109,8 +109,6 @@ mas = { version = "latest", os = "macos" }
 "pipx:tldr" = { version = "latest", os = "macos" }
 "conda:bfg" = { version = "latest", os = "macos" }
 "conda:wget" = { version = "latest", os = "macos" }
-"npm:@agentclientprotocol/codex-acp" = { version = "latest", os = "macos" }
-"npm:@agentclientprotocol/claude-agent-acp" = { version = "latest", os = "macos" }
 herdr = { version = "latest", os = "macos" }
 "github:flowcopilot/aether" = { version = "0.2.9", os = "macos" }
 xcodegen = { version = "latest", os = "macos" }
@@ -127,7 +125,6 @@ trusted_config_paths = ["~/development/dotfiles"]
 lockfile_platforms = ["macos-arm64", "linux-x64"]
 use_versions_host_track = false
 # Codex CLI is vendor-owned. Ignore old project or shell version requests too.
-# This does not disable codex-acp or its private npm dependency.
 disable_tools = ["codex", "aqua:openai/codex", "npm:@openai/codex"]
 minimum_release_age = "4d"
 # Entries match a full backend ID, a registry short name, or a backend wildcard.
@@ -139,8 +136,6 @@ minimum_release_age_excludes = [
   "npm:agent-browser",
   "npm:agent-desktop",
   "npm:agent-device",
-  "npm:@agentclientprotocol/codex-acp",
-  "npm:@agentclientprotocol/claude-agent-acp",
   "npm:tokenburnmarket",
   "npm:oh-my-t3",
   "npm:omt3",

@@ -1464,44 +1464,6 @@
       "setup_actions": {}
     },
     {
-      "id": "npm_agentclientprotocol_codex_acp",
-      "tool": "npm:@agentclientprotocol/codex-acp",
-      "source": "mise",
-      "kind": "cli",
-      "research": {
-        "tool": "npm:@agentclientprotocol/codex-acp",
-        "status": "none_found",
-        "mechanism": "No documented adapter-specific analytics, automatic crash-reporting, or error-upload opt-out found in the upstream README and bounded search. Apply the separate Codex CLI controls to the Codex process used by this adapter.",
-        "sources": [
-          "https://github.com/agentclientprotocol/codex-acp",
-          "https://github.com/agentclientprotocol/codex-acp/blob/main/README.md",
-          "https://learn.chatgpt.com/docs/config-file/config-reference"
-        ],
-        "notes": "The adapter starts Codex App Server and includes an @openai/codex dependency; CODEX_PATH can select another binary. CODEX_CONFIG is a JSON object merged into session config, but no wrapper-specific telemetry setting is documented. APP_SERVER_LOGS selects a local log directory and is not an upload opt-out. Codex analytics/feedback/OTel settings are covered by the separate codex audit; client, authentication, model service and npm update traffic are separate. Current upstream docs do not prove absence of telemetry or control compatibility with every bundled Codex version.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {}
-    },
-    {
-      "id": "npm_agentclientprotocol_claude_agent_acp",
-      "tool": "npm:@agentclientprotocol/claude-agent-acp",
-      "source": "mise",
-      "kind": "cli",
-      "research": {
-        "tool": "npm:@agentclientprotocol/claude-agent-acp",
-        "status": "none_found",
-        "mechanism": "No documented opt-out found for analytics or remote crash/error reporting specific to this ACP adapter. Claude Code and the Claude Agent SDK are separate underlying components; use their own documented controls rather than inventing an adapter flag.",
-        "sources": [
-          "https://raw.githubusercontent.com/agentclientprotocol/claude-agent-acp/main/README.md",
-          "https://raw.githubusercontent.com/agentclientprotocol/claude-agent-acp/main/src/index.ts",
-          "https://raw.githubusercontent.com/agentclientprotocol/claude-agent-acp/main/package.json"
-        ],
-        "notes": "The package implements an ACP agent through the Claude Agent SDK. Its entry point writes errors to stderr and enables an optional local agent.log only when CLAUDE_AGENT_LOGS names a directory; this is local logging, not a remote telemetry switch. ACP token/cost usage messages to the client are protocol output. Provider requests, MCP traffic, and npm package downloads are separate service or installation traffic. Research covers current upstream source, not a live installed version.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {}
-    },
-    {
       "id": "npm_cf",
       "tool": "npm:cf",
       "source": "mise",
