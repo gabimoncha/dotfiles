@@ -2,7 +2,6 @@
 
 set -euo pipefail
 
-self_path="$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")"
 routing_file="${GH_ACCOUNT_ROUTING_FILE:-${HOME}/.config/local/github-account-routing}"
 
 if [[ ! -r "$routing_file" && -n "${DOTFILES_ROOT:-}" ]]; then

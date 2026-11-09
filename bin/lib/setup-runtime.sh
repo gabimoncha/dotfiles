@@ -135,7 +135,7 @@ runtime_record_completed() { runtime_record completed "$1" "${2:-completed}"; }
 runtime_record_deferred() { runtime_record deferred "$1" "${2:-deferred}" "" "${3:-}"; }
 runtime_record_failure() { runtime_record "$1" "$2" "$3" "${4:-}" "${5:-}"; }
 runtime_acquire_lock() {
-  local lock_name="$1" lock_dir="${DOTFILES_RUNTIME_LOCK_ROOT}/$1.lock" pid=""
+  local lock_dir="${DOTFILES_RUNTIME_LOCK_ROOT}/$1.lock" pid=""
   mkdir -p "$DOTFILES_RUNTIME_LOCK_ROOT"
   if ! mkdir "$lock_dir" 2>/dev/null; then
     [[ -f "$lock_dir/pid" ]] && read -r pid <"$lock_dir/pid"
