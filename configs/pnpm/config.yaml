@@ -6,4 +6,11 @@ minimumReleaseAgeExclude:
   - agent-browser
   - agent-desktop
   - agent-device
+  - oxlint
+  - oxfmt
+  - tsrs
+  - tla-ts
+  - "@types/bun"
+  - fallow
+  - react-doctor
 virtualStoreType: global

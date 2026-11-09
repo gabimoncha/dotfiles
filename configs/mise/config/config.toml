@@ -67,7 +67,7 @@ hk = "latest"
 shellcheck = "latest"
 shfmt = "latest"
 # TypeScript checks and the editor language server (~/.config/tsrs/tsgo).
-"npm:tsrs" = "0.18.0-ts7.1.0-dev.20260929"
+"npm:tsrs" = "latest"
 # Linux only: the Mac installs btop with Homebrew, and btop ships no macOS build.
 btop = { version = "latest", os = "linux" }
 
@@ -146,6 +146,14 @@ minimum_release_age_excludes = [
   "npm:omt3",
   "npm:t3",
   "github:flowcopilot/aether",
+  # Code checks run the newest release, so a project and the editor agree.
+  "npm:oxlint",
+  "npm:oxfmt",
+  "npm:tsrs",
+  "npm:tla-ts",
+  "npm:fallow",
+  "npm:react-doctor",
+  "hk",
 ]
 
 [settings.npm]
