@@ -118,6 +118,9 @@ xcodegen = { version = "latest", os = "macos" }
 
 [settings]
 experimental = true
+# Activated shells (configs/zsh/mise-activate.zsh) never install a missing tool
+# when a command is not found. Setup and `mise install` install tools.
+not_found_auto_install = false
 # The repository root holds a mise.toml. Trust it, so tools work in that folder.
 trusted_config_paths = ["~/development/dotfiles"]
 # Linux boxes install from the same lockfile.
@@ -147,6 +150,27 @@ minimum_release_age_excludes = [
 
 [settings.npm]
 package_manager = "bun"
+
+# Activated shells define these aliases, in zsh and bash, for people and agents.
+# configs/zsh/aliases.zsh keeps two groups for interactive zsh only. Aliases
+# that replace a standard command (cat, ls, grep, tree): agents write flags for
+# the standard command, and `grep -r` means --replace in rg. The Socket Firewall
+# aliases (npm, pnpm, ...): sfw adds about 0.4 s and a node process to each
+# call. Agents keep the release-age delays of mise, Bun, and pnpm.
+[shell_alias]
+g = "git"
+gcai = "commit-ai"
+ll = "eza -la --git"
+la = "eza -a"
+lg = "lazygit"
+n = "nvim"
+cc = "claude"
+help = "use-my-mac"
+myip = "curl ifconfig.me"
+hosts = "sudo nvim /etc/hosts"
+localip = "{% if os() == 'macos' %}ipconfig getifaddr en0{% else %}hostname -I | awk '{print $1}'{% endif %}"
+cleanup = "find . -name .DS_Store -delete"
+brewup = "brew update && brew upgrade && brew cleanup"
 
 # Compilation was enabled because precompiled Ruby 3.4.11 bundled OpenSSL 3.5.5.
 [settings.ruby]

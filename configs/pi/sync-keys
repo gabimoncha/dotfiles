@@ -1,0 +1,8 @@
+# Settings of ~/.pi/agent/settings.json that bin/save-settings copies into
+# configs/pi/settings.json. A public rule names one setting. A private rule
+# can name a whole section. Each key in configs/pi/settings.json needs a
+# public rule. Settings on neither list are counted, not saved: run
+# ./bin/save-settings --show-new to list them.
+# Pi runs each command with `bash -c`, which reads no startup file. This prefix
+# activates mise first, as zshenv does for the agents that run zsh.
+public .shellCommandPrefix

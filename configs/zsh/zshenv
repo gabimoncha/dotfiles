@@ -1,2 +1,7 @@
 # zsh reads this file for every shell, so keep it tiny.
 [ -r "$HOME/.config/zsh/env.zsh" ] && source "$HOME/.config/zsh/env.zsh"
+# Agents run commands with `zsh -c`, which reads only this file. A login shell
+# activates mise at the end of zprofile, and an interactive shell in interactive.zsh.
+if [[ ! -o login && ! -o interactive && -r "$HOME/.config/zsh/mise-activate.zsh" ]]; then
+  source "$HOME/.config/zsh/mise-activate.zsh"
+fi

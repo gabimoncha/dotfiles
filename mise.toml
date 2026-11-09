@@ -17,10 +17,12 @@ min_version = { soft = "2026.11.1" }
 "~/.config/zsh/functions.zsh" = { source = "configs/zsh/functions.zsh", mode = "symlink" }
 "~/.config/zsh/harness.zsh" = { source = "configs/zsh/harness.zsh", mode = "symlink" }
 "~/.config/zsh/interactive.zsh" = { source = "configs/zsh/interactive.zsh", mode = "symlink" }
+"~/.config/zsh/mise-activate.zsh" = { source = "configs/zsh/mise-activate.zsh", mode = "symlink" }
 "~/.config/zsh/mise-npx.zsh" = { source = "configs/zsh/mise-npx.zsh", mode = "symlink" }
 "~/.config/zsh/path.zsh" = { source = "configs/zsh/path.zsh", mode = "symlink" }
 "~/.config/zsh/profile.zsh" = { source = "configs/zsh/profile.zsh", mode = "symlink" }
 "~/.config/zsh/telemetry.sh" = { source = "configs/zsh/telemetry.sh", mode = "symlink" }
+"~/.config/bash/mise-activate.bash" = { source = "configs/bash/mise-activate.bash", mode = "symlink" }
 
 "~/.gitconfig" = { source = "configs/git/gitconfig", mode = "symlink" }
 "~/bin/gh" = { source = "configs/gh/gh", mode = "symlink" }
@@ -50,6 +52,7 @@ min_version = { soft = "2026.11.1" }
 "~/.codex/config.toml/defaults" = { source = "configs/codex/defaults.toml", merge = "missing" }
 "~/.t3/userdata/settings.json/dotfiles" = { source = "configs/t3/settings.json", merge = true }
 "~/.config/opencode/opencode.json/dotfiles" = { source = "configs/opencode/opencode.json", merge = true }
+"~/.pi/agent/settings.json/dotfiles" = { source = "configs/pi/settings.json", merge = true }
 
 [bootstrap.repos]
 "~/.oh-my-zsh" = { url = "https://github.com/ohmyzsh/ohmyzsh.git", depth = 1 }

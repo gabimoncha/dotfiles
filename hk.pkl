@@ -7,6 +7,7 @@ local shellFiles =
   List(
     "bin/*",
     "bin/lib/*.sh",
+    "configs/bash/*.bash",
     "configs/gh/gh",
     "configs/gh/dotfiles-gh-real",
     "configs/harness/harness",

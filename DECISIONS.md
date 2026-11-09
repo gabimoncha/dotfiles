@@ -210,8 +210,8 @@ macos-arm64 and linux-x64. mise finds the sidecars through the
 `~/.config/mise` link. Keep the installed mise at or
 above the pin before linking or updating the lockfile. Native package support
 does not yet preserve all tap trust, app-presence, sudo, and vendor installer
-rules. Those steps stay in scripts. Shell startup keeps static shims and zsh
-aliases.
+rules. Those steps stay in scripts. Shell startup activates mise; see
+[GitHub and shell startup](#github-and-shell-startup).
 
 After a pull that moves sources, the old HOME links are broken until
 `./bin/link-dotfiles` runs. It points them at the new sources.
@@ -315,8 +315,27 @@ real gh binary without shims or the routing wrapper. API access gates the large
 mise install. SSH readiness is a separate check.
 
 Git identity, SSH identity, and API account routing stay separate and local.
-Shell startup uses static shims and installed integrations. It never installs
-tools or looks up credentials.
+
+Every shell activates mise: `configs/zsh/mise-activate.zsh` for zsh, and
+`configs/bash/mise-activate.bash` for the bash commands of Pi. Agents run
+commands with `zsh -c` (OpenCode, Claude), `zsh -lc` (Codex), `zsh -ilc`
+(Cursor), or `bash -c` (Pi). So zshenv activates mise for `zsh -c`, the end of
+zprofile for `zsh -lc`, interactive.zsh for an interactive shell, and Pi's
+`shellCommandPrefix` for bash. A command then gets the tool versions of its
+folder without `mise exec`. A tool starts directly, not through a shim that
+starts the 135 MB mise binary each time. Shims stay on PATH behind the
+activated tools, for scripts and GUI apps. Activation costs about 0.2 s for
+each zsh, and it skips a shell that `mise exec TOOL@VERSION` or a mise task
+started. It never installs tools (`not_found_auto_install = false`) or looks
+up credentials.
+
+Aliases for every shell are in `[shell_alias]` in the global mise config.
+Two groups stay in `configs/zsh/aliases.zsh` for interactive zsh only. Aliases
+that replace a standard command (`cat`, `ls`, `grep`, `tree`) stay there,
+because agents write flags for the standard command. The Socket Firewall
+aliases (`npm`, `pnpm`, `cargo`, ...) stay there, because `sfw` adds about
+0.4 s and a node process to each call. Agents keep the release-age delays of
+mise, Bun, and pnpm.
 
 ## Apple releases and macOS settings
 
