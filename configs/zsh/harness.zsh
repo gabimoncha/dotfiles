@@ -4,7 +4,7 @@
 # It prunes only the tools in the global config, such as the old Bun after a pin
 # change. A project whose mise.toml mise does not track (for example an
 # untrusted one) keeps its tools.
-_dotfiles_mise_prune_global() {
+__dotfiles_mise_prune_global() {
   local -a tools
   tools=(${${(f)"$(command mise ls --global --no-header 2>/dev/null)"}%% *})
   ((${#tools})) || return 0
@@ -14,12 +14,12 @@ _dotfiles_mise_prune_global() {
 
 # Activation (mise-activate.zsh) defines a mise function that runs `mise shell`
 # and `mise deactivate` in this shell. Keep it, and pass it the other commands.
-if ((${+functions[mise]} && ! ${+functions[_dotfiles_mise_activated]})); then
-  functions[_dotfiles_mise_activated]=$functions[mise]
+if ((${+functions[mise]} && ! ${+functions[__dotfiles_mise_activated]})); then
+  functions[__dotfiles_mise_activated]=$functions[mise]
 fi
-_dotfiles_mise_next() {
-  if ((${+functions[_dotfiles_mise_activated]})); then
-    _dotfiles_mise_activated "$@"
+__dotfiles_mise_next() {
+  if ((${+functions[__dotfiles_mise_activated]})); then
+    __dotfiles_mise_activated "$@"
   else
     command mise "$@"
   fi
@@ -46,11 +46,11 @@ mise() {
         done
       fi
       if ((prune)); then
-        _dotfiles_mise_prune_global
+        __dotfiles_mise_prune_global
       fi
       "$HOME/bin/harness" update --installed-only
       "${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/save-lock"
       ;;
-    *) _dotfiles_mise_next "$@" ;;
+    *) __dotfiles_mise_next "$@" ;;
   esac
 }

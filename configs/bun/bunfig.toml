@@ -19,8 +19,6 @@ minimumReleaseAgeExcludes = [
   "agent-browser",
   "agent-desktop",
   "agent-device",
-  "@agentclientprotocol/codex-acp",
-  "@agentclientprotocol/claude-agent-acp",
   "tokenburnmarket",
   "oxlint",
   "oxfmt",
