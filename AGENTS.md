@@ -82,6 +82,9 @@ run, and the mise tool list. A change that works only on the Mac breaks Linux.
   `minimumReleaseAgeExcludes` in `configs/bun/bunfig.toml`. If `mise up` then
   fails with `<name>@<version> failed to resolve`, add that dependency to the
   Bun list too.
+- Set a tool on `minimum_release_age_excludes` to `latest`. Don't pin its
+  version; `mise.lock` records it. `github:flowcopilot/aether` stays pinned,
+  because mise finds no releases for it.
 - Keep local companions under ignored `local/`; only examples belong in Git.
 - Keep the profile checks in `bin/lib/dotfiles-profile.sh` before setup writes.
   The Air and VM profiles stay deferred.

@@ -1440,9 +1440,9 @@ backend = "npm:ios-deploy"
 specifiers = ["latest"]
 
 [[tools."npm:oh-my-t3"]]
-version = "0.6.1"
+version = "0.7.0"
 backend = "npm:oh-my-t3"
-specifiers = ["0.6.1"]
+specifiers = ["latest"]
 
 [[tools."npm:oxfmt"]]
 version = "0.75.0"
