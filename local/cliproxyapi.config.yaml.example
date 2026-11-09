@@ -123,6 +123,13 @@ oauth:
       - "kimi-k2.8-code"
       - "kimi-k3"
       - "kimi-k3-256k"
+upstream:
+  claude:
+    header-defaults:
+      # T3 runs Claude Code as entrypoint "t3-code". Without this, the proxy
+      # replaces T3's Claude Code version with its built-in default, and the API
+      # rejects models that need a newer version.
+      native-entrypoints: ["t3-code"]
 routing:
   strategy: "round-robin"
   session-affinity: true
