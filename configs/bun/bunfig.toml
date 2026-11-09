@@ -7,6 +7,10 @@ minimumReleaseAge = 345600
 # bun has no scope wildcards, so the new dependencies of eas-cli and cf are
 # listed after each one. When a release adds another, mise up fails with
 # "<name>@<version> failed to resolve". Add that name here.
+# The code-check tools ship their binaries in platform packages, which bun
+# installs as optional dependencies. bun skips a blocked optional package with
+# no error, and the tool then fails to start. The list has the packages for
+# macos-arm64 and linux-x64, the lockfile_platforms in config.toml.
 minimumReleaseAgeExcludes = [
   "cf",
   "t3",
@@ -25,6 +29,17 @@ minimumReleaseAgeExcludes = [
   "@types/bun",
   "fallow",
   "react-doctor",
+  "@tsrs/darwin-arm64",
+  "@tsrs/linux-x64-gnu",
+  "@oxlint/binding-darwin-arm64",
+  "@oxlint/binding-linux-x64-gnu",
+  "@oxfmt/binding-darwin-arm64",
+  "@oxfmt/binding-linux-x64-gnu",
+  "@fallow-cli/darwin-arm64",
+  "@fallow-cli/linux-x64-gnu",
+  "fallow-type-aware",
+  "oxlint-plugin-react-doctor",
+  "bun-types",
   "eas-cli",
   "@expo/eas-build-job",
   "@expo/eas-json",

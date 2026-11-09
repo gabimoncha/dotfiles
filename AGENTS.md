@@ -81,7 +81,9 @@ run, and the mise tool list. A change that works only on the Mac breaks Linux.
   in `configs/mise/config/config.toml`, make the same change for `<package>` in
   `minimumReleaseAgeExcludes` in `configs/bun/bunfig.toml`. If `mise up` then
   fails with `<name>@<version> failed to resolve`, add that dependency to the
-  Bun list too.
+  Bun list too. When the tool ships its binary in platform packages, such as
+  `@tsrs/darwin-arm64`, add the macos-arm64 and linux-x64 packages too. Bun
+  skips a blocked platform package with no error, and the tool fails to start.
 - Set a tool on `minimum_release_age_excludes` to `latest`. Don't pin its
   version; `mise.lock` records it. `github:flowcopilot/aether` stays pinned,
   because mise finds no releases for it.
