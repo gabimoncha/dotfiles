@@ -48,8 +48,8 @@ if [[ -n "${SSH_TTY-}" && -z "${TMUX-}" && -o login && -o interactive ]] && (($+
   }
 fi
 
-# Static shims avoid invoking mise or credentials during prompt initialization.
-# Missing tools are installed only by an explicit setup/update command.
+# Print the installed executable of a tool, not its mise shim. Missing tools
+# are installed only by an explicit setup or update command.
 _dotfiles_real_tool() {
   local candidate="${commands[$1]-}"
   local mise_root="${MISE_DATA_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/mise}"
@@ -70,6 +70,10 @@ _dotfiles_real_tool() {
   print -r -- "$candidate"
 }
 path=("$HOME/bin" "$HOME/.local/bin" $path)
+
+# Activate before harness.zsh, which wraps the mise function that activation
+# defines. Activation never installs tools: not_found_auto_install is off.
+[ -r "$HOME/.config/zsh/mise-activate.zsh" ] && source "$HOME/.config/zsh/mise-activate.zsh"
 
 export ZSH="${ZSH:-$HOME/.oh-my-zsh}"
 ZSH_THEME=""

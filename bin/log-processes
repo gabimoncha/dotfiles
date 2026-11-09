@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# Record memory use and the busiest processes, so that a later memory incident
+# shows what grew and what started it. A login job in mise.macos.toml runs this
+# every minute through the ~/bin/dotfiles-process-log link. It also runs by
+# hand on Linux.
+#
+# Usage: log-processes
+#
+# Each run appends tab-separated lines to
+# ~/.local/state/dotfiles/process-log/YYYY-MM-DD.log, and deletes the logs that
+# are older than 7 days. Each line starts with the time and a kind:
+#   mem    free memory, swap use, and the process count
+#   count  processes per name, with the 3 most common parent names
+#   proc   the largest processes: memory in MB, pid, name, parent name
+#   group  memory in MB of all processes with one name, and their count
+# The log keeps process names only. It never keeps command arguments, which
+# can hold tokens, or executable paths.
+set -uo pipefail
+
+log_dir="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/process-log"
+mkdir -p "$log_dir" || exit 1
+log="$log_dir/$(date +%Y-%m-%d).log"
+now="$(date +%Y-%m-%dT%H:%M:%S%z)"
+rows=10
+
+if [[ "$(uname -s)" == Darwin ]]; then
+  # The share of memory that the kernel counts as free, from 0 to 100.
+  free="$(sysctl -n kern.memorystatus_level 2>/dev/null || echo '?')%"
+  # "total = 4096.00M  used = 1234.50M  free = 2861.50M  (encrypted)"
+  swap="$(sysctl -n vm.swapusage 2>/dev/null | awk '{ print $6 "/" $3 }')"
+  processes="$(ps -ax -o pid= -o ppid= -o rss= -o comm=)"
+else
+  free="$(awk '/^MemTotal:/ { t = $2 } /^MemAvailable:/ { a = $2 } END { if (t) printf "%d%%", a * 100 / t }' /proc/meminfo)"
+  swap="$(awk '/^SwapTotal:/ { t = $2 } /^SwapFree:/ { f = $2 } END { printf "%.0fM/%.0fM", (t - f) / 1024, t / 1024 }' /proc/meminfo)"
+  processes="$(ps -e -o pid= -o ppid= -o rss= -o comm=)"
+fi
+
+# awk prints the rows unsorted, with the sort key in field 2. sort and head
+# keep the largest rows of each kind. BSD awk has no sort function.
+summary="$(printf '%s\n' "$processes" | awk -v OFS='\t' '
+  NF >= 4 {
+    pid = $1; ppid = $2; rss = $3
+    # The name can hold spaces. Keep the text after the third field, and only
+    # its last path part.
+    name = $0
+    sub(/^[ \t]*[0-9]+[ \t]+[0-9]+[ \t]+[0-9]+[ \t]+/, "", name)
+    sub(/.*\//, "", name)
+    gsub(/\t/, " ", name)
+    names[pid] = name; parents[pid] = ppid; sizes[pid] = rss
+    count[name]++; total[name] += rss; all++
+  }
+  END {
+    print "mem", 0, all
+    for (pid in names) {
+      name = names[pid]
+      parent = (parents[pid] in names) ? names[parents[pid]] : "?"
+      pairs[name SUBSEP parent]++
+      print "proc", int(sizes[pid] / 1024), pid, name, parent
+    }
+    # Keep the 3 most common parent names of each name, in one pass.
+    for (key in pairs) {
+      split(key, part, SUBSEP); name = part[1]; n = pairs[key]
+      if (n > c1[name]) {
+        c3[name] = c2[name]; p3[name] = p2[name]
+        c2[name] = c1[name]; p2[name] = p1[name]
+        c1[name] = n; p1[name] = part[2]
+      } else if (n > c2[name]) {
+        c3[name] = c2[name]; p3[name] = p2[name]
+        c2[name] = n; p2[name] = part[2]
+      } else if (n > c3[name]) {
+        c3[name] = n; p3[name] = part[2]
+      }
+    }
+    for (name in count) {
+      print "group", int(total[name] / 1024), count[name], name
+      top = p1[name] " " c1[name]
+      if (c2[name]) top = top ", " p2[name] " " c2[name]
+      if (c3[name]) top = top ", " p3[name] " " c3[name]
+      print "count", count[name], name, top
+    }
+  }')"
+
+{
+  printf '%s\tmem\tfree=%s\tswap=%s\tprocesses=%s\n' "$now" "$free" "$swap" \
+    "$(printf '%s\n' "$summary" | awk -F '\t' '$1 == "mem" { print $3 }')"
+  for kind in count proc group; do
+    printf '%s\n' "$summary" | awk -F '\t' -v kind="$kind" '$1 == kind' |
+      sort -t "$(printf '\t')" -k2,2nr | head -n "$rows" |
+      awk -v now="$now" '{ print now "\t" $0 }'
+  done
+} >>"$log"
+
+find "$log_dir" -type f -name '*.log' -mtime +7 -delete 2>/dev/null
+exit 0

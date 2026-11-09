@@ -14,3 +14,10 @@ source ~/.orbstack/shell/init.zsh 2>/dev/null || :
 # >>> Codex installer >>>
 export PATH="$HOME/.local/bin:$PATH"
 # <<< Codex installer <<<
+
+# `zsh -lc` (Codex) reads no zshrc. Activate mise last, after the macOS
+# path_helper and the lines above have set PATH. interactive.zsh activates it
+# for an interactive shell.
+if [[ ! -o interactive && -r "$HOME/.config/zsh/mise-activate.zsh" ]]; then
+  source "$HOME/.config/zsh/mise-activate.zsh"
+fi

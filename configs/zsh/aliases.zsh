@@ -1,29 +1,15 @@
-# Replace a system command only when the replacement is installed.
+# Aliases for every shell, agents too, are in [shell_alias] in
+# configs/mise/config/config.toml. Only interactive zsh gets these aliases.
+# The first ones replace a standard command, and agents write flags for the
+# standard command.
 if (($+commands[rg])); then alias grep='rg'; fi
 if (($+commands[bat])); then alias cat='bat'; fi
-if (($+commands[eza])); then
-  alias ls='eza'
-  alias ll='eza -la --git'
-  alias la='eza -a'
-fi
+if (($+commands[eza])); then alias ls='eza'; fi
 alias tree='tree -a -I .git'
-alias g='git'
-alias gcai='commit-ai'
-alias myip='curl ifconfig.me'
-alias hosts='sudo nvim /etc/hosts'
-if [[ "$OSTYPE" == darwin* ]]; then
-  alias localip='ipconfig getifaddr en0'
-  alias cleanup='find . -name ".DS_Store" -delete'
-  alias brewup='brew update && brew upgrade && brew cleanup'
-else
-  alias localip="hostname -I | awk '{print \$1}'"
-fi
-alias help='use-my-mac'
-alias cc='claude'
-alias n='nvim'
-alias lg='lazygit'
 
-if _dotfiles_real_tool sfw >/dev/null 2>&1; then
+# Socket Firewall checks each package that these managers download. It adds
+# about 0.4 s and a node process to each call, so agent shells skip it.
+if (($+commands[sfw])); then
   alias npm='sfw npm'
   alias pnpm='sfw pnpm'
   alias yarn='sfw yarn'

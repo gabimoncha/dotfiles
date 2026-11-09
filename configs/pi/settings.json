@@ -1,0 +1,3 @@
+{
+  "shellCommandPrefix": "[ ! -r \"$HOME/.config/bash/mise-activate.bash\" ] || . \"$HOME/.config/bash/mise-activate.bash\""
+}

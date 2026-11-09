@@ -12,6 +12,19 @@ _dotfiles_mise_prune_global() {
     print -u2 'mise prune failed; rerun: mise prune --tools <tool>'
 }
 
+# Activation (mise-activate.zsh) defines a mise function that runs `mise shell`
+# and `mise deactivate` in this shell. Keep it, and pass it the other commands.
+if ((${+functions[mise]} && ! ${+functions[_dotfiles_mise_activated]})); then
+  functions[_dotfiles_mise_activated]=$functions[mise]
+fi
+_dotfiles_mise_next() {
+  if ((${+functions[_dotfiles_mise_activated]})); then
+    _dotfiles_mise_activated "$@"
+  else
+    command mise "$@"
+  fi
+}
+
 mise() {
   local subcommand="${1:-}" argument prune=1
   case "$subcommand" in
@@ -38,6 +51,6 @@ mise() {
       "$HOME/bin/harness" update --installed-only
       "${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/save-lock"
       ;;
-    *) command mise "$@" ;;
+    *) _dotfiles_mise_next "$@" ;;
   esac
 }
