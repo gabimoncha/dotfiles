@@ -1440,9 +1440,9 @@ backend = "npm:ios-deploy"
 specifiers = ["latest"]
 
 [[tools."npm:oh-my-t3"]]
-version = "0.6.1"
+version = "0.7.0"
 backend = "npm:oh-my-t3"
-specifiers = ["0.6.1"]
+specifiers = ["latest"]
 
 [[tools."npm:oxfmt"]]
 version = "0.75.0"
@@ -1465,9 +1465,9 @@ backend = "npm:tree-sitter-cli"
 specifiers = ["latest"]
 
 [[tools."npm:tsrs"]]
-version = "0.18.0-ts7.1.0-dev.20260929"
+version = "0.23.0-ts7.1.0-beta"
 backend = "npm:tsrs"
-specifiers = ["0.18.0-ts7.1.0-dev.20260929"]
+specifiers = ["latest"]
 
 [[tools.ollama]]
 version = "0.40.8"

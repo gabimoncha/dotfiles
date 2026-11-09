@@ -46,7 +46,8 @@ local hookSteps = new Mapping<String, Step> {
   }
   // oxfmt keeps line breaks in prose and pads tables so their columns line up.
   ["oxfmt"] = (Builtins.oxfmt) {
-    glob = List("**/*.md")
+    glob = List("**/*.md", "**/*.json", "**/*.toml", "**/*.yaml", "**/*.yml")
+    exclude = appWritten
   }
   // Fails only on errors for now. Raise the severity in a later change.
   ["shellcheck"] {

@@ -6,4 +6,20 @@ minimumReleaseAgeExclude:
   - agent-browser
   - agent-desktop
   - agent-device
+  - oxlint
+  - oxfmt
+  - tsrs
+  - tla-ts
+  - "@types/bun"
+  - fallow
+  - react-doctor
+  # The tools' binary packages. pnpm checks the packages of every platform,
+  # not only this one, and stops on a blocked one.
+  - "@tsrs/*"
+  - "@oxlint/binding-*"
+  - "@oxfmt/binding-*"
+  - "@fallow-cli/*"
+  - fallow-type-aware
+  - oxlint-plugin-react-doctor
+  - bun-types
 virtualStoreType: global
