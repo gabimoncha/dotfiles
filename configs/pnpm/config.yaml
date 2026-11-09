@@ -13,14 +13,12 @@ minimumReleaseAgeExclude:
   - "@types/bun"
   - fallow
   - react-doctor
-  - "@tsrs/darwin-arm64"
-  - "@tsrs/linux-x64-gnu"
-  - "@oxlint/binding-darwin-arm64"
-  - "@oxlint/binding-linux-x64-gnu"
-  - "@oxfmt/binding-darwin-arm64"
-  - "@oxfmt/binding-linux-x64-gnu"
-  - "@fallow-cli/darwin-arm64"
-  - "@fallow-cli/linux-x64-gnu"
+  # The tools' binary packages. pnpm checks the packages of every platform,
+  # not only this one, and stops on a blocked one.
+  - "@tsrs/*"
+  - "@oxlint/binding-*"
+  - "@oxfmt/binding-*"
+  - "@fallow-cli/*"
   - fallow-type-aware
   - oxlint-plugin-react-doctor
   - bun-types
