@@ -623,9 +623,13 @@ setup_standalone_agents() {
   fi
 }
 setup_telemetry() { "${repo_root}/bin/configure-telemetry"; }
-# The checkout folders: work, client projects, personal projects, forks and
-# friends' repositories, and read-only third-party clones.
-setup_code_folders() { mkdir -p "$HOME/code/work" "$HOME/code/client" "$HOME/code/personal" "$HOME/code/contrib" "$HOME/code/ref"; }
+# The checkout folders: work projects, personal projects, and forks and
+# friends' repositories. Only macowl has client projects. You create ~/code/ref
+# when you need it.
+setup_code_folders() {
+  mkdir -p "$HOME/code/work" "$HOME/code/personal" "$HOME/code/contrib" || return
+  [[ "$DOTFILES_PROFILE" != macowl ]] || mkdir -p "$HOME/code/client"
+}
 setup_t3_service() { "${repo_root}/bin/setup-t3-service"; }
 setup_remote_access() { "${repo_root}/bin/configure-remote-access"; }
 setup_tokenburnmarket() { "${repo_root}/bin/setup-tokenburnmarket"; }
