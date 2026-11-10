@@ -128,7 +128,10 @@ Two settings keep tools working inside the repository. mise refuses an
 untrusted file with `[dotfiles]` entries, and then every shim in this folder
 fails. The runtime list therefore trusts `~/code/personal/dotfiles`
 (`trusted_config_paths`), and `bin/link-dotfiles` trusts the root files for a
-checkout in another path. The root `min_version` is soft for the same reason:
+checkout in another path. The list also trusts `~/code/work` and
+`~/code/client`, which hold the owner's projects. It leaves out
+`~/code/contrib` and `~/code/ref`: a mise config can run commands, and those
+folders hold other people's repositories. The root `min_version` is soft for the same reason:
 a hard minimum stops every shim in this folder while an older mise is
 installed. `bin/repo-mise` still requires the pinned release.
 

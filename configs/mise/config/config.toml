@@ -119,7 +119,9 @@ experimental = true
 # when a command is not found. Setup and `mise install` install tools.
 not_found_auto_install = false
 # The repository root holds a mise.toml. Trust it, so tools work in that folder.
-trusted_config_paths = ["~/code/personal/dotfiles"]
+# Work and client projects are trusted too. ~/code/contrib and ~/code/ref hold
+# other people's repositories, so mise asks before it loads a config there.
+trusted_config_paths = ["~/code/personal/dotfiles", "~/code/work", "~/code/client"]
 # Linux boxes install from the same lockfile.
 lockfile_platforms = ["macos-arm64", "linux-x64"]
 use_versions_host_track = false
