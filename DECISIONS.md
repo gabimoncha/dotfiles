@@ -15,6 +15,13 @@ and restores. The user then signs in to the App Store, reviews App Management,
 and restarts the terminal. `--continue` acknowledges that step. No marker or TCC
 probe can verify consent or a restart.
 
+macOS shows the App Management prompt only when a process first changes an app
+from another developer in `/Applications`, and a new Mac has no such app. So
+the last preparation step, `app_management_prompt`, installs the Raycast cask
+and writes an extended attribute on the app, then removes it. The prompt then
+shows before the terminal restart. The step is optional, and its result does
+not prove consent.
+
 Telemetry opt-outs are the one exception to that boundary. Setup exports them
 before installers run and reapplies them after packages and restores, also when
 another step fails. mise installs the login job that sets them for GUI apps,

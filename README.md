@@ -243,7 +243,9 @@ the terminal.
 
 The first phase installs the foundation tools: Homebrew, standalone mise, an
 isolated GitHub CLI, Codex CLI, Claude Code, Cursor Agent, and OpenCode v2.
-Then it stops:
+It also installs one app, Raycast, and changes an attribute of it, so that
+macOS shows the App Management prompt in this phase and not in the middle of
+the app installs. Then it stops:
 
 1. Sign in to the App Store app.
 2. In **System Settings > Privacy & Security > App Management**, allow the

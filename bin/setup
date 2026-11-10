@@ -156,6 +156,7 @@ setup_macos_prepare() {
   step brew_environment local setup_brew_environment
   step standalone_agents capture setup_standalone_agents
   step --optional --always telemetry capture setup_telemetry
+  step --optional app_management_prompt capture setup_app_management_prompt
   step permission_handoff capture setup_permission_handoff
 }
 
