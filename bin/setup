@@ -169,6 +169,7 @@ setup_macos_continue() {
   step brew_environment local setup_brew_environment
   # The mise config links must exist before setup checks mise's GitHub access.
   step links capture setup_links
+  step --optional code_folders local setup_code_folders
   # The GitHub steps are optional: setup_mise_inventory and bin/install-apps
   # check the API access themselves, and the other steps do not need it.
   step --optional authenticate_api sensitive setup_api
@@ -222,6 +223,7 @@ setup_linux() {
   step system_packages capture setup_linux_system
   step install_gh capture setup_install_gh
   step links capture setup_links
+  step --optional code_folders local setup_code_folders
   step --optional submodules capture setup_submodules
   if [[ "${DOTFILES_SKIP_GITHUB_AUTH:-0}" == 1 ]]; then
     skip_step authenticate_api 'DOTFILES_SKIP_GITHUB_AUTH=1; run ./bin/auth-setup later'

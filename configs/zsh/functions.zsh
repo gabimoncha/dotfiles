@@ -1,5 +1,5 @@
 dotfiles() {
-  cd "${DOTFILES_ROOT:-$HOME/development/dotfiles}" || return
+  cd "${DOTFILES_ROOT:-$HOME/code/personal/dotfiles}" || return
 }
 
 code() {
@@ -7,7 +7,7 @@ code() {
 }
 
 dotfiles-update() {
-  "${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/dotfiles-update" "$@"
+  "${DOTFILES_ROOT:-$HOME/code/personal/dotfiles}/bin/dotfiles-update" "$@"
 }
 
 mkcd() {
@@ -363,7 +363,7 @@ _infisical_context() {
   local token="${(P)token_var}"
   if [[ -z "$token" ]]; then
     print -u2 "${command_name}: missing ${token_var}"
-    print -u2 "Add it to ~/.config/local/secrets.zsh or ${DOTFILES_ROOT:-$HOME/development/dotfiles}/local/secrets.zsh"
+    print -u2 "Add it to ~/.config/local/secrets.zsh or ${DOTFILES_ROOT:-$HOME/code/personal/dotfiles}/local/secrets.zsh"
     return 1
   fi
 

@@ -624,6 +624,9 @@ setup_standalone_agents() {
   fi
 }
 setup_telemetry() { "${repo_root}/bin/configure-telemetry"; }
+# The checkout folders: work, client projects, personal projects, forks and
+# friends' repositories, and read-only third-party clones.
+setup_code_folders() { mkdir -p "$HOME/code/work" "$HOME/code/client" "$HOME/code/personal" "$HOME/code/contrib" "$HOME/code/ref"; }
 setup_t3_service() { "${repo_root}/bin/setup-t3-service"; }
 setup_remote_access() { "${repo_root}/bin/configure-remote-access"; }
 setup_tokenburnmarket() { "${repo_root}/bin/setup-tokenburnmarket"; }

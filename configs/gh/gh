@@ -9,7 +9,9 @@ if [[ ! -r "$routing_file" && -n "${DOTFILES_ROOT:-}" ]]; then
 fi
 
 if [[ ! -r "$routing_file" ]]; then
-  default_dotfiles_root="${HOME}/development/dotfiles"
+  # ~/.config/mise links into the dotfiles checkout, wherever it is.
+  default_dotfiles_root="$(cd -P "${HOME}/.config/mise" 2>/dev/null && cd ../../.. && pwd)" ||
+    default_dotfiles_root="${HOME}/code/personal/dotfiles"
   routing_file="${default_dotfiles_root}/local/github-account-routing"
 fi
 

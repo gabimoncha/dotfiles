@@ -1,7 +1,6 @@
 # Shared interactive zsh configuration.
 
-export DOTFILES_ROOT="${DOTFILES_ROOT:-$HOME/development/dotfiles}"
-
+# env.zsh sets DOTFILES_ROOT.
 typeset -A dotfiles_sourced_local_configs
 for local_config in "$HOME"/.config/local/*.zsh(N) "${DOTFILES_ROOT}"/local/*.zsh(N); do
   local_config_real="${local_config:A}"

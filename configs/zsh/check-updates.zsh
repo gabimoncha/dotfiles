@@ -1,5 +1,5 @@
 _dotfiles_check_updates() {
-  local repo="${DOTFILES_ROOT:-$HOME/development/dotfiles}"
+  local repo="${DOTFILES_ROOT:-$HOME/code/personal/dotfiles}"
   local stamp="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/last-update-check"
   local now last
 

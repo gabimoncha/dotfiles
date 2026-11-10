@@ -144,7 +144,11 @@ if ! compile_helper; then
   exit 0
 fi
 
-add_favorite "development" "${HOME}/development" || warn "Could not add ~/development to Finder favorites"
+add_favorite "code" "${HOME}/code" || warn "Could not add ~/code to Finder favorites"
+# A machine that has not moved its checkouts to ~/code yet.
+if [[ -d "${HOME}/development" ]]; then
+  add_favorite "development" "${HOME}/development" || warn "Could not add ~/development to Finder favorites"
+fi
 add_favorite "screenshots" "${HOME}/Screenshots" || warn "Could not add ~/Screenshots to Finder favorites"
 
 killall sharedfilelistd >/dev/null 2>&1 || true

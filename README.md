@@ -56,6 +56,24 @@ app. The Mac mini gets the shared lists only. The
 [Mac mini guide](apps/remote-development.md#mac-mini) covers its T3 server,
 proxy key, and remote access.
 
+## Checkout folders
+
+Checkouts live in `~/code`, and setup creates its folders:
+
+```text
+~/code/
+  work/       work projects
+  client/     client and side projects
+  personal/   dotfiles, skills, and other personal projects
+  contrib/    forks and friends' repositories
+  ref/        read-only third-party clones
+```
+
+This repository goes in `~/code/personal/dotfiles`. `~/.config/mise` links
+into the checkout, and the shell and the mise tasks read the checkout's path
+from that link. A machine with the checkout in `~/development/dotfiles` keeps
+working until you move it.
+
 ## Change a setting
 
 Edit the file in `configs/<app>/`, or the `[dotfiles]` entry in a root mise
@@ -74,7 +92,7 @@ checked out. `--diff` does not show the content of merged settings, because
 those files can hold tokens.
 
 These mise tasks run the same scripts from any folder, for the checkout in
-`$DOTFILES_ROOT` or `~/development/dotfiles`: `dot:status`, `dot:diff`,
+`$DOTFILES_ROOT`, or the checkout that `~/.config/mise` links to: `dot:status`, `dot:diff`,
 `dot:apply`, `dot:save`, `dot:drift`, `setup`, `update`, `packages`, `backup`, `restore`,
 and `doctor`. For example, run `mise run dot:apply -- --dry-run`.
 
@@ -198,9 +216,9 @@ appears to be a prerelease. Update in System Settings, restart if needed, and
 retry. On a macOS beta, `--allow-macos-beta` lets one run continue. Setup does not install OS updates or change beta enrollment.
 
 ```bash
-mkdir -p ~/development
-git clone https://github.com/gabimoncha/dotfiles.git ~/development/dotfiles
-cd ~/development/dotfiles
+mkdir -p ~/code/personal
+git clone https://github.com/gabimoncha/dotfiles.git ~/code/personal/dotfiles
+cd ~/code/personal/dotfiles
 printf 'env = ["macowl"]\n' > .miserc.local.toml
 ./bin/setup
 ```
@@ -279,9 +297,9 @@ Setup also runs on Debian and Ubuntu, for example the NAS container in
 It needs `sudo` for apt and the login shell.
 
 ```bash
-mkdir -p ~/development
-git clone https://github.com/gabimoncha/dotfiles.git ~/development/dotfiles
-cd ~/development/dotfiles
+mkdir -p ~/code/personal
+git clone https://github.com/gabimoncha/dotfiles.git ~/code/personal/dotfiles
+cd ~/code/personal/dotfiles
 ./bin/setup --dry-run
 ./bin/setup
 ```
@@ -398,7 +416,7 @@ Authentication output is omitted. Review logs before you share them.
 | `./bin/configure-app-settings`                          | Retry the login-item setup.                                                                                                                                                                                                                                |
 | `./bin/configure-telemetry [--dry-run]`                 | Apply the telemetry opt-outs to installed tools.                                                                                                                                                                                                           |
 | `./bin/configure-screenshots`                           | Repair the PNG destination at `~/Screenshots`.                                                                                                                                                                                                             |
-| `./bin/finder-sidebar-favorites`                        | Retry the `development` and `screenshots` favorites.                                                                                                                                                                                                       |
+| `./bin/finder-sidebar-favorites`                        | Retry the `code` and `screenshots` favorites.                                                                                                                                                                                                              |
 | `./bin/setup-tokenburnmarket [--dry-run]`               | Sign in to tokenburnmarket and install its sync daemon. A Linux host without systemd runs the daemon under `bin/tokenburnmarket-supervise`. A connected host with a current daemon is not changed. `DOTFILES_SKIP_TOKENBURNMARKET=1` skips the setup step. |
 | `./bin/configure-sudo-touch-id --check`                 | Inspect Touch ID for sudo. `--enable` and `--disable` change it.                                                                                                                                                                                           |
 

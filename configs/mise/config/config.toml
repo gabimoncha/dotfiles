@@ -119,7 +119,8 @@ experimental = true
 # when a command is not found. Setup and `mise install` install tools.
 not_found_auto_install = false
 # The repository root holds a mise.toml. Trust it, so tools work in that folder.
-trusted_config_paths = ["~/development/dotfiles"]
+# The second path is the checkout of a machine that has not moved to ~/code yet.
+trusted_config_paths = ["~/code/personal/dotfiles", "~/development/dotfiles"]
 # Linux boxes install from the same lockfile.
 lockfile_platforms = ["macos-arm64", "linux-x64"]
 use_versions_host_track = false
@@ -197,54 +198,59 @@ minimum_release_age = "0s"
 [settings.task]
 run_auto_install = false
 
+# The checkout's path for the tasks below. ~/.config/mise links to this folder
+# in the checkout, so the link gives the path on every machine.
+[vars]
+dotfiles_root = '${DOTFILES_ROOT:-$(cd -P "$HOME/.config/mise" && cd ../../.. && pwd)}'
+
 # Shortcuts for the dotfiles scripts. They work from any folder, for example
 # `mise run dot:status` or `mise run setup -- --dry-run`.
 [tasks."dot:status"]
 description = "Show which managed files are missing or differ"
-run = '"${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/link-dotfiles" --status'
+run = '"{{vars.dotfiles_root}}/bin/link-dotfiles" --status'
 
 [tasks."dot:diff"]
 description = "Show the changes that dot:apply would make"
-run = '"${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/link-dotfiles" --diff'
+run = '"{{vars.dotfiles_root}}/bin/link-dotfiles" --diff'
 
 [tasks."dot:apply"]
 description = "Apply managed files, with backups"
-run = '"${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/link-dotfiles"'
+run = '"{{vars.dotfiles_root}}/bin/link-dotfiles"'
 raw = true
 
 [tasks."dot:save"]
 description = "Save agent settings into the repository, without private keys"
-run = '"${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/save-settings"'
+run = '"{{vars.dotfiles_root}}/bin/save-settings"'
 
 [tasks."dot:drift"]
 description = "Report installed apps and tools that differ from the Brewfiles and mise lists"
-run = '"${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/prepare-sync"'
+run = '"{{vars.dotfiles_root}}/bin/prepare-sync"'
 
 [tasks.setup]
 description = "Run setup"
-run = '"${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/setup"'
+run = '"{{vars.dotfiles_root}}/bin/setup"'
 raw = true
 
 [tasks.update]
 description = "Pull the repository and run the setup continuation"
-run = '"${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/dotfiles-update"'
+run = '"{{vars.dotfiles_root}}/bin/dotfiles-update"'
 raw = true
 
 [tasks.packages]
 description = "Install the apps in apps/manifest.tsv"
-run = '"${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/install-apps"'
+run = '"{{vars.dotfiles_root}}/bin/install-apps"'
 raw = true
 
 [tasks.backup]
 description = "Back up portable app state"
-run = '"${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/file-backup"'
+run = '"{{vars.dotfiles_root}}/bin/file-backup"'
 raw = true
 
 [tasks.restore]
 description = "Restore portable app state"
-run = '"${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/file-restore"'
+run = '"{{vars.dotfiles_root}}/bin/file-restore"'
 raw = true
 
 [tasks.doctor]
 description = "Check the repository and setup prerequisites"
-run = '"${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/preflight"'
+run = '"{{vars.dotfiles_root}}/bin/preflight"'
