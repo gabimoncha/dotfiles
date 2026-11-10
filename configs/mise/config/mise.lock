@@ -1107,16 +1107,6 @@ checksum_source = "mise-versions"
 url = "https://github.com/entireio/cli/releases/download/v0.12.2/entire_darwin_arm64.tar.gz"
 url_api = "https://api.github.com/repos/entireio/cli/releases/assets/677973791"
 
-[[tools."github:flowcopilot/aether"]]
-version = "0.2.9"
-backend = "github:flowcopilot/aether"
-specifiers = ["0.2.9"]
-
-[tools."github:flowcopilot/aether"."platforms.macos-arm64"]
-checksum = "sha256:bc5358ba281cf6f2512461ed150399ea4ed8fb6cf6eaed6d4c169d611d47ad78"
-url = "https://github.com/flowcopilot/aether/releases/download/v0.2.9/aether-macos-arm64"
-url_api = "https://api.github.com/repos/flowcopilot/aether/releases/assets/644582879"
-
 [[tools."github:ryanoasis/nerd-fonts"]]
 version = "3.5.1"
 backend = "github:ryanoasis/nerd-fonts"

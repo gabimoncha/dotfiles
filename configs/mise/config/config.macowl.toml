@@ -8,3 +8,6 @@ ollama = "0.40.8"
 "github:CoastalFuturist/ytcli" = "latest"
 # The Mackup backup stores its files in Synology Drive.
 "pipx:mackup" = "latest"
+# Version 0.2.9 is installed on macowl. Its release is gone from GitHub, so a
+# new machine cannot install it. Move it back to config.toml when a release exists.
+"github:flowcopilot/aether" = "0.2.9"

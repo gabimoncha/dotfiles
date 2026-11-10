@@ -22,6 +22,16 @@ checksum = "sha256:c0b0c05ef66906e769943f6f8c43fd98bd4aea326eb019dcb94208b3fbf46
 url = "https://github.com/CoastalFuturist/ytcli/releases/download/v0.2.0/ytcli_0.2.0_darwin_arm64.tar.gz"
 url_api = "https://api.github.com/repos/CoastalFuturist/ytcli/releases/assets/358379505"
 
+[[tools."github:flowcopilot/aether"]]
+version = "0.2.9"
+backend = "github:flowcopilot/aether"
+specifiers = ["0.2.9"]
+
+[tools."github:flowcopilot/aether"."platforms.macos-arm64"]
+checksum = "sha256:bc5358ba281cf6f2512461ed150399ea4ed8fb6cf6eaed6d4c169d611d47ad78"
+url = "https://github.com/flowcopilot/aether/releases/download/v0.2.9/aether-macos-arm64"
+url_api = "https://api.github.com/repos/flowcopilot/aether/releases/assets/644582879"
+
 [[tools.ollama]]
 version = "0.40.8"
 backend = "aqua:ollama/ollama"
