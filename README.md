@@ -69,8 +69,8 @@ Checkouts live in `~/code`:
   ref/        read-only third-party clones
 ```
 
-Setup creates `work`, `personal`, and `contrib` when they are missing, and
-`client` on macowl only. Create `ref` yourself when you need it.
+Setup creates `work`, `personal`, `contrib`, and `ref` when they are missing,
+and `client` on macowl only.
 
 This repository goes in `~/code/personal/dotfiles`. `~/.config/mise` links
 into the checkout, and the shell and the mise tasks read the checkout's path
