@@ -94,7 +94,8 @@ AutomaticCheckEnabled = true
 AutomaticDownload = true
 
 # Portable Vorssaint preferences captured from version 3.4.2.
-# Device identifiers, fan settings, calibration, and session state stay local.
+# Device identifiers, calibration, and session state stay local. Each profile
+# file has the fan curve of its machine.
 [bootstrap.macos.defaults."com.vorssaint.utils"]
 "appAppearance" = "system"
 "audioPriorityInputEnabled" = true

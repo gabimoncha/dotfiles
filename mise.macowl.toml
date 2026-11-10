@@ -27,3 +27,13 @@ process_type = "Background"
 DictationIMNetworkBasedLocaleIdentifier = "ro_RO"
 DictationIMPreferredLanguageIdentifiers = ["ro_RO", "en_US"]
 VisibleNetworkSRLocaleIdentifiers = { ro_RO = true, en_US = true }
+
+# Vorssaint fan curve for the MacBook Pro, as set in the app. The shared
+# Vorssaint preferences are in mise.macos.toml.
+[bootstrap.macos.defaults."com.vorssaint.utils"]
+fanControlMode = "curve"
+fanControlCoolingLevel = 100
+fanControlCurves = '[{"points":[{"coolingLevel":0,"temperature":20},{"coolingLevel":35,"temperature":55},{"coolingLevel":50,"temperature":65},{"coolingLevel":65,"temperature":75},{"coolingLevel":80,"temperature":85},{"coolingLevel":100,"temperature":95}],"sensor":"averageCPU"}]'
+# Vorssaint starts with this saved configuration, so it holds the same curve.
+fanControlResume = true
+fanControlResumeConfiguration = '{"curves":[{"points":[{"coolingLevel":0,"temperature":20},{"coolingLevel":35,"temperature":55},{"coolingLevel":50,"temperature":65},{"coolingLevel":65,"temperature":75},{"coolingLevel":80,"temperature":85},{"coolingLevel":100,"temperature":95}],"sensor":"averageCPU"}],"manualLevel":100,"mode":"curve"}'

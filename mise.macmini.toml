@@ -19,3 +19,16 @@
 program = "/bin/sh"
 args = ["-c", 'exec "$HOME/bin/dotfiles-lock-screen"']
 run_at_load = true
+
+# Vorssaint fan curve for the Mac mini (M4, one fan). The fan stays at its
+# lowest speed to 50 °C, so the machine is silent at idle. It reaches full speed
+# at 98 °C, below the temperature where the chip reduces its speed. The sensor
+# is the CPU average, so a short load peak does not make the fan pulse. The
+# shared Vorssaint preferences are in mise.macos.toml.
+[bootstrap.macos.defaults."com.vorssaint.utils"]
+fanControlMode = "curve"
+fanControlCoolingLevel = 100
+fanControlCurves = '[{"points":[{"coolingLevel":0,"temperature":50},{"coolingLevel":25,"temperature":65},{"coolingLevel":45,"temperature":75},{"coolingLevel":65,"temperature":85},{"coolingLevel":85,"temperature":92},{"coolingLevel":100,"temperature":98}],"sensor":"averageCPU"}]'
+# Vorssaint starts with this saved configuration, so it holds the same curve.
+fanControlResume = true
+fanControlResumeConfiguration = '{"curves":[{"points":[{"coolingLevel":0,"temperature":50},{"coolingLevel":25,"temperature":65},{"coolingLevel":45,"temperature":75},{"coolingLevel":65,"temperature":85},{"coolingLevel":85,"temperature":92},{"coolingLevel":100,"temperature":98}],"sensor":"averageCPU"}],"manualLevel":100,"mode":"curve"}'
