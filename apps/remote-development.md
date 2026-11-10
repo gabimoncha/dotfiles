@@ -394,6 +394,13 @@ asks for the account password.
 
 The script's header comment lists the commands that undo each change.
 
+Automatic login shows the desktop with no password. The login job
+`lock-screen` in `mise.macmini.toml` runs `bin/lock-screen`, which locks the
+screen in the first minutes after a start. The account stays logged in behind
+the lock, so SSH, the T3 server, and the other login jobs continue to work.
+Tools that read or click the real screen, such as `agent-desktop`, see the lock
+screen until you unlock it. `./bin/lock-screen --now` locks at any time.
+
 ### What the Mac mini leaves out
 
 The root `Brewfile` and the shared lists in `apps/` are the complete app

@@ -414,6 +414,13 @@ allows automatic login only with FileVault off. `bin/configure-remote-access`
 stops and reports when FileVault is on. It never turns FileVault off, because
 that choice gives a person at the machine your session.
 
+A login job then locks the screen, so the session exists but the desktop needs
+the password. `bin/lock-screen` calls `SACLockScreenImmediate` from the private
+login framework. No public command locks the screen without a dependency on
+the display state, and the Mac mini often has no display. An Apple update can
+remove the function; the screen then stays unlocked after a start, and nothing
+else breaks.
+
 ## Portable state
 
 Mackup runs explicit copy-mode backups with a narrow allowlist, and it must not

@@ -4,5 +4,18 @@
 # no dictation apps, no Synology Drive, no Mackup, and no T3 Code desktop app.
 # The T3 server runs as a login service: see the t3 row in apps/standalone.tsv
 # and bin/setup-t3-service. bin/configure-remote-access turns on Remote Login
-# and automatic login, and stops system sleep. It has no runtime tools of its
+# and automatic login, and stops system sleep. A login job locks the screen
+# after automatic login. It has no runtime tools of its
 # own: it uses the list in configs/mise/config/config.toml.
+
+[dotfiles]
+"~/bin/dotfiles-lock-screen" = { source = "bin/lock-screen", mode = "symlink" }
+
+# Automatic login shows the desktop with no password. This job locks the screen
+# right after login, and the session stays active behind the lock. launchd does
+# not expand ~ or $HOME in a program path, so /bin/sh finds the script.
+# bin/configure-telemetry applies it.
+[bootstrap.macos.launchd.agents.lock-screen]
+program = "/bin/sh"
+args = ["-c", 'exec "$HOME/bin/dotfiles-lock-screen"']
+run_at_load = true
