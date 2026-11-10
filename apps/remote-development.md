@@ -206,11 +206,11 @@ Removing only the live sudoers file is temporary: startup creates it again.
 
 ### Dotfiles on the box
 
-The checkout is `~/development/dotfiles`, also a T3 project on the box. Run the
+The checkout is `~/code/personal/dotfiles`, also a T3 project on the box. Run the
 normal setup there; it detects Linux and runs every step in one run:
 
 ```bash
-cd ~/development/dotfiles
+cd ~/code/personal/dotfiles
 ./bin/setup --dry-run
 DOTFILES_SKIP_GITHUB_AUTH=1 ./bin/setup   # until you log in to GitHub
 ```

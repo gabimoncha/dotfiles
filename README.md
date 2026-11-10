@@ -71,8 +71,7 @@ Checkouts live in `~/code`, and setup creates its folders:
 
 This repository goes in `~/code/personal/dotfiles`. `~/.config/mise` links
 into the checkout, and the shell and the mise tasks read the checkout's path
-from that link. A machine with the checkout in `~/development/dotfiles` keeps
-working until you move it.
+from that link.
 
 ## Change a setting
 

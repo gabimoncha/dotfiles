@@ -126,8 +126,8 @@ machine's name, `macowl`, which no other project uses.
 
 Two settings keep tools working inside the repository. mise refuses an
 untrusted file with `[dotfiles]` entries, and then every shim in this folder
-fails. The runtime list therefore trusts `~/code/personal/dotfiles` and the
-older `~/development/dotfiles` (`trusted_config_paths`), and `bin/link-dotfiles` trusts the root files for a
+fails. The runtime list therefore trusts `~/code/personal/dotfiles`
+(`trusted_config_paths`), and `bin/link-dotfiles` trusts the root files for a
 checkout in another path. The root `min_version` is soft for the same reason:
 a hard minimum stops every shim in this folder while an older mise is
 installed. `bin/repo-mise` still requires the pinned release.
