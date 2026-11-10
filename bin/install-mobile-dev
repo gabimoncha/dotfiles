@@ -57,7 +57,11 @@ install_xcode() {
   log "Installing Xcode from the App Store; this is a large download"
   # get also works for an Apple ID that never downloaded Xcode; install does not.
   if ! run sudo "$mas_bin" get "$mobile_xcode_app_store_id"; then
-    warn "The App Store did not install Xcode. Sign in to the App Store app, then rerun ./bin/install-mobile-dev."
+    # mas can fail for a signed-in account too, with ISErrorDomain code 4. The
+    # App Store app can still get Xcode, so open its page there.
+    open "macappstore://apps.apple.com/app/id${mobile_xcode_app_store_id}" 2>/dev/null || true
+    warn "mas did not install Xcode. In the App Store app, sign in, open the Xcode page, and click Get."
+    warn "When the download is complete, rerun ./bin/install-mobile-dev."
     return 1
   fi
 }

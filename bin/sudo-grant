@@ -35,8 +35,41 @@ render_dropin() {
   printf 'Defaults:%s timestamp_type=global, timestamp_timeout=%s\n' "$user" "$timeout_minutes"
 }
 
+touch_id_sudo() { grep -Eq '^auth[[:space:]].*pam_tid\.so' /etc/pam.d/sudo_local 2>/dev/null; }
+
+# Runs sudo with the password that enable_grant read, when it read one.
+grant_sudo() {
+  if [[ -n "$grant_password" ]]; then
+    printf '%s\n' "$grant_password" | sudo -S -p '' "$@"
+  else
+    sudo "$@"
+  fi
+}
+
+# sudo needs two authentications here: one to install the drop-in as root, and
+# one to create the shared timestamp, because the drop-in makes the terminal's
+# timestamp invalid. Read the password one time and give it to both calls. The
+# password stays in this shell's memory and goes to sudo through a pipe. With
+# Touch ID for sudo, or without a terminal, sudo asks by itself.
+read_grant_password() {
+  grant_password=""
+  if touch_id_sudo || [[ ! -t 0 ]] || sudo -n true 2>/dev/null; then
+    return 0
+  fi
+  for _ in 1 2 3; do
+    IFS= read -r -s -p "Password for ${1} (sudo): " grant_password || return 1
+    printf '\n' >&2
+    if [[ -n "$grant_password" ]] && printf '%s\n' "$grant_password" | sudo -S -p '' -v 2>/dev/null; then
+      return 0
+    fi
+    warn "sudo did not accept that password."
+  done
+  grant_password=""
+  return 1
+}
+
 enable_grant() {
-  local user
+  local user grant_password=""
 
   if [[ "${EUID}" -eq 0 ]]; then
     warn "Run ./bin/sudo-grant as your normal user, not with sudo."
@@ -55,17 +88,18 @@ enable_grant() {
     return 1
   fi
 
+  read_grant_password "$user" || return 1
   log "Installing a ${timeout_minutes}-minute shared sudo timestamp at ${dropin}"
   # One sudo call installs, validates, and rolls back. After the install, the
-  # terminal's timestamp no longer counts, so a second call would prompt.
+  # terminal's timestamp no longer counts, so the last call authenticates again.
   # shellcheck disable=SC2016
-  if ! sudo /bin/sh -c 'install -m 0440 -o root -g wheel "$1" "$2" &&
+  if ! grant_sudo /bin/sh -c 'install -m 0440 -o root -g wheel "$1" "$2" &&
     { visudo -c >/dev/null || { rm -f "$2"; exit 3; }; }' sh "$temp_file" "$dropin"; then
     warn "Could not install a valid ${dropin}; nothing was left behind."
     return 1
   fi
-  # Create the shared timestamp. This is the second and last prompt.
-  sudo -v
+  # Create the shared timestamp. Touch ID asks a second time here.
+  grant_sudo -v
 }
 
 disable_grant() {

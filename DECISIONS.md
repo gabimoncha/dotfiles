@@ -306,10 +306,16 @@ the mobile step stops before `sdkmanager` when the option is missing.
 
 ## Temporary sudo grant
 
-After the first `sudo -v`, setup installs `/etc/sudoers.d/dotfiles-setup`. The
+Before its other `sudo` steps, setup installs `/etc/sudoers.d/dotfiles-setup`. The
 file sets `timestamp_type=global` and `timestamp_timeout=30` for the setup user
 and grants no new commands. Steps without a terminal, and an agent shell, can
 then use the timestamp that the user created.
+
+The file makes the terminal's own timestamp invalid, so `sudo` authenticates
+two times: for the install and for the shared timestamp. `bin/sudo-grant` reads
+the password one time, keeps it in the shell's memory, and gives it to both
+`sudo` calls through a pipe. With Touch ID for `sudo`, the script reads no
+password, and `sudo` asks two times.
 
 The keepalive loop stops when setup exits, so the timestamp expires at most 30
 minutes later. The EXIT trap removes the file, also after a failure or a signal.

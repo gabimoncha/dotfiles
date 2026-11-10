@@ -231,10 +231,12 @@ On the Mac mini, save `env = ["macmini"]` instead. See the
 Run setup as your normal user, not with `sudo`. If Git or setup opens the
 Command Line Tools installer, finish it and retry the command.
 
-Each phase asks twice for your password, or Touch ID, near its start. The
-first prompt is for `sudo`. The second installs a temporary sudoers file at
+Each phase asks one time for your password near its start, or two times for
+Touch ID. Setup then installs a temporary sudoers file at
 `/etc/sudoers.d/dotfiles-setup`, so all your processes share one `sudo`
-timestamp. Later steps, and a coding agent shell without a terminal, can then
+timestamp. `sudo` needs two authentications for this: one to install the file
+and one to create the shared timestamp. `bin/sudo-grant` reads the password
+one time and gives it to both calls. Later steps, and a coding agent shell without a terminal, can then
 use `sudo` without a prompt. The timestamp expires after 30 minutes without a
 `sudo` command. Setup removes the file when it exits, also after a failure or
 Ctrl-C. Preflight reports a file that a killed run left behind. Set

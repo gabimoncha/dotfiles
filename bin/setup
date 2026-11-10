@@ -117,12 +117,14 @@ setup_sudo_steps() {
   else
     step --optional touch_id sensitive setup_touch_id
   fi
-  step sudo sensitive setup_sudo
+  # The grant goes first: it asks for the password one time and creates the
+  # timestamp that the sudo step then finds. Without the grant, the sudo step asks.
   if [[ "${DOTFILES_SKIP_SUDO_GRANT:-0}" == 1 ]]; then
     skip_step sudo_grant DOTFILES_SKIP_SUDO_GRANT=1
   else
     step --optional sudo_grant sensitive setup_sudo_grant
   fi
+  step sudo sensitive setup_sudo
   step sudo_keepalive local setup_keepalive
 }
 
