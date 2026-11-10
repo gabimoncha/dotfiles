@@ -71,7 +71,8 @@ shfmt = "latest"
 # Linux only: the Mac installs btop with Homebrew, and btop ships no macOS build.
 btop = { version = "latest", os = "linux" }
 
-# Mac only. Add a tool to the list above when a Linux box needs it.
+# Every Mac. Add a tool to the list above when a Linux box needs it. A tool
+# for one Mac only goes in config.<profile>.toml.
 perl = { version = "5.44.0", os = "macos" }
 ccache = { version = "latest", os = "macos" }
 cocoapods = { version = "latest", os = "macos" }
@@ -86,7 +87,6 @@ hub = { version = "latest", os = "macos" }
 # GHSA-5xfg-9629-mqgg, GHSA-jpm2-x6wf-fxjc, GHSA-74m9-q5m3-x53f,
 # GHSA-9xfw-6wqp-rq8f, and GHSA-9j7q-g3ch-2283.
 act = { version = "0.2.97", os = "macos" }
-ollama = { version = "0.40.8", os = "macos" }
 pandoc = { version = "latest", os = "macos" }
 typst = { version = "latest", os = "macos" }
 imagemagick = { version = "latest", os = "macos" }
@@ -100,10 +100,7 @@ mas = { version = "latest", os = "macos" }
 "npm:@yaakapp/cli" = { version = "latest", os = "macos" }
 "github:ryanoasis/nerd-fonts" = { version = "latest", asset_pattern = "Hack.zip", os = "macos" }
 "github:coollabsio/coolify-cli" = { version = "latest", os = "macos" }
-"github:CoastalFuturist/bodhi" = { version = "latest", os = "macos" }
-"github:CoastalFuturist/ytcli" = { version = "latest", os = "macos" }
 "gem:fastlane" = { version = "2.241.1", install_env = { GEMRC = "{{ config_source | dirname }}/gemrc" }, os = "macos" }
-"pipx:mackup" = { version = "latest", os = "macos" }
 "npm:ios-deploy" = { version = "latest", os = "macos" }
 "github:OpenVPN/easy-rsa" = { version = "latest", os = "macos" }
 "pipx:tldr" = { version = "latest", os = "macos" }

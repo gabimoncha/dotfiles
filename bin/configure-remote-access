@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+# Prepares the Mac mini for use through SSH with no person at the machine:
+# Remote Login on, no system sleep, a restart after a power failure, and
+# automatic login. The login jobs (the T3 server, tokenburnmarket, the process
+# log) start only when a user session exists, so the Mac must log in by itself
+# after a restart. Runs only on the macmini profile. Bash 3.2 compatible.
+#
+# Usage: configure-remote-access [--apply|--dry-run|--status]
+# Exit 20 means deferred: one setting needs a manual action first.
+#
+# Automatic login needs FileVault off, and a person at the machine then gets
+# the session without a password. This script never changes FileVault. Undo:
+#   sudo sysadminctl -autologin off
+#   sudo pmset -a sleep 1 autorestart 0
+#   sudo launchctl bootout system/com.openssh.sshd
+set -euo pipefail
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+mode="${1:---apply}"
+case "$mode" in --apply | --dry-run | --status) ;; *)
+  echo 'Usage: configure-remote-access [--apply|--dry-run|--status]' >&2
+  exit 2
+  ;;
+esac
+[[ $# -le 1 ]] || {
+  echo 'Usage: configure-remote-access [--apply|--dry-run|--status]' >&2
+  exit 2
+}
+if [[ "$(uname -s)" != Darwin ]]; then
+  echo 'configure-remote-access runs only on macOS.' >&2
+  exit 1
+fi
+. "$repo_root/bin/lib/dotfiles-profile.sh"
+profile="$(dotfiles_profile "$repo_root")" || exit
+if [[ "$profile" != macmini ]]; then
+  printf 'configure-remote-access changes only the macmini profile. This profile is %s.\n' "$profile" >&2
+  exit 1
+fi
+
+log() { printf '==> %s\n' "$1"; }
+warn() { printf '!! %s\n' "$1" >&2; }
+user="$(id -un)"
+status=0
+
+remote_login_on() { launchctl print system/com.openssh.sshd >/dev/null 2>&1; }
+
+# Succeeds when no power source lets the system sleep and the Mac restarts
+# after a power failure. A Mac mini reports only AC Power.
+power_ready() {
+  pmset -g custom | awk '
+    $1 == "sleep" && $2 != 0 { bad = 1 }
+    $1 == "autorestart" { seen = 1; if ($2 != 1) bad = 1 }
+    END { exit (bad || !seen) ? 1 : 0 }
+  '
+}
+
+autologin_user() { defaults read /Library/Preferences/com.apple.loginwindow autoLoginUser 2>/dev/null || true; }
+filevault_on() { fdesetup status 2>/dev/null | grep -q 'FileVault is On'; }
+
+configure_remote_login() {
+  if remote_login_on; then
+    log 'Remote Login is on'
+    return 0
+  fi
+  case "$mode" in
+    --status)
+      warn 'Remote Login is off'
+      return 1
+      ;;
+    --dry-run)
+      log 'dry-run: would turn on Remote Login'
+      return 0
+      ;;
+  esac
+  log 'Turning on Remote Login'
+  sudo launchctl enable system/com.openssh.sshd &&
+    sudo launchctl bootstrap system /System/Library/LaunchDaemons/ssh.plist &&
+    remote_login_on && return 0
+  warn 'Could not turn on Remote Login. Turn it on in System Settings > General > Sharing, then rerun.'
+  return 20
+}
+
+configure_power() {
+  if power_ready; then
+    log 'System sleep is off, and the Mac restarts after a power failure'
+    return 0
+  fi
+  case "$mode" in
+    --status)
+      warn 'System sleep is on, or the Mac does not restart after a power failure'
+      return 1
+      ;;
+    --dry-run)
+      log 'dry-run: would turn off system sleep and turn on restart after a power failure'
+      return 0
+      ;;
+  esac
+  log 'Turning off system sleep and turning on restart after a power failure'
+  # macos/defaults.sh sets the display sleep. The display can sleep while SSH works.
+  sudo pmset -a sleep 0 disksleep 0 womp 1 autorestart 1
+}
+
+configure_autologin() {
+  if [[ "$(autologin_user)" == "$user" ]]; then
+    log "Automatic login is on for ${user}"
+    return 0
+  fi
+  if filevault_on; then
+    warn 'Automatic login is off, and FileVault is on. macOS allows automatic login only with FileVault off.'
+    warn 'Decide first: with FileVault off and automatic login on, a person at the Mac gets your session.'
+    warn 'To continue, turn off FileVault in System Settings > Privacy & Security, wait for decryption, then rerun.'
+    return 20
+  fi
+  case "$mode" in
+    --status)
+      warn 'Automatic login is off'
+      return 1
+      ;;
+    --dry-run)
+      log "dry-run: would turn on automatic login for ${user} and ask for the account password"
+      return 0
+      ;;
+  esac
+  if [[ ! -t 0 ]]; then
+    warn 'Automatic login needs the account password. Run ./bin/configure-remote-access in a terminal.'
+    return 20
+  fi
+  log "Turning on automatic login for ${user}. macOS asks for the password of this account."
+  sudo sysadminctl -autologin set -userName "$user" -password - || return 1
+  if [[ "$(autologin_user)" != "$user" ]]; then
+    warn 'macOS did not turn on automatic login. Check System Settings > Users & Groups > Automatically log in as.'
+    return 1
+  fi
+}
+
+for setting in configure_remote_login configure_power configure_autologin; do
+  setting_status=0
+  "$setting" || setting_status=$?
+  # A failure counts more than a deferred setting.
+  if [[ "$setting_status" != 0 && "$status" != 1 ]]; then status="$setting_status"; fi
+done
+exit "$status"

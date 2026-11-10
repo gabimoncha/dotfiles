@@ -84,8 +84,8 @@ project:
 - `mise.toml` has the entries for every host.
 - `mise.macos.toml` and `mise.linux.toml` have the platform entries. The root
   `.miserc.toml` sets `auto_env`, so mise loads the platform file by itself.
-- `mise.macowl.toml`, `mise.air.toml`, `mise.container.toml`, and `mise.vm.toml`
-  are the profiles. The ignored `.miserc.local.toml` selects one, for example
+- `mise.macowl.toml`, `mise.macmini.toml`, `mise.air.toml`,
+  `mise.container.toml`, and `mise.vm.toml` are the profiles. The ignored `.miserc.local.toml` selects one, for example
   `env = ["macowl"]`. A profile file can replace an entry of the shared file, as
   the container does for `~/.codex/AGENTS.md`.
 
@@ -377,6 +377,26 @@ T3's shared launch arguments select the proxy. The global Codex provider stays
 Codex instance's driver and launch arguments; its other state stays local.
 Claude uses private native `env` settings.
 See [NAS agent proxy](apps/remote-development.md#nas-agent-proxy).
+
+## Mac profiles
+
+macowl is the personal MacBook Pro. The Mac mini is a development machine that
+you use through SSH and sometimes at its monitor. The shared Mac lists hold
+what both need: the root `Brewfile`, `apps/manifest.tsv`,
+`apps/login-items.txt`, `mise.macos.toml`, and the Mac tools in
+`configs/mise/config/config.toml`. An entry for one Mac goes in that
+profile's files. A shared list with one extra file per profile keeps one
+place for each app. A complete list per profile would repeat most entries, and
+the two copies would drift.
+
+The Mac mini has no dictation apps, no Synology Drive, and no Mackup, so setup
+restores only the Raycast export there. Its Raycast exports go to iCloud Drive.
+It runs the T3 server as a login service, with no desktop app. The T3 server,
+tokenburnmarket, and the process log are login jobs, and they start only in a
+user session. So the Mac mini logs in automatically after a restart, and macOS
+allows automatic login only with FileVault off. `bin/configure-remote-access`
+stops and reports when FileVault is on. It never turns FileVault off, because
+that choice gives a person at the machine your session.
 
 ## Portable state
 

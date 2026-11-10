@@ -112,6 +112,8 @@ skip_step() { runtime_record deferred "$1" "skipped: $2"; }
 setup_sudo_steps() {
   if [[ "${DOTFILES_SKIP_SUDO_TOUCH_ID:-0}" == 1 ]]; then
     skip_step touch_id DOTFILES_SKIP_SUDO_TOUCH_ID=1
+  elif [[ "$DOTFILES_PROFILE" == macmini ]]; then
+    skip_step touch_id 'the Mac mini has no Touch ID sensor'
   else
     step --optional touch_id sensitive setup_touch_id
   fi
@@ -132,6 +134,14 @@ setup_tokenburnmarket_step() {
   else
     step --optional tokenburnmarket sensitive setup_tokenburnmarket
   fi
+}
+
+# The Mac mini runs the T3 server with no desktop app, and you use it through
+# SSH. Both steps can ask a question, so they run with the interactive steps.
+setup_macmini_steps() {
+  [[ "$DOTFILES_PROFILE" == macmini ]] || return 0
+  step --optional t3_service sensitive setup_t3_service
+  step --optional remote_access sensitive setup_remote_access
 }
 
 # The first macOS phase installs the tools that need no App Store sign-in and
@@ -189,6 +199,7 @@ setup_macos_continue() {
   step --optional screenshots capture setup_screenshots
   step --optional app_settings sensitive setup_app_settings
   step --optional finder sensitive setup_finder
+  setup_macmini_steps
   setup_tokenburnmarket_step
   # After every interactive step, so the long Xcode download runs unattended.
   # Before telemetry, so its opt-outs cover the installed mobile tools.

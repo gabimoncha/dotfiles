@@ -1,15 +1,14 @@
-# Curated from the current machine state.
+# Entries for every Mac. A profile adds its own entries in apps/<profile>.Brewfile,
+# for example apps/macowl.Brewfile. Setup installs both files.
 # Homebrew owns GUI apps, App Store apps, system packages, and CLIs that are not
 # already managed by mise or standalone installer exceptions. Runtimes and
 # overlapping developer tools stay in mise instead.
 
 # Every third-party tap here has been reviewed as part of this machine setup.
 # Persist that approval so later Homebrew commands use the same trust policy.
-tap "anomalyco/tap", trusted: true
 tap "felixkratz/formulae", trusted: true
 tap "grishka/grishka", trusted: true
 tap "homebrew-zathura/zathura", trusted: true
-tap "kitlangton/tap", trusted: true
 tap "nikitabobko/tap", trusted: true
 tap "xykong/tap", trusted: true
 
@@ -45,54 +44,26 @@ brew "zlib"
 
 # Mac App Store
 mas "DevCleaner for Xcode", id: 1388020431
-mas "Endel", id: 1346247457
-mas "Numbers", id: 361304891
-mas "Pages", id: 361309726
 mas "TestFlight", id: 899247664
 mas "The Unarchiver", id: 425424353
-mas "WhatsApp", id: 310633997
-mas "Telegram", id: 747648890
 mas "Transporter", id: 1450874784
 
 cask "nikitabobko/tap/aerospace"
 cask "blackhole-2ch"
-cask "chatgpt"
 cask "cursor"
-cask "discord"
 cask "expo-orbit"
-cask "figma"
 cask "font-hack-nerd-font"
 cask "ghostty"
 cask "google-chrome"
-cask "helium-browser"
-cask "anomalyco/tap/hex"
-cask "iina"
-cask "iterm2"
 cask "karabiner-elements"
-cask "linear"
 cask "mole-app"
 cask "neardrop"
 cask "ngrok"
-cask "notion-calendar"
-cask "obs"
-cask "obsidian"
 cask "orbstack"
-cask "pgadmin4"
 cask "raycast"
-cask "kitlangton/tap/scrawl"
-cask "signal"
-cask "slack"
-cask "spotify"
-cask "superwhisper"
-cask "synology-drive"
-cask "synology-image-assistant"
-cask "t3-code@nightly"
 cask "tailscale-app"
-cask "typeless"
 cask "vorssaint"
 cask "xykong/tap/flux-markdown"
-cask "yaak"
-cask "zoom"
 cask "zulu@17"
 
 vscode "anysphere.remote-containers"

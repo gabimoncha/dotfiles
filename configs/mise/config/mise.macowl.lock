@@ -2,7 +2,43 @@
 
 lockfile_version = 3
 
+[[tools."github:CoastalFuturist/bodhi"]]
+version = "0.1.0"
+backend = "github:CoastalFuturist/bodhi"
+specifiers = ["latest"]
+
+[tools."github:CoastalFuturist/bodhi"."platforms.macos-arm64"]
+checksum = "sha256:dda9b59c533582f587cf8d2884b5966b3ce26631ff1aeddf5c45add9db8547fd"
+url = "https://github.com/CoastalFuturist/bodhi/releases/download/v0.1.0/bodhi-mac-arm64"
+url_api = "https://api.github.com/repos/CoastalFuturist/bodhi/releases/assets/316230789"
+
+[[tools."github:CoastalFuturist/ytcli"]]
+version = "0.2.0"
+backend = "github:CoastalFuturist/ytcli"
+specifiers = ["latest"]
+
+[tools."github:CoastalFuturist/ytcli"."platforms.macos-arm64"]
+checksum = "sha256:c0b0c05ef66906e769943f6f8c43fd98bd4aea326eb019dcb94208b3fbf468b0"
+url = "https://github.com/CoastalFuturist/ytcli/releases/download/v0.2.0/ytcli_0.2.0_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/CoastalFuturist/ytcli/releases/assets/358379505"
+
 [[tools."npm:agent-device"]]
 version = "0.21.36"
 backend = "npm:agent-device"
 specifiers = ["latest"]
+
+[[tools.ollama]]
+version = "0.40.8"
+backend = "aqua:ollama/ollama"
+specifiers = ["0.40.8"]
+
+[tools.ollama."platforms.macos-arm64"]
+checksum = "sha256:29fce20c736f62aa8885b1e83552c5fd8dcc63edc5ffc1b47f2de591a06cde44"
+url = "https://github.com/ollama/ollama/releases/download/v0.40.8/ollama-darwin.tgz"
+url_api = "https://api.github.com/repos/ollama/ollama/releases/assets/663837940"
+
+[[tools."pipx:mackup"]]
+version = "0.11.2"
+backend = "pipx:mackup"
+specifiers = ["latest"]
+uv = { path = "locks/pipx-mackup/0.11.2", digest = "sha256:c85c4064034e698e0023e939e989fd477aaa3c77f4b5435b5843ca6efa932f15" }

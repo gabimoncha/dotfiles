@@ -4,3 +4,8 @@
 
 [tools]
 "npm:agent-device" = "latest"
+ollama = "0.40.8"
+"github:CoastalFuturist/bodhi" = "latest"
+"github:CoastalFuturist/ytcli" = "latest"
+# The Mackup backup stores its files in Synology Drive.
+"pipx:mackup" = "latest"

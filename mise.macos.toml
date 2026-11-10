@@ -1,14 +1,12 @@
 # macOS only. mise loads this file on every Mac. macos/defaults.sh applies the
-# [bootstrap.macos] preferences, then sets input sources, the Dock, and display
-# sleep, which mise cannot set.
+# [bootstrap.macos] preferences of this file and of the profile file, then sets
+# input sources, the Dock, and display sleep, which mise cannot set.
 
 [dotfiles]
 "~/.aerospace.toml" = { source = "configs/aerospace/aerospace.toml", mode = "symlink" }
 "~/Library/Application Support/com.mitchellh.ghostty/config" = { source = "configs/ghostty/config", mode = "symlink" }
 "~/.config/karabiner/karabiner.json" = { source = "configs/karabiner/karabiner.json", mode = "symlink" }
 "~/scripts/toggle_function_keys.sh" = { source = "configs/karabiner/toggle_function_keys.sh", mode = "symlink" }
-"~/Documents/superwhisper/settings/settings.json" = { source = "configs/superwhisper/settings.json", mode = "symlink" }
-"~/.mackup.cfg" = { source = "configs/mackup/mackup.cfg", mode = "symlink" }
 # The login script that gives GUI apps the telemetry opt-outs.
 "~/bin/dotfiles-telemetry-env" = { source = "macos/dotfiles-telemetry-env", mode = "symlink" }
 # The script of the process-log login job below.
@@ -52,14 +50,6 @@ NSSpellCheckerAutomaticallyIdentifiesLanguages = true
 "com.apple.swipescrolldirection" = true
 "com.apple.trackpad.forceClick" = false
 "com.apple.trackpad.scaling" = 3.0
-
-[bootstrap.macos.defaults."com.apple.assistant.support"]
-"Dictation Enabled" = true
-
-[bootstrap.macos.defaults."com.apple.speech.recognition.AppleSpeechRecognition.prefs"]
-DictationIMNetworkBasedLocaleIdentifier = "ro_RO"
-DictationIMPreferredLanguageIdentifiers = ["ro_RO", "en_US"]
-VisibleNetworkSRLocaleIdentifiers = { ro_RO = true, en_US = true }
 
 [bootstrap.macos.defaults."com.apple.AppleMultitouchMouse"]
 MouseButtonMode = "OneButton"

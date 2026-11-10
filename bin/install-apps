@@ -3,7 +3,6 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-manifest="${repo_root}/apps/manifest.tsv"
 if [[ "$(uname -s)" != Darwin ]]; then
   printf 'The app manifest runs only on macOS.\n' >&2
   exit 1
@@ -183,10 +182,15 @@ elif [[ $# -gt 0 ]]; then
   exit 1
 fi
 
-if [[ ! -f "$manifest" ]]; then
-  warn "Missing app manifest: ${manifest}"
-  exit 1
-fi
+# The manifest for every Mac, then the profile's own manifest.
+manifests=()
+while IFS= read -r manifest; do
+  if [[ ! -f "$manifest" ]]; then
+    warn "Missing app manifest: ${manifest}"
+    exit 1
+  fi
+  manifests+=("$manifest")
+done < <(dotfiles_profile_app_lists "$repo_root" "$DOTFILES_PROFILE" manifest)
 
 load_homebrew_shellenv
 prepend_mise_shims
@@ -219,7 +223,7 @@ while IFS=$'\t' read -r key type token_or_url app_bundle notes || [[ -n "${key:-
       warn "Unknown app type '${type}' for ${key}"
       ;;
   esac
-done <"$manifest"
+done < <(cat "${manifests[@]}")
 
 if [[ $manual_count -gt 0 ]]; then
   cat <<'EOF'

@@ -929,12 +929,21 @@ raycast_backup() {
   local icloud_dir="${icloud_drive}/Raycast"
   local latest_export=""
   local mirrored_export=""
-  local suggested_export="${synology_dir}/raycast-settings-$(date +%Y%m%d-%H%M%S).rayconfig"
+  local suggested_export
 
-  mkdir -p "$synology_dir" "$icloud_dir" 2>/dev/null || true
+  # A Mac without Synology Drive, such as the Mac mini, keeps its exports in
+  # iCloud Drive only. Do not create a local folder under CloudStorage.
+  if [[ -d "$synology_drive" ]]; then
+    mkdir -p "$synology_dir" "$icloud_dir" 2>/dev/null || true
+  else
+    warn "Synology Drive is not ready; the Raycast export goes to iCloud Drive only."
+    synology_dir="$icloud_dir"
+    mkdir -p "$icloud_dir" 2>/dev/null || true
+  fi
+  suggested_export="${synology_dir}/raycast-settings-$(date +%Y%m%d-%H%M%S).rayconfig"
 
-  if [[ -d "$synology_dir" && -d "$icloud_dir" ]]; then
-    latest_export="$(newest_file "$synology_dir" '*.rayconfig')"
+  latest_export="$(newest_file "$synology_dir" '*.rayconfig')"
+  if [[ "$synology_dir" != "$icloud_dir" && -d "$synology_dir" && -d "$icloud_dir" ]]; then
     if [[ -n "$latest_export" && -f "$latest_export" ]]; then
       if cp -f "$latest_export" "${icloud_dir}/$(basename "$latest_export")"; then
         mirrored_export="${icloud_dir}/$(basename "$latest_export")"

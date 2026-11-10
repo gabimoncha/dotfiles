@@ -10,10 +10,11 @@ each setting lives. [DECISIONS.md](DECISIONS.md) explains the design.
 mise.toml             file links and shell checkouts for every host
 mise.macos.toml       Mac file links and macOS preferences
 mise.linux.toml       apt packages and the login shell for Linux
-mise.<profile>.toml   one file per machine: macowl, air, container, vm
+mise.<profile>.toml   one file per machine: macowl, macmini, air, container, vm
 configs/<app>/        the settings files, one folder per app
-Brewfile              Homebrew formulae, casks, taps, and App Store apps
-apps/                 the app manifest, vendor-installed tools, login items
+Brewfile              Homebrew formulae, casks, taps, and App Store apps for every Mac
+apps/                 the app manifest, vendor-installed tools, login items,
+                      and the app lists of one profile
 bin/                  setup and repair scripts
 macos/                the macOS defaults script and the telemetry login script
 local/                ignored local files; only the examples are tracked
@@ -33,6 +34,7 @@ into their settings, so mise merges selected keys from `configs/claude/`,
 | Profile     | Machine                   | Status                                                  |
 | ----------- | ------------------------- | ------------------------------------------------------- |
 | `macowl`    | MacBook Pro               | Set up.                                                 |
+| `macmini`   | Mac mini                  | Ready for its first setup run.                          |
 | `air`       | MacBook Air               | Not set up yet. Setup stops before it changes anything. |
 | `container` | NAS development container | Set up.                                                 |
 | `vm`        | Linux VM, planned on GCP  | Not set up yet. Setup stops before it changes anything. |
@@ -44,6 +46,15 @@ profile for one command.
 ```bash
 printf 'env = ["macowl"]\n' > .miserc.local.toml
 ```
+
+Every Mac gets the root `Brewfile`, `apps/manifest.tsv`, and
+`apps/login-items.txt`. A Mac profile adds its own apps in
+`apps/<profile>.Brewfile`, `apps/manifest.<profile>.tsv`, and
+`apps/login-items.<profile>.txt`. Only macowl has these files: they hold its
+personal, media, and dictation apps, Synology Drive, and the T3 Code desktop
+app. The Mac mini gets the shared lists only. The
+[Mac mini guide](apps/remote-development.md#mac-mini) covers its T3 server,
+proxy key, and remote access.
 
 ## Change a setting
 
@@ -170,7 +181,8 @@ It also moves local files from the old layout, such as
 `dotfiles-update` pulls, then runs the setup continuation without the general
 macOS defaults. It does not upgrade every installed package. The shell's daily
 background check only reports new commits. `./bin/prepare-sync` compares the
-live inventory with `Brewfile`, `apps/mobile.Brewfile`, and the mise lists, and saves a copy of both Brewfiles under
+live inventory with `Brewfile`, the profile's `apps/<profile>.Brewfile`,
+`apps/mobile.Brewfile`, and the mise lists, and saves a copy of these Brewfiles under
 `.sync-backups/`.
 
 ## Set up a new Mac
@@ -192,6 +204,9 @@ cd ~/development/dotfiles
 printf 'env = ["macowl"]\n' > .miserc.local.toml
 ./bin/setup
 ```
+
+On the Mac mini, save `env = ["macmini"]` instead. See the
+[Mac mini guide](apps/remote-development.md#mac-mini).
 
 Run setup as your normal user, not with `sudo`. If Git or setup opens the
 Command Line Tools installer, finish it and retry the command.
@@ -430,8 +445,11 @@ No script proves a fresh-Mac install. See
 
 Add packages in this order: the Mac App Store, then mise, then Homebrew. The
 agent CLIs and mise itself are vendor-installed exceptions in
-`apps/standalone.tsv`. The T3 nightly desktop app is a Homebrew cask. Hex and
-Scrawl come from their vendor taps, `anomalyco/tap` and `kitlangton/tap`.
+`apps/standalone.tsv`. Put an app for every Mac in the root `Brewfile`, and an
+app for one Mac in `apps/<profile>.Brewfile`. On macowl, the T3 nightly
+desktop app is a Homebrew cask, and Hex and Scrawl come from their vendor
+taps, `anomalyco/tap` and `kitlangton/tap`. The Mac mini runs the T3 server
+from `apps/standalone.tsv` instead.
 `vscode "publisher.extension"` lines in the Brewfile select Cursor extensions.
 
 `~/.config/mise` links to `configs/mise/config/`, the global mise config
@@ -443,7 +461,7 @@ The sidecars hold the locked dependencies of the pipx tools. An older
 lockfile moves the tools back to its versions.
 
 A tool for one profile goes in `configs/mise/config/config.<profile>.toml`,
-for example agent-device for macowl and container. The folder's
+for example Ollama and Mackup for macowl. The folder's
 `miserc.local.toml` links to this repository's `.miserc.local.toml`, so mise
 sets its environment to the profile and loads that file in every folder. mise
 keeps its versions in `mise.<profile>.lock`, so another profile never prunes
@@ -490,8 +508,8 @@ Gatekeeper before it replaces the app, and it keeps the old app under
 installing it, and `--check` checks the installed app. Quit Steam before a
 replacement. See [DECISIONS.md](DECISIONS.md#native-steam-installer).
 
-Setup adds the apps in [the login item list](apps/login-items.txt) as login
-items. This can ask for Automation access to System Events. After it adds T3
+Setup adds the apps in [the login item list](apps/login-items.txt) and in the
+profile's `apps/login-items.<profile>.txt` as login items. This can ask for Automation access to System Events. After it adds T3
 Code Nightly, it removes the `/Applications/Codex.app` login item. Run
 `./bin/configure-app-settings --dry-run` to preview the changes. Privacy
 permissions are manual for every app.

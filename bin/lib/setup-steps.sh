@@ -431,7 +431,11 @@ prepare_brewfiles() {
   : >"$xcode_brewfile"
   : >"$mas_brewfile"
   : >"$cursor_extensions_brewfile"
-  filter_brewfile_for_existing_apps "${repo_root}/Brewfile" "$temp_brewfile" "$xcode_brewfile" "$mas_brewfile" "$cursor_extensions_brewfile"
+  # The Brewfile for every Mac, then the profile's own Brewfile.
+  local brewfile
+  while IFS= read -r brewfile; do
+    filter_brewfile_for_existing_apps "$brewfile" "$temp_brewfile" "$xcode_brewfile" "$mas_brewfile" "$cursor_extensions_brewfile"
+  done < <(dotfiles_profile_app_lists "$repo_root" "$DOTFILES_PROFILE" brewfile)
 }
 
 install_brewfile() {
@@ -502,6 +506,7 @@ install_shell_framework() {
 apply_macos_defaults_once() {
   local defaults_script="${repo_root}/macos/defaults.sh"
   local defaults_config="${repo_root}/mise.macos.toml"
+  local profile_config="${repo_root}/mise.${DOTFILES_PROFILE}.toml"
   local status=0
 
   runtime_acquire_lock "macos-defaults" "macOS defaults" || return 1
@@ -513,7 +518,7 @@ apply_macos_defaults_once() {
   fi
 
   if [[ -f "$macos_defaults_flag" && ! "$defaults_script" -nt "$macos_defaults_flag" &&
-    ! "$defaults_config" -nt "$macos_defaults_flag" ]]; then
+    ! "$defaults_config" -nt "$macos_defaults_flag" && ! "$profile_config" -nt "$macos_defaults_flag" ]]; then
     log "macOS defaults already applied"
     runtime_release_lock "macos-defaults"
     return 0
@@ -619,6 +624,8 @@ setup_standalone_agents() {
   fi
 }
 setup_telemetry() { "${repo_root}/bin/configure-telemetry"; }
+setup_t3_service() { "${repo_root}/bin/setup-t3-service"; }
+setup_remote_access() { "${repo_root}/bin/configure-remote-access"; }
 setup_tokenburnmarket() { "${repo_root}/bin/setup-tokenburnmarket"; }
 setup_app_settings() { "${repo_root}/bin/configure-app-settings"; }
 setup_screenshots() { "${repo_root}/bin/configure-screenshots"; }
@@ -683,6 +690,6 @@ setup_verify_apps() {
         [[ -d "${DOTFILES_APPLICATIONS_DIR:-/Applications}/${bundle}.app" ]] || runtime_record_deferred "app.$key" 'vendor installation requires manual completion'
         ;;
     esac
-  done <"${repo_root}/apps/manifest.tsv"
+  done < <(dotfiles_profile_app_lists "$repo_root" "$DOTFILES_PROFILE" manifest | while IFS= read -r list; do cat "$list"; done)
   return "$status"
 }

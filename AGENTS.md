@@ -15,14 +15,15 @@ For mise behavior, the source of truth is the mise documentation at
 | Where a file goes in HOME                          | the `[dotfiles]` entry in a root mise file                                                                                         |
 | Entries for every host                             | `mise.toml`                                                                                                                        |
 | Entries for one platform                           | `mise.macos.toml` or `mise.linux.toml`                                                                                             |
-| Entries for one machine                            | the profile file: `mise.macowl.toml`, `mise.air.toml`, `mise.container.toml`, or `mise.vm.toml`                                    |
+| Entries for one machine                            | the profile file: `mise.macowl.toml`, `mise.macmini.toml`, `mise.air.toml`, `mise.container.toml`, or `mise.vm.toml`               |
 | Agent and T3 settings that sync between machines   | the merge sources in `configs/claude/`, `configs/codex/`, and `configs/t3/`; save them with `./bin/save-settings`                  |
 | Which agent settings sync                          | `configs/<app>/sync-keys`: one `public` rule per setting, including each key of the merge source, and `private` rules for sections |
 | Agent rules for every host                         | `configs/agents/instructions.md`                                                                                                   |
 | Agent rules for one host                           | `configs/agents/<profile>.md`                                                                                                      |
 | Runtime tools and mise tasks                       | `configs/mise/config/config.toml`                                                                                                  |
 | Runtime tools for one profile                      | `configs/mise/config/config.<profile>.toml`                                                                                        |
-| Homebrew formulae, casks, and App Store apps       | `Brewfile`                                                                                                                         |
+| Homebrew formulae, casks, and App Store apps       | `Brewfile` for every Mac; `apps/<profile>.Brewfile` for one Mac                                                                    |
+| Manifest apps and login items for one Mac          | `apps/manifest.<profile>.tsv` and `apps/login-items.<profile>.txt`                                                                 |
 | Apt packages                                       | `mise.linux.toml` or the profile file                                                                                              |
 | macOS preferences                                  | `[bootstrap.macos]` in `mise.macos.toml`, and `macos/defaults.sh`                                                                  |
 | Agent CLIs, mise, and other vendor-installed tools | `apps/standalone.tsv`                                                                                                              |
@@ -70,9 +71,11 @@ run, and the mise tool list. A change that works only on the Mac breaks Linux.
   Linux. The step functions are in `bin/lib/setup-steps.sh`. Mark a step
   `--optional` when the later steps can run without it.
 - Add GUI apps through mas when available, then use mise for supported tools,
-  then Homebrew. Coding agent CLIs, mise, and the Linux T3 server are
-  standalone exceptions, listed in `apps/standalone.tsv`.
-  The T3 nightly desktop app stays in Homebrew.
+  then Homebrew. Coding agent CLIs, mise, and the T3 server on Linux and on
+  the Mac mini are standalone exceptions, listed in `apps/standalone.tsv`.
+  The T3 nightly desktop app stays in Homebrew, for macowl only.
+- The Mac mini gets only the shared Mac lists. Put an app, tool, or setting
+  that only macowl needs in the macowl files, not in a shared list.
 - Steam uses `bin/install-steam` for Valve's verified ARM64 bootstrapper.
   Preserve its update channel and quarantine. Keep Rosetta installation manual.
 - Keep Brewfile entries alphabetized within sections unless deliberately grouped.
@@ -111,10 +114,11 @@ mise task in `configs/mise/config/config.toml`; `mise tasks` lists them.
 
 1. Sync the repository. `mise run dot:save` copies the public agent and T3
    settings into `configs/`. `mise run dot:drift` reports the installed apps
-   and tools that differ from `Brewfile`, `apps/mobile.Brewfile`, and the mise lists. The user's
+   and tools that differ from the Brewfiles and the mise lists. The user's
    commits are pushed.
 2. Back up portable state with `mise run backup`: Mackup app settings, an
-   encrypted Codex archive, and a Raycast export. The user types the
+   encrypted Codex archive, and a Raycast export. On the Mac mini, run only
+   `./bin/file-backup raycast`; it has no Mackup and no Synology Drive. The user types the
    passwords and completes the Raycast export in its window.
 3. The backup is done when the new files are in the Synology or iCloud
    folders of [MACKUP.md](MACKUP.md). A zero exit status does not prove it.

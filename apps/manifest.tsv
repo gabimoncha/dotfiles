@@ -1,38 +1,14 @@
+# Apps for every Mac. apps/manifest.<profile>.tsv adds the apps of one profile.
 # key	type	token_or_url	app_bundle	notes
 aerospace	cask	nikitabobko/tap/aerospace	AeroSpace	Homebrew cask because mise ls-remote aerospace errors.
 cursor	cask	cursor	Cursor	Homebrew cask.
-davinci-resolve	manual	https://www.blackmagicdesign.com/products/davinciresolve	DaVinci Resolve	Blackmagic requires a vendor download/account flow; install manually or use Codex-assisted browser automation after bootstrap.
-discord	cask	discord	Discord	Homebrew cask.
-figma	cask	figma	Figma	Homebrew cask.
 gcc	formula	gcc	-	Homebrew formula because mise ls-remote gcc errors.
 ghostty	cask	ghostty	Ghostty	Homebrew cask.
 google-chrome	cask	google-chrome	Google Chrome	Homebrew cask.
-helium-browser	cask	helium-browser	Helium	Homebrew cask.
-hex	cask	anomalyco/tap/hex	Hex	Vendor Homebrew cask for local dictation.
-iina	cask	iina	IINA	Homebrew cask.
-iterm2	cask	iterm2	iTerm	Homebrew cask.
-linear	cask	linear	Linear	Homebrew cask.
 mole	formula	mole	-	Homebrew formula because mise ls-remote mole errors.
 mole-app	cask	mole-app	Mole	Homebrew cask for the Mole GUI app.
 neardrop	cask	neardrop	NearDrop	Homebrew cask from grishka/grishka; macOS quarantine and consent are preserved.
-notion-calendar	cask	notion-calendar	Notion Calendar	Homebrew cask.
-obs	cask	obs	OBS	Homebrew cask supported by OBS; settings restored by Mackup.
-obsidian	cask	obsidian	Obsidian	Homebrew cask.
-pgadmin4	cask	pgadmin4	pgAdmin 4	Homebrew cask.
-pinokio	manual	https://pinokio.computer/	Pinokio	No Homebrew cask currently exists; install from vendor.
 postgresql	formula	postgresql@18	-	Homebrew formula because mise ls-remote postgresql errors.
 raycast	cask	raycast	Raycast	Homebrew cask; restore settings with a .rayconfig export.
-scrawl	cask	kitlangton/tap/scrawl	Scrawl	Vendor Homebrew cask for screen and voice captures.
-signal	cask	signal	Signal	Homebrew cask.
-slack	cask	slack	Slack	Homebrew cask.
-spotify	cask	spotify	Spotify	Homebrew cask.
-steam	script	bin/install-steam	Steam	Verified Valve ARM64 bootstrapper; preserves the update channel and does not install Rosetta.
-superwhisper	cask	superwhisper	superwhisper	Homebrew cask.
-synology-drive	cask	synology-drive	Synology Drive Client	Homebrew cask.
-synology-image-assistant	cask	synology-image-assistant	Synology Image Assistant	Homebrew cask.
-t3-code	cask	t3-code@nightly	T3 Code (Nightly)	Nightly desktop app.
 tailscale	cask	tailscale-app	Tailscale	Homebrew cask for the menu-bar app and full Mac UX.
-typeless	cask	typeless	Typeless	Homebrew cask.
 vorssaint	cask	vorssaint	Vorssaint	Homebrew cask for the menu bar toolkit.
-yaak	cask	yaak	Yaak	Homebrew cask; GUI companion to @yaakapp/cli in mise.
-zoom	cask	zoom	zoom.us	Homebrew cask.

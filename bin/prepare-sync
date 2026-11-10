@@ -18,6 +18,12 @@ log() {
 }
 
 mkdir -p "$backup_dir"
+. "${repo_root}/bin/lib/dotfiles-profile.sh"
+DOTFILES_PROFILE="$(dotfiles_profile "$repo_root")" || exit
+# The Brewfile for every Mac, the profile's own Brewfile, and the mobile one.
+brewfiles=()
+while IFS= read -r brewfile; do brewfiles+=("$brewfile"); done < <(dotfiles_profile_app_lists "$repo_root" "$DOTFILES_PROFILE" brewfile)
+brewfiles+=("${repo_root}/apps/mobile.Brewfile")
 
 # Compares the entries of the Brewfiles (all but the last file) with the dump
 # of the installed state (the last file). Order and comments do not count.
@@ -48,10 +54,10 @@ compare_brewfiles() {
 if command -v brew >/dev/null 2>&1; then
   log "Capturing current Homebrew bundle to a temp file"
   brew bundle dump --file "$temp_brewfile" --force
-  cp "${repo_root}/Brewfile" "${repo_root}/apps/mobile.Brewfile" "$backup_dir/"
-  drift="$(compare_brewfiles "${repo_root}/Brewfile" "${repo_root}/apps/mobile.Brewfile" "$temp_brewfile")"
+  cp "${brewfiles[@]}" "$backup_dir/"
+  drift="$(compare_brewfiles "${brewfiles[@]}" "$temp_brewfile")"
   if [[ -z "$drift" ]]; then
-    log "Installed Homebrew entries match Brewfile and apps/mobile.Brewfile"
+    log "Installed Homebrew entries match the Brewfiles of the ${DOTFILES_PROFILE} profile"
   else
     log "Homebrew drift (+ installed, not in a Brewfile; - in a Brewfile, not installed)"
     printf '%s\n' "$drift"

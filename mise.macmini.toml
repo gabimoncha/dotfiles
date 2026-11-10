@@ -1,0 +1,8 @@
+# Profile: macmini, the Mac mini for web and mobile development. You use it
+# mostly through SSH, and sometimes at its monitor. It uses mise.toml and
+# mise.macos.toml as they are, with the apps of the root Brewfile only. It has
+# no dictation apps, no Synology Drive, no Mackup, and no T3 Code desktop app.
+# The T3 server runs as a login service: see the t3 row in apps/standalone.tsv
+# and bin/setup-t3-service. bin/configure-remote-access turns on Remote Login
+# and automatic login, and stops system sleep. Its runtime tools are in
+# configs/mise/config/config.macmini.toml.

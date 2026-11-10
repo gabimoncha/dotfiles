@@ -2,12 +2,6 @@ AeroSpace
 Expo Orbit
 Ghostty
 Mole
-Notion Calendar
 Raycast
-superwhisper
-Synology Drive Client
-Synology Image Assistant
 Tailscale
-Typeless
 Vorssaint
-T3 Code (Nightly)
