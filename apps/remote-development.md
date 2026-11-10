@@ -366,8 +366,14 @@ The service needs the proxy key in its environment. Codex in T3 reads
 `CLIPROXYAPI_API_KEY` from the T3 process, and a terminal export does not
 reach a login service. Use the private files of the
 [NAS agent proxy](#nas-agent-proxy) section: `~/.config/local/cliproxyapi.zsh`
-and the login job that runs `launchctl setenv`. If the T3 service starts
-before that job at login, run `t3 service restart` once after login. Set the
+and the login job that runs `launchctl setenv`. At login, the T3 service can
+start before that job, and then it has no key. The restart test on the Mac
+mini showed this. So the login job on the Mac mini runs a private script,
+`~/.config/local/cliproxyapi-environment.sh`. After `launchctl setenv`, the
+script reads the process of `com.t3tools.t3code.service`. If that process has
+no `CLIPROXYAPI_API_KEY`, the script runs `launchctl kickstart -k` on the
+service one time. A later run of the job finds the key and does not restart
+the service. Set the
 proxy URL to the NAS's Tailscale HTTPS URL, as on the other Macs, so the Mac
 mini needs Tailscale signed in before the agents work.
 
