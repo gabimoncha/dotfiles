@@ -3,8 +3,8 @@
   "scope": "Tracked mise/Brewfile/app inventories, explicit setup tools, and managed shell/tmux plugins. Excludes project dependencies, other plugins, nvim repository dependencies, and unrelated manually installed tools.",
   "verification": "Official documentation and upstream source reviews; fake-command tests only. No live installations, account changes, personal settings edits, or network-capture tests.",
   "coverage": {
-    "total": 184,
-    "reviewed": 184,
+    "total": 183,
+    "reviewed": 183,
     "pending": 0
   },
   "limitations": [
@@ -2259,25 +2259,6 @@
           "https://docs.iina.io/pages/dev-guide"
         ],
         "notes": "The official IINA 1.5.0 site and release announcement make the no-tracking claim; this bounded documentation audit did not verify an installed binary or all dependencies. Optional online playback, subtitles, third-party plugins, downloads/update checks, user-submitted GitHub issues, and macOS system crash sharing are separate. Plugin documentation describes local logs in Window > Log Viewer and network permissions, which are not a general app telemetry opt-out. No live settings or app were accessed.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {}
-    },
-    {
-      "id": "iterm2",
-      "tool": "iterm2",
-      "source": "cask",
-      "kind": "app",
-      "research": {
-        "tool": "iTerm2",
-        "status": "none_found",
-        "mechanism": "No documented persistent analytics, usage, or crash-report opt-out preference, environment variable, or configuration key found in the checked official documentation and advanced-settings source.",
-        "sources": [
-          "https://iterm2.com/documentation-preferences-general.html",
-          "https://raw.githubusercontent.com/gnachman/iTerm2/master/sources/Settings/iTermAdvancedSettingsModel.m",
-          "https://gitlab.com/gnachman/iterm2/-/wikis/Privacy-Policy"
-        ],
-        "notes": "The general preferences documentation separately exposes General > Software Update > Check for updates automatically; this is an update check, not an established telemetry opt-out. Optional AI/model database requests, terminal commands, and user-submitted bug reports are separate traffic. The upstream Privacy Policy wiki yielded no readable body, limiting policy verification; absence of a documented control does not establish absence of reporting. No telemetry key/schema is supported by the checked evidence, so preserve the existing com.googlecode.iterm2 preferences and profiles rather than replacing them. Custom settings folders can change the settings source and write-back behavior. No live app/preferences were inspected.",
         "checked_date": "2026-10-03"
       },
       "setup_actions": {}

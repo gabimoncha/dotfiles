@@ -316,11 +316,6 @@ run = ['layout floating', 'move-node-to-workspace S']
 # These rules set layout only. They stay above the workspace D catch-all,
 # which matches every remaining window.
 
-### iTerm2
-[[on-window-detected]]
-if.app-id = 'com.googlecode.iterm2'
-run = 'layout floating'
-
 ### Finder
 [[on-window-detected]]
 if.app-id = 'com.apple.finder'

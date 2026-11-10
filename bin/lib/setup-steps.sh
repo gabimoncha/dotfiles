@@ -121,7 +121,6 @@ cask_app_bundle_name() {
     google-chrome) printf 'Google Chrome' ;;
     helium-browser) printf 'Helium' ;;
     iina) printf 'IINA' ;;
-    iterm2) printf 'iTerm' ;;
     karabiner-elements) printf 'Karabiner-Elements' ;;
     mole-app) printf 'Mole' ;;
     neardrop | grishka/grishka/neardrop) printf 'NearDrop' ;;
