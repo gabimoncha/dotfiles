@@ -27,9 +27,10 @@ smoke_commands=(
   yq
   shellcheck
 )
-# Mac-only tools (os = "macos" in the config).
+# Tools for every Mac (os = "macos" in the config). A tool for one profile, such
+# as mackup on macowl, is not here: the missing-tools check covers it.
 if [[ "$(uname -s)" == Darwin ]]; then
-  smoke_commands+=(mackup turbo vercel)
+  smoke_commands+=(turbo vercel)
 fi
 
 log() {
