@@ -3,7 +3,6 @@
 # The settings in config.toml apply here too.
 
 [tools]
-"npm:agent-device" = "latest"
 ollama = "0.40.8"
 "github:CoastalFuturist/bodhi" = "latest"
 "github:CoastalFuturist/ytcli" = "latest"

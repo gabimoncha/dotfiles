@@ -465,7 +465,8 @@ for example Ollama and Mackup for macowl. The folder's
 `miserc.local.toml` links to this repository's `.miserc.local.toml`, so mise
 sets its environment to the profile and loads that file in every folder. mise
 keeps its versions in `mise.<profile>.lock`, so another profile never prunes
-them. A new profile needs only its config file.
+them. A profile without tools of its own, such as macmini and container, has
+no config file here.
 
 After an interactive `mise install` or `mise up`, and after `mise run update`,
 `./bin/save-lock` commits a changed lockfile and pushes it to `main`, so the

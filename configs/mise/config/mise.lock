@@ -1392,6 +1392,11 @@ version = "1.2.0"
 backend = "npm:agent-desktop"
 specifiers = ["latest"]
 
+[[tools."npm:agent-device"]]
+version = "0.21.36"
+backend = "npm:agent-device"
+specifiers = ["latest"]
+
 [[tools."npm:cf"]]
 version = "1.0.0-beta.28"
 backend = "npm:cf"

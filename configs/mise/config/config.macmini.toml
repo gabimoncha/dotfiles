@@ -1,6 +1,0 @@
-# Runtime tools for the macmini profile only. miserc.local.toml selects the
-# profile, so mise loads this file and locks its tools in mise.macmini.lock.
-# The settings in config.toml apply here too.
-
-[tools]
-"npm:agent-device" = "latest"

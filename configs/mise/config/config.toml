@@ -47,6 +47,8 @@ worktrunk = "latest"
 yamlfmt = "latest"
 "npm:ctx7" = "latest"
 "npm:eas-cli" = "latest"
+# Drives iOS simulators and Android devices for the agents and the T3 device hub.
+"npm:agent-device" = "latest"
 "pipx:httpie" = { version = "latest", python = "3.15", with = ["certifi==2026.10.19"] }
 "github:boyter/scc" = "latest"
 "conda:aria2" = "latest"

@@ -22,11 +22,6 @@ checksum = "sha256:c0b0c05ef66906e769943f6f8c43fd98bd4aea326eb019dcb94208b3fbf46
 url = "https://github.com/CoastalFuturist/ytcli/releases/download/v0.2.0/ytcli_0.2.0_darwin_arm64.tar.gz"
 url_api = "https://api.github.com/repos/CoastalFuturist/ytcli/releases/assets/358379505"
 
-[[tools."npm:agent-device"]]
-version = "0.21.36"
-backend = "npm:agent-device"
-specifiers = ["latest"]
-
 [[tools.ollama]]
 version = "0.40.8"
 backend = "aqua:ollama/ollama"
