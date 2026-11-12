@@ -122,9 +122,10 @@ xcodegen = { version = "latest", os = "macos" }
 experimental = true
 # Activated shells (configs/zsh/mise-activate.zsh) never install a missing tool
 # when a command is not found. Setup and `mise install` install tools.
-# With this setting, activation also takes the shims folder off PATH, and a
-# shim stops when the version for the folder is not installed. Claude Code
-# shells use the shims.
+# With this setting, activation also takes the shims folder off PATH.
+# configs/claude/claude puts it on the PATH of Claude Code. A shim does not
+# install a missing version either: it runs the next executable of that name
+# on PATH, or stops when there is none.
 not_found_auto_install = false
 # The repository root holds a mise.toml. Trust it, so tools work in that folder.
 trusted_config_paths = ["~/development/dotfiles"]
@@ -162,8 +163,6 @@ minimum_release_age_excludes = [
 package_manager = "bun"
 
 # Activated shells define these aliases, in zsh and bash, for people and agents.
-# Claude Code shells do not activate: configs/zsh/aliases.zsh reads this list
-# for the Claude Code snapshot.
 # configs/zsh/aliases.zsh keeps two groups for interactive zsh only. Aliases
 # that replace a standard command (cat, ls, grep, tree): agents write flags for
 # the standard command, and `grep -r` means --replace in rg. The Socket Firewall

@@ -73,8 +73,6 @@ path=("$HOME/bin" "$HOME/.local/bin" $path)
 
 # Activate before harness.zsh, which wraps the mise function that activation
 # defines. Activation never installs tools: not_found_auto_install is off.
-# The shell that makes the Claude Code snapshot sources this file too.
-# mise-activate.zsh does not activate there.
 [ -r "$HOME/.config/zsh/mise-activate.zsh" ] && source "$HOME/.config/zsh/mise-activate.zsh"
 
 export ZSH="${ZSH:-$HOME/.oh-my-zsh}"

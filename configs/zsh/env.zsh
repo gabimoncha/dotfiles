@@ -16,10 +16,3 @@ else
   path=("$HOME/bin" "$HOME/.local/bin" "$MISE_DATA_DIR/shims" "$ANDROID_HOME/platform-tools" $path)
 fi
 [ ! -r "$HOME/.config/zsh/telemetry.sh" ] || . "$HOME/.config/zsh/telemetry.sh"
-# Claude Code runs the content of this file ahead of each Bash tool command,
-# after its shell snapshot. A Claude process gets the variable from the shell
-# or the app that starts it. A command shell of Claude Code does not set it:
-# there, mise-activate.zsh reads it to learn if the Claude process has it.
-if [[ -z "${CLAUDECODE-}" || -o interactive ]]; then
-  export CLAUDE_ENV_FILE="${CLAUDE_ENV_FILE:-$HOME/.config/zsh/claude-env.sh}"
-fi

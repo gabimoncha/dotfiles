@@ -8,6 +8,7 @@ local shellFiles =
     "bin/*",
     "bin/lib/*.sh",
     "configs/bash/*.bash",
+    "configs/claude/claude",
     "configs/gh/gh",
     "configs/gh/dotfiles-gh-real",
     "configs/harness/harness",

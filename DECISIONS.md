@@ -316,8 +316,7 @@ mise install. SSH readiness is a separate check.
 
 Git identity, SSH identity, and API account routing stay separate and local.
 
-Every shell activates mise, except the shells of Claude Code:
-`configs/zsh/mise-activate.zsh` for zsh, and
+Every shell activates mise: `configs/zsh/mise-activate.zsh` for zsh, and
 `configs/bash/mise-activate.bash` for the bash commands of Pi. Agents run
 commands with `zsh -c` (OpenCode, Claude), `zsh -lc` (Codex), `zsh -ilc`
 (Cursor), or `bash -c` (Pi). So zshenv activates mise for `zsh -c`, the end of
@@ -329,40 +328,47 @@ PATH, because `not_found_auto_install = false`. Activation costs about 0.2 s
 for each zsh, and it skips a shell that `mise exec TOOL@VERSION` or a mise
 task started. It never installs tools or looks up credentials.
 
-Claude Code shells use the mise shims. Claude Code runs each command in a
-`zsh -c` that reads zshenv and then sources a shell snapshot. Claude Code
-writes the snapshot one time, when a session starts. The last line of the
-snapshot sets PATH to the PATH of the Claude process, or to `env.PATH` from the
-Claude settings. That line replaces the PATH of an activation. A command
-then has the tool folders that the Claude process inherited: project tools are
-not found, and shared tools have the global version. With a shim, mise finds
-the version for the current folder each time a command runs, so a recorded
-PATH stays correct. The mise documentation gives the same rule: activation for
-the shell that you type into, shims for programs that do not start from it.
+Claude Code gets the mise shims on PATH from a wrapper. Claude Code writes a
+shell snapshot one time, when a session starts, and each Bash tool command
+sources it after zshenv. The last line of the snapshot sets PATH to the PATH
+of the Claude process, and that line replaces the PATH of the activation. With
+`mise/installs` folders on the PATH of the Claude process, a command gets the
+versions of the folder where Claude started. In another folder, project tools
+are not found, and shared tools have the wrong version.
 
-- The zsh startup files cannot change the PATH of the snapshot. So `env.zsh`
-  exports `CLAUDE_ENV_FILE`. Claude Code runs the content of that file,
-  `configs/zsh/claude-env.sh`, in each command after the snapshot.
-- `mise-activate.zsh` does not activate a shell that has `CLAUDECODE` and is
-  not interactive. It puts the shims behind `~/bin` and `~/.local/bin`, and
-  ahead of all other folders. `claude-env.sh` sources it again, so the shims
-  are first after the snapshot too.
-- A Claude process gets `CLAUDE_ENV_FILE` from the shell or the app that
-  starts it. Without the variable, nothing runs after the snapshot, so the
-  shells of that process activate as before. Restart an app that starts
-  Claude, such as T3 Code, after `env.zsh` changes.
-- The shell that makes the snapshot is a login shell that sources `~/.zshrc`.
-  It does not activate, so `aliases.zsh` reads the `[shell_alias]` aliases
-  from `mise shell-alias ls` there.
-- The snapshot drops each function whose name starts with one underscore. A
-  helper that a kept function calls has a name with two underscores.
+`configs/claude/claude` is linked at `~/bin/claude`, ahead of the vendor
+command `~/.local/bin/claude`. It puts `~/bin`, `~/.local/bin`, and the shims
+folder first on PATH, removes the `mise/installs` folders, and starts the
+vendor command with `exec`. A shim finds the version for the current folder
+each time a command runs, so the recorded PATH is correct in every folder. The
+mise documentation gives the same rule: activation for the shell that you type
+into, shims for programs that do not start from it. T3 Code starts `claude` by
+name, so it starts the wrapper too. Inside `mise exec TOOL@VERSION` or a mise
+task, the wrapper keeps PATH.
 
-The shims have three costs. A shim call takes about 0.08 s more than a direct
-call. The shell does not have the `[env]` variables of the folder: only a tool
-that starts through a shim gets them. `which node` prints the shim, and
-`mise which node` prints the tool. A shim never installs a tool. When the
-version for the folder is not installed, the shim stops with
-`Tool not installed for shim`.
+Shells keep activation when `CLAUDECODE` is set. Activation runs in zshenv
+before the snapshot, so a command has the `[env]` variables and the
+`[shell_alias]` aliases of its folder. The snapshot replaces only PATH. After
+a `cd` in a command, the activation hook sets PATH for the new folder.
+
+The wrapper removes the `mise/installs` folders. Shims ahead of them are not
+sufficient. When the version for a folder is not installed, a shim runs the
+next executable of that name on PATH (`not_found_system_fallback`, which is on
+by default). An install folder behind the shims then gives the global version
+with no error. Without those folders, the shim stops with
+`Tool not installed for shim`, unless Homebrew or the system has an executable
+of that name. Each executable in those folders has a shim, so no command is
+lost.
+
+A shim call takes about 0.08 s more than a direct call, and `which node`
+prints the shim: `mise which node` prints the tool. `bin/install-standalone`
+and `harness update` use the path `~/.local/bin/claude` from
+`apps/standalone.tsv`, and `claude update` and the automatic update change
+only that path. None of them reads or changes the wrapper.
+
+The snapshot drops each function whose name starts with one underscore. So a
+helper that a function in `configs/zsh/` calls when it runs has a name with
+two underscores.
 
 Aliases for every shell are in `[shell_alias]` in the global mise config.
 Two groups stay in `configs/zsh/aliases.zsh` for interactive zsh only. Aliases
