@@ -54,7 +54,11 @@ mode or add apps whose files this repository already links.
 
 Cursor settings belong here; AeroSpace and Ghostty belong to the repository.
 OBS uses Mackup's built-in profile for preferences, profiles and scenes, not
-plugins, logs or caches.
+plugins, logs or caches. SSH uses Mackup's built-in profile: `~/.ssh/config`
+and `~/.ssh/authorized_keys`. It does not copy keys. On a new Mac, make or
+restore the keys that the config names before you connect. After a restore,
+check that `~/.ssh/config` has mode 600, because SSH refuses a config that
+other users can write.
 
 Successful Synology backups are mirrored to iCloud when available. Restore
 selects a hydrated Synology tree, then iCloud. Mackup has one current tree;
