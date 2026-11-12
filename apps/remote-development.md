@@ -1,6 +1,7 @@
 # Local SSH access for remote development
 
 SSH identities and host settings stay local, not managed or linked by dotfiles.
+On macowl, Mackup backs up `~/.ssh/config` to your private backup storage.
 `bin/configure-ssh-host` is an explicit opt-in helper, never run by setup. Use it
 when an existing private key needs to live in your actual user home rather than
 an agent/runtime home. It does not trust `$HOME`: `--home` is mandatory.
@@ -154,10 +155,35 @@ change to `bin/t3-dev-supervise`, run
 the container. Do not use `cp`: it writes into the file that the running Bash
 reads, and Bash can then run broken lines.
 
-SSH publishes port 2222 on the specified LAN address only. T3 publishes port
-3773 on the NAS interfaces for LAN and Tailscale access. Keep router
-forwarding/UPnP exposure disabled. Port 3773 is not a public HTTPS endpoint.
-Tailscale ACLs and DSM firewall rules still apply. Memory and total RAM+swap
+SSH publishes port 2222 and T3 publishes port 3773 on the NAS interfaces, for
+LAN and Tailscale access. Do not bind SSH only to the NAS's Tailscale address:
+after a NAS restart, Docker can start before Tailscale, and then the container
+does not start. SSH accepts only the key in `authorized_keys` and only the
+user `box`. Keep router forwarding/UPnP exposure disabled. Port 3773 is not a
+public HTTPS endpoint. Tailscale ACLs and DSM firewall rules still apply.
+
+To use the LAN at home and Tailscale away from home with one alias, put a
+`Match` block before the `Host` block in `~/.ssh/config` on the Mac:
+
+```sshconfig
+Match originalhost nasbox exec "nc -z -G 1 LAN_IP 2222 >/dev/null 2>&1"
+  HostName LAN_IP
+
+Host nasbox
+  HostName NAS_TAILSCALE_NAME
+  User box
+  Port 2222
+  IdentityFile ~/.ssh/KEY_NAME
+```
+
+Before each connection, `nc` checks for 1 second whether port 2222 answers on
+the LAN. If it does, the `Match` block sets the LAN address, because SSH uses
+the first value it finds. Otherwise SSH uses the NAS's Tailscale MagicDNS name,
+such as `NAS_NAME.TAILNET.ts.net`. On Linux, use `nc -z -w 1`. A wrong
+device at the same LAN address fails the host-key check. `ssh -G nasbox` shows
+which address SSH picks. `bin/configure-ssh-host` refuses a config with `Match`
+blocks, so run it before you add this block, or remove the block first.
+Mackup backs up `~/.ssh/config` on macowl (see [MACKUP.md](../MACKUP.md)). Memory and total RAM+swap
 are both capped at 6 GiB. This is a ceiling, not reserved RAM; on an 8 GiB NAS,
 full container usage leaves roughly 2 GiB for DSM and all other workloads.
 The container has no Docker socket or personal shares.
