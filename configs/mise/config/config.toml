@@ -1,24 +1,26 @@
 # An older mise cannot parse self_update.minimum_release_age. With this floor it
 # stops with an upgrade message. Run ./bin/install-standalone mise to install the pin.
-min_version = "2026.11.1"
+min_version = "2026.11.6"
 
 [tools]
 # Tools for one profile only are in config.<profile>.toml in this folder.
 # Mac and Linux. pnpm stays before node, so Corepack wrappers do not shadow it.
 pnpm = "latest"
 npm = "12.2.1"
-node = "26.12.1"
+# Security exception to the four-day delay: 26.13.1 fixes the November
+# Node.js advisories, including CVE-2026-123863 and CVE-2026-123872.
+node = "26.13.1"
 rust = "latest"
-# Security exception to the four-day delay: 1.26.1 updates gix and
-# rustls-webpki for GHSA-q54r-jf2p-rfr2 and CVE-2026-111943.
-cargo-binstall = "1.26.1"
+# Security exception to the four-day delay: 1.27.0 updates zstd-safe for
+# RUSTSEC-2026-0395 through RUSTSEC-2026-0406 and rustix for RUSTSEC-2026-0486.
+cargo-binstall = "1.27.0"
 sccache = "latest"
 direnv = "latest"
 bun = "1.4.4"
 # Security exception to the four-day delay: 3.8.1 fixes CVE-2026-105802,
 # CVE-2026-105803, CVE-2026-69260, and CVE-2026-69261.
 git-lfs = "3.8.1"
-uv = "0.13.5"
+uv = "0.13.7"
 fzf = "latest"
 ripgrep = "latest"
 fd = "latest"
@@ -39,6 +41,8 @@ ruby = "3.4.12"
 age = "latest"
 "github:entireio/cli" = "latest"
 ast-grep = "latest"
+# Security exception to the four-day delay: the lock selects 4.54.3 for
+# GHSA-c3cc-5w96-mw9r, GHSA-9fvq-9qj8-6qhx, and GHSA-h2cv-65fq-jgrp.
 yq = "latest"
 cloudflared = "2026.10.2"
 cmake = "latest"
@@ -90,7 +94,7 @@ ollama = { version = "0.40.8", os = "macos" }
 pandoc = { version = "latest", os = "macos" }
 typst = { version = "latest", os = "macos" }
 imagemagick = { version = "latest", os = "macos" }
-infisical = { version = "0.44.6", os = "macos" }
+infisical = { version = "0.45.3", os = "macos" }
 portless = { version = "latest", os = "macos" }
 vercel = { version = "latest", os = "macos" }
 turbo = { version = "latest", os = "macos" }
@@ -102,7 +106,7 @@ mas = { version = "latest", os = "macos" }
 "github:coollabsio/coolify-cli" = { version = "latest", os = "macos" }
 "github:CoastalFuturist/bodhi" = { version = "latest", os = "macos" }
 "github:CoastalFuturist/ytcli" = { version = "latest", os = "macos" }
-"gem:fastlane" = { version = "2.241.1", install_env = { GEMRC = "{{ config_source | dirname }}/gemrc" }, os = "macos" }
+"gem:fastlane" = { version = "2.241.2", install_env = { GEMRC = "{{ config_source | dirname }}/gemrc" }, os = "macos" }
 "pipx:mackup" = { version = "latest", os = "macos" }
 "npm:ios-deploy" = { version = "latest", os = "macos" }
 "github:OpenVPN/easy-rsa" = { version = "latest", os = "macos" }
