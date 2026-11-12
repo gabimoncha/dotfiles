@@ -25,18 +25,30 @@ flock -n 9 || exit 0
 
 log() { printf 't3-supervise: %s\n' "$1" >>"$logs/server.log"; }
 
-# The launcher runs the version in service-state.json. Without that file, use
-# the runtime that the official installer linked as ~/.local/bin/t3.
+# The protocol that `t3 service install` writes for the installed CLI. The CLI
+# does not print it. When a T3 error names a new protocol, change this number.
+launcher_protocol=4
+
+# The launcher runs the version in service-state.json, and that server must
+# speak the launcher's protocol. The container has no `t3 service install`, so do
+# its work here: pin the runtime that the official installer linked as
+# ~/.local/bin/t3 when the file is missing or pins an older version. Keep a
+# newer version, which an update from the T3 app installed.
 seed_service_state() {
-  local runtime version
-  [[ ! -f "$service_state" ]] || return 0
+  local runtime version active
   runtime="$(readlink -f "$HOME/.local/bin/t3")" || return 1
   version="$(basename "$(dirname "$runtime")")"
   [[ "$(cat "$(dirname "$runtime")/.install-complete" 2>/dev/null)" == "$version" ]] || return 1
+  if [[ -f "$service_state" ]]; then
+    active="$(sed -n 's/^ *"activeVersion": *"\([^"]*\)".*/\1/p' "$service_state")"
+    [[ -n "$active" ]] || return 0
+    [[ "$(printf '%s\n%s\n' "$active" "$version" | sort -V | tail -n 1)" != "$active" ]] || return 0
+    cp -f "$service_state" "$service_state.bak"
+  fi
   mkdir -p "$(dirname "$service_state")"
-  printf '{\n  "protocol": 3,\n  "activeVersion": "%s"\n}\n' "$version" >"$service_state.tmp"
+  printf '{\n  "protocol": %s,\n  "activeVersion": "%s"\n}\n' "$launcher_protocol" "$version" >"$service_state.tmp"
   mv -f "$service_state.tmp" "$service_state"
-  log "pinned t3@$version in $service_state"
+  log "pinned t3@$version (protocol $launcher_protocol) in $service_state"
 }
 
 pid=""

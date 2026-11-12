@@ -128,12 +128,31 @@ supervisor does what its unit does: it runs `t3 __service-launcher`, and the
 launcher starts `t3 serve`. The server then tells the T3 app that it can
 update itself, so update the box from the app. The launcher backs up the
 database first and returns to the old version when the new one fails to start.
-The launcher runs the version in `~/.t3/runtime/service-state.json`. On the
-first start, the supervisor writes that file with the runtime that
-`~/.local/bin/t3` links to. `t3 update` moves only that link and does not
-change the running server. When the launcher exits, the supervisor starts it
-again after 5 seconds. The current log is `~/.local/state/t3/server.log`, and
-the log of the previous start is `server.log.1`.
+The launcher runs the version in `~/.t3/runtime/service-state.json`. That
+server must speak the protocol of the launcher. Otherwise the server stops at
+once with "The service launcher supplied invalid startup context". Before each
+start of the launcher, the supervisor does the work of `t3 service install`.
+When the file is missing, or names a version older than the runtime that
+`~/.local/bin/t3` links to, the supervisor writes that runtime and the
+protocol in `launcher_protocol` to the file. It keeps the old file as
+`service-state.json.bak`. It keeps a newer version that the app installed.
+When the launcher exits, the supervisor starts it again after 5 seconds. The
+current log is `~/.local/state/t3/server.log`, and the log of the previous
+start is `server.log.1`.
+
+When the app reports that the launcher speaks an older protocol, install the
+CLI version from the error message with the install script. Then stop the
+launcher with `pkill -TERM -f "t3 __service-launcher"`, and the supervisor
+starts the new one. If the error names a protocol higher than
+`launcher_protocol` in `bin/t3-dev-supervise`, change that number first. When
+SSH and the T3 terminal do not work, run the commands as root from a DSM Task
+Scheduler script with `docker exec -u box nasbox`.
+
+The container starts the supervisor only when the container starts. After a
+change to `bin/t3-dev-supervise`, run
+`install -m 0700 bin/t3-dev-supervise ~/.local/bin/t3-supervise` and restart
+the container. Do not use `cp`: it writes into the file that the running Bash
+reads, and Bash can then run broken lines.
 
 SSH publishes port 2222 on the specified LAN address only. T3 publishes port
 3773 on the NAS interfaces for LAN and Tailscale access. Keep router

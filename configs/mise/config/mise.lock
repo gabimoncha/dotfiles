@@ -670,20 +670,20 @@ checksum = "sha256:c240d7f0ccb90c263a849fcdb09b7ee62630d921348ed6aafda86b9d577bc
 url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.4/bun-darwin-aarch64.zip"
 
 [[tools.cargo-binstall]]
-version = "1.26.1"
+version = "1.27.0"
 backend = "aqua:cargo-bins/cargo-binstall"
-specifiers = ["1.26.1"]
+specifiers = ["1.27.0"]
 
 [tools.cargo-binstall."platforms.linux-x64"]
-checksum = "sha256:97d3fe139df2eb0947e9db09c129e4381847440a4622d2a94fc38ce4bd52f378"
-url = "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.26.1/cargo-binstall-x86_64-unknown-linux-gnu.tgz"
-url_api = "https://api.github.com/repos/cargo-bins/cargo-binstall/releases/assets/672372547"
+checksum = "sha256:4121a0e8c7a97997cb0662859b258f34f3c5cca0d55ebc57d935e3cfcabdc413"
+url = "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.27.0/cargo-binstall-x86_64-unknown-linux-gnu.tgz"
+url_api = "https://api.github.com/repos/cargo-bins/cargo-binstall/releases/assets/734981484"
 provenance = "github-attestations"
 
 [tools.cargo-binstall."platforms.macos-arm64"]
-checksum = "sha256:f98f9e19ba97b483d4058d8388a8ec9ee8ffdba487f4c07aa4516f0edd44b152"
-url = "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.26.1/cargo-binstall-aarch64-apple-darwin.zip"
-url_api = "https://api.github.com/repos/cargo-bins/cargo-binstall/releases/assets/672374239"
+checksum = "sha256:69cfe1156ad39e91f4e6802db1ce1e2f02ac926452d6c20fd14a328c68f676c8"
+url = "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.27.0/cargo-binstall-aarch64-apple-darwin.zip"
+url_api = "https://api.github.com/repos/cargo-bins/cargo-binstall/releases/assets/734983777"
 provenance = "github-attestations"
 
 [[tools.ccache]]
@@ -1018,9 +1018,9 @@ checksum = "sha256:dc27f003c1061891f596ce04a4ac3b2b2ff8b9ee5d8b8822b62ae087d5e9e
 url = "https://storage.googleapis.com/cloud-sdk-release/google-cloud-sdk-589.0.0-darwin-arm.tar.gz"
 
 [[tools."gem:fastlane"]]
-version = "2.241.1"
+version = "2.241.2"
 backend = "gem:fastlane"
-specifiers = ["2.241.1"]
+specifiers = ["2.241.2"]
 
 [[tools.gh]]
 version = "2.103.3"
@@ -1091,21 +1091,21 @@ url = "https://github.com/coollabsio/coolify-cli/releases/download/v1.11.0/cooli
 url_api = "https://api.github.com/repos/coollabsio/coolify-cli/releases/assets/678021453"
 
 [[tools."github:entireio/cli"]]
-version = "0.12.2"
+version = "0.13.1"
 backend = "github:entireio/cli"
 specifiers = ["latest"]
 
 [tools."github:entireio/cli"."platforms.linux-x64"]
-checksum = "sha256:bfc5c8d5b599f328775b89b735db020c963e307b6a324fc30ce371fe8fa789e8"
+checksum = "sha256:c7afbecd5e18bee7a97b69ec318ff9f14033994eae309746c98ec7eed9c33048"
 checksum_source = "mise-versions"
-url = "https://github.com/entireio/cli/releases/download/v0.12.2/entire_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/entireio/cli/releases/assets/677973704"
+url = "https://github.com/entireio/cli/releases/download/v0.13.1/entire_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/entireio/cli/releases/assets/717617959"
 
 [tools."github:entireio/cli"."platforms.macos-arm64"]
-checksum = "sha256:ec8f8a325e0f8f0b0c17781906273b5e21bc125b0bb6cfbc0c61cad8dfccba4f"
+checksum = "sha256:09a68c033eee4bb7049e772449cc109f2de4fd1f14c806d5ed04989c79e213c6"
 checksum_source = "mise-versions"
-url = "https://github.com/entireio/cli/releases/download/v0.12.2/entire_darwin_arm64.tar.gz"
-url_api = "https://api.github.com/repos/entireio/cli/releases/assets/677973791"
+url = "https://github.com/entireio/cli/releases/download/v0.13.1/entire_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/entireio/cli/releases/assets/717617963"
 
 [[tools."github:ryanoasis/nerd-fonts"]]
 version = "3.5.1"
@@ -1264,17 +1264,18 @@ conda_deps = [
 ]
 
 [[tools.infisical]]
-version = "0.44.6"
+version = "0.45.3"
 backend = "github:Infisical/cli"
-specifiers = ["0.44.6"]
+specifiers = ["0.45.3"]
 
 [tools.infisical.options]
 asset_pattern = "cli_{{ version }}_{{ os(macos='darwin') }}_{{ arch(x64='amd64') }}.tar.gz"
 
 [tools.infisical."platforms.macos-arm64"]
-checksum = "sha256:f42e44ae2b57fe028ba357dcc386ee71de2a4a498e320b0e64115750573e7f07"
-url = "https://github.com/Infisical/cli/releases/download/v0.44.6/cli_0.44.6_darwin_arm64.tar.gz"
-url_api = "https://api.github.com/repos/Infisical/cli/releases/assets/663453352"
+checksum = "sha256:153d824594585be2d672f2403a4f7f5fdc5d4e141cb669591770b394c85d8967"
+checksum_source = "mise-versions"
+url = "https://github.com/Infisical/cli/releases/download/v0.45.3/cli_0.45.3_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/Infisical/cli/releases/assets/718123649"
 
 [[tools.jq]]
 version = "1.8.2"
@@ -1342,17 +1343,17 @@ checksum = "sha256:1dbd148222b051ba6c307c4d17a318ed083df018a4f6a5a0ce46955ffc9ab
 url = "https://github.com/neovim/neovim/releases/download/v0.12.6/nvim-macos-arm64.tar.gz"
 
 [[tools.node]]
-version = "26.12.1"
+version = "26.13.1"
 backend = "core:node"
-specifiers = ["26.12.1"]
+specifiers = ["26.13.1"]
 
 [tools.node."platforms.linux-x64"]
-checksum = "sha256:0fd1eb7770598f52a21995edf6ed35fc690400fa437c2386af329519e9143132"
-url = "https://nodejs.org/dist/v26.12.1/node-v26.12.1-linux-x64.tar.gz"
+checksum = "sha256:518674de2b621728a5e4486f5fb3b7d2900bb3cc4aa97969edaa463db99f9778"
+url = "https://nodejs.org/dist/v26.13.1/node-v26.13.1-linux-x64.tar.gz"
 
 [tools.node."platforms.macos-arm64"]
-checksum = "sha256:1901d539912c02afa10d1cc126943a8855a7eedebe830119463470db5e6c59e8"
-url = "https://nodejs.org/dist/v26.12.1/node-v26.12.1-darwin-arm64.tar.gz"
+checksum = "sha256:aec2514ea1ceb2ba52455e9ec65986f6749a06dd759e5db2a72e6889668c9735"
+url = "https://nodejs.org/dist/v26.13.1/node-v26.13.1-darwin-arm64.tar.gz"
 
 [[tools.npm]]
 version = "12.2.1"
@@ -1398,7 +1399,7 @@ backend = "npm:ctx7"
 specifiers = ["latest"]
 
 [[tools."npm:eas-cli"]]
-version = "27.5.0"
+version = "27.7.1"
 backend = "npm:eas-cli"
 specifiers = ["latest"]
 
@@ -1661,20 +1662,20 @@ url = "https://github.com/typst/typst/releases/download/v0.15.1/typst-aarch64-ap
 url_api = "https://api.github.com/repos/typst/typst/releases/assets/480299147"
 
 [[tools.uv]]
-version = "0.13.5"
+version = "0.13.7"
 backend = "aqua:astral-sh/uv"
-specifiers = ["0.13.5"]
+specifiers = ["0.13.7"]
 
 [tools.uv."platforms.linux-x64"]
-checksum = "sha256:f68d291c75783122dad58ab77def0e13f3233f358731db5d6d7e8715603b928f"
-url = "https://github.com/astral-sh/uv/releases/download/0.13.5/uv-x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/664336023"
+checksum = "sha256:c5221ff41b7892bfc223543883600125f6a47fe845093e0f5bdff4f359196d83"
+url = "https://github.com/astral-sh/uv/releases/download/0.13.7/uv-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/704009823"
 provenance = "github-attestations"
 
 [tools.uv."platforms.macos-arm64"]
-checksum = "sha256:743f85035a1996ecb350659e01cd9faea9709829be09b1b4b03c73eaf3c9cd73"
-url = "https://github.com/astral-sh/uv/releases/download/0.13.5/uv-aarch64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/664335803"
+checksum = "sha256:81b811b57e4624df7ed3aac148e0359100d9962f3d9dce00aec533dc2e086731"
+url = "https://github.com/astral-sh/uv/releases/download/0.13.7/uv-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/704009442"
 provenance = "github-attestations"
 
 [[tools.vercel]]
@@ -1747,20 +1748,20 @@ url = "https://github.com/google/yamlfmt/releases/download/v0.21.0/yamlfmt_0.21.
 url_api = "https://api.github.com/repos/google/yamlfmt/releases/assets/336650209"
 
 [[tools.yq]]
-version = "4.54.1"
+version = "4.54.3"
 backend = "aqua:mikefarah/yq"
 specifiers = ["latest"]
 
 [tools.yq."platforms.linux-x64"]
-checksum = "sha256:8e34fc298390875de416e6a4afcb8cabeceb25d9aa8506c1a2f9353cf702ea5f"
-url = "https://github.com/mikefarah/yq/releases/download/v4.54.1/yq_linux_amd64"
-url_api = "https://api.github.com/repos/mikefarah/yq/releases/assets/597222595"
+checksum = "sha256:129534601871538efe0ba4c5e62a34fb1d5f469bcb975c4fddeb467d82974973"
+url = "https://github.com/mikefarah/yq/releases/download/v4.54.3/yq_linux_amd64"
+url_api = "https://api.github.com/repos/mikefarah/yq/releases/assets/726219936"
 provenance = "cosign"
 
 [tools.yq."platforms.macos-arm64"]
-checksum = "sha256:fee511a181bd8b3e6b7da98842b41973bfac8cd3bcd341ed29a584620b5b2844"
-url = "https://github.com/mikefarah/yq/releases/download/v4.54.1/yq_darwin_arm64"
-url_api = "https://api.github.com/repos/mikefarah/yq/releases/assets/597222609"
+checksum = "sha256:a2aebb93b5bdcb61bb76f630e42a0ef6a3ee10842a6516cd7b9e4080786ec593"
+url = "https://github.com/mikefarah/yq/releases/download/v4.54.3/yq_darwin_arm64"
+url_api = "https://api.github.com/repos/mikefarah/yq/releases/assets/726219940"
 provenance = "cosign"
 
 [[tools.zoxide]]
