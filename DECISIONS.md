@@ -370,6 +370,32 @@ The snapshot drops each function whose name starts with one underscore. So a
 helper that a function in `configs/zsh/` calls when it runs has a name with
 two underscores.
 
+`npx`, `px`, and `npx!` are executables in `~/bin`: three links to
+`configs/npx/npx`. They were shell functions that only interactive zsh
+loaded, so Codex, OpenCode, and Pi ran the npx of npm. `~/bin` is first on
+PATH in every shell, so each agent now gets them, in zsh and in bash. So does
+a command that a script, a package manager, or an MCP config starts, which a
+shell function cannot reach. `npx` and `px` run the package manager that mise
+selects for the folder (`[settings.npm] package_manager`): `bunx` for bun,
+`sfw pnpm exec` or `sfw pnpm dlx` for pnpm, and `aubx` for aube. `npx!` runs
+the real npx through Socket Firewall.
+
+`npx!` starts the real npx by its path. `sfw npx` finds npx on PATH, where the
+wrapper is first, and the two would start each other with no end. The wrapper
+takes the first npx on PATH that is not itself: the npm folder in an activated
+shell, or the mise shim in Claude Code.
+
+A caller that had the npx of npm gets these differences:
+
+- `bunx` does not have `-c` (`--call`). `-y`, `-p`, `--package`,
+  `--no-install`, `-q`, and `--` work. Use `npx!` for `-c`.
+- In a folder whose mise config selects `npm` or `yarn`, `npx` stops with
+  exit status 1 and a message that names `npx!`.
+- Each call starts `mise settings get` and takes about 0.02 s more.
+
+`mise exec` and a mise task put the tool folders ahead of `~/bin`, so `npx`
+there is the npx of npm.
+
 Aliases for every shell are in `[shell_alias]` in the global mise config.
 Two groups stay in `configs/zsh/aliases.zsh` for interactive zsh only. Aliases
 that replace a standard command (`cat`, `ls`, `grep`, `tree`) stay there,
