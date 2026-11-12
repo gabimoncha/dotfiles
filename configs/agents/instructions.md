@@ -6,4 +6,4 @@ A subagent's task starts with "Act as the <role> sub-agent for this task." T3 `d
 
 Before you post text to GitHub for the user, such as a PR, an issue, or a comment, load the `github-writing` skill.
 
-Run a tool by its name, such as `node`, `pnpm`, or `gh`. Each shell activates mise, so a command gets the tool versions of its folder. Use `mise exec` only when a command is not found or when you need a different version.
+Run a tool by its name, such as `node`, `pnpm`, or `gh`. mise gives a command the tool versions of its folder. Use `mise exec` only when a command is not found or when you need a different version. In Claude Code, a tool starts through a mise shim, and the shell does not have the `[env]` variables of a `mise.toml`. Start a command that needs them with `mise exec -- <command>`.

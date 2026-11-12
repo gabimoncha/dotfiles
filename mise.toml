@@ -13,6 +13,7 @@ min_version = { soft = "2026.11.6" }
 "~/.p10k.zsh" = { source = "configs/zsh/p10k.zsh", mode = "symlink" }
 "~/.config/zsh/aliases.zsh" = { source = "configs/zsh/aliases.zsh", mode = "symlink" }
 "~/.config/zsh/check-updates.zsh" = { source = "configs/zsh/check-updates.zsh", mode = "symlink" }
+"~/.config/zsh/claude-env.sh" = { source = "configs/zsh/claude-env.sh", mode = "symlink" }
 "~/.config/zsh/env.zsh" = { source = "configs/zsh/env.zsh", mode = "symlink" }
 "~/.config/zsh/functions.zsh" = { source = "configs/zsh/functions.zsh", mode = "symlink" }
 "~/.config/zsh/harness.zsh" = { source = "configs/zsh/harness.zsh", mode = "symlink" }

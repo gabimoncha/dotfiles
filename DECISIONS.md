@@ -316,18 +316,53 @@ mise install. SSH readiness is a separate check.
 
 Git identity, SSH identity, and API account routing stay separate and local.
 
-Every shell activates mise: `configs/zsh/mise-activate.zsh` for zsh, and
+Every shell activates mise, except the shells of Claude Code:
+`configs/zsh/mise-activate.zsh` for zsh, and
 `configs/bash/mise-activate.bash` for the bash commands of Pi. Agents run
 commands with `zsh -c` (OpenCode, Claude), `zsh -lc` (Codex), `zsh -ilc`
 (Cursor), or `bash -c` (Pi). So zshenv activates mise for `zsh -c`, the end of
 zprofile for `zsh -lc`, interactive.zsh for an interactive shell, and Pi's
 `shellCommandPrefix` for bash. A command then gets the tool versions of its
 folder without `mise exec`. A tool starts directly, not through a shim that
-starts the 135 MB mise binary each time. Shims stay on PATH behind the
-activated tools, for scripts and GUI apps. Activation costs about 0.2 s for
-each zsh, and it skips a shell that `mise exec TOOL@VERSION` or a mise task
-started. It never installs tools (`not_found_auto_install = false`) or looks
-up credentials.
+starts the 135 MB mise binary each time. Activation takes the shims folder off
+PATH, because `not_found_auto_install = false`. Activation costs about 0.2 s
+for each zsh, and it skips a shell that `mise exec TOOL@VERSION` or a mise
+task started. It never installs tools or looks up credentials.
+
+Claude Code shells use the mise shims. Claude Code runs each command in a
+`zsh -c` that reads zshenv and then sources a shell snapshot. Claude Code
+writes the snapshot one time, when a session starts. The last line of the
+snapshot sets PATH to the PATH of the Claude process, or to `env.PATH` from the
+Claude settings. That line replaces the PATH of an activation. A command
+then has the tool folders that the Claude process inherited: project tools are
+not found, and shared tools have the global version. With a shim, mise finds
+the version for the current folder each time a command runs, so a recorded
+PATH stays correct. The mise documentation gives the same rule: activation for
+the shell that you type into, shims for programs that do not start from it.
+
+- The zsh startup files cannot change the PATH of the snapshot. So `env.zsh`
+  exports `CLAUDE_ENV_FILE`. Claude Code runs the content of that file,
+  `configs/zsh/claude-env.sh`, in each command after the snapshot.
+- `mise-activate.zsh` does not activate a shell that has `CLAUDECODE` and is
+  not interactive. It puts the shims behind `~/bin` and `~/.local/bin`, and
+  ahead of all other folders. `claude-env.sh` sources it again, so the shims
+  are first after the snapshot too.
+- A Claude process gets `CLAUDE_ENV_FILE` from the shell or the app that
+  starts it. Without the variable, nothing runs after the snapshot, so the
+  shells of that process activate as before. Restart an app that starts
+  Claude, such as T3 Code, after `env.zsh` changes.
+- The shell that makes the snapshot is a login shell that sources `~/.zshrc`.
+  It does not activate, so `aliases.zsh` reads the `[shell_alias]` aliases
+  from `mise shell-alias ls` there.
+- The snapshot drops each function whose name starts with one underscore. A
+  helper that a kept function calls has a name with two underscores.
+
+The shims have three costs. A shim call takes about 0.08 s more than a direct
+call. The shell does not have the `[env]` variables of the folder: only a tool
+that starts through a shim gets them. `which node` prints the shim, and
+`mise which node` prints the tool. A shim never installs a tool. When the
+version for the folder is not installed, the shim stops with
+`Tool not installed for shim`.
 
 Aliases for every shell are in `[shell_alias]` in the global mise config.
 Two groups stay in `configs/zsh/aliases.zsh` for interactive zsh only. Aliases
@@ -335,7 +370,8 @@ that replace a standard command (`cat`, `ls`, `grep`, `tree`) stay there,
 because agents write flags for the standard command. The Socket Firewall
 aliases (`npm`, `pnpm`, `cargo`, ...) stay there, because `sfw` adds about
 0.4 s and a node process to each call. Agents keep the release-age delays of
-mise, Bun, and pnpm.
+mise, Bun, and pnpm. Current behavior differs for Claude Code: its snapshot
+shell sources `~/.zshrc`, so Claude Code shells have both groups too.
 
 A login job on each Mac logs free memory and the busiest processes each minute
 into `~/.local/state/dotfiles/process-log/`, for 7 days. It keeps process names
