@@ -303,12 +303,15 @@ reload-shell() {
   print "Shell reloaded"
 }
 
-_cursor_available() {
+# Claude Code copies these functions into its shell snapshot and skips each
+# name that starts with one underscore. A helper that a kept function calls
+# when it runs has a name with two underscores.
+__cursor_available() {
   whence -p cursor >/dev/null 2>&1
 }
 
 c() {
-  if ! _cursor_available; then
+  if ! __cursor_available; then
     print -u2 "c: cursor binary not found on PATH"
     print -u2 "Install it from Cursor: Command Palette -> 'Shell Command: Install cursor command in PATH'"
     return 1
@@ -321,11 +324,11 @@ c() {
   fi
 }
 
-_infisical_available() {
+__infisical_available() {
   whence -p infisical >/dev/null 2>&1
 }
 
-_infisical_context() {
+__infisical_context() {
   local context="$1"
   local token_var="$2"
   local api_url_var="$3"
@@ -355,7 +358,7 @@ _infisical_context() {
       ;;
   esac
 
-  if ! _infisical_available; then
+  if ! __infisical_available; then
     print -u2 "${command_name}: infisical binary not found on PATH"
     return 1
   fi
@@ -376,11 +379,11 @@ _infisical_context() {
 }
 
 infisical-work() {
-  _infisical_context "work" "INFISICAL_WORK_TOKEN" "INFISICAL_WORK_API_URL" "$@"
+  __infisical_context "work" "INFISICAL_WORK_TOKEN" "INFISICAL_WORK_API_URL" "$@"
 }
 
 infisical-personal() {
-  _infisical_context "personal" "INFISICAL_PERSONAL_TOKEN" "INFISICAL_PERSONAL_API_URL" "$@"
+  __infisical_context "personal" "INFISICAL_PERSONAL_TOKEN" "INFISICAL_PERSONAL_API_URL" "$@"
 }
 
 ports() {

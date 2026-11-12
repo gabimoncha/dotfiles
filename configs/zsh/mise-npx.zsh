@@ -25,8 +25,12 @@
 # pnpm projects, routes pnpm through Socket Firewall Free, deliberately refuses
 # `npm` and `yarn`, and treats `auto` as aubx -> bunx -> pnpm without falling
 # back to npm.
+#
+# The helper names start with two underscores. Claude Code copies the shell
+# functions into its shell snapshot and skips each name that starts with one
+# underscore, so `npx` and `px` would lose a helper with such a name.
 
-_mise_npm_package_manager() {
+__mise_npm_package_manager() {
   local manager
 
   if ! command -v mise >/dev/null 2>&1; then
@@ -58,7 +62,7 @@ _mise_npm_package_manager() {
   esac
 }
 
-_mise_npm_auto_package_manager() {
+__mise_npm_auto_package_manager() {
   if command -v aubx >/dev/null 2>&1; then
     print -r -- "aube"
   elif command -v bunx >/dev/null 2>&1; then
@@ -71,18 +75,18 @@ _mise_npm_auto_package_manager() {
   fi
 }
 
-_mise_npm_effective_package_manager() {
+__mise_npm_effective_package_manager() {
   local manager
 
-  manager="$(_mise_npm_package_manager)" || return
+  manager="$(__mise_npm_package_manager)" || return
   if [[ "$manager" == "auto" ]]; then
-    _mise_npm_auto_package_manager
+    __mise_npm_auto_package_manager
   else
     print -r -- "$manager"
   fi
 }
 
-_mise_npm_require_runner() {
+__mise_npm_require_runner() {
   case "$1" in
     bun)
       command -v bunx >/dev/null 2>&1 || {
@@ -113,13 +117,13 @@ _mise_npm_require_runner() {
   esac
 }
 
-_mise_npm_has_local_bin() {
+__mise_npm_has_local_bin() {
   local bin="${1:-}"
 
   [[ -n "$bin" && "$bin" != -* && "$bin" != */* && -x "node_modules/.bin/$bin" ]]
 }
 
-_mise_npm_run_pnpm() {
+__mise_npm_run_pnpm() {
   local bin
 
   bin="${1:-}"
@@ -129,7 +133,7 @@ _mise_npm_run_pnpm() {
     bin="${1:-}"
   done
 
-  if _mise_npm_has_local_bin "$bin"; then
+  if __mise_npm_has_local_bin "$bin"; then
     command sfw pnpm exec "$@"
   else
     command sfw pnpm dlx "$@"
@@ -139,15 +143,15 @@ _mise_npm_run_pnpm() {
 npx() {
   local manager
 
-  manager="$(_mise_npm_effective_package_manager)" || return
-  _mise_npm_require_runner "$manager" || return
+  manager="$(__mise_npm_effective_package_manager)" || return
+  __mise_npm_require_runner "$manager" || return
 
   case "$manager" in
     bun)
       command bunx "$@"
       ;;
     pnpm)
-      _mise_npm_run_pnpm "$@"
+      __mise_npm_run_pnpm "$@"
       ;;
     aube)
       command aubx "$@"
