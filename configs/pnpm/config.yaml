@@ -6,6 +6,8 @@ minimumReleaseAgeExclude:
   - agent-browser
   - agent-desktop
   - agent-device
+  # Security exception for the November node-forge CVEs, fixed in 1.4.3.
+  - node-forge
   - oxlint
   - oxfmt
   - tsrs

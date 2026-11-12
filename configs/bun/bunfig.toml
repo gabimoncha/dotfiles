@@ -39,6 +39,8 @@ minimumReleaseAgeExcludes = [
   "oxlint-plugin-react-doctor",
   "bun-types",
   "eas-cli",
+  # Security exception: eas-cli 27.7.1 needs node-forge 1.4.3 for its November CVEs.
+  "node-forge",
   "@expo/eas-build-job",
   "@expo/eas-json",
   "@expo/logger",

@@ -7,8 +7,10 @@
 # release's install.sh digest in GitHub's release metadata. Raise the pin only
 # when this repository needs a newer release. mise updates itself without the
 # four-day delay, so the installed mise is often newer than the pin.
-pinned_mise_version=2026.11.1
-pinned_installer_sha256=55ac56863078539ec6bf5146e269a927481335edd3478477be7dfc84a22c2be7
+# Security exception to the four-day delay: rmcp 3.9.0 in this release fixes
+# RUSTSEC-2026-0462 (GHSA-c9f9-cp8h-jcj5). Earlier November releases use 3.8.0.
+pinned_mise_version=2026.11.6
+pinned_installer_sha256=2a58dd5a58832180431da1372f223ccad5b037114471c088a7ba3a395b6135c3
 
 # An older mise can refuse the current global config, so read only its version.
 mise_installed_version() {
