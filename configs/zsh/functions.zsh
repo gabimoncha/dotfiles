@@ -633,7 +633,6 @@ cargo <args>                     - run Cargo through Socket Firewall Free
 command <tool> <args>            - bypass shell aliases for one package-manager call
 npx <pkg>                        - run a package CLI through mise-selected bun, pnpm, or aube
 px <pkg>                         - short name for the mise-aware npx wrapper
-npx! <pkg>                       - run the real npx through Socket Firewall Free
 bx <pkg>                         - run a package CLI explicitly with bunx
 help                             - alias for use-my-mac
 use-my-mac                       - open this searchable command menu

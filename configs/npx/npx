@@ -1,18 +1,17 @@
 #!/usr/bin/env bash
-# npx, px, and npx! for every shell. Linked at ~/bin/npx, ~/bin/px, and
-# ~/bin/npx!, ahead of the npx of npm. Bash 3.2 compatible.
+# npx and px for every shell. Linked at ~/bin/npx and ~/bin/px, ahead of
+# the npx of npm. Bash 3.2 compatible.
 #
 # - `npx <pkg>` and `px <pkg>` run the package with the package manager that
 #   mise selects for the folder: `[settings.npm] package_manager`, which is
 #   bun in the global config. bun runs `bunx`, pnpm runs `sfw pnpm exec` for a
 #   command in node_modules/.bin and `sfw pnpm dlx` for another package, and
 #   aube runs `aubx`. `auto` uses the first of aubx, bunx, and pnpm on PATH.
-# - With `npm` or `yarn` selected, it stops with a message that names `npx!`.
-# - `npx! <pkg>` runs the real npx through Socket Firewall (`sfw`).
+# - With `npm` or `yarn` selected, it stops with an error.
 #
 # The arguments go to the runner unchanged, apart from a leading `-y` or
-# `--yes` for pnpm. bunx does not have `-c` (`--call`) of npm: use `npx!` for
-# it. Each call takes about 0.02 s more than the runner alone, for bash and
+# `--yes` for pnpm. bunx does not support npm's `-c` (`--call`) flag.
+# Each call takes about 0.02 s more than the runner alone, for bash and
 # `mise settings get`.
 set -u
 
@@ -21,36 +20,13 @@ fail() {
   exit 1
 }
 
-# Prints the first npx on PATH that is not this file. `sfw npx` cannot do this:
-# sfw finds npx on PATH, where this file is first, and the two would start
-# each other with no end. A mise shim is a correct result: it starts the npx
-# of the current folder.
-real_npx() {
-  local dir entries=()
-  IFS=: read -r -a entries <<<"$PATH"
-  for dir in ${entries[@]+"${entries[@]}"}; do
-    [[ -n "$dir" ]] || continue
-    if [[ -f "$dir/npx" && -x "$dir/npx" && ! "$dir/npx" -ef "$0" ]]; then
-      printf '%s\n' "$dir/npx"
-      return 0
-    fi
-  done
-  return 1
-}
-
-if [[ "${0##*/}" == 'npx!' ]]; then
-  command -v sfw >/dev/null 2>&1 || fail "npx!: sfw is required to run the real npx safely"
-  real="$(real_npx)" || fail "npx!: no npx other than this wrapper is on PATH"
-  exec sfw "$real" "$@"
-fi
-
 command -v mise >/dev/null 2>&1 || fail "npx: mise is required to resolve npm.package_manager"
 manager="$(mise settings get npm.package_manager)" || fail "npx: could not read mise npm.package_manager"
 
 case "$manager" in
   bun | pnpm | aube | auto) ;;
   npm | yarn)
-    fail "npx: mise selected '$manager', but this wrapper only allows bun, pnpm, aube, or non-npm auto. Run npx! for the real npx."
+    fail "npx: mise selected '$manager', but this wrapper only allows bun, pnpm, aube, or non-npm auto."
     ;;
   "") fail "npx: mise did not return npm.package_manager" ;;
   *) fail "npx: unsupported mise npm.package_manager '$manager'" ;;
