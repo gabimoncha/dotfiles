@@ -384,7 +384,9 @@ A caller that had the npx of npm gets these differences:
 - `bunx` does not have `-c` (`--call`). `-y`, `-p`, `--package`,
   `--no-install`, `-q`, and `--` work.
 - In a folder whose mise config selects `npm` or `yarn`, `npx` stops with
-  exit status 1 and an error that names the supported package managers.
+  exit status 1. The error names the supported package managers and
+  `sfw npm exec -- <package>`, which runs the npx of npm through Socket
+  Firewall.
 - Each call starts `mise settings get` and takes about 0.02 s more.
 
 `mise exec` and a mise task put the tool folders ahead of `~/bin`, so `npx`

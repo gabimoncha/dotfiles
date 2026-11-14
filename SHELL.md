@@ -55,7 +55,8 @@ The global choice is Bun; projects can override it to pnpm or aube.
 Bun delegates to `bunx`; pnpm uses a local `node_modules/.bin` command when
 present, otherwise `pnpm dlx`. Both commands are executables in `~/bin`
 ([configs/npx/npx](configs/npx/npx)), so every shell, agent, and script gets
-them. In a project that selects `npm` or `yarn`, `npx` stops with an error.
+them. In a project that selects `npm` or `yarn`, `npx` stops with an error. Run
+`sfw npm exec -- <package>` there for the npx of npm.
 `bunx` does not support the `-c` flag of npx. `bx` selects Bun
 explicitly, in interactive zsh only.
 

@@ -7,7 +7,8 @@
 #   bun in the global config. bun runs `bunx`, pnpm runs `sfw pnpm exec` for a
 #   command in node_modules/.bin and `sfw pnpm dlx` for another package, and
 #   aube runs `aubx`. `auto` uses the first of aubx, bunx, and pnpm on PATH.
-# - With `npm` or `yarn` selected, it stops with an error.
+# - With `npm` or `yarn` selected, it stops with an error that names
+#   `sfw npm exec`, which runs the npx of npm through Socket Firewall.
 #
 # The arguments go to the runner unchanged, apart from a leading `-y` or
 # `--yes` for pnpm. bunx does not support npm's `-c` (`--call`) flag.
@@ -26,7 +27,7 @@ manager="$(mise settings get npm.package_manager)" || fail "npx: could not read 
 case "$manager" in
   bun | pnpm | aube | auto) ;;
   npm | yarn)
-    fail "npx: mise selected '$manager', but this wrapper only allows bun, pnpm, aube, or non-npm auto."
+    fail "npx: mise selected '$manager', but this wrapper only allows bun, pnpm, aube, or non-npm auto. Run 'sfw npm exec -- <package>' for the npx of npm."
     ;;
   "") fail "npx: mise did not return npm.package_manager" ;;
   *) fail "npx: unsupported mise npm.package_manager '$manager'" ;;
