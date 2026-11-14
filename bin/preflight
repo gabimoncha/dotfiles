@@ -203,7 +203,9 @@ check_script_syntax() {
 }
 
 # Each `source` in the root mise files names a file that exists, and each file
-# in configs/ is a source or sits in a source folder. The exceptions: the
+# in configs/ is a source or sits in a source folder. A source that starts with
+# ~/ or / is on the host, such as a tool that setup installs, so this check
+# skips it. The exceptions to the second rule: the
 # Cursor telemetry files, which bin/configure-telemetry applies, and the
 # sync-keys lists of bin/save-settings.
 check_layout() {
@@ -211,6 +213,7 @@ check_layout() {
   sources="$(sed -n 's/.*source = "\([^"]*\)".*/\1/p' "$repo_root"/mise.toml "$repo_root"/mise.*.toml | sort -u)"
   while IFS= read -r source; do
     [[ -n "$source" ]] || continue
+    case "$source" in "~/"* | /*) continue ;; esac
     if [[ ! -e "${repo_root}/${source}" ]]; then
       fail "a mise file names a missing source: ${source}"
       missing=1

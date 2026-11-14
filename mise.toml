@@ -42,6 +42,12 @@ min_version = { soft = "2026.11.6" }
 # repository's .miserc.local.toml, so mise loads this machine's profile file.
 "~/.config/mise" = { source = "configs/mise/config", mode = "symlink" }
 
+# A link to mise acts as a shim: mise runs the tool that the link name names.
+# The Claude and Codex MCP configs start this path. A link to the tool's
+# install folder would fail, because setup links files before mise installs
+# tools, and one missing source stops the whole apply.
+"~/.local/bin/aether" = { source = "~/.local/bin/mise", mode = "symlink" }
+
 "~/bin/harness" = { source = "configs/harness/harness", mode = "symlink" }
 "~/bin/claude" = { source = "configs/claude/claude", mode = "symlink" }
 "~/bin/npx" = { source = "configs/npx/npx", mode = "symlink" }
