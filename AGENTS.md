@@ -100,6 +100,11 @@ run, and the mise tool list. A change that works only on the Mac breaks Linux.
   state. See [SECURITY.md](SECURITY.md).
 - Keep test fixtures and diagnostic scratch files in system temporary directories.
   Setup logs use ignored `.local/setup-runs/` with automatic retention.
+- In a test with a temporary `HOME`, do not link the real `~/.local` or mise
+  folders into it. mise then installs into the real folder but records paths
+  through the temporary one. When the temporary folder is deleted, those
+  installs break and `mise prune` stops. For the real tools, set
+  `MISE_DATA_DIR` to the real folder path, not to a path through a link.
 - `nvim/` is a separate repository. Do not edit it unless explicitly requested.
 - Keep macOS changes conservative and reversible. Correct documentation drift
   when found; distinguish current behavior from proposed fixes.
