@@ -185,7 +185,7 @@ check_script_syntax() {
       *)
         case "$script" in
           configs/zsh/*.zsh | configs/zsh/zshrc | configs/zsh/zshenv | configs/zsh/zprofile) shell=zsh ;;
-          *.sh) shell=bash ;;
+          configs/bash/*.bash | configs/bash/bash_profile | *.sh) shell=bash ;;
           *) continue ;;
         esac
         ;;
