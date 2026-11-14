@@ -39,7 +39,6 @@ neovim = "latest"
 python = "3.15.2"
 ruby = "3.4.12"
 age = "latest"
-"github:entireio/cli" = "latest"
 ast-grep = "latest"
 # Security exception to the four-day delay: the lock selects 4.54.3 for
 # GHSA-c3cc-5w96-mw9r, GHSA-9fvq-9qj8-6qhx, and GHSA-h2cv-65fq-jgrp.
