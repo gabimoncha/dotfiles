@@ -1,56 +1,16 @@
 {
   "favorites": [
     {
-      "provider": "claudeAgent",
-      "model": "claude-opus-5-5"
-    },
-    {
-      "provider": "cursor",
-      "model": "grok-4.7"
-    },
-    {
-      "provider": "cursor",
-      "model": "muse-wonder-1.0"
-    },
-    {
-      "provider": "opencode",
-      "model": "opencode/glm-5.3-flash-free"
-    },
-    {
-      "provider": "opencode",
-      "model": "opencode/deepseek-v4.1-flash-free"
-    },
-    {
-      "provider": "opencode",
-      "model": "fs/argon-high"
-    },
-    {
-      "provider": "opencode",
-      "model": "fs/argon-medium"
-    },
-    {
-      "provider": "opencode",
-      "model": "fs/argon-low"
-    },
-    {
-      "provider": "opencode",
-      "model": "fs/sol-xhigh"
-    },
-    {
-      "provider": "opencode",
-      "model": "fs/sol-high"
-    },
-    {
-      "provider": "opencode",
-      "model": "fs/sol-medium"
-    },
-    {
-      "provider": "opencode",
-      "model": "fs/sol-low"
+      "provider": "codex",
+      "model": "gpt-6.1-sol"
     },
     {
       "provider": "claudeAgent",
       "model": "claude-fable-5-2"
+    },
+    {
+      "provider": "claudeAgent",
+      "model": "claude-opus-5-5"
     }
   ],
   "defaultModelSelection": {
