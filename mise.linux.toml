@@ -13,6 +13,3 @@
 [bootstrap.user]
 # A full path: a bare name would take the first zsh on PATH.
 login_shell = "/usr/bin/zsh"
-
-[dotfiles]
-"~/.bash_profile" = { source = "configs/bash/bash_profile", mode = "symlink" }

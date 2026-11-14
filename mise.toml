@@ -24,6 +24,7 @@ min_version = { soft = "2026.11.6" }
 "~/.config/zsh/profile.zsh" = { source = "configs/zsh/profile.zsh", mode = "symlink" }
 "~/.config/zsh/telemetry.sh" = { source = "configs/zsh/telemetry.sh", mode = "symlink" }
 "~/.config/bash/mise-activate.bash" = { source = "configs/bash/mise-activate.bash", mode = "symlink" }
+"~/.bash_profile" = { source = "configs/bash/bash_profile", mode = "symlink" }
 
 "~/.gitconfig" = { source = "configs/git/gitconfig", mode = "symlink" }
 "~/bin/gh" = { source = "configs/gh/gh", mode = "symlink" }
