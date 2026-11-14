@@ -1,7 +1,7 @@
 # Repository rules
 
 This repository owns setup, tool inventories, and selected app settings for
-the owner's Macs and for Linux hosts: Docker containers and VMs. Read
+the owner's Macs and for Linux hosts in Docker containers. Read
 [README.md](README.md) for the workflow and [DECISIONS.md](DECISIONS.md)
 before changing ownership, bootstrap boundaries, or other design decisions.
 For mise behavior, the source of truth is the mise documentation at
@@ -15,7 +15,7 @@ For mise behavior, the source of truth is the mise documentation at
 | Where a file goes in HOME                          | the `[dotfiles]` entry in a root mise file                                                                                         |
 | Entries for every host                             | `mise.toml`                                                                                                                        |
 | Entries for one platform                           | `mise.macos.toml` or `mise.linux.toml`                                                                                             |
-| Entries for one machine                            | the profile file: `mise.macowl.toml`, `mise.macmini.toml`, `mise.air.toml`, `mise.container.toml`, or `mise.vm.toml`               |
+| Entries for one machine                            | the profile file: `mise.macowl.toml`, `mise.macmini.toml`, `mise.air.toml`, or `mise.container.toml`                               |
 | Agent and T3 settings that sync between machines   | the merge sources in `configs/claude/`, `configs/codex/`, and `configs/t3/`; save them with `./bin/save-settings`                  |
 | Which agent settings sync                          | `configs/<app>/sync-keys`: one `public` rule per setting, including each key of the merge source, and `private` rules for sections |
 | Agent rules for every host                         | `configs/agents/instructions.md`                                                                                                   |
@@ -94,7 +94,7 @@ run, and the mise tool list. A change that works only on the Mac breaks Linux.
   version; `mise.lock` records it.
 - Keep local companions under ignored `local/`; only examples belong in Git.
 - Keep the profile checks in `bin/lib/dotfiles-profile.sh` before setup writes.
-  The Air and VM profiles stay deferred.
+  The Air profile stays deferred.
 - Never commit credentials, private identities, backup payloads, or machine-local
   state. See [SECURITY.md](SECURITY.md).
 - Keep test fixtures and diagnostic scratch files in system temporary directories.

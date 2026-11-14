@@ -453,27 +453,3 @@ inventory of the Mac mini. It has no dictation apps, no Synology Drive, no
 Mackup, and no T3 Code desktop app. Setup restores only the Raycast export,
 from iCloud Drive or from a path that you pass to `./bin/file-restore raycast`.
 `./bin/file-backup raycast` saves a new export to iCloud Drive.
-
-## Future GCP VM
-
-The VM does not exist yet. `vm` (`mise.vm.toml`) is a reserved, deferred profile.
-VM creation, guest setup, cloud control tasks, and hardening belong to a later
-session. Do not copy the NAS container's sandbox or sudo exceptions into a VM.
-
-Start that session with the hardening requirements. Choose the project, zone,
-machine size, disk, IAM permissions, guest access, updates, and backup policy.
-The earlier proposal was IAP SSH with OS Login, persistent disks, and an
-ephemeral external IP for outbound access. Revisit those choices during the
-hardening review before provisioning.
-
-Then add `vm:status`, `vm:start`, `vm:stop`, `vm:ssh`, and `vm:doctor` mise tasks
-that call gcloud with an explicit configuration, project, zone, and instance.
-Keep these values local and leave credentials in gcloud. Start and stop must
-handle repeated calls safely. SSH must not start a stopped VM automatically.
-See [GCP stop and start](https://docs.cloud.google.com/compute/docs/instances/stop-start-instance)
-and [IAP SSH](https://docs.cloud.google.com/compute/docs/connect/ssh-using-iap).
-
-Use manual start and stop by default. An optional runtime cap must use `STOP`
-and state that it can interrupt work. A missing SSH session does not prove that
-agents or tmux are idle. Stopping loses RAM and running processes; retained
-storage and other resources can still incur charges.

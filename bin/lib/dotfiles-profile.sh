@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # The machine profile selects one mise.<profile>.toml file at the repository
-# root: macowl, macmini, and air on macOS, container and vm on Linux. A macOS
+# root: macowl, macmini, and air on macOS, and container on Linux. A macOS
 # profile can also have app lists in apps/. Bash 3.2 compatible.
 
 # Accept the profile names that older versions of this repository used.
@@ -9,7 +9,6 @@ dotfiles_profile_normalize() {
     macos/pro | pro) printf 'macowl\n' ;;
     macos/air) printf 'air\n' ;;
     linux/container | linux-container) printf 'container\n' ;;
-    linux/vm-gcp | linux-vm | vm-gcp) printf 'vm\n' ;;
     *) printf '%s\n' "${1:-}" ;;
   esac
 }
@@ -24,19 +23,19 @@ dotfiles_profile_validate() {
         return 2
       }
       ;;
-    container | vm)
+    container)
       [[ "$system" == Linux ]] || {
         printf 'dotfiles: profile %s requires Linux.\n' "$profile" >&2
         return 2
       }
       ;;
     *)
-      printf 'dotfiles: unsupported profile: %s. Use macowl, macmini, air, container, or vm.\n' "$profile" >&2
+      printf 'dotfiles: unsupported profile: %s. Use macowl, macmini, air, or container.\n' "$profile" >&2
       return 2
       ;;
   esac
   case "$profile" in
-    air | vm)
+    air)
       printf 'dotfiles: profile %s is not set up yet. No changes were made.\n' "$profile" >&2
       return 2
       ;;

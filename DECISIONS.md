@@ -91,8 +91,8 @@ project:
 - `mise.toml` has the entries for every host.
 - `mise.macos.toml` and `mise.linux.toml` have the platform entries. The root
   `.miserc.toml` sets `auto_env`, so mise loads the platform file by itself.
-- `mise.macowl.toml`, `mise.macmini.toml`, `mise.air.toml`,
-  `mise.container.toml`, and `mise.vm.toml` are the profiles. The ignored `.miserc.local.toml` selects one, for example
+- `mise.macowl.toml`, `mise.macmini.toml`, `mise.air.toml`, and
+  `mise.container.toml` are the profiles. The ignored `.miserc.local.toml` selects one, for example
   `env = ["macowl"]`. A profile file can replace an entry of the shared file, as
   the container does for `~/.codex/AGENTS.md`.
 
@@ -113,7 +113,7 @@ replaces a link per file, and a new profile needs no new link.
 `bin/repo-mise` runs the pinned mise from the repository root. It loads only
 this repository's files: no global or system config, and no config file in a
 parent folder. `bin/lib/dotfiles-profile.sh` selects the profile and stops the
-deferred Air and VM profiles before any write. `repo-mise --global` uses
+deferred Air profile before any write. `repo-mise --global` uses
 `configs/mise/config/` as the config folder and sets `MISE_ENV` to the profile,
 so it loads the same files as `~/.config/mise`, and no other global config.
 
@@ -248,7 +248,7 @@ forces the beta channel, and deletes the old app backup after copying.
 ## Linux hosts
 
 `bin/setup` runs a one-phase Linux plan on Debian and Ubuntu. The NAS
-container is the first host. A GCP VM is the next one.
+container is the only Linux host.
 
 - Setup diagnostics stay on `/usr/bin/ruby`. Debian's `ruby` package provides
   it, as the Command Line Tools do on macOS. `bin/linux-prerequisites` installs
@@ -267,8 +267,7 @@ container is the first host. A GCP VM is the next one.
   unprotected key would add a second credential next to the token.
 - Kernel 4.4 on the NAS has no user namespaces, so the agent sandboxes cannot
   run there. The container is the boundary, so its Codex config sets
-  `sandbox_mode = "danger-full-access"`. A VM with a current kernel can use
-  the sandboxes.
+  `sandbox_mode = "danger-full-access"`.
 
 ## Xcode and mobile tools
 

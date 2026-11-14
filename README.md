@@ -10,7 +10,7 @@ each setting lives. [DECISIONS.md](DECISIONS.md) explains the design.
 mise.toml             file links and shell checkouts for every host
 mise.macos.toml       Mac file links and macOS preferences
 mise.linux.toml       apt packages and the login shell for Linux
-mise.<profile>.toml   one file per machine: macowl, macmini, air, container, vm
+mise.<profile>.toml   one file per machine: macowl, macmini, air, container
 configs/<app>/        the settings files, one folder per app
 Brewfile              Homebrew formulae, casks, taps, and App Store apps for every Mac
 apps/                 the app manifest, vendor-installed tools, login items,
@@ -36,7 +36,6 @@ into their settings, so mise merges selected keys from `configs/claude/`,
 | `macmini`   | Mac mini                  | Ready for its first setup run.                          |
 | `air`       | MacBook Air               | Not set up yet. Setup stops before it changes anything. |
 | `container` | NAS development container | Set up.                                                 |
-| `vm`        | Linux VM, planned on GCP  | Not set up yet. Setup stops before it changes anything. |
 
 Save the machine's profile in the ignored `.miserc.local.toml`. A Linux
 container without this file uses `container`. `DOTFILES_PROFILE=macowl` selects a
