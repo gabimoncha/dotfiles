@@ -1090,6 +1090,23 @@ checksum_source = "mise-versions"
 url = "https://github.com/coollabsio/coolify-cli/releases/download/v1.11.0/coolify-cli_1.11.0_darwin_arm64.tar.gz"
 url_api = "https://api.github.com/repos/coollabsio/coolify-cli/releases/assets/678021453"
 
+[[tools."github:flowcopilot/aether"]]
+version = "0.1.1"
+backend = "github:flowcopilot/aether"
+specifiers = ["0.1.1"]
+
+[tools."github:flowcopilot/aether"."platforms.linux-x64"]
+checksum = "sha256:c5b707ca4fad92b1ea5b8422f3e4fc7ef17bdd11f05ee55799da5fbb1f629b05"
+checksum_source = "mise-versions"
+url = "https://github.com/flowcopilot/aether/releases/download/v0.1.1/aether-0.1.1-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/flowcopilot/aether/releases/assets/748880527"
+
+[tools."github:flowcopilot/aether"."platforms.macos-arm64"]
+checksum = "sha256:414bd527f2b07817cbd1501460fda22fd6d4f9a412359849480827e3bd14e327"
+checksum_source = "mise-versions"
+url = "https://github.com/flowcopilot/aether/releases/download/v0.1.1/aether-0.1.1-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/flowcopilot/aether/releases/assets/748880524"
+
 [[tools."github:ryanoasis/nerd-fonts"]]
 version = "3.5.1"
 backend = "github:ryanoasis/nerd-fonts"

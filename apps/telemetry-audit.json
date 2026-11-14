@@ -1,10 +1,10 @@
 {
   "checked_date": "2026-10-03",
-  "scope": "Tracked mise/Brewfile/app inventories, explicit setup tools, and managed shell/tmux plugins. Excludes project dependencies, other plugins, the Neovim plugins of configs/nvim/, and unrelated manually installed tools.",
+  "scope": "Tracked mise/Brewfile/app inventories, explicit setup tools, and managed shell/tmux plugins. Excludes project dependencies, other plugins, the Neovim plugins of configs/nvim/, and unrelated manually installed tools. Excludes tools from the GitHub owners gabimoncha, flowcopilot, and TudorAndrei, which belong to the owner's team.",
   "verification": "Official documentation and upstream source reviews; fake-command tests only. No live installations, account changes, personal settings edits, or network-capture tests.",
   "coverage": {
-    "total": 177,
-    "reviewed": 177,
+    "total": 176,
+    "reviewed": 176,
     "pending": 0
   },
   "limitations": [
@@ -1504,25 +1504,6 @@
         "scope": "CLI usage and error reports. Deployment dependency metadata needs dependencies_instrumentation.enabled=false in each project; dotfiles does not own those files.",
         "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
-    },
-    {
-      "id": "github_flowcopilot_aether",
-      "tool": "github:flowcopilot/aether",
-      "source": "mise",
-      "kind": "cli",
-      "research": {
-        "tool": "github:flowcopilot/aether",
-        "status": "uncertain",
-        "mechanism": "No documented opt-out found for this exact repository identity. Its official GitHub page and raw README could not be retrieved, and exact-name searches returned no result. No supported environment variable, command, or configuration key can be established from this bounded check.",
-        "sources": [
-          "https://github.com/flowcopilot/aether",
-          "https://raw.githubusercontent.com/flowcopilot/aether/main/README.md",
-          "https://raw.githubusercontent.com/flowcopilot/aether/master/README.md"
-        ],
-        "notes": "The listed source URLs were attempted but unavailable through web access; a read-only HTTP fallback also failed DNS resolution. Search returned several different projects named Aether, including contextbridge/aether, but their relationship to flowcopilot/aether could not be verified. Their telemetry settings must not be applied to this tool on name alone. Analytics, crash reporting, provider-service traffic, and update behavior remain unverified. No live tool or configuration change was made.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {}
     },
     {
       "id": "apktool",

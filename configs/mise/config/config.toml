@@ -54,6 +54,9 @@ yamlfmt = "latest"
 "npm:agent-device" = "latest"
 "pipx:httpie" = { version = "latest", python = "3.15", with = ["certifi==2026.10.19"] }
 "github:boyter/scc" = "latest"
+# The mise versions host lists no release of aether, so `latest` finds no
+# version. Pin the newest release from GitHub.
+"github:flowcopilot/aether" = "0.1.1"
 "conda:aria2" = "latest"
 "conda:sox" = "latest"
 "conda:tig" = "latest"
@@ -151,6 +154,7 @@ minimum_release_age_excludes = [
   "npm:oh-my-t3",
   "npm:omt3",
   "npm:t3",
+  "github:flowcopilot/aether",
   # Code checks run the newest release, so a project and the editor agree.
   "npm:oxlint",
   "npm:oxfmt",

@@ -1,6 +1,8 @@
 # Telemetry controls
 
-Reviewed on 2026-10-03. Coverage: 178 of 178 tracked entries.
+Reviewed on 2026-10-03. Coverage: 177 of 177 tracked entries.
+
+Tools from the owner's team are out of scope: the GitHub owners `gabimoncha`, `flowcopilot`, and `TudorAndrei`. Do not add audit entries for them.
 
 Setup exports the supported environment controls before installers run. It applies saved preferences after foundation installation, and again at the end of continuation after restores. A failed setter makes the step fail; other installed tools are still configured.
 
@@ -78,7 +80,6 @@ Turborepo’s optional experimental OTLP exporter can be disabled with `experime
 | superwhisper                 | Official release notes describe optional error/performance reporting. Leave it disabled in app settings; the current exact key and UI label were not established.       | [Official source](https://superwhisper.com/changelog)                                                      |
 | davinci-resolve              | Official manual access failed. No exact supported preference was established.                                                                                           | [Official source](https://www.blackmagicdesign.com/privacy)                                                |
 | github:CoastalFuturist/bodhi | The exact upstream repository was unavailable. No verified telemetry control was established.                                                                           | [Official source](https://github.com/CoastalFuturist/bodhi)                                                |
-| github:flowcopilot/aether    | The exact upstream repository was unavailable. No verified control was established.                                                                                     | [Official source](https://github.com/flowcopilot/aether)                                                   |
 
 Each entry had a separate tool research assignment. Agent thread limits required reuse: 14 fresh tool agents, 137 focused assignments to reused workers, and 44 individual dispatcher audits. A separate agent reviewed the implementation.
 
