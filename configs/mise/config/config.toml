@@ -113,7 +113,6 @@ mas = { version = "latest", os = "macos" }
 "pipx:tldr" = { version = "latest", os = "macos" }
 "conda:bfg" = { version = "latest", os = "macos" }
 "conda:wget" = { version = "latest", os = "macos" }
-herdr = { version = "latest", os = "macos" }
 "github:flowcopilot/aether" = { version = "0.2.9", os = "macos" }
 xcodegen = { version = "latest", os = "macos" }
 "npm:oh-my-t3" = "latest"
