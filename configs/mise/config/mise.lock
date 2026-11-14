@@ -1110,23 +1110,6 @@ checksum_source = "mise-versions"
 url = "https://github.com/coollabsio/coolify-cli/releases/download/v1.11.0/coolify-cli_1.11.0_darwin_arm64.tar.gz"
 url_api = "https://api.github.com/repos/coollabsio/coolify-cli/releases/assets/678021453"
 
-[[tools."github:entireio/cli"]]
-version = "0.13.1"
-backend = "github:entireio/cli"
-specifiers = ["latest"]
-
-[tools."github:entireio/cli"."platforms.linux-x64"]
-checksum = "sha256:c7afbecd5e18bee7a97b69ec318ff9f14033994eae309746c98ec7eed9c33048"
-checksum_source = "mise-versions"
-url = "https://github.com/entireio/cli/releases/download/v0.13.1/entire_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/entireio/cli/releases/assets/717617959"
-
-[tools."github:entireio/cli"."platforms.macos-arm64"]
-checksum = "sha256:09a68c033eee4bb7049e772449cc109f2de4fd1f14c806d5ed04989c79e213c6"
-checksum_source = "mise-versions"
-url = "https://github.com/entireio/cli/releases/download/v0.13.1/entire_darwin_arm64.tar.gz"
-url_api = "https://api.github.com/repos/entireio/cli/releases/assets/717617963"
-
 [[tools."github:flowcopilot/aether"]]
 version = "0.2.9"
 backend = "github:flowcopilot/aether"
@@ -1149,16 +1132,6 @@ asset_pattern = "Hack.zip"
 checksum = "sha256:fa24da7de7cefe7766614d27762570b20453c852fc1d5b657111666df9a5e449"
 url = "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.5.1/Hack.zip"
 url_api = "https://api.github.com/repos/ryanoasis/nerd-fonts/releases/assets/523429472"
-
-[[tools.herdr]]
-version = "0.9.5"
-backend = "aqua:herdrdev/herdr"
-specifiers = ["latest"]
-
-[tools.herdr."platforms.macos-arm64"]
-checksum = "sha256:fb77c2232a05a8035421382c894392f4174e4e38a18e48af3dd0290157c3a7e2"
-url = "https://github.com/herdrdev/herdr/releases/download/v0.9.5/herdr-macos-aarch64"
-url_api = "https://api.github.com/repos/herdrdev/herdr/releases/assets/640898230"
 
 [[tools.hk]]
 version = "2.11.1"
