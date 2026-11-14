@@ -124,10 +124,10 @@ experimental = true
 # on PATH, or stops when there is none.
 not_found_auto_install = false
 # `mise exec` and `mise run` install missing tools from every config layer,
-# including the profile tools of this repository. In a project, a large or
-# uninstallable profile tool then blocks or fails each `mise exec` call. Only
-# `mise install` installs these tools. Use the full backend name.
-auto_install_disable_tools = ["ollama", "github:flowcopilot/aether"]
+# including the profile tools of this repository. In a project, a large profile
+# tool then blocks each `mise exec` call. Only `mise install` installs these
+# tools. Use the full backend name, such as `github:owner/repo`.
+auto_install_disable_tools = ["ollama"]
 # The repository root holds a mise.toml. Trust it, so tools work in that folder.
 # Work and client projects are trusted too. ~/code/contrib and ~/code/ref hold
 # other people's repositories, so mise asks before it loads a config there.
@@ -151,7 +151,6 @@ minimum_release_age_excludes = [
   "npm:oh-my-t3",
   "npm:omt3",
   "npm:t3",
-  "github:flowcopilot/aether",
   # Code checks run the newest release, so a project and the editor agree.
   "npm:oxlint",
   "npm:oxfmt",
