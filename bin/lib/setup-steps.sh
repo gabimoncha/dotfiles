@@ -446,15 +446,6 @@ install_brewfile() {
   runtime_with_lock homebrew brew bundle install --jobs="$brew_bundle_jobs" --no-upgrade --verbose --file "$temp_brewfile"
 }
 
-initialize_submodules() {
-  log "Initializing git submodules"
-  git -C "$repo_root" submodule sync --recursive || return $?
-  git -C "$repo_root" submodule update --init --recursive || {
-    warn "Submodule init failed. Check network access and rerun: git submodule update --init --recursive"
-    return 1
-  }
-}
-
 install_mise_tools_unlocked() {
   local status=0 refresh_status=0
   "${repo_root}/bin/repo-mise" --global install || status=$?
@@ -607,7 +598,6 @@ setup_mise_inventory() {
 setup_manifest_apps() { "${repo_root}/bin/install-apps"; }
 setup_app_store() { install_mas_apps; }
 setup_editor_extensions() { install_cursor_extensions; }
-setup_submodules() { initialize_submodules; }
 setup_shell() {
   local status=0
   install_shell_framework || status=1

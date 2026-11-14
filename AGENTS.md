@@ -105,7 +105,6 @@ run, and the mise tool list. A change that works only on the Mac breaks Linux.
   through the temporary one. When the temporary folder is deleted, those
   installs break and `mise prune` stops. For the real tools, set
   `MISE_DATA_DIR` to the real folder path, not to a path through a link.
-- `nvim/` is a separate repository. Do not edit it unless explicitly requested.
 - Keep macOS changes conservative and reversible. Correct documentation drift
   when found; distinguish current behavior from proposed fixes.
 - Write every PR body from `.github/pull_request_template.md`. Delete the

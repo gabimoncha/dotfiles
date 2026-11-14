@@ -51,6 +51,9 @@ This repo has no CI. List the checks that you ran and their results:
   `./bin/install-apps --dry-run`.
 - For a shared file, the same checks on a Linux host (Debian or Ubuntu),
   if you could reach one.
+- For a change in `configs/nvim/`, `nvim --headless "+qa"` exits without
+  errors, and the changed plugin or language server works on a real file:
+  `:Lazy`, `:checkhealth <plugin>`, or `:LspInfo`. Name the Neovim version.
 - Any other probe, for example a lockfile check, a checksum, or a
   `--version` from the new binary.
 
@@ -77,6 +80,7 @@ anything near credentials (SECURITY.md).
 <!--
 Manual steps in order, and on which hosts: `dotfiles-update` or
 `git pull`, `mise install`, a rerun of `./bin/setup` or
-`./bin/setup --continue`, `harness update`, a new shell, or a manual app or
-System Settings step. Delete if none.
+`./bin/setup --continue`, `harness update`, `:Lazy restore` after a
+`lazy-lock.json` change, a new shell, or a manual app or System Settings
+step. Delete if none.
 -->

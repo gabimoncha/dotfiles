@@ -6,9 +6,6 @@
 *.rayconfig
 codex-state-*.tar.gz.age
 
-# Local worktree noise from nested repos/submodules.
-.submodule-seed/
-
 # Generated diagnostics and local working files.
 /.local/
 
