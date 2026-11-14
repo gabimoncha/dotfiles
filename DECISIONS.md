@@ -343,6 +343,13 @@ PATH, because `not_found_auto_install = false`. Activation costs about 0.2 s
 for each zsh, and it skips a shell that `mise exec TOOL@VERSION` or a mise
 task started. It never installs tools or looks up credentials.
 
+On Linux, `~/.bash_profile` links to `configs/bash/bash_profile`. Debian's
+`/etc/profile` sets a new PATH for a login bash, so `bash -l` lost the mise
+tools of its parent shell. The file reads `~/.profile`, then activates mise.
+`~/.profile` stays a local file, because hosts add their own lines to it. A
+`bash -c` and an interactive bash keep the PATH of their parent shell. On
+macOS, `path_helper` keeps that PATH, so the Mac needs no such file.
+
 Claude Code gets the mise shims on PATH from a wrapper. Claude Code writes a
 shell snapshot one time, when a session starts, and each Bash tool command
 sources it after zshenv. The last line of the snapshot sets PATH to the PATH

@@ -1,0 +1,11 @@
+# shellcheck shell=bash
+# Linux only. A login bash (`bash -l`) reads this file instead of ~/.profile.
+# Debian's /etc/profile sets a new PATH, so the login bash loses the mise tools
+# that the parent shell had. Read ~/.profile as before, then activate mise.
+# ~/.profile stays a local file, because hosts add their own lines to it.
+if [ -f "$HOME/.profile" ]; then
+  . "$HOME/.profile"
+fi
+if [ -f "$HOME/.config/bash/mise-activate.bash" ]; then
+  . "$HOME/.config/bash/mise-activate.bash"
+fi
