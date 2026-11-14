@@ -171,23 +171,6 @@ check_homebrew() {
   fi
 }
 
-check_submodule_url() {
-  local url
-
-  url="$(git -C "$repo_root" config --file .gitmodules --get submodule.nvim.url || true)"
-  case "$url" in
-    ../nvim | https://github.com/gabimoncha/nvim | https://github.com/gabimoncha/nvim.git)
-      pass "nvim submodule uses public-friendly URL"
-      ;;
-    git@github.com:* | ssh://*)
-      fail "nvim submodule URL requires SSH: ${url}"
-      ;;
-    *)
-      fail "nvim submodule URL should be ../nvim or HTTPS, got: ${url:-missing}"
-      ;;
-  esac
-}
-
 # Check every tracked shell script: the ones with a sh, bash, or zsh shebang,
 # and the zsh startup files.
 check_script_syntax() {
@@ -309,7 +292,6 @@ case "$(uname -s)" in
   *) fail "setup supports macOS and Linux, not $(uname -s)" ;;
 esac
 # API and SSH checks belong to the authentication steps.
-check_submodule_url
 check_repo_state
 check_layout
 check_app_manifest

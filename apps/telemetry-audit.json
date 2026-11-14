@@ -1,6 +1,6 @@
 {
   "checked_date": "2026-10-03",
-  "scope": "Tracked mise/Brewfile/app inventories, explicit setup tools, and managed shell/tmux plugins. Excludes project dependencies, other plugins, nvim repository dependencies, and unrelated manually installed tools.",
+  "scope": "Tracked mise/Brewfile/app inventories, explicit setup tools, and managed shell/tmux plugins. Excludes project dependencies, other plugins, the Neovim plugins of configs/nvim/, and unrelated manually installed tools.",
   "verification": "Official documentation and upstream source reviews; fake-command tests only. No live installations, account changes, personal settings edits, or network-capture tests.",
   "coverage": {
     "total": 177,
@@ -800,7 +800,7 @@
         "status": "none_found",
         "mechanism": "No documented opt-out found in the official core CLI/startup documentation reviewed.",
         "sources": ["https://neovim.io/doc/user/starting/"],
-        "notes": "Startup timing and verbose logs write to specified local files or local output. ShaDa and swap files support local state and crash recovery, not remote reporting. Disabling these changes editor functionality. Plugins, language servers, user scripts, remote editing/RPC, and package downloads have separate behavior and were not audited. No nvim repository edits, live execution, or network validation.",
+        "notes": "Startup timing and verbose logs write to specified local files or local output. ShaDa and swap files support local state and crash recovery, not remote reporting. Disabling these changes editor functionality. Plugins, language servers, user scripts, remote editing/RPC, and package downloads have separate behavior and were not audited. No edits to the Neovim config in configs/nvim/, live execution, or network validation.",
         "checked_date": "2026-10-03"
       },
       "setup_actions": {}
@@ -3337,7 +3337,7 @@
           "https://github.com/christoomey/vim-tmux-navigator",
           "https://raw.githubusercontent.com/christoomey/vim-tmux-navigator/master/README.md"
         ],
-        "notes": "Local key bindings and pane/process detection. Vim/Neovim integrations, custom shell bindings and plugin-manager traffic are separate. Only the directly managed tmux plugin was reviewed; nvim repository was not edited. Bounded official search/README review.",
+        "notes": "Local key bindings and pane/process detection. Vim/Neovim integrations, custom shell bindings and plugin-manager traffic are separate. Only the directly managed tmux plugin was reviewed; the Neovim config in configs/nvim/ was not edited. Bounded official search/README review.",
         "checked_date": "2026-10-03"
       },
       "setup_actions": {}

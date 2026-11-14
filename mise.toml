@@ -35,7 +35,7 @@ min_version = { soft = "2026.11.6" }
 "~/.config/.bunfig.toml" = { source = "configs/bun/bunfig.toml", mode = "symlink" }
 "~/.config/pnpm/config.yaml/dotfiles" = { source = "configs/pnpm/config.yaml", merge = true }
 "~/.config/tsrs/tsgo" = { source = "configs/tsrs/tsgo", mode = "symlink" }
-"~/.config/nvim" = { source = "nvim", mode = "symlink" }
+"~/.config/nvim" = { source = "configs/nvim", mode = "symlink" }
 
 # The global mise config folder: runtime tools and settings, each profile's
 # config.<profile>.toml, and their locks. Its miserc.local.toml links to this

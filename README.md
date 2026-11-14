@@ -18,7 +18,6 @@ apps/                 the app manifest, vendor-installed tools, login items,
 bin/                  setup and repair scripts
 macos/                the macOS defaults script and the telemetry login script
 local/                ignored local files; only the examples are tracked
-nvim/                 the Neovim config, a separate repository
 ```
 
 Most files in `configs/` are links in HOME, so an app's change to its file is a
@@ -89,9 +88,8 @@ file, then preview and apply:
 
 `bin/link-dotfiles` saves each file that it replaces in
 `~/.dotfiles-backups/links-<time>-*/`. `--status` exits with 1 when an entry is
-missing or differs. `~/.config/nvim` waits until the `nvim/` submodule is
-checked out. `--diff` does not show the content of merged settings, because
-those files can hold tokens.
+missing or differs. `--diff` does not show the content of merged settings,
+because those files can hold tokens.
 
 These mise tasks run the same scripts from any folder, for the checkout in
 `$DOTFILES_ROOT`, or the checkout that `~/.config/mise` links to: `dot:status`, `dot:diff`,

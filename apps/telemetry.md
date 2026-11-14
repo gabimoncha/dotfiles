@@ -82,4 +82,4 @@ Turborepo’s optional experimental OTLP exporter can be disabled with `experime
 
 Each entry had a separate tool research assignment. Agent thread limits required reuse: 14 fresh tool agents, 137 focused assignments to reused workers, and 44 individual dispatcher audits. A separate agent reviewed the implementation.
 
-The audit includes the managed shell/tmux plugins. It excludes project dependencies, other plugins, the separate nvim repository dependencies, and tools outside the tracked inventories. Tests use fake commands and isolated settings. No fresh-Mac installation or network capture was performed.
+The audit includes the managed shell/tmux plugins. It excludes project dependencies, other plugins, the Neovim plugins of `configs/nvim/`, and tools outside the tracked inventories. Tests use fake commands and isolated settings. No fresh-Mac installation or network capture was performed.

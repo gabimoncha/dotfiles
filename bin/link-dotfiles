@@ -154,10 +154,6 @@ changing_rows=()
 while IFS=$'\t' read -r state entry_mode target; do
   [[ -n "${target:-}" ]] || continue
   selected "$target" || continue
-  if [[ "$target" == "$HOME/.config/nvim" ]] && [[ -z "$(ls -A "$repo_root/nvim" 2>/dev/null)" ]]; then
-    printf 'Skipped ~/.config/nvim: the nvim submodule is empty. Run git submodule update --init nvim.\n'
-    continue
-  fi
   # A folder link on the way to a target must not lead into this repository
   # or out of HOME, because mise would write the file there.
   parent="$(real_parent "$target")"

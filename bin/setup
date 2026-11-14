@@ -182,7 +182,6 @@ setup_macos_continue() {
   step brewfiles local setup_brewfiles
   step --optional homebrew_inventory capture setup_brew_inventory
   step --optional mise_inventory capture setup_mise_inventory
-  step --optional submodules capture setup_submodules
   step --optional manifest_apps capture setup_manifest_apps
   step --optional applications capture setup_verify_apps
   step --optional editor_extensions capture setup_editor_extensions
@@ -227,7 +226,6 @@ setup_linux() {
   step install_gh capture setup_install_gh
   step links capture setup_links
   step --optional code_folders local setup_code_folders
-  step --optional submodules capture setup_submodules
   if [[ "${DOTFILES_SKIP_GITHUB_AUTH:-0}" == 1 ]]; then
     skip_step authenticate_api 'DOTFILES_SKIP_GITHUB_AUTH=1; run ./bin/auth-setup later'
   else

@@ -160,7 +160,6 @@ link where a real file is, and one refused entry stops the whole apply.
   without their content.
 - Before it replaces `~/.gitconfig`, it copies the Git identity to
   `~/.gitconfig.local`, which the tracked file includes.
-- It skips `~/.config/nvim` while the `nvim/` submodule is empty.
 - It removes links that older versions made, only while they point into this
   repository. It moves local files from the old layout, such as
   `mise/setup/miserc.local.toml`, to their new place.
@@ -438,7 +437,22 @@ Live Text is off in the global defaults (`AppleLiveTextEnabled`). Without it,
 Safari makes the text in a paused video selectable, and a click selects text
 instead of playing the video.
 
-Neovim is a separate submodule. Its plugins install at editor startup.
+## Neovim config
+
+The Neovim config is in `configs/nvim/`, and `~/.config/nvim` links to that
+folder. Its plugins install at editor startup. The config was a Git submodule
+from `gabimoncha/nvim` until the nvim commit `c68cade`. The submodule caused
+these problems:
+
+- Each plugin change needed two commits: one in nvim, and a commit in dotfiles
+  that moved the submodule pointer.
+- `git submodule update --init nvim` refused a checkout when `lazy-lock.json`
+  was modified, also when its content matched the target commit.
+- The hk hooks found the dotfiles `hk.pkl` from inside `nvim/` and reformatted
+  `lazy-lock.json`.
+
+lazy.nvim writes `lazy-lock.json` in its own format. `hk.pkl` excludes
+`configs/**/*.json` from the format steps, so the hooks keep that format.
 
 ## NAS agent proxy
 
