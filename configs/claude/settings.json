@@ -19,7 +19,11 @@
   "teammateMode": "tmux",
   "useAutoModeDuringPlan": true,
   "skipDangerousModePermissionPrompt": true,
-  "attribution": false,
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
   "worktree": {
     "baseRef": "fresh"
   },

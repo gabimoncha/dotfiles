@@ -19,7 +19,9 @@ public .switchModelsOnFlag
 public .teammateMode
 public .useAutoModeDuringPlan
 public .skipDangerousModePermissionPrompt
-public .attribution
+public .attribution.commit
+public .attribution.pr
+public .attribution.sessionUrl
 public .worktree.baseRef
 public .permissions.defaultMode
 public .pluginConfigs."agents-md@builtin".options.instructionFiles
