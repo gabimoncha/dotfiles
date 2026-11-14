@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Installs the T3 server as a login service on a Mac that runs it with no
+# desktop app, such as the Mac mini. bin/install-standalone installs the t3
+# command first. The T3 app on another machine then updates this server. The
+# NAS container has no service manager and uses bin/t3-dev-supervise instead.
+# Exit 20 means deferred: the t3 command is not installed yet.
+#
+# Usage: setup-t3-service [--dry-run]
+set -euo pipefail
+dry_run=0
+case "${1:-}" in
+  --dry-run) dry_run=1 ;;
+  '') ;;
+  *)
+    echo 'Usage: setup-t3-service [--dry-run]' >&2
+    exit 2
+    ;;
+esac
+if [[ "$(uname -s)" != Darwin ]]; then
+  echo 'setup-t3-service runs only on macOS.' >&2
+  exit 1
+fi
+# The vendor command, not the launcher of the desktop app.
+t3="${HOME}/.local/bin/t3"
+if [[ ! -x "$t3" ]]; then
+  echo 'The t3 command is not installed. Run ./bin/install-standalone install t3, then rerun.' >&2
+  exit 20
+fi
+service_status="$("$t3" service status 2>&1)" || {
+  printf '%s\n' "$service_status" >&2
+  exit 1
+}
+case "$service_status" in
+  *'not installed'*) ;;
+  *)
+    printf 'The T3 service is installed.\n%s\n' "$service_status"
+    exit 0
+    ;;
+esac
+if [[ "$dry_run" == 1 ]]; then
+  echo 'dry-run: would run t3 service install'
+  exit 0
+fi
+echo '==> Installing the T3 service'
+"$t3" service install
+cat <<'EOF'
+
+Next steps, which need your choices and private values:
+1. Run `t3 up` to choose how your other devices reach this server.
+2. Give the service the proxy key. See "Mac mini" in apps/remote-development.md.
+EOF

@@ -37,8 +37,17 @@ restore_offer() {
   fi
 }
 
+# Restores the backup groups of this profile. See dotfiles_profile_restores.
 setup_restores() {
-  local tool backup="" candidate archive status=0
+  local kind status=0
+  for kind in $(dotfiles_profile_restores "$DOTFILES_PROFILE"); do
+    "setup_restore_$kind" || status=1
+  done
+  return "$status"
+}
+
+setup_restore_mackup() {
+  local tool backup="" candidate
   for candidate in "${HOME}/Library/CloudStorage/SynologyDrive-personal/MacBackups/Mackup" "${HOME}/Library/Mobile Documents/com~apple~CloudDocs/Mackup"; do
     if restore_hydrated_tree "$candidate"; then
       backup="$candidate"
@@ -46,22 +55,27 @@ setup_restores() {
     fi
   done
   if tool="$(setup_real_tool mackup)" && "$tool" --version >/dev/null 2>&1 && [[ -n "$backup" ]]; then
-    PATH="$(dirname "$tool"):$PATH" restore_offer mackup || status=1
+    PATH="$(dirname "$tool"):$PATH" restore_offer mackup || return 1
   else runtime_record_deferred restore.mackup "requires working mackup and a readable, hydrated backup"; fi
+}
 
+setup_restore_raycast() {
+  local archive
   archive="$(latest_rayconfig || true)"
   if [[ -d "${DOTFILES_APPLICATIONS_DIR:-/Applications}/Raycast.app" ]] && restore_hydrated_file "$archive"; then
-    restore_offer raycast "$archive" || status=1
+    restore_offer raycast "$archive" || return 1
   else runtime_record_deferred restore.raycast "requires Raycast and a readable, hydrated export"; fi
+}
 
+setup_restore_codex() {
+  local tool archive
   archive="$(latest_codex_state_archive || true)"
   if tool="$(setup_real_tool age)" && "$tool" --version >/dev/null 2>&1 && restore_hydrated_file "$archive"; then
     if codex_portable_state_exists; then
       runtime_record_deferred restore.codex "existing portable state preserved; compare with file-restore codex --dry-run first"
     else
       # file-restore decrypts and validates the archive allowlist before copying.
-      PATH="$(dirname "$tool"):$PATH" restore_offer codex "$archive" || status=1
+      PATH="$(dirname "$tool"):$PATH" restore_offer codex "$archive" || return 1
     fi
   else runtime_record_deferred restore.codex "requires working age and a readable, hydrated encrypted archive"; fi
-  return "$status"
 }

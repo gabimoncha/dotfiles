@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Locks the screen of the Mac mini after automatic login. The account stays
+# logged in, so the login jobs, SSH, and the T3 server continue to work. A
+# login job in mise.macmini.toml runs this script. launchd also runs the job
+# when setup loads it, so without --now the script locks only in the first
+# minutes after a start. Bash 3.2 compatible.
+#
+# Usage: lock-screen [--now]
+#
+# The lock uses SACLockScreenImmediate from the private login framework, the
+# function behind Lock Screen in the Apple menu. No public command locks the
+# screen without a dependency on the display state. /usr/bin/python3 comes
+# with the Command Line Tools.
+set -euo pipefail
+max_uptime_seconds=300
+case "${1:-}" in
+  --now | '') ;;
+  *)
+    echo 'Usage: lock-screen [--now]' >&2
+    exit 2
+    ;;
+esac
+if [[ "$(uname -s)" != Darwin ]]; then
+  echo 'lock-screen runs only on macOS.' >&2
+  exit 1
+fi
+if [[ "${1:-}" != --now ]]; then
+  boot="$(sysctl -n kern.boottime | sed -E 's/^\{ sec = ([0-9]+),.*/\1/')"
+  [[ "$boot" =~ ^[0-9]+$ ]] || exit 1
+  if (($(date +%s) - boot > max_uptime_seconds)); then
+    exit 0
+  fi
+fi
+exec /usr/bin/python3 -c '
+import ctypes, sys
+login = ctypes.CDLL("/System/Library/PrivateFrameworks/login.framework/Versions/Current/login")
+sys.exit(login.SACLockScreenImmediate())
+'

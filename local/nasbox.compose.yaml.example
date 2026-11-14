@@ -112,8 +112,8 @@ services:
           fi
           sleep 2
         done &
-        if test -x /home/box/development/dotfiles/bin/container-system-packages; then
-          su - box -c /home/box/development/dotfiles/bin/container-system-packages &
+        if test -x /home/box/code/personal/dotfiles/bin/container-system-packages; then
+          su - box -c /home/box/code/personal/dotfiles/bin/container-system-packages &
         fi
         if test -x /home/box/.local/bin/t3-supervise; then
           su - box -c /home/box/.local/bin/t3-supervise &

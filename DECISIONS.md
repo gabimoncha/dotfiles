@@ -15,6 +15,13 @@ and restores. The user then signs in to the App Store, reviews App Management,
 and restarts the terminal. `--continue` acknowledges that step. No marker or TCC
 probe can verify consent or a restart.
 
+macOS shows the App Management prompt only when a process first changes an app
+from another developer in `/Applications`, and a new Mac has no such app. So
+the last preparation step, `app_management_prompt`, installs the Raycast cask
+and writes an extended attribute on the app, then removes it. The prompt then
+shows before the terminal restart. The step is optional, and its result does
+not prove consent.
+
 Telemetry opt-outs are the one exception to that boundary. Setup exports them
 before installers run and reapplies them after packages and restores, also when
 another step fails. mise installs the login job that sets them for GUI apps,
@@ -84,8 +91,8 @@ project:
 - `mise.toml` has the entries for every host.
 - `mise.macos.toml` and `mise.linux.toml` have the platform entries. The root
   `.miserc.toml` sets `auto_env`, so mise loads the platform file by itself.
-- `mise.macowl.toml`, `mise.air.toml`, `mise.container.toml`, and `mise.vm.toml`
-  are the profiles. The ignored `.miserc.local.toml` selects one, for example
+- `mise.macowl.toml`, `mise.macmini.toml`, `mise.air.toml`,
+  `mise.container.toml`, and `mise.vm.toml` are the profiles. The ignored `.miserc.local.toml` selects one, for example
   `env = ["macowl"]`. A profile file can replace an entry of the shared file, as
   the container does for `~/.codex/AGENTS.md`.
 
@@ -126,9 +133,12 @@ machine's name, `macowl`, which no other project uses.
 
 Two settings keep tools working inside the repository. mise refuses an
 untrusted file with `[dotfiles]` entries, and then every shim in this folder
-fails. The runtime list therefore trusts `~/development/dotfiles`
+fails. The runtime list therefore trusts `~/code/personal/dotfiles`
 (`trusted_config_paths`), and `bin/link-dotfiles` trusts the root files for a
-checkout in another path. The root `min_version` is soft for the same reason:
+checkout in another path. The list also trusts `~/code/work` and
+`~/code/client`, which hold the owner's projects. It leaves out
+`~/code/contrib` and `~/code/ref`: a mise config can run commands, and those
+folders hold other people's repositories. The root `min_version` is soft for the same reason:
 a hard minimum stops every shim in this folder while an older mise is
 installed. `bin/repo-mise` still requires the pinned release.
 
@@ -296,10 +306,16 @@ the mobile step stops before `sdkmanager` when the option is missing.
 
 ## Temporary sudo grant
 
-After the first `sudo -v`, setup installs `/etc/sudoers.d/dotfiles-setup`. The
+Before its other `sudo` steps, setup installs `/etc/sudoers.d/dotfiles-setup`. The
 file sets `timestamp_type=global` and `timestamp_timeout=30` for the setup user
 and grants no new commands. Steps without a terminal, and an agent shell, can
 then use the timestamp that the user created.
+
+The file makes the terminal's own timestamp invalid, so `sudo` authenticates
+two times: for the install and for the shared timestamp. `bin/sudo-grant` reads
+the password one time, keeps it in the shell's memory, and gives it to both
+`sudo` calls through a pipe. With Touch ID for `sudo`, the script reads no
+password, and `sudo` asks two times.
 
 The keepalive loop stops when setup exits, so the timestamp expires at most 30
 minutes later. The EXIT trap removes the file, also after a failure or a signal.
@@ -441,6 +457,33 @@ T3's shared launch arguments select the proxy. The global Codex provider stays
 Codex instance's driver and launch arguments; its other state stays local.
 Claude uses private native `env` settings.
 See [NAS agent proxy](apps/remote-development.md#nas-agent-proxy).
+
+## Mac profiles
+
+macowl is the personal MacBook Pro. The Mac mini is a development machine that
+you use through SSH and sometimes at its monitor. The shared Mac lists hold
+what both need: the root `Brewfile`, `apps/manifest.tsv`,
+`apps/login-items.txt`, `mise.macos.toml`, and the Mac tools in
+`configs/mise/config/config.toml`. An entry for one Mac goes in that
+profile's files. A shared list with one extra file per profile keeps one
+place for each app. A complete list per profile would repeat most entries, and
+the two copies would drift.
+
+The Mac mini has no dictation apps, no Synology Drive, and no Mackup, so setup
+restores only the Raycast export there. Its Raycast exports go to iCloud Drive.
+It runs the T3 server as a login service, with no desktop app. The T3 server,
+tokenburnmarket, and the process log are login jobs, and they start only in a
+user session. So the Mac mini logs in automatically after a restart, and macOS
+allows automatic login only with FileVault off. `bin/configure-remote-access`
+stops and reports when FileVault is on. It never turns FileVault off, because
+that choice gives a person at the machine your session.
+
+A login job then locks the screen, so the session exists but the desktop needs
+the password. `bin/lock-screen` calls `SACLockScreenImmediate` from the private
+login framework. No public command locks the screen without a dependency on
+the display state, and the Mac mini often has no display. An Apple update can
+remove the function; the screen then stays unlocked after a start, and nothing
+else breaks.
 
 ## Portable state
 

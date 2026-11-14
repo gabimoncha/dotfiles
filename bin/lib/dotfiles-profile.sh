@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # The machine profile selects one mise.<profile>.toml file at the repository
-# root: macowl and air on macOS, container and vm on Linux. Bash 3.2 compatible.
+# root: macowl, macmini, and air on macOS, container and vm on Linux. A macOS
+# profile can also have app lists in apps/. Bash 3.2 compatible.
 
 # Accept the profile names that older versions of this repository used.
 dotfiles_profile_normalize() {
@@ -17,7 +18,7 @@ dotfiles_profile_normalize() {
 dotfiles_profile_validate() {
   local profile="${1:-}" system="${2:-$(uname -s)}"
   case "$profile" in
-    macowl | air)
+    macowl | macmini | air)
       [[ "$system" == Darwin ]] || {
         printf 'dotfiles: profile %s requires macOS.\n' "$profile" >&2
         return 2
@@ -30,7 +31,7 @@ dotfiles_profile_validate() {
       }
       ;;
     *)
-      printf 'dotfiles: unsupported profile: %s. Use macowl, air, container, or vm.\n' "$profile" >&2
+      printf 'dotfiles: unsupported profile: %s. Use macowl, macmini, air, container, or vm.\n' "$profile" >&2
       return 2
       ;;
   esac
@@ -39,6 +40,30 @@ dotfiles_profile_validate() {
       printf 'dotfiles: profile %s is not set up yet. No changes were made.\n' "$profile" >&2
       return 2
       ;;
+  esac
+}
+
+# Prints the app lists of one kind for a profile: the list for every Mac, then
+# the profile's own list when it exists. KIND is brewfile, manifest, or
+# login-items.
+dotfiles_profile_app_lists() {
+  local root="$1" profile="$2" kind="$3" shared own
+  case "$kind" in
+    brewfile) shared="$root/Brewfile" own="$root/apps/$profile.Brewfile" ;;
+    manifest) shared="$root/apps/manifest.tsv" own="$root/apps/manifest.$profile.tsv" ;;
+    login-items) shared="$root/apps/login-items.txt" own="$root/apps/login-items.$profile.txt" ;;
+    *) return 2 ;;
+  esac
+  printf '%s\n' "$shared"
+  [[ ! -f "$own" ]] || printf '%s\n' "$own"
+}
+
+# Prints the backup groups that setup restores on a profile. The Mac mini has
+# no Synology Drive and no Mackup, so it restores only the Raycast export.
+dotfiles_profile_restores() {
+  case "${1:-}" in
+    macmini) printf 'raycast\n' ;;
+    *) printf 'mackup raycast codex\n' ;;
   esac
 }
 

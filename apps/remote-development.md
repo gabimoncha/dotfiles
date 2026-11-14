@@ -251,11 +251,11 @@ Removing only the live sudoers file is temporary: startup creates it again.
 
 ### Dotfiles on the box
 
-The checkout is `~/development/dotfiles`, also a T3 project on the box. Run the
+The checkout is `~/code/personal/dotfiles`, also a T3 project on the box. Run the
 normal setup there; it detects Linux and runs every step in one run:
 
 ```bash
-cd ~/development/dotfiles
+cd ~/code/personal/dotfiles
 ./bin/setup --dry-run
 DOTFILES_SKIP_GITHUB_AUTH=1 ./bin/setup   # until you log in to GitHub
 ```
@@ -392,6 +392,67 @@ Updating the example alone does not change the deployed NAS configuration.
 Full request logging and debug logging stay off. Docker retains application
 stdout with its existing rotation limits. Error log files can still contain
 request content. Keep those files private and inspect them before sharing.
+
+## Mac mini
+
+The Mac mini uses the `macmini` profile. It runs the T3 server with no desktop
+app, and you use it through SSH. `./bin/setup --continue` runs two steps for
+this profile only: `t3_service` and `remote_access`. Both steps are untested on
+a real Mac mini.
+
+### T3 server
+
+Setup installs `t3` with the vendor script, as on the NAS container, and
+`bin/setup-t3-service` runs `t3 service install`. Then run `t3 up` and choose
+how your other devices reach the server. The T3 app on another machine updates
+the server.
+
+The service needs the proxy key in its environment. Codex in T3 reads
+`CLIPROXYAPI_API_KEY` from the T3 process, and a terminal export does not
+reach a login service. Use the private files of the
+[NAS agent proxy](#nas-agent-proxy) section: `~/.config/local/cliproxyapi.zsh`
+and the login job that runs `launchctl setenv`. At login, the T3 service can
+start before that job, and then it has no key. The restart test on the Mac
+mini showed this. So the login job on the Mac mini runs a private script,
+`~/.config/local/cliproxyapi-environment.sh`. After `launchctl setenv`, the
+script reads the process of `com.t3tools.t3code.service`. If that process has
+no `CLIPROXYAPI_API_KEY`, the script runs `launchctl kickstart -k` on the
+service one time. A later run of the job finds the key and does not restart
+the service. Set the
+proxy URL to the NAS's Tailscale HTTPS URL, as on the other Macs, so the Mac
+mini needs Tailscale signed in before the agents work.
+
+### Remote access
+
+`bin/configure-remote-access` turns on Remote Login, turns off system sleep,
+makes the Mac restart after a power failure, and turns on automatic login. It
+changes only the `macmini` profile. `--status` reports each setting and
+`--dry-run` previews the changes.
+
+The T3 server, tokenburnmarket, and the process log are login jobs. They start
+only in a user session, so the Mac must log in by itself after a restart.
+macOS allows automatic login only with FileVault off. With both choices, a
+person at the Mac gets your session without a password. The script stops when
+FileVault is on and never turns it off. To continue, turn off FileVault in
+System Settings, wait for decryption to finish, and rerun the script. It then
+asks for the account password.
+
+The script's header comment lists the commands that undo each change.
+
+Automatic login shows the desktop with no password. The login job
+`lock-screen` in `mise.macmini.toml` runs `bin/lock-screen`, which locks the
+screen in the first minutes after a start. The account stays logged in behind
+the lock, so SSH, the T3 server, and the other login jobs continue to work.
+Tools that read or click the real screen, such as `agent-desktop`, see the lock
+screen until you unlock it. `./bin/lock-screen --now` locks at any time.
+
+### What the Mac mini leaves out
+
+The root `Brewfile` and the shared lists in `apps/` are the complete app
+inventory of the Mac mini. It has no dictation apps, no Synology Drive, no
+Mackup, and no T3 Code desktop app. Setup restores only the Raycast export,
+from iCloud Drive or from a path that you pass to `./bin/file-restore raycast`.
+`./bin/file-backup raycast` saves a new export to iCloud Drive.
 
 ## Future GCP VM
 

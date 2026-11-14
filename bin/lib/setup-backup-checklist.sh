@@ -30,25 +30,29 @@ setup_backup_location() {
 setup_backup_checklist() {
   local primary="${HOME}/Library/CloudStorage/SynologyDrive-personal/MacBackups"
   local secondary="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
-  local kind pattern
-  cat <<'EOF'
+  local kind pattern kinds
+  kinds="$(dotfiles_profile_restores "$DOTFILES_PROFILE")"
+  cat <<EOF
 
 Cloud backups needed for restore
-Setup restores three backup groups: Mackup, Raycast, and Codex.
+Setup restores these backup groups on the ${DOTFILES_PROFILE} profile: ${kinds}.
 Synology Drive is primary; iCloud Drive is the fallback. Only one copy is needed.
 This check reads file metadata only. It does not download or restore files.
 EOF
-  for kind in Mackup Raycast Codex; do
+  for kind in $kinds; do
     case "$kind" in
-      Mackup)
+      mackup)
+        kind=Mackup
         pattern='*'
         printf '\nMackup: download the entire folder (includes Cursor and other allowlisted app settings).\n'
         ;;
-      Raycast)
+      raycast)
+        kind=Raycast
         pattern='*.rayconfig'
         printf '\nRaycast: download the newest .rayconfig export; import it in Raycast with its password.\n'
         ;;
-      Codex)
+      codex)
+        kind=Codex
         pattern='codex-state-*.tar.gz.age'
         printf '\nCodex: download codex-state-latest.tar.gz.age, or the newest dated archive; its passphrase is required.\n'
         ;;
@@ -58,8 +62,9 @@ EOF
   done
   cat <<'EOF'
 
-In Finder, open iCloud Drive and download Mackup, the Raycast export, and the
-Codex archive listed above. You can instead use the Synology Drive copies.
+In Finder, open iCloud Drive and download the backups listed above: the Mackup
+folder, the Raycast export, and the Codex archive, as this profile needs them.
+You can instead use the Synology Drive copies.
 If Raycast was exported elsewhere in iCloud Drive, download that .rayconfig;
 the restore step also searches iCloud Drive for exports outside Raycast/.
 Wait for downloads to finish, then continue setup or rerun it.

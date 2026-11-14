@@ -1,6 +1,7 @@
-# Profile: macowl, the MacBook Pro. It uses mise.toml and mise.macos.toml as
-# they are. Put settings here that only macowl needs. Its runtime tools are in
-# configs/mise/config/config.macowl.toml.
+# Profile: macowl, the MacBook Pro. It adds these entries to mise.toml and
+# mise.macos.toml. Put settings here that only macowl needs. Its runtime tools
+# are in configs/mise/config/config.macowl.toml, and its apps are in
+# apps/macowl.Brewfile, apps/manifest.macowl.tsv, and apps/login-items.macowl.txt.
 
 # This Mac is the source of the shared T3 settings. The login job saves them
 # into configs/t3/settings.json each minute that T3 changes them, and never
@@ -8,6 +9,9 @@
 # finds the script.
 [dotfiles]
 "~/bin/dotfiles-t3-autosave" = { source = "bin/autosave-t3-settings", mode = "symlink" }
+# Dictation and the Mackup backup, which stores its files in Synology Drive.
+"~/Documents/superwhisper/settings/settings.json" = { source = "configs/superwhisper/settings.json", mode = "symlink" }
+"~/.mackup.cfg" = { source = "configs/mackup/mackup.cfg", mode = "symlink" }
 
 [bootstrap.macos.launchd.agents.t3-settings-autosave]
 program = "/bin/sh"
@@ -15,3 +19,21 @@ args = ["-c", 'exec "$HOME/bin/dotfiles-t3-autosave"']
 run_at_load = true
 start_interval = 60
 process_type = "Background"
+
+[bootstrap.macos.defaults."com.apple.assistant.support"]
+"Dictation Enabled" = true
+
+[bootstrap.macos.defaults."com.apple.speech.recognition.AppleSpeechRecognition.prefs"]
+DictationIMNetworkBasedLocaleIdentifier = "ro_RO"
+DictationIMPreferredLanguageIdentifiers = ["ro_RO", "en_US"]
+VisibleNetworkSRLocaleIdentifiers = { ro_RO = true, en_US = true }
+
+# Vorssaint fan curve for the MacBook Pro, as set in the app. The shared
+# Vorssaint preferences are in mise.macos.toml.
+[bootstrap.macos.defaults."com.vorssaint.utils"]
+fanControlMode = "curve"
+fanControlCoolingLevel = 100
+fanControlCurves = '[{"points":[{"coolingLevel":0,"temperature":20},{"coolingLevel":35,"temperature":55},{"coolingLevel":50,"temperature":65},{"coolingLevel":65,"temperature":75},{"coolingLevel":80,"temperature":85},{"coolingLevel":100,"temperature":95}],"sensor":"averageCPU"}]'
+# Vorssaint starts with this saved configuration, so it holds the same curve.
+fanControlResume = true
+fanControlResumeConfiguration = '{"curves":[{"points":[{"coolingLevel":0,"temperature":20},{"coolingLevel":35,"temperature":55},{"coolingLevel":50,"temperature":65},{"coolingLevel":65,"temperature":75},{"coolingLevel":80,"temperature":85},{"coolingLevel":100,"temperature":95}],"sensor":"averageCPU"}],"manualLevel":100,"mode":"curve"}'

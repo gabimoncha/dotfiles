@@ -49,7 +49,7 @@ mise() {
         __dotfiles_mise_prune_global
       fi
       "$HOME/bin/harness" update --installed-only
-      "${DOTFILES_ROOT:-$HOME/development/dotfiles}/bin/save-lock"
+      "${DOTFILES_ROOT:-$HOME/code/personal/dotfiles}/bin/save-lock"
       ;;
     *) __dotfiles_mise_next "$@" ;;
   esac

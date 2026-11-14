@@ -284,14 +284,17 @@ check_sudo_grant() {
 }
 
 check_app_manifest() {
-  local bad_rows
+  local bad_rows manifest
 
-  bad_rows="$(awk -F '\t' 'NF != 5 && $0 !~ /^#/ && $0 != "" { print NR }' "${repo_root}/apps/manifest.tsv")"
-  if [[ -z "$bad_rows" ]]; then
-    pass "app manifest has five TSV columns"
-  else
-    fail "app manifest malformed rows: ${bad_rows}"
-  fi
+  for manifest in "${repo_root}"/apps/manifest.tsv "${repo_root}"/apps/manifest.*.tsv; do
+    [[ -f "$manifest" ]] || continue
+    bad_rows="$(awk -F '\t' 'NF != 5 && $0 !~ /^#/ && $0 != "" { print NR }' "$manifest")"
+    if [[ -z "$bad_rows" ]]; then
+      pass "${manifest#"${repo_root}/"} has five TSV columns"
+    else
+      fail "${manifest#"${repo_root}/"} malformed rows: ${bad_rows//$'\n'/ }"
+    fi
+  done
 }
 
 case "$(uname -s)" in

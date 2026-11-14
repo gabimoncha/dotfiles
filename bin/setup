@@ -112,15 +112,19 @@ skip_step() { runtime_record deferred "$1" "skipped: $2"; }
 setup_sudo_steps() {
   if [[ "${DOTFILES_SKIP_SUDO_TOUCH_ID:-0}" == 1 ]]; then
     skip_step touch_id DOTFILES_SKIP_SUDO_TOUCH_ID=1
+  elif [[ "$DOTFILES_PROFILE" == macmini ]]; then
+    skip_step touch_id 'the Mac mini has no Touch ID sensor'
   else
     step --optional touch_id sensitive setup_touch_id
   fi
-  step sudo sensitive setup_sudo
+  # The grant goes first: it asks for the password one time and creates the
+  # timestamp that the sudo step then finds. Without the grant, the sudo step asks.
   if [[ "${DOTFILES_SKIP_SUDO_GRANT:-0}" == 1 ]]; then
     skip_step sudo_grant DOTFILES_SKIP_SUDO_GRANT=1
   else
     step --optional sudo_grant sensitive setup_sudo_grant
   fi
+  step sudo sensitive setup_sudo
   step sudo_keepalive local setup_keepalive
 }
 
@@ -132,6 +136,14 @@ setup_tokenburnmarket_step() {
   else
     step --optional tokenburnmarket sensitive setup_tokenburnmarket
   fi
+}
+
+# The Mac mini runs the T3 server with no desktop app, and you use it through
+# SSH. Both steps can ask a question, so they run with the interactive steps.
+setup_macmini_steps() {
+  [[ "$DOTFILES_PROFILE" == macmini ]] || return 0
+  step --optional t3_service sensitive setup_t3_service
+  step --optional remote_access sensitive setup_remote_access
 }
 
 # The first macOS phase installs the tools that need no App Store sign-in and
@@ -146,6 +158,7 @@ setup_macos_prepare() {
   step brew_environment local setup_brew_environment
   step standalone_agents capture setup_standalone_agents
   step --optional --always telemetry capture setup_telemetry
+  step --optional app_management_prompt capture setup_app_management_prompt
   step permission_handoff capture setup_permission_handoff
 }
 
@@ -159,6 +172,7 @@ setup_macos_continue() {
   step brew_environment local setup_brew_environment
   # The mise config links must exist before setup checks mise's GitHub access.
   step links capture setup_links
+  step --optional code_folders local setup_code_folders
   # The GitHub steps are optional: setup_mise_inventory and bin/install-apps
   # check the API access themselves, and the other steps do not need it.
   step --optional authenticate_api sensitive setup_api
@@ -189,6 +203,7 @@ setup_macos_continue() {
   step --optional screenshots capture setup_screenshots
   step --optional app_settings sensitive setup_app_settings
   step --optional finder sensitive setup_finder
+  setup_macmini_steps
   setup_tokenburnmarket_step
   # After every interactive step, so the long Xcode download runs unattended.
   # Before telemetry, so its opt-outs cover the installed mobile tools.
@@ -211,6 +226,7 @@ setup_linux() {
   step system_packages capture setup_linux_system
   step install_gh capture setup_install_gh
   step links capture setup_links
+  step --optional code_folders local setup_code_folders
   step --optional submodules capture setup_submodules
   if [[ "${DOTFILES_SKIP_GITHUB_AUTH:-0}" == 1 ]]; then
     skip_step authenticate_api 'DOTFILES_SKIP_GITHUB_AUTH=1; run ./bin/auth-setup later'

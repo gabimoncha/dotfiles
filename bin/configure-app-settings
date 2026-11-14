@@ -7,6 +7,11 @@ case "$mode" in --apply | --dry-run) ;; *)
   exit 2
   ;;
 esac
+. "$repo_root/bin/lib/dotfiles-profile.sh"
+DOTFILES_PROFILE="$(dotfiles_profile "$repo_root")" || exit
+# The login items for every Mac, then the profile's own login items.
+lists=()
+while IFS= read -r list; do lists+=("$list"); done < <(dotfiles_profile_app_lists "$repo_root" "$DOTFILES_PROFILE" login-items)
 status=0
 while IFS= read -r app; do
   [[ -n "$app" && "$app" != \#* ]] || continue
@@ -48,7 +53,7 @@ APPLESCRIPT
     status=1
     break
   }
-done <"$repo_root/apps/login-items.txt"
+done < <(cat "${lists[@]}")
 if [[ "$status" != 0 ]]; then
   echo 'Some login items remain incomplete. Install missing apps or allow Automation for System Events, then rerun ./bin/configure-app-settings.' >&2
 fi

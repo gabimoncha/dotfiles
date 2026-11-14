@@ -4,6 +4,8 @@
 standalone_manifest="${repo_root}/apps/standalone.tsv"
 # shellcheck source=bin/lib/mise-pin.sh
 . "${repo_root}/bin/lib/mise-pin.sh"
+# shellcheck source=bin/lib/dotfiles-profile.sh
+. "${repo_root}/bin/lib/dotfiles-profile.sh"
 
 # Keep inherited discovery settings from adding or omitting repository configs.
 # Preserve cache, state, data, and authentication settings for the caller.
@@ -47,13 +49,20 @@ standalone_expand() {
   printf '%s\n' "$path"
 }
 
-# Prints this OS's rows as: name, phase, command, root, installer, update.
+# Prints this machine's rows as: name, phase, command, root, installer, update.
+# The os column is all, or a comma list of OS names and profile names. Without
+# a selected profile, as before setup selects one, only the OS names match.
 standalone_rows() {
-  local os name row_os phase command root installer update
+  local os profile name row_os phase command root installer update
   os="$(standalone_os)"
+  profile="${DOTFILES_PROFILE:-$(dotfiles_profile "$repo_root" 2>/dev/null)}" || profile=""
   while IFS=$'\t' read -r name row_os phase command root installer update || [[ -n "${name:-}" ]]; do
     [[ -z "$name" || "$name" == \#* ]] && continue
-    [[ "$row_os" == all || "$row_os" == "$os" ]] || continue
+    case ",$row_os," in
+      ,all, | *",$os,"*) ;;
+      *",${profile:-no-profile},"*) ;;
+      *) continue ;;
+    esac
     printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$name" "$phase" \
       "$(standalone_expand "$command")" "$(standalone_expand "$root")" "$installer" "$update"
   done <"$standalone_manifest"

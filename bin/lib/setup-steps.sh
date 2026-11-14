@@ -121,7 +121,6 @@ cask_app_bundle_name() {
     google-chrome) printf 'Google Chrome' ;;
     helium-browser) printf 'Helium' ;;
     iina) printf 'IINA' ;;
-    iterm2) printf 'iTerm' ;;
     karabiner-elements) printf 'Karabiner-Elements' ;;
     mole-app) printf 'Mole' ;;
     neardrop | grishka/grishka/neardrop) printf 'NearDrop' ;;
@@ -431,7 +430,11 @@ prepare_brewfiles() {
   : >"$xcode_brewfile"
   : >"$mas_brewfile"
   : >"$cursor_extensions_brewfile"
-  filter_brewfile_for_existing_apps "${repo_root}/Brewfile" "$temp_brewfile" "$xcode_brewfile" "$mas_brewfile" "$cursor_extensions_brewfile"
+  # The Brewfile for every Mac, then the profile's own Brewfile.
+  local brewfile
+  while IFS= read -r brewfile; do
+    filter_brewfile_for_existing_apps "$brewfile" "$temp_brewfile" "$xcode_brewfile" "$mas_brewfile" "$cursor_extensions_brewfile"
+  done < <(dotfiles_profile_app_lists "$repo_root" "$DOTFILES_PROFILE" brewfile)
 }
 
 install_brewfile() {
@@ -502,6 +505,7 @@ install_shell_framework() {
 apply_macos_defaults_once() {
   local defaults_script="${repo_root}/macos/defaults.sh"
   local defaults_config="${repo_root}/mise.macos.toml"
+  local profile_config="${repo_root}/mise.${DOTFILES_PROFILE}.toml"
   local status=0
 
   runtime_acquire_lock "macos-defaults" "macOS defaults" || return 1
@@ -513,7 +517,7 @@ apply_macos_defaults_once() {
   fi
 
   if [[ -f "$macos_defaults_flag" && ! "$defaults_script" -nt "$macos_defaults_flag" &&
-    ! "$defaults_config" -nt "$macos_defaults_flag" ]]; then
+    ! "$defaults_config" -nt "$macos_defaults_flag" && ! "$profile_config" -nt "$macos_defaults_flag" ]]; then
     log "macOS defaults already applied"
     runtime_release_lock "macos-defaults"
     return 0
@@ -619,19 +623,51 @@ setup_standalone_agents() {
   fi
 }
 setup_telemetry() { "${repo_root}/bin/configure-telemetry"; }
+# The checkout folders: work projects, personal projects, forks and friends'
+# repositories, and read-only third-party clones. Only macowl has client
+# projects.
+setup_code_folders() {
+  mkdir -p "$HOME/code/work" "$HOME/code/personal" "$HOME/code/contrib" "$HOME/code/ref" || return
+  [[ "$DOTFILES_PROFILE" != macowl ]] || mkdir -p "$HOME/code/client"
+}
+setup_t3_service() { "${repo_root}/bin/setup-t3-service"; }
+setup_remote_access() { "${repo_root}/bin/configure-remote-access"; }
 setup_tokenburnmarket() { "${repo_root}/bin/setup-tokenburnmarket"; }
 setup_app_settings() { "${repo_root}/bin/configure-app-settings"; }
 setup_screenshots() { "${repo_root}/bin/configure-screenshots"; }
+# macOS asks for App Management the first time a process changes an app from
+# another developer in /Applications. A new Mac has no such app, so the prompt
+# would first show in the middle of the cask installs of the second phase. This
+# step installs one cask from the Brewfile and changes an attribute of its app,
+# so the prompt shows before the terminal restart of the handoff.
+setup_app_management_prompt() {
+  local app="${DOTFILES_APPLICATIONS_DIR:-/Applications}/Raycast.app"
+  local probe=com.gabimoncha.dotfiles.app-management-probe
+  if [[ ! -d "$app" ]]; then
+    log "Installing Raycast, so that macOS can ask for App Management now"
+    runtime_with_lock homebrew brew install --cask raycast || return 1
+  fi
+  if xattr -w "$probe" 1 "$app" 2>/dev/null; then
+    xattr -d "$probe" "$app" 2>/dev/null || true
+    log "This terminal can manage apps"
+    return 0
+  fi
+  warn "macOS did not let this terminal change ${app}. Allow the App Management prompt, or enable the terminal in System Settings > Privacy & Security > App Management."
+  return 20
+}
 setup_permission_handoff() {
   cat <<'INSTRUCTIONS'
-Foundation installation finished. This phase does not install the bulk app inventory.
+Foundation installation finished. This phase installed one app, Raycast, so
+that macOS asks for the App Management permission now. It does not install the
+bulk app inventory.
 
 Before continuing:
 0. Open the App Store app and sign in. Continuation installs App Store apps,
    including Xcode, without another sign-in prompt.
 1. Open System Settings > Privacy & Security > App Management.
 2. Enable the terminal application you will use for setup, if listed; use Add
-   if macOS offers it. Approve App Management when macOS requests it.
+   if macOS offers it. If macOS showed an App Management prompt in this
+   phase, allow it.
    Setup cannot grant or reliably verify this permission. If the app is not
    available to select, the first protected app operation may still prompt.
 3. Once this command exits, fully quit and reopen that terminal application
@@ -683,6 +719,6 @@ setup_verify_apps() {
         [[ -d "${DOTFILES_APPLICATIONS_DIR:-/Applications}/${bundle}.app" ]] || runtime_record_deferred "app.$key" 'vendor installation requires manual completion'
         ;;
     esac
-  done <"${repo_root}/apps/manifest.tsv"
+  done < <(dotfiles_profile_app_lists "$repo_root" "$DOTFILES_PROFILE" manifest | while IFS= read -r list; do cat "$list"; done)
   return "$status"
 }

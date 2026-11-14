@@ -1054,26 +1054,6 @@ checksum = "sha256:0ba10e897e0496412cd86eacaed4ed554c97ddc29bc5c709d28faa5eaaa22
 url = "https://github.com/git-lfs/git-lfs/releases/download/v3.8.1/git-lfs-darwin-arm64-v3.8.1.zip"
 url_api = "https://api.github.com/repos/git-lfs/git-lfs/releases/assets/666388058"
 
-[[tools."github:CoastalFuturist/bodhi"]]
-version = "0.1.0"
-backend = "github:CoastalFuturist/bodhi"
-specifiers = ["latest"]
-
-[tools."github:CoastalFuturist/bodhi"."platforms.macos-arm64"]
-checksum = "sha256:dda9b59c533582f587cf8d2884b5966b3ce26631ff1aeddf5c45add9db8547fd"
-url = "https://github.com/CoastalFuturist/bodhi/releases/download/v0.1.0/bodhi-mac-arm64"
-url_api = "https://api.github.com/repos/CoastalFuturist/bodhi/releases/assets/316230789"
-
-[[tools."github:CoastalFuturist/ytcli"]]
-version = "0.2.0"
-backend = "github:CoastalFuturist/ytcli"
-specifiers = ["latest"]
-
-[tools."github:CoastalFuturist/ytcli"."platforms.macos-arm64"]
-checksum = "sha256:c0b0c05ef66906e769943f6f8c43fd98bd4aea326eb019dcb94208b3fbf468b0"
-url = "https://github.com/CoastalFuturist/ytcli/releases/download/v0.2.0/ytcli_0.2.0_darwin_arm64.tar.gz"
-url_api = "https://api.github.com/repos/CoastalFuturist/ytcli/releases/assets/358379505"
-
 [[tools."github:OpenVPN/easy-rsa"]]
 version = "3.2.7"
 backend = "github:OpenVPN/easy-rsa"
@@ -1109,16 +1089,6 @@ checksum = "sha256:4a3e4b8ec28d4f7e982bcf615012836699e94662f72e5a10c6a0a634ce254
 checksum_source = "mise-versions"
 url = "https://github.com/coollabsio/coolify-cli/releases/download/v1.11.0/coolify-cli_1.11.0_darwin_arm64.tar.gz"
 url_api = "https://api.github.com/repos/coollabsio/coolify-cli/releases/assets/678021453"
-
-[[tools."github:flowcopilot/aether"]]
-version = "0.2.9"
-backend = "github:flowcopilot/aether"
-specifiers = ["0.2.9"]
-
-[tools."github:flowcopilot/aether"."platforms.macos-arm64"]
-checksum = "sha256:bc5358ba281cf6f2512461ed150399ea4ed8fb6cf6eaed6d4c169d611d47ad78"
-url = "https://github.com/flowcopilot/aether/releases/download/v0.2.9/aether-macos-arm64"
-url_api = "https://api.github.com/repos/flowcopilot/aether/releases/assets/644582879"
 
 [[tools."github:ryanoasis/nerd-fonts"]]
 version = "3.5.1"
@@ -1386,6 +1356,11 @@ version = "1.2.0"
 backend = "npm:agent-desktop"
 specifiers = ["latest"]
 
+[[tools."npm:agent-device"]]
+version = "0.21.36"
+backend = "npm:agent-device"
+specifiers = ["latest"]
+
 [[tools."npm:cf"]]
 version = "1.0.0-beta.28"
 backend = "npm:cf"
@@ -1436,16 +1411,6 @@ version = "0.23.0-ts7.1.0-beta"
 backend = "npm:tsrs"
 specifiers = ["latest"]
 
-[[tools.ollama]]
-version = "0.40.8"
-backend = "aqua:ollama/ollama"
-specifiers = ["0.40.8"]
-
-[tools.ollama."platforms.macos-arm64"]
-checksum = "sha256:29fce20c736f62aa8885b1e83552c5fd8dcc63edc5ffc1b47f2de591a06cde44"
-url = "https://github.com/ollama/ollama/releases/download/v0.40.8/ollama-darwin.tgz"
-url_api = "https://api.github.com/repos/ollama/ollama/releases/assets/663837940"
-
 [[tools.pandoc]]
 version = "3.13"
 backend = "github:jgm/pandoc"
@@ -1477,12 +1442,6 @@ uv = { path = "locks/pipx-httpie/3.2.4~86d29274", digest = "sha256:667b66c572c9a
 [tools."pipx:httpie".options]
 python = "3.15"
 with = '["certifi==2026.10.19"]'
-
-[[tools."pipx:mackup"]]
-version = "0.11.2"
-backend = "pipx:mackup"
-specifiers = ["latest"]
-uv = { path = "locks/pipx-mackup/0.11.2", digest = "sha256:c85c4064034e698e0023e939e989fd477aaa3c77f4b5435b5843ca6efa932f15" }
 
 [[tools."pipx:tldr"]]
 version = "3.4.4"
