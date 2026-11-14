@@ -1,3 +1,57 @@
 {
-  "shellCommandPrefix": "[ ! -r \"$HOME/.config/bash/mise-activate.bash\" ] || . \"$HOME/.config/bash/mise-activate.bash\""
+  "shellCommandPrefix": "[ ! -r \"$HOME/.config/bash/mise-activate.bash\" ] || . \"$HOME/.config/bash/mise-activate.bash\"",
+  "theme": "dark",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-6-astra",
+  "enabledModels": [
+    "xai/grok-4.7",
+    "openrouter/openrouter/free",
+    "openrouter/~deepseek/deepseek-flash-latest",
+    "openrouter/~deepseek/deepseek-pro-latest",
+    "openrouter/~deepseek/deepseek-v4-flash-latest",
+    "openrouter/~google/gemini-flash-latest",
+    "openrouter/~google/gemini-pro-latest",
+    "openrouter/~moonshotai/kimi-latest",
+    "openrouter/fireworks/ember-1",
+    "openrouter/google/gemini-2.5-flash",
+    "openrouter/google/gemini-2.5-flash-lite",
+    "openrouter/google/gemini-2.5-pro",
+    "openrouter/google/gemini-2.5-pro-preview",
+    "openrouter/google/gemini-3-flash-preview",
+    "openrouter/google/gemini-3-pro-image",
+    "openrouter/google/gemini-3.1-flash-lite",
+    "openrouter/google/gemini-3.1-pro-preview",
+    "openrouter/google/gemini-3.5-flash",
+    "openrouter/google/gemini-3.5-flash-lite",
+    "openrouter/google/gemini-3.6-flash",
+    "openrouter/google/gemini-3.7-flash",
+    "openrouter/google/gemini-3.8-flash",
+    "openrouter/google/gemini-4-argon",
+    "openrouter/google/gemma-3-12b-it",
+    "openrouter/google/gemma-3-27b-it",
+    "openrouter/google/gemma-4-26b-a4b-it",
+    "openrouter/google/gemma-4-31b-it",
+    "openrouter/liquid/lfm-2.5-24b-a2b",
+    "openrouter/meta/muse-spark-open",
+    "openrouter/openrouter/pareto-code"
+  ],
+  "modelThinkingLevels": {
+    "openai-codex/gpt-6-astra": "low",
+    "openai-codex/gpt-5.6-terra": "medium",
+    "openai-codex/gpt-5.6-sol": "medium",
+    "openai-codex/gpt-5.6-luna": "medium",
+    "openai-codex/gpt-5.3-codex-spark": "medium"
+  },
+  "transport": "auto",
+  "cacheWarming": "streaming",
+  "markdown": {
+    "mermaid": "final"
+  },
+  "showHardwareCursor": true,
+  "showCacheMissNotices": true,
+  "enableInstallTelemetry": false,
+  "defaultProjectTrust": "ask",
+  "doubleEscapeAction": "tree",
+  "treeFilterMode": "default",
+  "fullscreenExitOutput": "transcript"
 }

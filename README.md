@@ -142,6 +142,11 @@ list, then save again.
 A public setting can also be a list of records, such as T3's model favorites.
 `bin/save-settings` checks every key and text in each record.
 
+A `public-home` rule is a public rule whose value can name a path under `$HOME`
+or `~/`, such as pi's `.shellCommandPrefix`, which reads a file that
+`bin/link-dotfiles` deploys. An absolute path, another user's `~name/`, a
+credential, or an email address still stops the save.
+
 `bin/save-settings` leaves a file unchanged when one of its keys has no public
 rule, or when a public setting has become a section or holds a local path, a
 credential, or an email address. Its messages never show a value.

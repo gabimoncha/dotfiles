@@ -17,6 +17,11 @@ public .providerModelPreferences.pi.hiddenModels
 public .providerModelPreferences.pi.modelOrder
 public .providerModelPreferences.opencode.hiddenModels
 public .providerModelPreferences.opencode.modelOrder
+public .reviewGuidesEnabled
+public .reviewGuideModelSelection.instanceId
+public .reviewGuideModelSelection.model
+public .reviewGuideModelSelection.options
+public .promptSuggestionsEnabled
 public .providerModelPreferences.fs_lab.hiddenModels
 public .providerModelPreferences.fs_lab.modelOrder
 public .providerInstances.codex.driver
@@ -40,6 +45,7 @@ private .providerInstances.codex.config.shadowHomePath
 # Threads, worktrees, and Git
 public .defaultThreadEnvMode
 public .defaultAutoPull
+public .fastWorktreeCheckout
 public .automaticGitFetchInterval
 public .pullRequestMergeMethod
 public .sourceControlWritingStyle.mode
@@ -78,3 +84,4 @@ private .enableDeviceSupport
 private .deviceOnboardingCompleted
 private .cursorKeychainUsageEnabled
 private .environmentIcon
+private .speechAcceleration

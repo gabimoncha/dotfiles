@@ -5,4 +5,26 @@
 # ./bin/save-settings --show-new to list them.
 # Pi runs each command with `bash -c`, which reads no startup file. This prefix
 # activates mise first, as zshenv does for the agents that run zsh.
-public .shellCommandPrefix
+# The value names files under $HOME that bin/link-dotfiles deploys.
+public-home .shellCommandPrefix
+public .theme
+public .defaultProvider
+public .defaultModel
+public .enabledModels
+public .modelThinkingLevels."openai-codex/gpt-6-astra"
+public .modelThinkingLevels."openai-codex/gpt-5.6-terra"
+public .modelThinkingLevels."openai-codex/gpt-5.6-sol"
+public .modelThinkingLevels."openai-codex/gpt-5.6-luna"
+public .modelThinkingLevels."openai-codex/gpt-5.3-codex-spark"
+public .transport
+public .cacheWarming
+public .markdown.mermaid
+public .showHardwareCursor
+public .showCacheMissNotices
+public .enableInstallTelemetry
+public .defaultProjectTrust
+public .doubleEscapeAction
+public .treeFilterMode
+public .fullscreenExitOutput
+# App state: the last changelog that pi showed on this machine.
+private .lastChangelogVersion

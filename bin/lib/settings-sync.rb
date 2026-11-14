@@ -5,8 +5,10 @@
 #
 # SOURCE is the repository file, such as configs/claude/settings.json.
 # SOURCE_JSON and LIVE_JSON hold it and the live file as JSON. The sync-keys
-# file next to SOURCE has one rule per line: "public PATH" or "private PATH",
-# where PATH is a key path such as .model or .env."NAME". A public rule names
+# file next to SOURCE has one rule per line: "public PATH", "public-home PATH",
+# or "private PATH", where PATH is a key path such as .model or .env."NAME".
+# public-home is a public rule whose value can name a path under $HOME or ~/,
+# such as a file that bin/link-dotfiles deploys. A public rule names
 # one setting: a string, a number, a boolean, or a list. A list can hold
 # records; each key and text in them gets the same checks as the setting. A
 # private rule can name a whole section. Settings under no rule are counted, not
@@ -18,11 +20,15 @@
 require 'json'
 
 PATH_SYNTAX = /\A(?:\.[A-Za-z0-9_-]+|\."[^"]+")+\z/
-PRIVATE_TEXT = Regexp.union(
-  # An absolute or home path after the start, a space, a quote, or a
-  # separator. A URL path follows "//host", so it does not match.
-  %r#(?:\A|[\s"'=(,;:\[{])(?:/(?!/)|~[A-Za-z0-9_.-]*/|\$\{?HOME\b|[A-Za-z]:[\\/]|\\\\)#,
-  /\A~\z/,
+# A path after the start, a space, a quote, or a separator. A URL path follows
+# "//host", so it does not match.
+PATH_START = %r#(?:\A|[\s"'=(,;:\[{])#
+# A path under the home folder of the user who runs the app: the same on each
+# machine.
+HOME_TEXT = Regexp.union(/#{PATH_START}(?:~\/|\$\{?HOME\b)/, /\A~\z/)
+OTHER_PRIVATE_TEXT = Regexp.union(
+  # An absolute path, or a path under another user's home folder.
+  /#{PATH_START}(?:\/(?!\/)|~[A-Za-z0-9_.-]+\/|[A-Za-z]:[\\\/]|\\\\)/,
   /\bfile:/i,
   %r{://[^/@\s]+:[^/@\s]*@},
   /\b(?:Bearer|Basic)\s+\S/i,
@@ -36,6 +42,7 @@ PRIVATE_TEXT = Regexp.union(
   /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/,
   /[\r\n]/
 )
+PRIVATE_TEXT = Regexp.union(HOME_TEXT, OTHER_PRIVATE_TEXT)
 SECRET_NAME = /(?:\A|[_.-])(?:api_?key|secret|password|passwd|passphrase|private_?key|credentials?|(?:auth|access|refresh|bearer|session)_?token|token|headers?)\z|\A(?:authorization|cookie)\z/i
 # OpenCode reads "{env:NAME}" from the environment, so the value names a
 # variable and holds no secret.
@@ -104,13 +111,16 @@ source_file, source_json, live_file, output_file, option = ARGV
 fail!('usage: settings-sync.rb SOURCE SOURCE_JSON LIVE_JSON OUTPUT_JSON [--show-new]') unless output_file
 sync_file = File.join(File.dirname(source_file), 'sync-keys')
 public_rules = []
+home_rules = []
 private_rules = []
 File.readlines(sync_file).each_with_index do |line, index|
   line = line.strip
   next if line.empty? || line.start_with?('#')
   kind, text = line.split(/\s+/, 2)
-  fail!("#{sync_file}:#{index + 1} must start with public or private") unless %w[public private].include?(kind) && text
-  (kind == 'public' ? public_rules : private_rules) << parse_path(text, sync_file, index + 1)
+  fail!("#{sync_file}:#{index + 1} must start with public, public-home, or private") unless %w[public public-home private].include?(kind) && text
+  keys = parse_path(text, sync_file, index + 1)
+  (kind == 'private' ? private_rules : public_rules) << keys
+  home_rules << keys if kind == 'public-home'
 end
 
 saved = read_map(source_json, source_file)
@@ -137,7 +147,8 @@ public_rules.each do |keys|
   names = []
   texts = []
   parts(value, names, texts)
-  if (texts + names).any? { |text| text.match?(PRIVATE_TEXT) }
+  private_text = home_rules.include?(keys) ? OTHER_PRIVATE_TEXT : PRIVATE_TEXT
+  if (texts + names).any? { |text| text.match?(private_text) }
     problems << "#{show(keys)} holds a local path, a credential, or an email address. Mark it private in #{sync_file}"
   elsif (keys + names).any? { |key| key.match?(SECRET_NAME) } && !(value.is_a?(String) && value.match?(ENV_REFERENCE))
     problems << "#{show(keys)} has a secret-like name. Mark it private in #{sync_file}"

@@ -194,8 +194,10 @@ source. After a pull, the job reports a failure until `bin/link-dotfiles` runs. 
 key in the source needs a public rule, so that a save cannot delete a key that
 nobody listed. The messages of `bin/save-settings` name only paths from the
 list and the source, because a key name can be private too. The save converts
-the file to JSON, which drops comments. It stops when a public setting has
-become a section or holds a local path, a credential, or an email address. It
+the file to JSON, which drops comments, so it rewrites a TOML or YAML source only
+when its data changed. It stops when a public setting has become a section or
+holds a local path, a credential, or an email address. A `public-home` rule
+accepts a path under `$HOME` or `~/`, which is the same on each machine. It
 also stops until this machine has merged the current source, so an older live
 value cannot replace a newer save from another machine. A merge never removes
 a key, so a key deleted in an app stays on the

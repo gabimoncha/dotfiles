@@ -616,6 +616,22 @@
       ]
     }
   },
+  "reviewGuidesEnabled": true,
+  "reviewGuideModelSelection": {
+    "instanceId": "codex",
+    "model": "gpt-6.1-sol",
+    "options": [
+      {
+        "id": "reasoningEffort",
+        "value": "xhigh"
+      },
+      {
+        "id": "serviceTier",
+        "value": "priority"
+      }
+    ]
+  },
+  "promptSuggestionsEnabled": true,
   "providerInstances": {
     "codex": {
       "driver": "codex",
@@ -652,6 +668,7 @@
   },
   "defaultThreadEnvMode": "worktree",
   "defaultAutoPull": true,
+  "fastWorktreeCheckout": true,
   "automaticGitFetchInterval": 15000,
   "pullRequestMergeMethod": "squash",
   "sourceControlWritingStyle": {
