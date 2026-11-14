@@ -1,0 +1,41 @@
+#!/bin/sh
+# Starts Claude Code with the mise shims on PATH. Linked at ~/bin/claude, ahead
+# of the vendor command ~/.local/bin/claude. POSIX sh: macOS and Linux run it.
+#
+# Claude Code writes a shell snapshot when a session starts, and the last line
+# of the snapshot sets PATH to the PATH of the Claude process. Each Bash tool
+# command sources the snapshot after zshenv, so that PATH replaces the PATH of
+# the mise activation. With tool folders of mise on it, a command gets the
+# versions of the folder where Claude started. A shim finds the version for
+# the current folder each time a command runs, so a PATH with the shims is
+# correct in every folder.
+real="$HOME/.local/bin/claude"
+if [ ! -x "$real" ]; then
+  printf 'claude: %s is missing. Run bin/install-standalone claude in the dotfiles repository.\n' "$real" >&2
+  exit 127
+fi
+
+# Inside `mise exec TOOL@VERSION` or a mise task, PATH has the versions that
+# mise chose. Keep them, as mise-activate.zsh does.
+if [ -z "${__MISE_TASK_TOOL_ARGS-}${MISE_TASK_NAME-}" ]; then
+  mise_data="${MISE_DATA_DIR:-$HOME/.local/share/mise}"
+  new_path="$HOME/bin:$HOME/.local/bin:$mise_data/shims"
+  # Remove the mise/installs folders. When the version for a folder is not
+  # installed, a shim runs the next executable of that name on PATH, and an
+  # install folder there would give the global version with no error.
+  old_ifs=$IFS
+  IFS=:
+  set -f
+  for dir in $PATH; do
+    case "$dir" in
+      "$HOME/bin" | "$HOME/.local/bin" | "$mise_data/shims" | "$mise_data/installs/"*) ;;
+      *) new_path="$new_path:$dir" ;;
+    esac
+  done
+  set +f
+  IFS=$old_ifs
+  PATH=$new_path
+  export PATH
+fi
+
+exec "$real" "$@"

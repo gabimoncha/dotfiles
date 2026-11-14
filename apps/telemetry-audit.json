@@ -3,8 +3,8 @@
   "scope": "Tracked mise/Brewfile/app inventories, explicit setup tools, and managed shell/tmux plugins. Excludes project dependencies, other plugins, nvim repository dependencies, and unrelated manually installed tools.",
   "verification": "Official documentation and upstream source reviews; fake-command tests only. No live installations, account changes, personal settings edits, or network-capture tests.",
   "coverage": {
-    "total": 183,
-    "reviewed": 183,
+    "total": 177,
+    "reviewed": 177,
     "pending": 0
   },
   "limitations": [
@@ -336,29 +336,6 @@
         "checked_date": "2026-10-03"
       },
       "setup_actions": {}
-    },
-    {
-      "id": "github_entireio_cli",
-      "tool": "github:entireio/cli",
-      "source": "mise",
-      "kind": "cli",
-      "research": {
-        "tool": "github:entireio/cli",
-        "status": "supported",
-        "mechanism": "Persist export ENTIRE_TELEMETRY_OPTOUT=1 in the managed shell environment. Per-project alternatives: entire configure --telemetry=false, or merge the top-level JSON property \"telemetry\": false into .entire/settings.json or the untracked .entire/settings.local.json; preserve other properties.",
-        "sources": [
-          "https://github.com/entireio/cli/blob/main/docs/security-and-privacy.md",
-          "https://github.com/entireio/cli"
-        ],
-        "notes": "Anonymous command analytics are enabled by default and sent to PostHog with GeoIP disabled. Data includes command/agent, enabled state, CLI/git versions, platform, flag names, and a hashed machine ID. Telemetry excludes prompts, transcripts, source code, paths, and repository identifiers. Session/checkpoint storage and push traffic are separate product functions; the telemetry opt-out does not disable them. No separate crash-reporting or update-check control was documented in the bounded review.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {
-        "environment": {
-          "ENTIRE_TELEMETRY_OPTOUT": "1"
-        },
-        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
-      }
     },
     {
       "id": "fzf",
@@ -1527,25 +1504,6 @@
         "scope": "CLI usage and error reports. Deployment dependency metadata needs dependencies_instrumentation.enabled=false in each project; dotfiles does not own those files.",
         "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
-    },
-    {
-      "id": "herdr",
-      "tool": "herdr",
-      "source": "mise",
-      "kind": "cli",
-      "research": {
-        "tool": "herdr CLI (herdrdev/herdr)",
-        "status": "none_found",
-        "mechanism": "No documented opt-out found for core Herdr usage analytics or remote crash/error reporting in the reviewed official CLI and configuration references. No supported telemetry environment variable or persistent key was established.",
-        "sources": [
-          "https://herdr.dev/docs/cli-reference/",
-          "https://herdr.dev/docs/configuration/",
-          "https://raw.githubusercontent.com/herdrdev/herdr/master/README.md"
-        ],
-        "notes": "Tracked mise configuration lists herdr. The official CLI reference describes communication with the running Herdr server through a local socket, or selected remote machines through SSH. These requested operations and agent-detection manifest downloads are distinct from vendor analytics. The herdr update command downloads releases. Third-party herdr-telemetry plugins have their own collection behavior and are not core CLI controls; they were not audited. No live command or configuration change was made.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {}
     },
     {
       "id": "github_flowcopilot_aether",

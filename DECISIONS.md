@@ -339,11 +339,74 @@ commands with `zsh -c` (OpenCode, Claude), `zsh -lc` (Codex), `zsh -ilc`
 zprofile for `zsh -lc`, interactive.zsh for an interactive shell, and Pi's
 `shellCommandPrefix` for bash. A command then gets the tool versions of its
 folder without `mise exec`. A tool starts directly, not through a shim that
-starts the 135 MB mise binary each time. Shims stay on PATH behind the
-activated tools, for scripts and GUI apps. Activation costs about 0.2 s for
-each zsh, and it skips a shell that `mise exec TOOL@VERSION` or a mise task
-started. It never installs tools (`not_found_auto_install = false`) or looks
-up credentials.
+starts the 135 MB mise binary each time. Activation takes the shims folder off
+PATH, because `not_found_auto_install = false`. Activation costs about 0.2 s
+for each zsh, and it skips a shell that `mise exec TOOL@VERSION` or a mise
+task started. It never installs tools or looks up credentials.
+
+Claude Code gets the mise shims on PATH from a wrapper. Claude Code writes a
+shell snapshot one time, when a session starts, and each Bash tool command
+sources it after zshenv. The last line of the snapshot sets PATH to the PATH
+of the Claude process, and that line replaces the PATH of the activation. With
+`mise/installs` folders on the PATH of the Claude process, a command gets the
+versions of the folder where Claude started. In another folder, project tools
+are not found, and shared tools have the wrong version.
+
+`configs/claude/claude` is linked at `~/bin/claude`, ahead of the vendor
+command `~/.local/bin/claude`. It puts `~/bin`, `~/.local/bin`, and the shims
+folder first on PATH, removes the `mise/installs` folders, and starts the
+vendor command with `exec`. A shim finds the version for the current folder
+each time a command runs, so the recorded PATH is correct in every folder. The
+mise documentation gives the same rule: activation for the shell that you type
+into, shims for programs that do not start from it. T3 Code starts `claude` by
+name, so it starts the wrapper too. Inside `mise exec TOOL@VERSION` or a mise
+task, the wrapper keeps PATH.
+
+Shells keep activation when `CLAUDECODE` is set. Activation runs in zshenv
+before the snapshot, so a command has the `[env]` variables and the
+`[shell_alias]` aliases of its folder. The snapshot replaces only PATH. After
+a `cd` in a command, the activation hook sets PATH for the new folder.
+
+The wrapper removes the `mise/installs` folders. Shims ahead of them are not
+sufficient. When the version for a folder is not installed, a shim runs the
+next executable of that name on PATH (`not_found_system_fallback`, which is on
+by default). An install folder behind the shims then gives the global version
+with no error. Without those folders, the shim stops with
+`Tool not installed for shim`, unless Homebrew or the system has an executable
+of that name. Each executable in those folders has a shim, so no command is
+lost.
+
+A shim call takes about 0.08 s more than a direct call, and `which node`
+prints the shim: `mise which node` prints the tool. `bin/install-standalone`
+and `harness update` use the path `~/.local/bin/claude` from
+`apps/standalone.tsv`, and `claude update` and the automatic update change
+only that path. None of them reads or changes the wrapper.
+
+The snapshot drops each function whose name starts with one underscore. So a
+helper that a function in `configs/zsh/` calls when it runs has a name with
+two underscores.
+
+`npx` and `px` are executables in `~/bin`: two links to
+`configs/npx/npx`. They were shell functions that only interactive zsh
+loaded, so Codex, OpenCode, and Pi ran the npx of npm. `~/bin` is first on
+PATH in every shell, so each agent now gets them, in zsh and in bash. So does
+a command that a script, a package manager, or an MCP config starts, which a
+shell function cannot reach. `npx` and `px` run the package manager that mise
+selects for the folder (`[settings.npm] package_manager`): `bunx` for bun,
+`sfw pnpm exec` or `sfw pnpm dlx` for pnpm, and `aubx` for aube.
+
+A caller that had the npx of npm gets these differences:
+
+- `bunx` does not have `-c` (`--call`). `-y`, `-p`, `--package`,
+  `--no-install`, `-q`, and `--` work.
+- In a folder whose mise config selects `npm` or `yarn`, `npx` stops with
+  exit status 1. The error names the supported package managers and
+  `sfw npm exec -- <package>`, which runs the npx of npm through Socket
+  Firewall.
+- Each call starts `mise settings get` and takes about 0.02 s more.
+
+`mise exec` and a mise task put the tool folders ahead of `~/bin`, so `npx`
+there is the npx of npm.
 
 Aliases for every shell are in `[shell_alias]` in the global mise config.
 Two groups stay in `configs/zsh/aliases.zsh` for interactive zsh only. Aliases
@@ -351,7 +414,8 @@ that replace a standard command (`cat`, `ls`, `grep`, `tree`) stay there,
 because agents write flags for the standard command. The Socket Firewall
 aliases (`npm`, `pnpm`, `cargo`, ...) stay there, because `sfw` adds about
 0.4 s and a node process to each call. Agents keep the release-age delays of
-mise, Bun, and pnpm.
+mise, Bun, and pnpm. Current behavior differs for Claude Code: its snapshot
+shell sources `~/.zshrc`, so Claude Code shells have both groups too.
 
 A login job on each Mac logs free memory and the busiest processes each minute
 into `~/.local/state/dotfiles/process-log/`, for 7 days. It keeps process names

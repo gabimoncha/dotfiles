@@ -52,9 +52,14 @@ infisical-personal secrets get SOME_KEY --env=dev
 
 `npx` / `px` uses mise's resolved `[settings.npm].package_manager` setting.
 The global choice is Bun; projects can override it to pnpm or aube.
-Bun delegates to `bunx`; pnpm uses a local `node_modules/.bin` command when
-present, otherwise `pnpm dlx`. `bx` selects Bun explicitly; `npx!` selects the
-real npm runner through Socket Firewall Free.
+Bun delegates to `bunx`; pnpm uses a `node_modules/.bin` command of the
+project or its workspace root when present, otherwise `pnpm dlx`. Both
+commands are executables in `~/bin`
+([configs/npx/npx](configs/npx/npx)), so every shell, agent, and script gets
+them. In a project that selects `npm` or `yarn`, `npx` stops with an error. Run
+`sfw npm exec -- <package>` there for the npx of npm.
+`bunx` does not support the `-c` flag of npx. `bx` selects Bun
+explicitly, in interactive zsh only.
 
 Interactive aliases wrap `npm`, `pnpm`, `yarn`, `pip`, `uv`, and `cargo` with
 Socket Firewall Free when it is available. `command <tool>` bypasses an alias.

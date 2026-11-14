@@ -39,7 +39,6 @@ neovim = "latest"
 python = "3.15.2"
 ruby = "3.4.12"
 age = "latest"
-"github:entireio/cli" = "latest"
 ast-grep = "latest"
 # Security exception to the four-day delay: the lock selects 4.54.3 for
 # GHSA-c3cc-5w96-mw9r, GHSA-9fvq-9qj8-6qhx, and GHSA-h2cv-65fq-jgrp.
@@ -112,7 +111,6 @@ mas = { version = "latest", os = "macos" }
 "pipx:tldr" = { version = "latest", os = "macos" }
 "conda:bfg" = { version = "latest", os = "macos" }
 "conda:wget" = { version = "latest", os = "macos" }
-herdr = { version = "latest", os = "macos" }
 xcodegen = { version = "latest", os = "macos" }
 "npm:oh-my-t3" = "latest"
 
@@ -120,6 +118,10 @@ xcodegen = { version = "latest", os = "macos" }
 experimental = true
 # Activated shells (configs/zsh/mise-activate.zsh) never install a missing tool
 # when a command is not found. Setup and `mise install` install tools.
+# With this setting, activation also takes the shims folder off PATH.
+# configs/claude/claude puts it on the PATH of Claude Code. A shim does not
+# install a missing version either: it runs the next executable of that name
+# on PATH, or stops when there is none.
 not_found_auto_install = false
 # The repository root holds a mise.toml. Trust it, so tools work in that folder.
 # Work and client projects are trusted too. ~/code/contrib and ~/code/ref hold

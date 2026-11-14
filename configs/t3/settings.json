@@ -1,24 +1,12 @@
 {
   "favorites": [
     {
-      "provider": "codex",
-      "model": "gpt-6.1-sol"
-    },
-    {
       "provider": "claudeAgent",
       "model": "claude-opus-5-5"
     },
     {
-      "provider": "claudeAgent",
-      "model": "claude-sonnet-5-5"
-    },
-    {
       "provider": "cursor",
       "model": "grok-4.7"
-    },
-    {
-      "provider": "codex",
-      "model": "gpt-6.1-terra"
     },
     {
       "provider": "cursor",
@@ -59,6 +47,10 @@
     {
       "provider": "opencode",
       "model": "fs/sol-low"
+    },
+    {
+      "provider": "claudeAgent",
+      "model": "claude-fable-5-2"
     }
   ],
   "defaultModelSelection": {
@@ -77,10 +69,19 @@
         "gpt-5.6-luna",
         "gpt-5.6-terra",
         "gpt-5.6-sol",
-        "gpt-6-sol"
+        "gpt-6-sol",
+        "gpt-6-luna"
       ],
       "modelOrder": [
-
+        "gpt-6-astra",
+        "gpt-6.1-sol",
+        "gpt-6.1-terra",
+        "gpt-6-sol",
+        "gpt-6-luna",
+        "gpt-5.6-sol",
+        "gpt-5.6-terra",
+        "gpt-5.6-luna",
+        "gpt-5.5"
       ]
     },
     "claudeAgent": {
@@ -94,10 +95,24 @@
         "claude-opus-4-8",
         "claude-sonnet-5",
         "claude-opus-5",
-        "claude-fable-5-1"
+        "claude-fable-5-1",
+        "claude-haiku-5-5"
       ],
       "modelOrder": [
-
+        "claude-opus-5-5",
+        "claude-fable-5-2",
+        "claude-sonnet-5-5",
+        "claude-haiku-5-5",
+        "claude-fable-5-1",
+        "claude-fable-5",
+        "claude-opus-5",
+        "claude-opus-4-8",
+        "claude-opus-4-7",
+        "claude-opus-4-6",
+        "claude-opus-4-5",
+        "claude-sonnet-5",
+        "claude-sonnet-4-6",
+        "claude-haiku-4-5"
       ]
     },
     "cursor": {
@@ -563,7 +578,29 @@
         "xai/grok-4.3",
         "xai/grok-4.5",
         "xai/grok-4.6",
-        "xai/grok-4.7"
+        "xai/grok-4.7",
+        "openrouter/z-ai/glm-5.3-flashx-legal",
+        "openrouter/tencent/hy4",
+        "openrouter/ricursiveai/ripple-65b-preview",
+        "openrouter/openrouter/auto-code",
+        "openrouter/liquid/lfm-3-1.7b",
+        "openrouter/inclusionai/ling-3.0-tiny",
+        "openrouter/xingchen-agi/xing4.0-29b-a4b:free",
+        "openrouter/unbiased/pareto-26.10",
+        "openrouter/stepfun/step-5-preview",
+        "openrouter/reflection/beam-1.0-501b-a23b",
+        "openrouter/particle-ai/particle-1",
+        "openrouter/openrouter/pareto-code",
+        "openrouter/openai/gpt-6.1-terra-pro",
+        "openrouter/openai/gpt-6.1-terra",
+        "openrouter/meta/muse-spark-open",
+        "openrouter/liquid/lfm-2.5-24b-a2b",
+        "openrouter/inclusionai/ling-3.1-flash",
+        "openrouter/google/gemini-4-argon",
+        "openrouter/elorian/glimpse",
+        "openrouter/deepseek/deepseek-v4.1-flash-1017",
+        "openrouter/~unbiased/pareto-latest",
+        "openrouter/anthropic/claude-haiku-5.5"
       ],
       "modelOrder": [
 
@@ -575,7 +612,9 @@
         "opencode/nemotron-3.5-lightning-free",
         "opencode/nemotron-3.5-super-vl-free",
         "opencode/big-pickle",
-        "opencode/flint-40b-free"
+        "opencode/flint-40b-free",
+        "opencode/longcat-2.5-free",
+        "opencode/iceman-free"
       ],
       "modelOrder": [
         "opencode/deepseek-v4.1-flash-free",

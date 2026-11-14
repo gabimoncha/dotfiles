@@ -16,7 +16,9 @@ services:
     mem_limit: 6g
     memswap_limit: 6g
     ports:
-      - "192.0.2.10:2222:22"
+      # SSH on every NAS address, for the LAN and Tailscale. A Tailscale-only
+      # address can be missing when Docker starts after a NAS restart.
+      - "2222:22"
       - "3773:3773"
     volumes:
       - dev-home:/home/box

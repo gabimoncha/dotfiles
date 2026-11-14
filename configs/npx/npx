@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# npx and px for every shell. Linked at ~/bin/npx and ~/bin/px, ahead of
+# the npx of npm. Bash 3.2 compatible.
+#
+# - `npx <pkg>` and `px <pkg>` run the package with the package manager that
+#   mise selects for the folder: `[settings.npm] package_manager`, which is
+#   bun in the global config. bun runs `bunx`, pnpm runs `sfw pnpm exec` for a
+#   command in a node_modules/.bin folder of the project or of its workspace
+#   root, and `sfw pnpm dlx` for another package, and
+#   aube runs `aubx`. `auto` uses the first of aubx, bunx, and pnpm on PATH.
+# - With `npm` or `yarn` selected, it stops with an error that names
+#   `sfw npm exec`, which runs the npx of npm through Socket Firewall.
+#
+# The arguments go to the runner unchanged, apart from a leading `-y` or
+# `--yes` for pnpm. bunx does not support npm's `-c` (`--call`) flag.
+# Each call takes about 0.02 s more than the runner alone, for bash and
+# `mise settings get`.
+set -u
+
+fail() {
+  printf '%s\n' "$1" >&2
+  exit 1
+}
+
+# Succeeds when pnpm exec can run $1 from this folder. pnpm exec runs the
+# node_modules/.bin commands of the folders from here up to the project root:
+# the folder with pnpm-workspace.yaml, or else the nearest one with
+# package.json.
+pnpm_local_bin() {
+  local dir="$PWD" root=""
+  while :; do
+    if [[ -f "$dir/pnpm-workspace.yaml" ]]; then
+      root="$dir"
+      break
+    fi
+    [[ -z "$root" && -f "$dir/package.json" ]] && root="$dir"
+    [[ "$dir" == / ]] && break
+    dir="${dir%/*}"
+    [[ -n "$dir" ]] || dir=/
+  done
+  [[ -n "$root" ]] || root="$PWD"
+  dir="$PWD"
+  while :; do
+    [[ -x "$dir/node_modules/.bin/$1" ]] && return 0
+    [[ "$dir" == "$root" || "$dir" == / ]] && return 1
+    dir="${dir%/*}"
+    [[ -n "$dir" ]] || dir=/
+  done
+}
+
+command -v mise >/dev/null 2>&1 || fail "npx: mise is required to resolve npm.package_manager"
+manager="$(mise settings get npm.package_manager)" || fail "npx: could not read mise npm.package_manager"
+
+case "$manager" in
+  bun | pnpm | aube | auto) ;;
+  npm | yarn)
+    fail "npx: mise selected '$manager', but this wrapper only allows bun, pnpm, aube, or non-npm auto. Run 'sfw npm exec -- <package>' for the npx of npm."
+    ;;
+  "") fail "npx: mise did not return npm.package_manager" ;;
+  *) fail "npx: unsupported mise npm.package_manager '$manager'" ;;
+esac
+
+if [[ "$manager" == auto ]]; then
+  if command -v aubx >/dev/null 2>&1; then
+    manager=aube
+  elif command -v bunx >/dev/null 2>&1; then
+    manager=bun
+  elif command -v pnpm >/dev/null 2>&1; then
+    manager=pnpm
+  else
+    fail "npx: mise npm.package_manager is auto, but no aubx, bunx, or pnpm runner is on PATH"
+  fi
+fi
+
+case "$manager" in
+  bun)
+    command -v bunx >/dev/null 2>&1 || fail "npx: mise selected bun, but bunx is not on PATH"
+    exec bunx "$@"
+    ;;
+  pnpm)
+    command -v pnpm >/dev/null 2>&1 || fail "npx: mise selected pnpm, but pnpm is not on PATH"
+    command -v sfw >/dev/null 2>&1 || fail "npx: mise selected pnpm, but sfw is not on PATH"
+    bin="${1:-}"
+    while [[ "$bin" == --yes || "$bin" == -y ]]; do
+      shift
+      bin="${1:-}"
+    done
+    if [[ -n "$bin" && "$bin" != -* && "$bin" != */* ]] && pnpm_local_bin "$bin"; then
+      exec sfw pnpm exec "$@"
+    fi
+    exec sfw pnpm dlx "$@"
+    ;;
+  aube)
+    command -v aubx >/dev/null 2>&1 || fail "npx: mise selected aube, but aubx is not on PATH"
+    exec aubx "$@"
+    ;;
+esac
