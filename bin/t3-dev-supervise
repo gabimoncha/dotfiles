@@ -10,7 +10,7 @@ set -eu
   exit 1
 }
 umask 077
-export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
 # After a container recreate the login shell is bash, which skips the zsh
 # files that load the telemetry opt-outs. T3 and its agents inherit them here.
 [ ! -r "$HOME/.config/zsh/telemetry.sh" ] || . "$HOME/.config/zsh/telemetry.sh"
