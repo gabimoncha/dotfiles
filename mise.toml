@@ -42,6 +42,9 @@ min_version = { soft = "2026.11.6" }
 "~/.config/mise" = { source = "configs/mise/config", mode = "symlink" }
 
 "~/bin/harness" = { source = "configs/harness/harness", mode = "symlink" }
+"~/bin/claude" = { source = "configs/claude/claude", mode = "symlink" }
+"~/bin/npx" = { source = "configs/npx/npx", mode = "symlink" }
+"~/bin/px" = { source = "configs/npx/npx", mode = "symlink" }
 "~/.claude/CLAUDE.md" = { source = "configs/agents/instructions.md", mode = "symlink" }
 "~/.codex/AGENTS.md" = { source = "configs/agents/instructions.md", mode = "symlink" }
 # These apps rewrite their settings. mise sets only the keys in the sources.

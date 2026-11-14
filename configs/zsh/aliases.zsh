@@ -1,7 +1,8 @@
 # Aliases for every shell, agents too, are in [shell_alias] in
-# configs/mise/config/config.toml. Only interactive zsh gets these aliases.
+# configs/mise/config/config.toml. These aliases are for interactive zsh.
 # The first ones replace a standard command, and agents write flags for the
-# standard command.
+# standard command. The Claude Code snapshot shell sources this file, so
+# Claude Code has them too.
 if (($+commands[rg])); then alias grep='rg'; fi
 if (($+commands[bat])); then alias cat='bat'; fi
 if (($+commands[eza])); then alias ls='eza'; fi
