@@ -13,6 +13,7 @@ minimumReleaseAge = 345600
 # macos-arm64 and linux-x64, the lockfile_platforms in config.toml.
 minimumReleaseAgeExcludes = [
   "cf",
+  "workerd",
   "t3",
   "omt3",
   "oh-my-t3",

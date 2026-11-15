@@ -1646,7 +1646,7 @@ url = "https://github.com/tmux/tmux-builds/releases/download/v3.8/tmux-3.8-macos
 url_api = "https://api.github.com/repos/tmux/tmux-builds/releases/assets/721688988"
 
 [[tools.turbo]]
-version = "2.11.10"
+version = "2.11.11"
 backend = "npm:turbo"
 specifiers = ["latest"]
 
@@ -1722,14 +1722,14 @@ url = "https://github.com/yonaskolb/XcodeGen/releases/download/2.46.0/xcodegen.z
 url_api = "https://api.github.com/repos/yonaskolb/XcodeGen/releases/assets/478866069"
 
 [[tools.xcodes]]
-version = "2.1.0"
+version = "2.2.0"
 backend = "aqua:XcodesOrg/xcodes"
 specifiers = ["latest"]
 
 [tools.xcodes."platforms.macos-arm64"]
-checksum = "sha256:f1519afe934a513e85dd9b32fc872394becbbb6a41db15d9ac3926a09a891888"
-url = "https://github.com/XcodesOrg/xcodes/releases/download/2.1.0/xcodes.zip"
-url_api = "https://api.github.com/repos/XcodesOrg/xcodes/releases/assets/563562943"
+checksum = "sha256:3c3ce6c550f079300c578b741e20ea0405fbe1eea808b8002ef591d568cea564"
+url = "https://github.com/XcodesOrg/xcodes/releases/download/2.2.0/xcodes.zip"
+url_api = "https://api.github.com/repos/XcodesOrg/xcodes/releases/assets/735725476"
 
 [[tools.yamlfmt]]
 version = "0.21.0"
