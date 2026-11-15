@@ -49,6 +49,8 @@ redis = "latest"
 worktrunk = "latest"
 yamlfmt = "latest"
 "npm:ctx7" = "latest"
+# Installs and updates the agent skills in configs/agents/skills.
+"npm:skills" = "latest"
 "npm:eas-cli" = "latest"
 # Drives iOS simulators and Android devices for the agents and the T3 device hub.
 "npm:agent-device" = "latest"

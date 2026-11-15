@@ -2,6 +2,9 @@ amends "package://github.com/jdx/hk/releases/download/v2.10.0/hk@2.10.0#/Config.
 
 import "package://github.com/jdx/hk/releases/download/v2.10.0/hk@2.10.0#/Builtins.pkl"
 
+// The skills CLI writes these third-party files. hk leaves them as installed.
+exclude = List("configs/agents/skills")
+
 // Bash and POSIX sh scripts. Most have no file extension, so list them by path.
 local shellFiles =
   List(

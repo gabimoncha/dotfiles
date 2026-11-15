@@ -20,6 +20,7 @@ For mise behavior, the source of truth is the mise documentation at
 | Which agent settings sync                          | `configs/<app>/sync-keys`: one `public` rule per setting, including each key of the merge source, and `private` rules for sections |
 | Agent rules for every host                         | `configs/agents/instructions.md`                                                                                                   |
 | Agent rules for one host                           | `configs/agents/<profile>.md`                                                                                                      |
+| Installed agent skills                             | `configs/agents/skills/` and `configs/agents/skill-lock.json`, through the `skills` CLI                                            |
 | Runtime tools and mise tasks                       | `configs/mise/config/config.toml`                                                                                                  |
 | Runtime tools for one profile                      | `configs/mise/config/config.<profile>.toml`                                                                                        |
 | Homebrew formulae, casks, and App Store apps       | `Brewfile` for every Mac; `apps/<profile>.Brewfile` for one Mac                                                                    |
@@ -99,6 +100,13 @@ run, and the mise tool list. A change that works only on the Mac breaks Linux.
 - Set a tool on `minimum_release_age_excludes` to `latest`. Don't pin its
   version; `mise.lock` records it. `github:flowcopilot/aether` stays pinned,
   because the mise versions host lists no release for it.
+- Change the installed skills with the `skills` CLI, not by hand: `skills add
+  <source> -g -a claude-code codex -y -s <skill>`, `skills update -g`, or
+  `skills remove -g <skill>`. The CLI writes through `~/.agents/skills` into
+  `configs/agents/skills/`. Then commit the changes in `configs/agents/`. Do not
+  edit or reformat the files of a third-party skill. Before you add a skill
+  from a new source, check that its license allows redistribution and add it to
+  `licenses/skills/`.
 - Keep local companions under ignored `local/`; only examples belong in Git.
 - Keep the profile checks in `bin/lib/dotfiles-profile.sh` before setup writes.
   The Air profile stays deferred.

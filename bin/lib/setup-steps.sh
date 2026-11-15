@@ -671,23 +671,6 @@ Both phases retain live output and private diagnostic logs.
 INSTRUCTIONS
 }
 setup_mobile() { "${repo_root}/bin/install-mobile-dev"; }
-setup_skills() {
-  local source_ref="${DOTFILES_REVIEWED_SKILLS_REF:-}" node
-  # Mutable remote skill code is not silently trusted during recovery.
-  if [[ ! "$source_ref" =~ ^[0-9a-f]{40}$ ]]; then
-    runtime_record_deferred 'Personal skills' 'set DOTFILES_REVIEWED_SKILLS_REF to a reviewed repository commit' 'Review the skill source, then rerun setup with the reviewed commit.'
-    return 20
-  fi
-  node="$(setup_real_tool node)" || return 1
-  # Require a reviewed installed skills CLI rather than executing latest code.
-  local skills
-  skills="$(setup_real_tool skills)" || {
-    warn 'Install a reviewed skills CLI version explicitly before importing skills.'
-    return 20
-  }
-  PATH="$(dirname "$node"):$PATH" "$skills" --version >/dev/null 2>&1 || return 1
-  PATH="$(dirname "$node"):$PATH" "$skills" add "https://github.com/gabimoncha/skills/tree/${source_ref}" -g --skill '*' --agent claude-code cursor codex -y
-}
 setup_defaults() { apply_macos_defaults_once; }
 setup_finder() { "${repo_root}/bin/finder-sidebar-favorites"; }
 

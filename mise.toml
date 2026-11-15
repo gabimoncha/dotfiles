@@ -54,6 +54,13 @@ min_version = { soft = "2026.11.6" }
 "~/bin/px" = { source = "configs/npx/npx", mode = "symlink" }
 "~/.claude/CLAUDE.md" = { source = "configs/agents/instructions.md", mode = "symlink" }
 "~/.codex/AGENTS.md" = { source = "configs/agents/instructions.md", mode = "symlink" }
+# Agent skills for every host. The skills CLI writes through these two links
+# into the repository, so commit configs/agents after `skills add`, `update`,
+# or `remove`. Claude Code reads only ~/.claude/skills, so each skill also gets
+# a link there. The glob leaves Claude Code's own items in that folder alone.
+"~/.agents/skills" = { source = "configs/agents/skills", mode = "symlink" }
+"~/.agents/.skill-lock.json" = { source = "configs/agents/skill-lock.json", mode = "symlink" }
+"~/.claude/skills/*" = { source = "configs/agents/skills/*", mode = "symlink" }
 # These apps rewrite their settings. mise sets only the keys in the sources.
 "~/.claude/settings.json/dotfiles" = { source = "configs/claude/settings.json", merge = true }
 "~/.codex/config.toml/dotfiles" = { source = "configs/codex/config.toml", merge = true }
@@ -63,6 +70,23 @@ min_version = { soft = "2026.11.6" }
 "~/.t3/userdata/settings.json/dotfiles" = { source = "configs/t3/settings.json", merge = true }
 "~/.config/opencode/opencode.json/dotfiles" = { source = "configs/opencode/opencode.json", merge = true }
 "~/.pi/agent/settings.json/dotfiles" = { source = "configs/pi/settings.json", merge = true }
+
+# mise keeps a glob link after its source goes away. This hook removes the
+# broken skill links, the CLI's (../../.agents/skills/<name>) and mise's. It runs
+# after each `mise dot apply` and must not fail: a failure makes
+# bin/link-dotfiles undo the apply.
+[bootstrap.hooks.post-dotfiles]
+description = "Remove broken links in ~/.claude/skills"
+run = """
+for link in "$HOME"/.claude/skills/* "$HOME"/.claude/skills/.[!.]*; do
+  [ -L "$link" ] && [ ! -e "$link" ] || continue
+  case "$(readlink "$link" || true)" in
+    */.agents/skills/* | */configs/agents/skills/*)
+      rm -f "$link" && echo "Removed the broken skill link $link" || true ;;
+  esac
+done
+true
+"""
 
 [bootstrap.repos]
 "~/.oh-my-zsh" = { url = "https://github.com/ohmyzsh/ohmyzsh.git", depth = 1 }

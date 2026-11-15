@@ -172,7 +172,8 @@ check_homebrew() {
 }
 
 # Check every tracked shell script: the ones with a sh, bash, or zsh shebang,
-# and the zsh startup files.
+# and the zsh startup files. The installed agent skills are third-party code
+# that the skills CLI replaces on update, so this check skips them.
 check_script_syntax() {
   local script first shell
   while IFS= read -r script; do
@@ -199,22 +200,27 @@ check_script_syntax() {
     else
       fail "syntax error: ${script}"
     fi
-  done < <(git -C "$repo_root" ls-files -- bin macos configs)
+  done < <(git -C "$repo_root" ls-files -- bin macos configs ':!configs/agents/skills')
 }
 
 # Each `source` in the root mise files names a file that exists, and each file
 # in configs/ is a source or sits in a source folder. A source that starts with
 # ~/ or / is on the host, such as a tool that setup installs, so this check
-# skips it. The exceptions to the second rule: the
+# skips it. A source with a * is a glob, such as configs/agents/skills/*, and
+# must match at least one file. The exceptions to the second rule: the
 # Cursor telemetry files, which bin/configure-telemetry applies, and the
 # sync-keys lists of bin/save-settings.
 check_layout() {
-  local sources source file used missing=0 unused=0
+  local sources source file skill_files used missing=0 unused=0
   sources="$(sed -n 's/.*source = "\([^"]*\)".*/\1/p' "$repo_root"/mise.toml "$repo_root"/mise.*.toml | sort -u)"
   while IFS= read -r source; do
     [[ -n "$source" ]] || continue
     case "$source" in "~/"* | /*) continue ;; esac
-    if [[ ! -e "${repo_root}/${source}" ]]; then
+    if [[ "$source" == *'*'* ]]; then
+      compgen -G "${repo_root}/${source}" >/dev/null && continue
+      fail "a mise file names a glob that matches nothing: ${source}"
+      missing=1
+    elif [[ ! -e "${repo_root}/${source}" ]]; then
       fail "a mise file names a missing source: ${source}"
       missing=1
     fi
@@ -224,7 +230,9 @@ check_layout() {
     used=0
     while IFS= read -r source; do
       [[ -n "$source" ]] || continue
-      if [[ "$file" == "$source" || "$file" == "$source/"* ]]; then
+      # shellcheck disable=SC2053 # A glob source matches as a pattern.
+      if [[ "$file" == "$source" || "$file" == "$source/"* ]] ||
+        [[ "$source" == *'*'* && "$file" == $source ]]; then
         used=1
         break
       fi
@@ -236,12 +244,17 @@ check_layout() {
   done < <(git -C "$repo_root" ls-files -- configs)
   [[ "$unused" == 1 ]] || pass "every file in configs/ is used"
   # An AGENTS.md or CLAUDE.md in a subfolder would give agents wrong rules.
+  # A third-party skill can ship one. The skills CLI replaces a renamed file
+  # on the next update, so a skill's file only warns.
   file="$(git -C "$repo_root" ls-files | grep -E '(^|/)(AGENTS|CLAUDE)\.md$' | grep -vx 'AGENTS.md' || true)"
+  skill_files="$(printf '%s\n' "$file" | grep '^configs/agents/skills/' || true)"
+  file="$(printf '%s\n' "$file" | grep -v '^configs/agents/skills/' || true)"
   if [[ -z "$file" ]]; then
     pass "AGENTS.md exists only at the repository root"
   else
     fail "rename these agent instruction files: ${file//$'\n'/ }"
   fi
+  [[ -z "$skill_files" ]] || warn "agents that edit these skill folders also read: ${skill_files//$'\n'/ }"
 }
 
 check_repo_state() {

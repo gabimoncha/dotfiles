@@ -190,11 +190,6 @@ setup_macos_continue() {
   step --optional shell capture setup_shell
   # Pi needs Node from the mise inventory.
   step --optional standalone_agents capture setup_standalone_agents
-  if [[ -z "${DOTFILES_REVIEWED_SKILLS_REF:-}" ]]; then
-    skip_step skills 'set DOTFILES_REVIEWED_SKILLS_REF to a reviewed commit of the skills repository'
-  else
-    step --optional skills sensitive setup_skills
-  fi
   step --optional restores sensitive setup_restores
   step --optional final_links capture setup_final_links
   # macos/defaults.sh applies mise.macos.toml with the standalone mise.

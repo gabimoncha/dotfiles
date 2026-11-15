@@ -187,6 +187,39 @@ T3 reloads the file, but existing Codex processes keep their startup arguments.
 Start a fresh provider process to use changed arguments. The merge targets
 the default T3 home; a custom `T3CODE_HOME` needs a matching file entry.
 
+### Agent skills
+
+`configs/agents/skills/` holds the installed agent skills, and
+`configs/agents/skill-lock.json` records where each one comes from. Every host
+gets the same skills. `./bin/link-dotfiles` links `~/.agents/skills` to the
+folder and `~/.agents/.skill-lock.json` to the lock. It also links each skill
+into `~/.claude/skills/`, because Claude Code does not read `~/.agents/skills`.
+Codex reads `~/.agents/skills`.
+
+The `skills` CLI from the mise tools writes through these links into the
+repository. Install, update, or remove a skill on any machine, then commit the
+changes in `configs/agents/`:
+
+```bash
+skills add <owner>/<repo> -g -a claude-code codex -y -s <skill>
+skills update -g
+skills remove -g <skill>
+git status configs/agents
+```
+
+Give `-a` at least two agents with different skill folders, such as
+`claude-code codex`. With one agent, `skills` 1.8.1 copies the skill into that
+agent's folder, such as `~/.claude/skills/<skill>`, and not into the repository.
+A new skill on another machine gets its `~/.claude/skills/` link at the next
+`./bin/link-dotfiles`. After `skills remove`, the same run removes the broken
+link. The lock records the time of each update, so an update changes the lock
+even when the skill files stay the same.
+
+`licenses/skills/` keeps the license of each source repository. Before you add
+a skill from a new source, check that its license allows redistribution,
+because this repository is public. Then add the license file and its row in
+[licenses/skills/README.md](licenses/skills/README.md).
+
 ## Update a machine
 
 ```bash
@@ -362,11 +395,6 @@ protected key.
   Android Emulator, which the T3 Code device hub needs. To run an emulator,
   install a system image with `sdkmanager` or in Android Studio, and create a
   virtual device.
-- Personal skills need a reviewed `skills` CLI and
-  `DOTFILES_REVIEWED_SKILLS_REF` set to a reviewed 40-character commit of
-  `gabimoncha/skills`. Without that commit, setup skips the step. With the
-  commit but without the CLI, setup defers the step and returns nonzero. Skills
-  and their lock file stay on the machine.
 
 Missing optional restore inputs do not fail a run. A restore that runs and
 fails does. A failed, blocked, or deferred step makes setup return nonzero. A
