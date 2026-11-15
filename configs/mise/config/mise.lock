@@ -594,21 +594,21 @@ url_api = "https://api.github.com/repos/FiloSottile/age/releases/assets/53554189
 provenance = "github-attestations"
 
 [[tools.ast-grep]]
-version = "0.51.1"
+version = "0.51.2"
 backend = "aqua:ast-grep/ast-grep"
 specifiers = ["latest"]
 
 [tools.ast-grep."platforms.linux-x64"]
-checksum = "sha256:42514f77ae0c8a25d7d32154d31d3e7e16f3ab894f8ce76ce417de234ee49157"
+checksum = "sha256:40604c21c38d4c7581c56bdddeef277c56bf3c0113620aa96e78ae87e82366df"
 checksum_source = "mise-versions"
-url = "https://github.com/ast-grep/ast-grep/releases/download/0.51.1/app-x86_64-unknown-linux-gnu.zip"
-url_api = "https://api.github.com/repos/ast-grep/ast-grep/releases/assets/701823082"
+url = "https://github.com/ast-grep/ast-grep/releases/download/0.51.2/app-x86_64-unknown-linux-gnu.zip"
+url_api = "https://api.github.com/repos/ast-grep/ast-grep/releases/assets/734234607"
 
 [tools.ast-grep."platforms.macos-arm64"]
-checksum = "sha256:a95772097b4d02bd9d45ed63b300c37041ae3c36632b3bf19250cc7c10187dc4"
+checksum = "sha256:ea4f4082d25e5f8e0450add6fd488dd008a373c90483cc2031759c8431f1dcfb"
 checksum_source = "mise-versions"
-url = "https://github.com/ast-grep/ast-grep/releases/download/0.51.1/app-aarch64-apple-darwin.zip"
-url_api = "https://api.github.com/repos/ast-grep/ast-grep/releases/assets/701845634"
+url = "https://github.com/ast-grep/ast-grep/releases/download/0.51.2/app-aarch64-apple-darwin.zip"
+url_api = "https://api.github.com/repos/ast-grep/ast-grep/releases/assets/734229272"
 
 [[tools.awscli]]
 version = "2.38.4"
@@ -687,14 +687,15 @@ url_api = "https://api.github.com/repos/cargo-bins/cargo-binstall/releases/asset
 provenance = "github-attestations"
 
 [[tools.ccache]]
-version = "4.14.2"
+version = "4.14.3"
 backend = "github:ccache/ccache"
 specifiers = ["latest"]
 
 [tools.ccache."platforms.macos-arm64"]
-checksum = "sha256:cf240009630b605b775c7c5c7b7105a3b196c79f31af322c1557969aa28003fc"
-url = "https://github.com/ccache/ccache/releases/download/v4.14.2/ccache-4.14.2-darwin.tar.gz"
-url_api = "https://api.github.com/repos/ccache/ccache/releases/assets/653389938"
+checksum = "sha256:764dd2a8100ff83e6bbd7b9a1e2016cc401be34bee8a70ea99698186622c34d5"
+checksum_source = "mise-versions"
+url = "https://github.com/ccache/ccache/releases/download/v4.14.3/ccache-4.14.3-darwin.tar.gz"
+url_api = "https://api.github.com/repos/ccache/ccache/releases/assets/725170134"
 
 [[tools.cloudflared]]
 version = "2026.10.2"
@@ -968,45 +969,49 @@ checksum = "sha256:c351f9506f6e30a8efb61701afc2313986004b8813c466c0f8b947db1ae89
 url = "https://github.com/cargo-bins/cargo-quickinstall/releases/download/eza-0.23.5/eza-0.23.5-aarch64-apple-darwin.tar.gz"
 
 [[tools.fastfetch]]
-version = "2.70.0"
+version = "2.71.0"
 backend = "aqua:fastfetch-cli/fastfetch"
 specifiers = ["latest"]
 
 [tools.fastfetch."platforms.macos-arm64"]
-checksum = "sha256:8e3e2f3583a5b43ea20c451edfe0dac7172835c5b7de97a96347168f31106558"
-url = "https://github.com/fastfetch-cli/fastfetch/releases/download/2.70.0/fastfetch-macos-universal.tar.gz"
-url_api = "https://api.github.com/repos/fastfetch-cli/fastfetch/releases/assets/639771526"
+checksum = "sha256:6e503980ac268b072259f00e5c439eb90a420535f3593704c096b5b3bea64199"
+checksum_source = "mise-versions"
+url = "https://github.com/fastfetch-cli/fastfetch/releases/download/2.71.0/fastfetch-macos-universal.tar.gz"
+url_api = "https://api.github.com/repos/fastfetch-cli/fastfetch/releases/assets/715730326"
 
 [[tools.fd]]
-version = "10.5.1"
+version = "10.5.2"
 backend = "aqua:sharkdp/fd"
 specifiers = ["latest"]
 
 [tools.fd."platforms.linux-x64"]
-checksum = "sha256:d0e2b438c8c4946955f05e4cf51452deada8f7ed509e1ccd60235a468622716f"
-checksum_source = "mise-versions"
-url = "https://github.com/sharkdp/fd/releases/download/v10.5.1/fd-v10.5.1-x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/sharkdp/fd/releases/assets/708933694"
+checksum = "sha256:985e24041e9ef6e9a38e9e088743405dde23d7220aa96740f091862167d9ff28"
+url = "https://github.com/sharkdp/fd/releases/download/v10.5.2/fd-v10.5.2-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/sharkdp/fd/releases/assets/719976301"
+provenance = "github-attestations"
 
 [tools.fd."platforms.macos-arm64"]
-checksum = "sha256:2d336895ed27b14c5cc9fc5eb22df03b3ee842b5dce80060e99d9cdc1b1b9fc7"
-url = "https://github.com/sharkdp/fd/releases/download/v10.5.1/fd-v10.5.1-aarch64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/sharkdp/fd/releases/assets/708928450"
+checksum = "sha256:81bf98a16d3d7230e4a9123fcede243d71ea31a577113476ed43f1cdf4773162"
+url = "https://github.com/sharkdp/fd/releases/download/v10.5.2/fd-v10.5.2-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/sharkdp/fd/releases/assets/719971048"
+provenance = "github-attestations"
 
 [[tools.fzf]]
-version = "0.74.5"
+version = "0.75.0"
 backend = "aqua:junegunn/fzf"
 specifiers = ["latest"]
 
 [tools.fzf."platforms.linux-x64"]
-checksum = "sha256:d47d7f882972c7d674dbbba998ffa4116e68379616ffac7695d0671e9a722c5f"
-url = "https://github.com/junegunn/fzf/releases/download/v0.74.5/fzf-0.74.5-linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/junegunn/fzf/releases/assets/629581740"
+checksum = "sha256:0d6640f83582d991cf429754baad64b07e3a4e439a6019670f4b91da1314141c"
+checksum_source = "mise-versions"
+url = "https://github.com/junegunn/fzf/releases/download/v0.75.0/fzf-0.75.0-linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/junegunn/fzf/releases/assets/720590794"
 
 [tools.fzf."platforms.macos-arm64"]
-checksum = "sha256:ada808c7401b9949ce8842274ac16a6b6193fd32dcada396884a6a9a89e5985a"
-url = "https://github.com/junegunn/fzf/releases/download/v0.74.5/fzf-0.74.5-darwin_arm64.tar.gz"
-url_api = "https://api.github.com/repos/junegunn/fzf/releases/assets/629581702"
+checksum = "sha256:1e76698eb481436e42119bea6aa6e2bd9552ff090789d769c286e3c3a4e0ded6"
+checksum_source = "mise-versions"
+url = "https://github.com/junegunn/fzf/releases/download/v0.75.0/fzf-0.75.0-darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/junegunn/fzf/releases/assets/720590797"
 
 [[tools.gcloud]]
 version = "589.0.0"
@@ -1121,19 +1126,19 @@ url = "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.5.1/Hack.zip
 url_api = "https://api.github.com/repos/ryanoasis/nerd-fonts/releases/assets/523429472"
 
 [[tools.hk]]
-version = "2.11.1"
+version = "2.12.0"
 backend = "packslip:github.com/jdx/hk"
 specifiers = ["latest"]
 
 [tools.hk."platforms.linux-x64"]
-checksum = "sha256:b9330bd4b9326c3e1aefd757ff923fdf6d1b060074bcb4e54e16ec0a81fde7ec"
-url = "https://github.com/jdx/hk/releases/download/v2.11.1/hk-x86_64-unknown-linux-gnu.tar.gz"
+checksum = "sha256:db98f893b882f064c1f7abcc96f4ccc31e8154fd1ba0f7f94823d371c2c4fdad"
+url = "https://github.com/jdx/hk/releases/download/v2.12.0/hk-x86_64-unknown-linux-gnu.tar.gz"
 signer = "sigstore-oidc:https://github.com/jdx/hk/.github/workflows/release.yml"
 repository_ids = { repository = "922514152" }
 
 [tools.hk."platforms.macos-arm64"]
-checksum = "sha256:95f89e6eef60e0c690b0d439b30e3b8558f47235a1a45cbff7b5351d294e4322"
-url = "https://github.com/jdx/hk/releases/download/v2.11.1/hk-aarch64-apple-darwin.tar.gz"
+checksum = "sha256:269c17d47e884c19adb77144d5957e854fc5fc6a1a6f9c1a0a5b19431e2fabb8"
+url = "https://github.com/jdx/hk/releases/download/v2.12.0/hk-aarch64-apple-darwin.tar.gz"
 signer = "sigstore-oidc:https://github.com/jdx/hk/.github/workflows/release.yml"
 repository_ids = { repository = "922514152" }
 
@@ -1285,19 +1290,21 @@ url_api = "https://api.github.com/repos/jqlang/jq/releases/assets/453012783"
 provenance = "github-attestations"
 
 [[tools.lazygit]]
-version = "0.66.2"
+version = "0.66.3"
 backend = "aqua:jesseduffield/lazygit"
 specifiers = ["latest"]
 
 [tools.lazygit."platforms.linux-x64"]
-checksum = "sha256:158efc9ddfa1241fab5fb3526bb442c8dc6c4b1904d73213b9e4e93e03c52034"
-url = "https://github.com/jesseduffield/lazygit/releases/download/v0.66.2/lazygit_0.66.2_linux_x86_64.tar.gz"
-url_api = "https://api.github.com/repos/jesseduffield/lazygit/releases/assets/646837723"
+checksum = "sha256:0a23f429a95f0d09db298b3c291536d818de066aa5a85c255806f0490ff6656b"
+checksum_source = "mise-versions"
+url = "https://github.com/jesseduffield/lazygit/releases/download/v0.66.3/lazygit_0.66.3_linux_x86_64.tar.gz"
+url_api = "https://api.github.com/repos/jesseduffield/lazygit/releases/assets/722268995"
 
 [tools.lazygit."platforms.macos-arm64"]
-checksum = "sha256:fadda59ae7665ba556fcbaa704c7eade6e40d016d3f3b25d6327dd1f3f906a0c"
-url = "https://github.com/jesseduffield/lazygit/releases/download/v0.66.2/lazygit_0.66.2_darwin_arm64.tar.gz"
-url_api = "https://api.github.com/repos/jesseduffield/lazygit/releases/assets/646837816"
+checksum = "sha256:6873e6b7a538b521c4d7ff3f76ec49e6dcafa41e6053a6aae33c12f62663e163"
+checksum_source = "mise-versions"
+url = "https://github.com/jesseduffield/lazygit/releases/download/v0.66.3/lazygit_0.66.3_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/jesseduffield/lazygit/releases/assets/722268996"
 
 [[tools.mas]]
 version = "7.0.0"
@@ -1364,32 +1371,32 @@ backend = "npm:@yaakapp/cli"
 specifiers = ["latest"]
 
 [[tools."npm:agent-browser"]]
-version = "0.41.2"
+version = "0.43.0"
 backend = "npm:agent-browser"
 specifiers = ["latest"]
 
 [[tools."npm:agent-desktop"]]
-version = "1.2.0"
+version = "1.3.1"
 backend = "npm:agent-desktop"
 specifiers = ["latest"]
 
 [[tools."npm:agent-device"]]
-version = "0.21.36"
+version = "0.21.37"
 backend = "npm:agent-device"
 specifiers = ["latest"]
 
 [[tools."npm:cf"]]
-version = "1.0.0-beta.28"
+version = "1.0.0-beta.32"
 backend = "npm:cf"
 specifiers = ["latest"]
 
 [[tools."npm:ctx7"]]
-version = "0.9.0"
+version = "0.11.0"
 backend = "npm:ctx7"
 specifiers = ["latest"]
 
 [[tools."npm:eas-cli"]]
-version = "27.7.1"
+version = "27.10.0"
 backend = "npm:eas-cli"
 specifiers = ["latest"]
 
@@ -1419,12 +1426,12 @@ backend = "npm:tokenburnmarket"
 specifiers = ["latest"]
 
 [[tools."npm:tree-sitter-cli"]]
-version = "0.27.1"
+version = "0.27.2"
 backend = "npm:tree-sitter-cli"
 specifiers = ["latest"]
 
 [[tools."npm:tsrs"]]
-version = "0.23.0-ts7.1.0-beta"
+version = "0.25.0-ts7.1.0-beta"
 backend = "npm:tsrs"
 specifiers = ["latest"]
 
@@ -1484,7 +1491,7 @@ url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/711505537"
 provenance = "github-attestations"
 
 [[tools.portless]]
-version = "0.16.0"
+version = "0.17.0"
 backend = "npm:portless"
 specifiers = ["latest"]
 
@@ -1622,19 +1629,21 @@ url = "https://github.com/mvdan/sh/releases/download/v3.14.1/shfmt_v3.14.1_darwi
 url_api = "https://api.github.com/repos/mvdan/sh/releases/assets/547320930"
 
 [[tools.tmux]]
-version = "3.7c"
+version = "3.8"
 backend = "aqua:tmux/tmux-builds"
 specifiers = ["latest"]
 
 [tools.tmux."platforms.linux-x64"]
-checksum = "sha256:cc56bd1cc873eb6089c615f0496b072385bda8a6d944069f38564a5d49c128aa"
-url = "https://github.com/tmux/tmux-builds/releases/download/v3.7c/tmux-3.7c-linux-x86_64.tar.gz"
-url_api = "https://api.github.com/repos/tmux/tmux-builds/releases/assets/528734864"
+checksum = "sha256:147849ff18b62a8aa3d5d8f75dd07c3f9fdfad529f932236afdec838fc1d15e1"
+checksum_source = "mise-versions"
+url = "https://github.com/tmux/tmux-builds/releases/download/v3.8/tmux-3.8-linux-x86_64.tar.gz"
+url_api = "https://api.github.com/repos/tmux/tmux-builds/releases/assets/721688991"
 
 [tools.tmux."platforms.macos-arm64"]
-checksum = "sha256:0a763dd0380aa980d239509654da1bc7455843706a3c050f6709c8cd2e13d12d"
-url = "https://github.com/tmux/tmux-builds/releases/download/v3.7c/tmux-3.7c-macos-arm64.tar.gz"
-url_api = "https://api.github.com/repos/tmux/tmux-builds/releases/assets/528734861"
+checksum = "sha256:ec926bbf28ddf55d0dc7c9791d43e03e251ddab392d763f7fbb38d4b8408d051"
+checksum_source = "mise-versions"
+url = "https://github.com/tmux/tmux-builds/releases/download/v3.8/tmux-3.8-macos-arm64.tar.gz"
+url_api = "https://api.github.com/repos/tmux/tmux-builds/releases/assets/721688988"
 
 [[tools.turbo]]
 version = "2.11.10"
@@ -1669,7 +1678,7 @@ url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/704009442"
 provenance = "github-attestations"
 
 [[tools.vercel]]
-version = "65.11.0"
+version = "65.14.0"
 backend = "npm:vercel"
 specifiers = ["latest"]
 
