@@ -98,7 +98,7 @@ act = { version = "0.2.97", os = "macos" }
 pandoc = { version = "latest", os = "macos" }
 typst = { version = "latest", os = "macos" }
 imagemagick = { version = "latest", os = "macos" }
-infisical = { version = "0.45.3", os = "macos" }
+infisical = { version = "0.45.8", os = "macos" }
 portless = { version = "latest", os = "macos" }
 vercel = { version = "latest", os = "macos" }
 turbo = { version = "latest", os = "macos" }
