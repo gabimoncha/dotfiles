@@ -221,6 +221,24 @@
       "skillFolderHash": "d1101dece996de7339a4accbc83d0671afae21ac",
       "installedAt": "2026-11-10T15:05:55.142Z",
       "updatedAt": "2026-11-10T15:05:55.142Z"
+    },
+    "creative-act": {
+      "source": "TudorAndrei/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/TudorAndrei/skills.git",
+      "skillPath": "skills/creative-act/SKILL.md",
+      "skillFolderHash": "fd8b3b5bccedec5c0f03f0b069991aa469bef4ce",
+      "installedAt": "2026-11-15T20:43:31.483Z",
+      "updatedAt": "2026-11-15T20:43:31.483Z"
+    },
+    "hk-init": {
+      "source": "TudorAndrei/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/TudorAndrei/skills.git",
+      "skillPath": "skills/hk-init/SKILL.md",
+      "skillFolderHash": "afc0ac948f235bf2fa5171580c920e174e5e87d8",
+      "installedAt": "2026-11-15T20:43:31.483Z",
+      "updatedAt": "2026-11-15T20:43:31.483Z"
     }
   },
   "dismissed": {

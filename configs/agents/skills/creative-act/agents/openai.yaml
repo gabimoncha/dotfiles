@@ -1,0 +1,4 @@
+interface:
+  display_name: "The Creative Act"
+  short_description: "Rick Rubin's creative process for starting, crafting, and finishing work"
+  default_prompt: "Use $creative-act to help me get unstuck on this project."
