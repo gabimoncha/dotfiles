@@ -635,14 +635,14 @@ url = "https://github.com/sharkdp/bat/releases/download/v0.26.1/bat-v0.26.1-aarc
 url_api = "https://api.github.com/repos/sharkdp/bat/releases/assets/323548442"
 
 [[tools.btop]]
-version = "1.4.7"
+version = "1.4.8"
 backend = "aqua:aristocratos/btop"
 specifiers = ["latest"]
 
 [tools.btop."platforms.linux-x64"]
-checksum = "sha256:5099054dd6a101bd12eb6ff3702a9a6a3f57aaa27923a0da478ae5b517faf335"
-url = "https://github.com/aristocratos/btop/releases/download/v1.4.7/btop-x86_64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/aristocratos/btop/releases/assets/409963672"
+checksum = "sha256:af589cf82cc9ea9c29ce050b9239a13bef2d1492256d476156e1054a42ce89ad"
+url = "https://github.com/aristocratos/btop/releases/download/v1.4.8/btop-x86_64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/aristocratos/btop/releases/assets/674452462"
 
 [[tools.bun]]
 version = "1.4.4"
