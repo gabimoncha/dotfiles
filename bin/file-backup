@@ -611,7 +611,7 @@ codex_restore() {
     warn "Archive contains legacy Codex global state; leaving it unrestored because it can contain project, workspace, and connection state."
   fi
   if [[ -d "${codex_restore_tmp_dir}/payload/.agents/skills" ]]; then
-    warn "Archive contains legacy global skills; leaving them unrestored because setup installs them from gabimoncha/skills."
+    warn "Archive contains legacy global skills; leaving them unrestored because the dotfiles repository tracks them in configs/agents/skills."
   fi
 
   codex_restore_path ".codex/config.toml" "$backup_root" "$replace"

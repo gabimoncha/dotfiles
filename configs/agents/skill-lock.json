@@ -1,0 +1,246 @@
+{
+  "version": 3,
+  "skills": {
+    "find-docs": {
+      "source": "upstash/context7",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/upstash/context7.git",
+      "skillPath": "skills/find-docs/SKILL.md",
+      "skillFolderHash": "9bd51dc72e6807bb88171b59ca2ed8dc117361e2",
+      "installedAt": "2026-09-18T20:29:19.737Z",
+      "updatedAt": "2026-11-01T22:09:38.721Z"
+    },
+    "commit": {
+      "source": "legendapp/legend-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/legendapp/legend-skills.git",
+      "skillPath": "commit/SKILL.md",
+      "skillFolderHash": "523332dcf573ea32e1b287d508c1be52b35400c5",
+      "installedAt": "2026-09-18T20:29:35.008Z",
+      "updatedAt": "2026-11-01T22:09:39.871Z"
+    },
+    "explore-subagents": {
+      "source": "gabimoncha/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/gabimoncha/skills.git",
+      "skillPath": "skills/essentials/explore-subagents/SKILL.md",
+      "skillFolderHash": "ca9e3d1098bdb9bffb0be371454f59df04beaadd",
+      "installedAt": "2026-09-18T20:29:58.956Z",
+      "updatedAt": "2026-11-01T22:09:41.160Z"
+    },
+    "grill-with-docs": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mattpocock/skills.git",
+      "skillPath": "skills/engineering/grill-with-docs/SKILL.md",
+      "skillFolderHash": "eedaf2562c83155115e9c649fa3ecaac2e10e81d",
+      "pluginName": "mattpocock-skills",
+      "installedAt": "2026-09-20T14:46:48.575Z",
+      "updatedAt": "2026-09-20T14:46:48.575Z"
+    },
+    "domain-modeling": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mattpocock/skills.git",
+      "skillPath": "skills/engineering/domain-modeling/SKILL.md",
+      "skillFolderHash": "ea30ee454ba264543dbe40737973b1a5afb9f0e6",
+      "installedAt": "2026-09-20T14:46:48.580Z",
+      "updatedAt": "2026-10-03T15:17:58.240Z"
+    },
+    "grilling": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mattpocock/skills.git",
+      "skillPath": "skills/productivity/grilling/SKILL.md",
+      "skillFolderHash": "f551b6e0d219fdda0b6abf277f8f915b3127d1e9",
+      "installedAt": "2026-09-20T14:46:48.580Z",
+      "updatedAt": "2026-11-01T22:09:42.926Z"
+    },
+    "setup-matt-pocock-skills": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mattpocock/skills.git",
+      "skillPath": "skills/engineering/setup-matt-pocock-skills/SKILL.md",
+      "skillFolderHash": "b644b684781fd5baae57f6be000a180a4d4448d7",
+      "installedAt": "2026-09-20T14:46:48.581Z",
+      "updatedAt": "2026-11-01T22:09:44.346Z"
+    },
+    "show-me": {
+      "source": "humanlayer/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/humanlayer/skills.git",
+      "skillPath": "plugins/show-me/skills/show-me/SKILL.md",
+      "skillFolderHash": "362200ac2fb3c17b765049444e88de73767e6d08",
+      "installedAt": "2026-10-02T16:12:38.996Z",
+      "updatedAt": "2026-10-02T16:12:38.996Z"
+    },
+    "clarity": {
+      "source": "flowcopilot/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/flowcopilot/skills.git",
+      "skillPath": "skills/clarity/SKILL.md",
+      "skillFolderHash": "0403282d396338418ea7e5c024ce365ca398d7ce",
+      "installedAt": "2026-10-05T20:01:08.305Z",
+      "updatedAt": "2026-11-03T14:13:42.365Z"
+    },
+    "scrawl": {
+      "source": "kitlangton/scrawl",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/kitlangton/scrawl.git",
+      "skillPath": "skills/scrawl/SKILL.md",
+      "skillFolderHash": "afddc05003828078d088586e829c1938d3b731f9",
+      "installedAt": "2026-10-23T11:07:41.211Z",
+      "updatedAt": "2026-10-23T11:07:41.211Z"
+    },
+    "pr": {
+      "source": "gabimoncha/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/gabimoncha/skills.git",
+      "skillPath": "skills/essentials/pr/SKILL.md",
+      "skillFolderHash": "40000d061370342b55a804a65b5e2bf44ac5dc63",
+      "installedAt": "2026-10-26T17:05:49.359Z",
+      "updatedAt": "2026-11-03T14:21:22.251Z"
+    },
+    "writing-for-agents": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mattpocock/skills.git",
+      "skillPath": "skills/productivity/writing-for-agents/SKILL.md",
+      "skillFolderHash": "ad2925850efb8973a72d2e666f7a975f9a2d4a9b",
+      "pluginName": "mattpocock-skills",
+      "installedAt": "2026-10-26T17:05:49.360Z",
+      "updatedAt": "2026-10-26T17:05:49.360Z"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/anthropics/skills.git",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "skillFolderHash": "d79e2a5bb4df4a386c2adcdd9ab8709bba28c3f6",
+      "pluginName": "example-skills",
+      "installedAt": "2026-10-29T22:31:29.094Z",
+      "updatedAt": "2026-10-29T22:31:29.094Z"
+    },
+    "skill-creator": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/anthropics/skills.git",
+      "skillPath": "skills/skill-creator/SKILL.md",
+      "skillFolderHash": "3cf9a8db32597ba3e24b584a3d696f4e11c7d7b6",
+      "pluginName": "example-skills",
+      "installedAt": "2026-10-30T10:19:12.516Z",
+      "updatedAt": "2026-10-30T10:19:12.516Z"
+    },
+    "design-engineering": {
+      "source": "flowcopilot/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/flowcopilot/skills.git",
+      "skillPath": "skills/design-engineering/SKILL.md",
+      "skillFolderHash": "a780aeba181d2eb22d759a258a844e2a1111fa6b",
+      "installedAt": "2026-10-31T16:09:34.184Z",
+      "updatedAt": "2026-11-03T18:28:02.888Z"
+    },
+    "agent-surf": {
+      "source": "flowcopilot/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/flowcopilot/skills.git",
+      "skillPath": "skills/agent-surf/SKILL.md",
+      "skillFolderHash": "66d17cc232429763abb12d5208a3ae44cf407a14",
+      "installedAt": "2026-11-01T15:25:37.980Z",
+      "updatedAt": "2026-11-03T18:28:07.570Z"
+    },
+    "statechart": {
+      "source": "cursor/plugins",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/cursor/plugins.git",
+      "skillPath": "harness/pstack/claude-code/skills/statechart/SKILL.md",
+      "skillFolderHash": "a79a48c6970be3b63d6efefb0a306b7c87de88d0",
+      "installedAt": "2026-11-01T23:10:16.680Z",
+      "updatedAt": "2026-11-01T23:10:16.680Z"
+    },
+    "untangle-codebase": {
+      "source": "caldoai/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/caldoai/skills.git",
+      "skillPath": "skills/untangle-codebase/SKILL.md",
+      "skillFolderHash": "bf2f9fc0f8dcd62103862d30260007dfecd7ea35",
+      "pluginName": "untangle-codebase",
+      "installedAt": "2026-11-07T00:29:17.268Z",
+      "updatedAt": "2026-11-07T00:29:17.268Z"
+    },
+    "github-writing": {
+      "source": "gabimoncha/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/gabimoncha/skills.git",
+      "skillPath": "skills/essentials/github-writing/SKILL.md",
+      "skillFolderHash": "a9e399675a3e70853b395a4e24bc49a4a651186d",
+      "installedAt": "2026-11-15T20:10:37.497Z",
+      "updatedAt": "2026-11-15T20:11:07.552Z"
+    },
+    "mise-review": {
+      "source": "gabimoncha/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/gabimoncha/skills.git",
+      "skillPath": "skills/essentials/mise-review/SKILL.md",
+      "skillFolderHash": "77345568fcdb1e7a6a8f09f95368b8754e8a18c2",
+      "installedAt": "2026-11-15T20:10:37.498Z",
+      "updatedAt": "2026-11-15T20:11:07.553Z"
+    },
+    "expo": {
+      "source": "flowcopilot/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/flowcopilot/skills.git",
+      "skillPath": "skills/expo/SKILL.md",
+      "skillFolderHash": "566263c3a3c3c1d232e358248d2c01bfc37f6542",
+      "installedAt": "2026-11-10T15:05:55.141Z",
+      "updatedAt": "2026-11-10T15:05:55.141Z"
+    },
+    "install-anti-slop": {
+      "source": "dmmulroy/anti-slop",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/dmmulroy/anti-slop.git",
+      "skillPath": "skills/install-anti-slop/SKILL.md",
+      "skillFolderHash": "97962dc9fad565ca7695bf57805d9d0138ce1def",
+      "installedAt": "2026-11-12T15:06:30.319Z",
+      "updatedAt": "2026-11-12T15:06:30.319Z"
+    },
+    "project-setup": {
+      "source": "gabimoncha/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/gabimoncha/skills.git",
+      "skillPath": "skills/essentials/project-setup/SKILL.md",
+      "skillFolderHash": "075418f6763efc0699c24db4e01ff9f2bddd2e43",
+      "installedAt": "2026-11-10T15:09:42.076Z",
+      "updatedAt": "2026-11-10T15:09:42.076Z"
+    },
+    "react-native": {
+      "source": "flowcopilot/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/flowcopilot/skills.git",
+      "skillPath": "skills/react-native/SKILL.md",
+      "skillFolderHash": "d1101dece996de7339a4accbc83d0671afae21ac",
+      "installedAt": "2026-11-10T15:05:55.142Z",
+      "updatedAt": "2026-11-10T15:05:55.142Z"
+    }
+  },
+  "dismissed": {
+    "findSkillsPrompt": true
+  },
+  "lastSelectedAgents": [
+    "amp",
+    "cline",
+    "codex",
+    "cursor",
+    "droid",
+    "fx",
+    "gemini-cli",
+    "github-copilot",
+    "kilo",
+    "kimi-code-cli",
+    "opencode",
+    "pi",
+    "warp",
+    "zed",
+    "claude-code"
+  ]
+}

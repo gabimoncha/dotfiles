@@ -521,8 +521,41 @@ automation definitions. It excludes authentication, runtime, and database
 state. Restore keeps active files and stages conflicts. `--replace` overwrites.
 Path checks do not prove that restored executable configuration is safe.
 
-Personal skills come from a reviewed commit and a reviewed skills CLI. They
-stay outside the repo and the Codex archive.
+### Agent skills
+
+The repository tracks the installed skill folders in `configs/agents/skills/`
+and the `skills` CLI lock in `configs/agents/skill-lock.json`. A new machine
+gets every skill with `git pull` and `./bin/link-dotfiles`, with no network
+install and no reinstall step in setup. A list of sources would be smaller,
+but each machine would then install whatever the sources hold that day, and
+local edits to a skill would not reach the other machines.
+
+The cost is churn. The CLI writes `updatedAt` for each update and
+`lastSelectedAgents` for each install, so the lock changes even when no skill
+does. The owner accepts that and commits after each `skills add`, `update`,
+or `remove`.
+
+`~/.agents/skills` and `~/.agents/.skill-lock.json` are folder and file links
+into the repository. The CLI deletes and rewrites a skill folder inside the
+linked folder, and it writes the lock with a plain file write, which follows
+the link. It reads the lock from `$XDG_STATE_HOME/skills/` instead when
+`XDG_STATE_HOME` is set, and no host sets it.
+
+Claude Code reads only `~/.claude/skills/`. A glob entry,
+`"~/.claude/skills/*"`, makes one link for each skill and leaves the other
+items in that folder alone, such as Claude Code's `synced/` and `.trash/`.
+mise does not delete a glob link when its skill goes away. A
+`[bootstrap.hooks.post-dotfiles]` hook removes the broken links that point into
+a skills folder. The hook never fails, because `bin/link-dotfiles` undoes the
+apply when mise fails. `symlink-each` mode would make real folders with a link
+for each file, and the CLI deletes those folders when it updates a skill.
+
+Every host gets the same skills, including the container. At the first apply,
+`bin/link-dotfiles` moves each machine's old `~/.agents/skills` folder and lock
+to its link backup, so a skill that the repository lacks stays there. `creative-act` stays out because its source has no license, and this
+repository is public. `licenses/skills/` keeps the license of each source.
+
+The skills stay out of the Codex archive.
 
 ## Diagnostics
 

@@ -94,7 +94,7 @@ Opening the import dialog is not proof that the import completed.
 `age -p` encrypts the allowlisted config, keybindings, instructions, rules,
 memories and automation definitions. Authentication, sessions, databases,
 worktrees, plugins, global app/workspace state and installer packages are
-excluded. Global skills are installed separately from reviewed sources.
+excluded. The repository tracks the global skills in `configs/agents/skills/`.
 
 Selection prefers Synology's `codex-state-latest.tar.gz.age`, then its newest
 dated archive, then the equivalent iCloud choices. Pass a path for another
