@@ -70,12 +70,14 @@ run, and the mise tool list. A change that works only on the Mac breaks Linux.
 - `bin/setup` lists the setup steps in order: two phases on macOS, one on
   Linux. The step functions are in `bin/lib/setup-steps.sh`. Mark a step
   `--optional` when the later steps can run without it.
-- Use a mise feature before you write a script, a manual step, or a Homebrew
-  entry. Put a file or link in HOME in a `[dotfiles]` entry, a tool in mise
-  `[tools]`, and a setting in mise `[settings]`. Use `[bootstrap]` for packages,
-  macOS defaults, and LaunchAgents, and mise tasks for commands. Read the mise
-  documentation first. Write a `bin/` script only for a gap that mise cannot
-  fill, and record that gap in a comment or in DECISIONS.md.
+- Use a mise feature before you propose or write a script, a manual step, or a
+  Homebrew entry. Put a file or link in HOME in a `[dotfiles]` entry, a tool in
+  mise `[tools]`, and a setting in mise `[settings]`. Use `[bootstrap]` for
+  packages, macOS defaults, and LaunchAgents, and mise tasks for commands.
+  Before you recommend a design, check the mise documentation yourself, and put
+  the result in the recommendation: the mise feature that fits, or the gap and
+  the documentation section that shows it. Write a `bin/` script only for a gap
+  that mise cannot fill, and record that gap in a comment or in DECISIONS.md.
 - Add GUI apps through mas when available, then use mise for supported tools,
   then Homebrew. Coding agent CLIs, mise, and the T3 server on Linux and on
   the Mac mini are standalone exceptions, listed in `apps/standalone.tsv`.
