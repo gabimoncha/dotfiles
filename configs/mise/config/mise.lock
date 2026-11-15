@@ -1259,18 +1259,18 @@ conda_deps = [
 ]
 
 [[tools.infisical]]
-version = "0.45.3"
+version = "0.45.8"
 backend = "github:Infisical/cli"
-specifiers = ["0.45.3"]
+specifiers = ["0.45.8"]
 
 [tools.infisical.options]
 asset_pattern = "cli_{{ version }}_{{ os(macos='darwin') }}_{{ arch(x64='amd64') }}.tar.gz"
 
 [tools.infisical."platforms.macos-arm64"]
-checksum = "sha256:153d824594585be2d672f2403a4f7f5fdc5d4e141cb669591770b394c85d8967"
+checksum = "sha256:8f5beab19c084d42ae01db7b120b72005f3f74274930a508559c1022cdcf40e1"
 checksum_source = "mise-versions"
-url = "https://github.com/Infisical/cli/releases/download/v0.45.3/cli_0.45.3_darwin_arm64.tar.gz"
-url_api = "https://api.github.com/repos/Infisical/cli/releases/assets/718123649"
+url = "https://github.com/Infisical/cli/releases/download/v0.45.8/cli_0.45.8_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/Infisical/cli/releases/assets/743853858"
 
 [[tools.jq]]
 version = "1.8.2"
