@@ -28,8 +28,9 @@ pid=""
 signaled=""
 # An earlier copy of this script that got SIGTERM and still stops its daemon.
 stopping=""
-# Set while the daemon starts and its PID is not known yet.
-launching=""
+# Set while a stop must wait: while the daemon starts and its PID is not
+# known yet, and between recording an earlier copy and sending it SIGTERM.
+deferring=""
 stop_requested=""
 
 # Background sleeps let the trap run at once instead of after the sleep ends.
@@ -66,7 +67,7 @@ finish_stopping() {
 }
 # The stop also waits for an earlier copy. Further stop signals are ignored.
 on_stop() {
-  if [[ -n "$launching" ]]; then
+  if [[ -n "$deferring" ]]; then
     stop_requested=1
     return
   fi
@@ -88,11 +89,12 @@ not_gone() {
 # pgrep is the only command in $(...), so no copy of this script runs it.
 for old in $(pgrep -u "$(id -u)" -f -- '/bin/tokenburnmarket-supervise$'); do
   [[ "$old" != "$$" ]] || continue
+  deferring=1
   stopping="$old"
-  if ! kill -TERM "$old" 2>/dev/null; then
-    stopping=""
-    continue
-  fi
+  kill -TERM "$old" 2>/dev/null || stopping=""
+  deferring=""
+  [[ -z "$stop_requested" ]] || on_stop
+  [[ -n "$stopping" ]] || continue
   log "stopping an earlier supervisor (PID $old)"
   finish_stopping || not_gone "$old"
   stopping=""
@@ -127,10 +129,10 @@ while true; do
     clear_stale_lock
     # pitchfork stops a daemon with a signal to its whole process group. setsid
     # gives the daemon its own group, so it gets only this script's SIGTERM.
-    launching=1
+    deferring=1
     setsid "$node" "$cli" daemon &
     pid=$!
-    launching=""
+    deferring=""
     [[ -z "$stop_requested" ]] || on_stop
     wait "$pid" || log "daemon exited with status $?"
     pid=""
