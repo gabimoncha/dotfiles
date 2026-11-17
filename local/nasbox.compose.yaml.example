@@ -10,6 +10,8 @@ services:
     hostname: nasbox
     restart: unless-stopped
     init: true
+    # The command stops the mise daemons first, and T3 needs up to 90 seconds.
+    stop_grace_period: 100s
     dns:
       - 1.1.1.1
       - 8.8.8.8
@@ -115,13 +117,25 @@ services:
         if test -x /home/box/code/personal/dotfiles/bin/container-system-packages; then
           su - box -c /home/box/code/personal/dotfiles/bin/container-system-packages &
         fi
-        if test -x /home/box/.local/bin/t3-supervise; then
-          su - box -c /home/box/.local/bin/t3-supervise &
+        # The daemons in mise.container.toml run T3 and the tokenburnmarket
+        # sync daemon. The start waits until they run, so it runs in the
+        # background.
+        daemons=/home/box/code/personal/dotfiles/bin/container-daemons
+        if test -x "$$daemons"; then
+          su - box -c "$$daemons start --all" &
         fi
-        if test -x /home/box/.local/bin/tokenburnmarket-supervise; then
-          su - box -c /home/box/.local/bin/tokenburnmarket-supervise &
-        fi
-        exec /usr/sbin/sshd -D -e -o HostKey=/var/lib/nasbox-ssh/ssh_host_ed25519_key -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no -o PermitRootLogin=no -o AllowUsers=box -o PrintMotd=no
+        # docker stop sends SIGTERM to this shell through init. Stop the
+        # daemons first, so T3 can stop its server. stop_grace_period covers
+        # T3's 90 seconds.
+        stop_container() {
+          test ! -x "$$daemons" || su - box -c "$$daemons stop" || true
+          kill -TERM "$$sshd" 2>/dev/null || true
+          exit 0
+        }
+        trap stop_container TERM INT
+        /usr/sbin/sshd -D -e -o HostKey=/var/lib/nasbox-ssh/ssh_host_ed25519_key -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no -o PermitRootLogin=no -o AllowUsers=box -o PrintMotd=no &
+        sshd=$$!
+        wait "$$sshd"
 # external keeps Compose from making or deleting the volumes.
 volumes:
   dev-home:

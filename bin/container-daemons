@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Runs `mise daemons` for the daemons in mise.container.toml on a Linux host
+# without systemd, such as the NAS container. Use it instead of
+# ./bin/repo-mise daemons.
+#
+# The pitchfork supervisor keeps the environment of the command that starts
+# it, and every daemon gets that environment. ./bin/repo-mise hides the global
+# mise config, so a supervisor that it starts runs the daemons without the
+# global tools, such as node and tokenburnmarket. This script uses the user's
+# own mise setup instead: the global config in ~/.config/mise, which trusts
+# this checkout, and the profile of this host.
+#
+# Usage: container-daemons <mise daemons arguments...>
+#   Examples: start --all, stop, restart t3, status, logs tokenburnmarket
+set -euo pipefail
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ "$(uname -s)" != Linux ]]; then
+  printf 'container-daemons runs only on Linux hosts. The Macs use launchd.\n' >&2
+  exit 1
+fi
+. "${repo_root}/bin/lib/dotfiles-profile.sh"
+profile="$(dotfiles_profile "$repo_root")" || exit
+# The caller's mise overrides, such as those of ./bin/repo-mise, stay out of
+# the supervisor.
+for name in $(compgen -e); do
+  case "$name" in MISE_*) unset "$name" ;; esac
+done
+cd "$repo_root"
+MISE_ENV="$profile" exec "${HOME}/.local/bin/mise" daemons "$@"

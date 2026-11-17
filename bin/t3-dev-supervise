@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
-# Install as ~/.local/bin/t3-supervise for the non-root NAS container user.
-# The container has no systemd, so this loop does what the unit from
+# The run command of the t3 daemon in mise.container.toml, on a Linux host
+# without systemd, such as the NAS container. It does what the unit from
 # `t3 service install` does: it keeps T3's service launcher running. The
 # launcher starts `t3 serve`, so the desktop app can update this server. An
 # update gets a database backup, and a failed update goes back to the old version.
+#
+# pitchfork, through mise, starts this script, keeps one copy and its output,
+# and stops it. The restart loop stays here: T3's unit restarts the launcher
+# 5 seconds after every exit, and pitchfork restarts only after a failure, with
+# a wait that grows with each restart.
 set -eu
 [[ "$(uname -s)" == Linux && "$(id -u)" != 0 ]] || {
   printf 'Run this supervisor as the non-root Linux development user.\n' >&2
@@ -11,19 +16,15 @@ set -eu
 }
 umask 077
 export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
-# After a container recreate the login shell is bash, which skips the zsh
-# files that load the telemetry opt-outs. T3 and its agents inherit them here.
+# The daemon does not read the zsh files that load the telemetry opt-outs.
+# T3 and its agents inherit them here.
 [ ! -r "$HOME/.config/zsh/telemetry.sh" ] || . "$HOME/.config/zsh/telemetry.sh"
 export T3CODE_HOME="$HOME/.t3" T3CODE_HOST=0.0.0.0 T3CODE_PORT=3773
 # `t3 serve` uses the working directory for provider sessions.
 cd /workspace
-logs="$HOME/.local/state/t3"
 service_state="$T3CODE_HOME/runtime/service-state.json"
-mkdir -p "$logs"
-exec 9>"$logs/supervisor.lock"
-flock -n 9 || exit 0
 
-log() { printf 't3-supervise: %s\n' "$1" >>"$logs/server.log"; }
+log() { printf 't3-supervise: %s\n' "$1"; }
 
 # The protocol that `t3 service install` writes for the installed CLI. The CLI
 # does not print it. When a T3 error names a new protocol, change this number.
@@ -58,6 +59,7 @@ pause() {
   wait $! || true
 }
 # The launcher stops the server first. 90 seconds matches T3's launchd job.
+# pitchfork waits for this script, so the launcher gets that time.
 stop_launcher() {
   kill -TERM "$pid" 2>/dev/null || return 0
   for _ in $(seq 90); do
@@ -69,9 +71,8 @@ stop_launcher() {
 trap '[[ -z "$pid" ]] || stop_launcher; exit 0' TERM INT HUP
 
 while true; do
-  [[ ! -f "$logs/server.log" ]] || mv -f "$logs/server.log" "$logs/server.log.1"
   if seed_service_state; then
-    "$HOME/.local/bin/t3" __service-launcher >>"$logs/server.log" 2>&1 &
+    "$HOME/.local/bin/t3" __service-launcher &
     pid=$!
     wait "$pid" || log "launcher exited with status $?"
     pid=""

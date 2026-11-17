@@ -12,6 +12,36 @@
 [vars]
 dotfiles_shared_instructions = "{{ config_root }}/configs/agents/instructions.md"
 dotfiles_host_instructions = "{{ config_root }}/configs/agents/container.md"
+dotfiles_bin = "{{ config_root }}/bin"
+
+[settings]
+# mise daemons are experimental. The daemons below need this setting.
+experimental = true
+
+# The container has no systemd, so pitchfork, through mise, runs T3 and the
+# tokenburnmarket sync daemon. The compose file starts them when the container
+# starts, and stops them when it stops. Run every daemons command through
+# ./bin/container-daemons, for example `status` or `logs t3`. It explains why
+# ./bin/repo-mise does not work here.
+#
+# Each daemon runs a script with its own restart loop, because pitchfork
+# restarts a daemon only after a failed exit, and its wait grows with each
+# restart (pitchfork's "Automatic retries"). See DECISIONS.md. `retry`
+# restarts a script that stops by itself. pitchfork stops the script, and the
+# script stops its service.
+[daemons.t3]
+run = "exec {{ vars.dotfiles_bin | quote }}/t3-dev-supervise"
+retry = true
+# The script gives T3's launcher 90 seconds to stop the server.
+stop_signal = { signal = "SIGTERM", timeout = "95s" }
+logs = { line_retention = 20000 }
+
+# bin/setup-tokenburnmarket signs in, and restarts this daemon after `mise up`
+# moves node or the CLI.
+[daemons.tokenburnmarket]
+run = "exec {{ vars.dotfiles_bin | quote }}/tokenburnmarket-supervise"
+retry = true
+logs = { line_retention = 20000 }
 
 [dotfiles]
 # Codex reads one global file, so it gets the shared and the host rules joined.
