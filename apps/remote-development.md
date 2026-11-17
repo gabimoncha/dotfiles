@@ -103,10 +103,11 @@ The container has no systemd. Two mise daemons in `mise.container.toml` run
 T3 and the tokenburnmarket sync daemon as `box`, under the pitchfork
 supervisor. The compose command starts them when the container starts, and
 starts pitchfork again within a minute when it dies. When the container stops,
-it waits up to 30 seconds for a start that is still running, then stops the
-daemons first, so T3 can stop its server. `stop_grace_period: 130s` covers
-both waits. Copy those lines from the example into the compose file on the
-NAS, and rebuild the project.
+it runs `pitchfork supervisor stop` before it stops sshd. The supervisor
+refuses new starts, waits for a start in progress, and stops every daemon with
+its own stop timeout, so T3 can stop its server. `stop_grace_period: 130s`
+covers the t3 daemon's 95 seconds. Copy those lines from the example into the
+compose file on the NAS, and rebuild the project.
 
 Run every daemons command through `./bin/container-daemons`, not
 `./bin/repo-mise daemons`. The supervisor keeps the environment of the command

@@ -10,8 +10,8 @@ services:
     hostname: nasbox
     restart: unless-stopped
     init: true
-    # The command waits up to 30 seconds for a daemon start, then stops the mise
-    # daemons. The t3 daemon gets up to 95 seconds to stop.
+    # The command stops the pitchfork supervisor, which stops the mise daemons.
+    # The t3 daemon gets up to 95 seconds to stop.
     stop_grace_period: 130s
     dns:
       - 1.1.1.1
@@ -122,39 +122,51 @@ services:
         # sync daemon. The start waits until they run, so it runs in the
         # background, and sshd is reachable at once.
         daemons=/home/box/code/personal/dotfiles/bin/container-daemons
-        starting=
         watchdog=
         sshd=
         # The path anchor keeps this command's own text from matching.
         supervisor_runs() { pgrep -u box -f '^/[^ ]*/pitchfork supervisor run' >/dev/null; }
-        # docker stop sends SIGTERM to this shell through init. The stop misses
-        # a daemon that is still starting, so wait up to 30 seconds for the
-        # start. A supervisor that died cannot stop its daemons, so start it
-        # again first. Then stop the daemons, so T3 can stop its server.
-        # stop_grace_period covers 30 seconds and the t3 daemon's 95.
+        # docker stop sends SIGTERM to this shell through init. Stop the start
+        # and watchdog job first. Then stop the pitchfork supervisor: it refuses
+        # new starts, waits for a start in progress, and stops every daemon
+        # with its own stop signal and timeout, so T3 can stop its server. A
+        # supervisor that died is started again first, so it can stop the
+        # daemons that it left.
         stop_container() {
-          test -z "$$watchdog" || kill "$$watchdog" 2>/dev/null || true
-          for _ in $$(seq 30); do
-            test -n "$$starting" && kill -0 "$$starting" 2>/dev/null || break
-            sleep 1
-          done
+          trap '' TERM INT
+          if test -n "$$watchdog"; then
+            kill -TERM "$$watchdog" 2>/dev/null || true
+            wait "$$watchdog" || true
+          fi
           if test -x "$$daemons"; then
-            supervisor_runs || su - box -c "$$daemons start --all" || true
-            su - box -c "$$daemons stop" || true
+            su - box -c '
+              pf=$$("$$HOME/.local/bin/mise" which pitchfork) || exit
+              "$$pf" supervisor start || exit
+              exec "$$pf" supervisor stop
+            ' || true
           fi
           test -z "$$sshd" || kill -TERM "$$sshd" 2>/dev/null || true
           exit 0
         }
         trap stop_container TERM INT
+        # One background job starts the daemons, and then starts pitchfork
+        # again when it dies, for example from the out-of-memory killer.
+        # pitchfork has no watchdog of its own. The new scripts stop the
+        # copies and services that the old supervisor left.
         if test -x "$$daemons"; then
-          su - box -c "$$daemons start --all" &
-          starting=$$!
-          # pitchfork has no watchdog of its own. When it dies, for example
-          # from the out-of-memory killer, start it again. The new scripts
-          # stop the copies and services that the old supervisor left.
-          while sleep 60; do
-            supervisor_runs || su - box -c "$$daemons start --all" >/dev/null 2>&1 || true
-          done &
+          (
+            trap 'trap "" TERM INT; for job in $$(jobs -pr); do kill -TERM "$$job" 2>/dev/null || true; done; wait || true; exit 0' TERM INT
+            su - box -c "exec $$daemons start --all" &
+            wait "$$!" || true
+            while :; do
+              sleep 60 &
+              wait "$$!" || true
+              if ! supervisor_runs; then
+                su - box -c "exec $$daemons start --all" >/dev/null 2>&1 &
+                wait "$$!" || true
+              fi
+            done
+          ) &
           watchdog=$$!
         fi
         /usr/sbin/sshd -D -e -o HostKey=/var/lib/nasbox-ssh/ssh_host_ed25519_key -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no -o PermitRootLogin=no -o AllowUsers=box -o PrintMotd=no &
