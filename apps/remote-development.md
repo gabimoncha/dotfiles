@@ -101,10 +101,12 @@ period in seconds.
 
 The container has no systemd. Two mise daemons in `mise.container.toml` run
 T3 and the tokenburnmarket sync daemon as `box`, under the pitchfork
-supervisor. The compose command starts them when the container starts. When
-the container stops, it stops them first, so T3 can stop its server.
-`stop_grace_period` gives it the time. Copy those lines from the example into
-the compose file on the NAS, and rebuild the project.
+supervisor. The compose command starts them when the container starts, and
+starts pitchfork again within a minute when it dies. When the container stops,
+it waits up to 30 seconds for a start that is still running, then stops the
+daemons first, so T3 can stop its server. `stop_grace_period: 130s` covers
+both waits. Copy those lines from the example into the compose file on the
+NAS, and rebuild the project.
 
 Run every daemons command through `./bin/container-daemons`, not
 `./bin/repo-mise daemons`. The supervisor keeps the environment of the command
@@ -122,7 +124,12 @@ with namespace 'nasbox'".
 Each daemon runs a script from this checkout: `bin/t3-dev-supervise` and
 `bin/tokenburnmarket-supervise`. The script restarts its service after every
 exit, as the systemd units of T3 and tokenburnmarket do. pitchfork keeps one
-copy of each script and keeps their output. `running` in `status` means that
+copy of each script and keeps their output. At its start, a script stops an
+earlier copy of itself and a service that an earlier run left, for example
+after the out-of-memory killer ended a script. The tokenburnmarket script also
+removes a stale `daemon.lock`, whose PID a new process can have after an
+unclean stop. `MISE_AUTO_INSTALL=0` keeps a failed install of another tool
+from stopping the daemons. `running` in `status` means that
 the script runs, not that T3 answers. Check T3 in the app, or read
 `logs t3` for "no complete runtime" and launcher errors. The setup step
 `tokenburnmarket` signs in, and restarts its daemon when `mise up` has moved

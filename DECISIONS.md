@@ -290,8 +290,11 @@ container is the only Linux host.
   script, which gives T3's launcher its 90 seconds to stop. pitchfork signals
   the whole process group, and T3's launcher handles only its first SIGTERM,
   so each script starts its service with `setsid` and sends the one stop
-  signal itself. The daemons use the fixed namespace `nasbox`, so a second
-  checkout cannot start a second copy. The daemons start
+  signal itself. A service in its own group outlives a script that is
+  killed, so each script stops earlier copies and their services at its
+  start. pitchfork has no watchdog of its own, so the compose command starts
+  it again when it dies. The daemons use the fixed namespace `nasbox`, so a
+  second checkout cannot start a second copy. The daemons start
   through `bin/container-daemons`, because the supervisor keeps the
   environment of the command that starts it, and `bin/repo-mise` hides the
   global tools.

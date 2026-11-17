@@ -63,29 +63,39 @@ connect_if_needed() {
 }
 
 if [[ "$mode" == mise-daemon ]]; then
-  # The tokenburnmarket daemon processes, and whether a supervise loop of this
-  # repository started one. pitchfork runs that loop as the mise daemon.
-  daemon_pids() { pgrep -u "$(id -u)" -f -- "tokenburnmarket daemon\$" || true; }
-  supervised() {
-    local parent
-    parent="$(ps -o ppid= -p "$1" | tr -d ' ')" || return 1
-    tr '\0' ' ' <"/proc/$parent/cmdline" 2>/dev/null | grep -q '/bin/tokenburnmarket-supervise'
+  # pitchfork runs bin/tokenburnmarket-supervise as the mise daemon. Its PID,
+  # when pitchfork reports it running and that process is the supervise loop.
+  # status reads pitchfork's saved state, so check the process too.
+  managed_pid() {
+    local status pid
+    status="$("$repo_root/bin/container-daemons" status tokenburnmarket 2>/dev/null)" || return 1
+    printf '%s\n' "$status" | grep -qx 'Status: running' || return 1
+    pid="$(printf '%s\n' "$status" | sed -n 's/^PID: *\([0-9][0-9]*\)$/\1/p')"
+    [[ -n "$pid" ]] || return 1
+    tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null | grep -q '/bin/tokenburnmarket-supervise' || return 1
+    printf '%s\n' "$pid"
   }
-  # Current: the mise daemon runs, and its loop started the daemon with the
-  # node and CLI that mise gives now.
+  daemon_pids() { pgrep -u "$(id -u)" -f -- "tokenburnmarket daemon\$" || true; }
+  parent_pid() { ps -o ppid= -p "$1" | tr -d ' '; }
+  # Current: the managed loop started a daemon with the node and CLI that mise
+  # gives now.
   daemon_current() {
-    local p
-    "$repo_root/bin/container-daemons" status tokenburnmarket 2>/dev/null | grep -qx 'Status: running' || return 1
+    local managed p
+    managed="$(managed_pid)" || return 1
     for p in $(daemon_pids); do
-      supervised "$p" || continue
+      [[ "$(parent_pid "$p")" == "$managed" ]] || continue
       [[ "$(readlink -f "/proc/$p/exe")" == "$(readlink -f "$node")" ]] || continue
       tr '\0' ' ' <"/proc/$p/cmdline" | grep -qF -- "$cli daemon" && return 0
     done
     return 1
   }
+  # The daemons that the managed loop did not start.
   unmanaged_pids() {
-    local p
-    for p in $(daemon_pids); do supervised "$p" || printf '%s\n' "$p"; done
+    local managed p
+    managed="$(managed_pid)" || managed=""
+    for p in $(daemon_pids); do
+      [[ -n "$managed" && "$(parent_pid "$p")" == "$managed" ]] || printf '%s\n' "$p"
+    done
   }
   # Before the mise daemon, setup installed the supervisor here and started it.
   old_supervisor="$HOME/.local/bin/tokenburnmarket-supervise"
@@ -116,8 +126,14 @@ if [[ "$mode" == mise-daemon ]]; then
     rm -f "$old_supervisor"
     printf 'Stopped and removed the old supervisor %s\n' "$old_supervisor"
   fi
+  # Two daemons must not sync at once, so wait until these exit.
   for p in $(unmanaged_pids); do
     kill -TERM "$p" 2>/dev/null || true
+    for _ in $(seq 20); do
+      kill -0 "$p" 2>/dev/null || break
+      sleep 0.5
+    done
+    kill -KILL "$p" 2>/dev/null || true
     printf 'Stopped a tokenburnmarket daemon that mise did not start (PID %s)\n' "$p"
   done
   # A restart also starts a stopped daemon, and replaces one that runs an old

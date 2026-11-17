@@ -67,9 +67,30 @@ stop_launcher() {
     kill -0 "$pid" 2>/dev/null || return 0
     pause 1
   done
-  kill -KILL -- "-$pid" 2>/dev/null || true
+  kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
 }
 trap '[[ -z "$pid" ]] || stop_launcher; exit 0' TERM INT HUP
+
+# Only one launcher may run. An earlier copy of this script can still run when
+# pitchfork died and started again. SIGTERM lets its trap stop its launcher.
+# pgrep is the only command in $(...), so no copy of this script runs it.
+for old in $(pgrep -u "$(id -u)" -f -- '/bin/t3-dev-supervise$'); do
+  [[ "$old" != "$$" ]] || continue
+  kill -TERM "$old" 2>/dev/null || continue
+  log "stopping an earlier supervisor (PID $old)"
+  for _ in $(seq 95); do
+    kill -0 "$old" 2>/dev/null || break
+    pause 1
+  done
+  kill -KILL "$old" 2>/dev/null || true
+done
+# A launcher whose script was killed before its trap ran, for example by the
+# out-of-memory killer, still runs in its own process group.
+for pid in $(pgrep -u "$(id -u)" -f -- 't3 __service-launcher' || true); do
+  log "stopping a launcher that an earlier supervisor left (PID $pid)"
+  stop_launcher
+done
+pid=""
 
 while true; do
   if seed_service_state; then

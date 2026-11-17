@@ -28,7 +28,12 @@ experimental = true
 # restarts a daemon only after a failed exit, and its wait grows with each
 # restart (pitchfork's "Automatic retries"). See DECISIONS.md. `retry`
 # restarts a script that stops by itself. pitchfork stops the script, and the
-# script stops its service.
+# script stops its service. At its start, a script also stops a copy of itself
+# and a service that an earlier run left, so only one of each runs.
+#
+# pitchfork runs each command through `mise x`, which installs missing tools
+# first. MISE_AUTO_INSTALL = "0" keeps a failed install of an unrelated tool
+# from stopping these daemons. Setup installs the tools.
 
 # One set of daemon IDs for the host. A second checkout or a worktree then
 # reaches the same two daemons instead of starting a second copy of each.
@@ -38,6 +43,7 @@ namespace_per_worktree = false
 
 [daemons.t3]
 run = "exec {{ vars.dotfiles_bin | quote }}/t3-dev-supervise"
+env = { MISE_AUTO_INSTALL = "0" }
 retry = true
 # The script gives T3's launcher 90 seconds to stop the server.
 stop_signal = { signal = "SIGTERM", timeout = "95s" }
@@ -47,6 +53,7 @@ logs = { line_retention = 20000 }
 # moves node or the CLI.
 [daemons.tokenburnmarket]
 run = "exec {{ vars.dotfiles_bin | quote }}/tokenburnmarket-supervise"
+env = { MISE_AUTO_INSTALL = "0" }
 retry = true
 logs = { line_retention = 20000 }
 

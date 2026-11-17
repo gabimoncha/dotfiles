@@ -37,12 +37,50 @@ stop_daemon() {
     kill -0 "$pid" 2>/dev/null || return 0
     pause 0.5
   done
-  kill -KILL -- "-$pid" 2>/dev/null || true
+  kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
 }
 trap '[[ -z "$pid" ]] || stop_daemon; exit 0' TERM INT HUP
 
+# Only one daemon may sync. An earlier copy of this script can still run when
+# pitchfork died and started again. SIGTERM lets its trap stop its daemon.
+# pgrep is the only command in $(...), so no copy of this script runs it.
+for old in $(pgrep -u "$(id -u)" -f -- '/bin/tokenburnmarket-supervise$'); do
+  [[ "$old" != "$$" ]] || continue
+  kill -TERM "$old" 2>/dev/null || continue
+  log "stopping an earlier supervisor (PID $old)"
+  for _ in $(seq 10); do
+    kill -0 "$old" 2>/dev/null || break
+    pause 1
+  done
+  kill -KILL "$old" 2>/dev/null || true
+done
+# A daemon whose script was killed before its trap ran, for example by the
+# out-of-memory killer, or one that was started by hand.
+for pid in $(pgrep -u "$(id -u)" -f -- 'tokenburnmarket daemon$' || true); do
+  log "stopping a daemon that this supervisor did not start (PID $pid)"
+  stop_daemon
+done
+pid=""
+
+# The CLI's lock records a PID and checks only that the PID exists. After an
+# unclean container stop, a new process can have that PID, and the daemon then
+# refuses to start. Remove a lock whose PID is not a tokenburnmarket daemon.
+config_home="${XDG_CONFIG_HOME:-}"
+[[ "$config_home" == /* ]] || config_home="$HOME/.config"
+lock="$config_home/tokenburnmarket/daemon.lock"
+clear_stale_lock() {
+  local held
+  [[ -f "$lock" ]] || return 0
+  held="$(sed -n 's/.*"pid": *\([0-9][0-9]*\).*/\1/p' "$lock")"
+  [[ -n "$held" ]] || return 0
+  tr '\0' ' ' <"/proc/$held/cmdline" 2>/dev/null | grep -q 'tokenburnmarket daemon' && return 0
+  rm -f "$lock"
+  log "removed a stale daemon lock: PID $held is not a tokenburnmarket daemon"
+}
+
 while true; do
   if node="$(real_tool node)" && cli="$(real_tool tokenburnmarket)"; then
+    clear_stale_lock
     # pitchfork stops a daemon with a signal to its whole process group. setsid
     # gives the daemon its own group, so it gets only the trap's one SIGTERM.
     setsid "$node" "$cli" daemon &
