@@ -114,7 +114,9 @@ telemetry_gui_environment() {
     return 0
   fi
   # Apply only the files of the login script, with the usual backups.
-  "$repo_root/bin/link-dotfiles" "$HOME/.config/zsh/telemetry.sh" "$HOME/bin/dotfiles-telemetry-env" ||
+  # telemetry.sh is part of the symlink-each entry for ~/.config/zsh, so
+  # link-dotfiles takes the folder, not the file.
+  "$repo_root/bin/link-dotfiles" "$HOME/.config/zsh" "$HOME/bin/dotfiles-telemetry-env" ||
     {
       status=1
       return
