@@ -286,8 +286,10 @@ case "$action" in
     runtime_acquire_lock harness 'standalone tool update' || exit 1
     while IFS=$'\t' read -r name phase command root installer update; do
       [[ -n "$name" ]] && selected "$name" || continue
-      # Rows with "-" update themselves. A named mise runs self-update.
-      if [[ "$update" == - ]] && ! { [[ ${#requested[@]} -gt 0 ]] && selected "$name"; }; then
+      # Rows with "-" update themselves. mise runs self-update, because
+      # self_update.auto skips non-interactive sessions, such as agents and
+      # services on the Mac mini and on Linux.
+      if [[ "$update" == - && "$name" != mise ]] && ! { [[ ${#requested[@]} -gt 0 ]] && selected "$name"; }; then
         continue
       fi
       if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
@@ -305,6 +307,9 @@ case "$action" in
       fi
       runtime_run_job "$name" recoverable 'Run ./bin/install-standalone update after fixing the reported error.' \
         update_one "$name" "$command" "$update" </dev/null
+      # The other updaters can run tools through mise shims, so mise finishes
+      # before they start.
+      if [[ "$name" == mise ]]; then runtime_wait_jobs || status=1; fi
     done <<<"$rows"
     runtime_wait_jobs || status=1
     runtime_print_summary

@@ -63,7 +63,6 @@ run outside that directory before repeated repair attempts if you need its logs.
 | `system_packages` (Linux) | `./bin/repo-mise bootstrap --only packages,user --yes`; check with `bootstrap packages status`                                                          |
 | Linux prerequisites       | `./bin/linux-prerequisites` (bin/setup runs it before the runtime starts)                                                                               |
 | `telemetry`               | `./bin/configure-telemetry`                                                                                                                             |
-| `app_settings`            | `./bin/configure-app-settings`                                                                                                                          |
 | `screenshots`             | `./bin/configure-screenshots`                                                                                                                           |
 | `finder`                  | `./bin/finder-sidebar-favorites`                                                                                                                        |
 | `tokenburnmarket`         | `./bin/setup-tokenburnmarket` (the user runs it in a terminal for the browser sign-in)                                                                  |
@@ -71,6 +70,26 @@ run outside that directory before repeated repair attempts if you need its logs.
 
 The other steps run functions in `bin/lib/setup-steps.sh`. To retry one of
 them, repair the cause from its output, then run `./bin/setup --continue`.
+
+## mise failures
+
+Collect details before you change anything. These commands only read state:
+
+- `./bin/repo-mise --global doctor` reports problems with the mise install,
+  the config, and the tools. `./bin/repo-mise doctor project` runs the
+  readiness checks of this repository.
+- `./bin/repo-mise bootstrap status` compares this machine with the files,
+  checkouts, packages, preferences, and login items in the mise files.
+- Add `MISE_DEBUG=1` before a failed `./bin/repo-mise` command to see what
+  mise resolved and downloaded.
+
+`repo-mise` does not load the shell activation. For a shell problem, such as a
+missing tool in a new terminal, run `mise doctor` in that terminal.
+
+To see the output of one failing tool install, run
+`MISE_DEBUG=1 ./bin/repo-mise --global install --raw <tool>`. This is not a
+check: it installs the tool. `--raw` shows the installer's prompts and build
+output.
 
 ## Mobile development
 
@@ -99,8 +118,9 @@ error in its output:
   user to run `./bin/sudo-grant --enable`, then rerun the script.
 - **`~/.androidrc` does not turn off Android CLI metrics.** Run
   `./bin/link-dotfiles`, then rerun the script.
-- **sdkmanager needs Java.** Install the `zulu@17` cask from the Brewfile, then
-  rerun the script.
+- **sdkmanager needs Java.** Run `./bin/repo-mise --global install java`, then
+  rerun the script. The `java` tool in `configs/mise/config/config.toml` is
+  the JDK on both systems.
 - **The Command Line Tools download fails, or its SHA-256 differs.** Check the
   network and rerun. If Google replaced the file, find the new build in
   https://dl.google.com/android/repository/repository2-3.xml, compare its SHA-1

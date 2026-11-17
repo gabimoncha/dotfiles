@@ -74,6 +74,10 @@ path=("$HOME/bin" "$HOME/.local/bin" $path)
 # defines. Activation never installs tools: not_found_auto_install is off.
 [ -r "$HOME/.config/zsh/mise-activate.zsh" ] && source "$HOME/.config/zsh/mise-activate.zsh"
 
+# Completions for mise commands, tools, and task names. Setup writes _mise
+# with `mise completion zsh --install`. Oh My Zsh runs compinit.
+fpath=("${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions" $fpath)
+
 export ZSH="${ZSH:-$HOME/.oh-my-zsh}"
 ZSH_THEME=""
 plugins=(git)

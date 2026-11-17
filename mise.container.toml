@@ -2,7 +2,7 @@
 # systemd, and its kernel cannot start the agent sandboxes.
 
 [bootstrap.packages]
-# Keep these container packages in the native upgrade inventory.
+# bin/dotfiles-update upgrades these container packages.
 "apt:libbrotli-dev" = "latest"
 "apt:libbrotli1" = "latest"
 "apt:libexpat1" = "latest"
@@ -17,4 +17,4 @@ dotfiles_host_instructions = "{{ config_root }}/configs/agents/container.md"
 # Codex reads one global file, so it gets the shared and the host rules joined.
 "~/.codex/AGENTS.md" = { source = "configs/agents/instructions.md.tera", mode = "template" }
 "~/.claude/rules/host.md" = { source = "configs/agents/container.md", mode = "symlink" }
-"~/.codex/config.toml/host" = { source = "configs/codex/container.toml", merge = true }
+"~/.codex/config.toml/host" = { source = "configs/codex/container.toml", merge = true, permissions = "0600" }

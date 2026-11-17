@@ -1,10 +1,11 @@
 # An older mise cannot parse self_update.minimum_release_age. With this floor it
 # stops with an upgrade message. Run ./bin/install-standalone mise to install the pin.
-min_version = "2026.11.6"
+min_version = "2026.11.8"
 
 [tools]
 # Tools for one profile only are in config.<profile>.toml in this folder.
-# Mac and Linux. pnpm stays before node, so Corepack wrappers do not shadow it.
+# Mac and Linux. Node.js 26 ships no Corepack, and mise enables Corepack only
+# with node.corepack, so the pnpm and npm entries own those commands.
 pnpm = "latest"
 npm = "12.2.1"
 # Security exception to the four-day delay: 26.13.1 fixes the November
@@ -56,9 +57,7 @@ yamlfmt = "latest"
 "npm:agent-device" = "latest"
 "pipx:httpie" = { version = "latest", python = "3.15", with = ["certifi==2026.10.19"] }
 "github:boyter/scc" = "latest"
-# The mise versions host lists no release of aether, so `latest` finds no
-# version. Pin the newest release from GitHub.
-"github:flowcopilot/aether" = "0.1.1"
+"github:flowcopilot/aether" = "latest"
 "conda:aria2" = "latest"
 "conda:sox" = "latest"
 "conda:tig" = "latest"
@@ -80,6 +79,10 @@ shfmt = "latest"
 "npm:tsrs" = "latest"
 # Linux only: the Mac installs btop with Homebrew, and btop ships no macOS build.
 btop = { version = "latest", os = "linux" }
+# The JDK for Android builds and sdkmanager. mise sets JAVA_HOME in activated
+# shells. Scripts and configs/zsh/env.zsh use the link that follows upgrades:
+# ~/.local/share/mise/installs/java/global.
+java = "zulu-17"
 
 # Every Mac. Add a tool to the list above when a Linux box needs it. A tool
 # for one Mac only goes in config.<profile>.toml.
@@ -116,6 +119,11 @@ mas = { version = "latest", os = "macos" }
 "pipx:tldr" = { version = "latest", os = "macos" }
 "conda:bfg" = { version = "latest", os = "macos" }
 "conda:wget" = { version = "latest", os = "macos" }
+# ffmpeg and yt-dlp stay in the Brewfile: other apps look for them in
+# /opt/homebrew/bin.
+exiftool = { version = "latest", os = "macos" }
+minisign = { version = "latest", os = "macos" }
+poppler = { version = "latest", os = "macos" }
 xcodegen = { version = "latest", os = "macos" }
 "npm:oh-my-t3" = "latest"
 
@@ -123,11 +131,18 @@ xcodegen = { version = "latest", os = "macos" }
 experimental = true
 # Activated shells (configs/zsh/mise-activate.zsh) never install a missing tool
 # when a command is not found. Setup and `mise install` install tools.
-# With this setting, activation also takes the shims folder off PATH.
-# configs/claude/claude puts it on the PATH of Claude Code. A shim does not
-# install a missing version either: it runs the next executable of that name
-# on PATH, or stops when there is none.
 not_found_auto_install = false
+# Activation does not add the shims folder to PATH, also when a project
+# declares a lazy tool. configs/claude/claude puts it on the PATH of Claude Code.
+activate_shims = false
+# A shim whose version is not installed stops with an error. It does not run
+# another executable of that name, such as /usr/bin/python3.
+not_found_system_fallback = false
+# mise refuses an unregistered community plugin that is asked for by its
+# short name. A full plugin URL still installs.
+paranoid = ["plugins"]
+# No tool here uses an asdf plugin. mise then never installs a tool with one.
+disable_backends = ["asdf"]
 # `mise exec` and `mise run` install missing tools from every config layer,
 # including the profile tools of this repository. In a project, a large profile
 # tool then blocks each `mise exec` call. Only `mise install` installs these
@@ -191,15 +206,13 @@ localip = "{% if os() == 'macos' %}ipconfig getifaddr en0{% else %}hostname -I |
 cleanup = "find . -name .DS_Store -delete"
 brewup = "brew update && brew upgrade && brew cleanup"
 
-# Compilation was enabled because precompiled Ruby 3.4.11 bundled OpenSSL 3.5.5.
+# mise installs the precompiled Ruby, and compiles only when there is none.
 [settings.ruby]
-compile = true
-# configure otherwise runs the first `ruby` on PATH. The mise shim then waits
-# for the Ruby that is being built, and the install hangs. Docs add build time.
+# For a compile: configure otherwise runs the first `ruby` on PATH. The mise
+# shim then waits for the Ruby that is being built, and the install hangs.
+# Docs add build time.
 ruby_build_opts = "--without-baseruby --disable-install-doc"
 
-[settings.cargo]
-binstall = true
 
 [settings.github]
 credential_command = '"$HOME/bin/dotfiles-gh-real" auth token --hostname "$MISE_CREDENTIAL_HOST"'
@@ -213,6 +226,8 @@ minimum_release_age = "0s"
 
 [settings.task]
 run_auto_install = false
+# Task arguments use the usage field. mise makes this the default in 2027.5.0.
+disable_spec_from_run_scripts = true
 
 # The checkout's path for the tasks below. ~/.config/mise links to this folder
 # in the checkout, so the link gives the path on every machine.
@@ -220,53 +235,79 @@ run_auto_install = false
 dotfiles_root = '${DOTFILES_ROOT:-$(cd -P "$HOME/.config/mise" && cd ../../.. && pwd)}'
 
 # Shortcuts for the dotfiles scripts. They work from any folder, for example
-# `mise run dot:status` or `mise run setup -- --dry-run`.
+# `mise run dot:status` or `mise run dot:setup --dry-run`. Each name starts
+# with dot:, because a project task with the same name replaces a global task.
+# raw_args sends every argument, --help too, to the script.
 [tasks."dot:status"]
 description = "Show which managed files are missing or differ"
 run = '"{{vars.dotfiles_root}}/bin/link-dotfiles" --status'
+raw_args = true
 
 [tasks."dot:diff"]
 description = "Show the changes that dot:apply would make"
 run = '"{{vars.dotfiles_root}}/bin/link-dotfiles" --diff'
+raw_args = true
 
 [tasks."dot:apply"]
 description = "Apply managed files, with backups"
 run = '"{{vars.dotfiles_root}}/bin/link-dotfiles"'
+raw_args = true
 raw = true
 
 [tasks."dot:save"]
 description = "Save agent settings into the repository, without private keys"
 run = '"{{vars.dotfiles_root}}/bin/save-settings"'
+raw_args = true
 
 [tasks."dot:drift"]
 description = "Report installed apps and tools that differ from the Brewfiles and mise lists"
 run = '"{{vars.dotfiles_root}}/bin/prepare-sync"'
+raw_args = true
 
-[tasks.setup]
+[tasks."dot:setup"]
 description = "Run setup"
 run = '"{{vars.dotfiles_root}}/bin/setup"'
+raw_args = true
 raw = true
 
-[tasks.update]
+[tasks."dot:update"]
 description = "Pull the repository and run the setup continuation"
 run = '"{{vars.dotfiles_root}}/bin/dotfiles-update"'
+raw_args = true
 raw = true
 
-[tasks.packages]
+[tasks."dot:packages"]
 description = "Install the apps in apps/manifest.tsv"
 run = '"{{vars.dotfiles_root}}/bin/install-apps"'
+raw_args = true
 raw = true
 
-[tasks.backup]
+[tasks."dot:backup"]
 description = "Back up portable app state"
 run = '"{{vars.dotfiles_root}}/bin/file-backup"'
+raw_args = true
 raw = true
 
-[tasks.restore]
+[tasks."dot:restore"]
 description = "Restore portable app state"
 run = '"{{vars.dotfiles_root}}/bin/file-restore"'
+raw_args = true
 raw = true
 
-[tasks.doctor]
+[tasks."dot:doctor"]
 description = "Check the repository and setup prerequisites"
 run = '"{{vars.dotfiles_root}}/bin/preflight"'
+raw_args = true
+
+# Local history of the settings files that bin/link-dotfiles merges into. The
+# history stays in ~/.local/state/mise/history-local and holds the private
+# keys too, so it never leaves this machine. bin/link-dotfiles saves a
+# checkpoint before and after each merge. Browse it with
+# `mise dot history --path <file>`, and restore with `mise dot rollback <file>`.
+[dotfiles]
+"~/.claude/settings.json" = { mode = "track-local" }
+"~/.codex/config.toml" = { mode = "track-local" }
+"~/.t3/userdata/settings.json" = { mode = "track-local" }
+"~/.config/opencode/opencode.json" = { mode = "track-local" }
+"~/.pi/agent/settings.json" = { mode = "track-local" }
+"~/.config/pnpm/config.yaml" = { mode = "track-local" }

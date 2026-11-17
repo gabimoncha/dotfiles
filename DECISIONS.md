@@ -64,8 +64,10 @@ small cases in that script:
 - mise lives at `~/.local/bin/mise`. Its pinned installer is checksum-verified.
   Setup replaces a mise older than the pin, because the repo's mise files need
   that release. The global config sets `self_update.auto`, so mise updates
-  itself between setup runs, without the four-day release delay. Setup sets `MISE_SELF_UPDATE_AUTO=0`, so the binary
-  does not change during a run.
+  itself before interactive commands, without the four-day release delay. It
+  skips non-interactive sessions, which are the only use on some hosts, so
+  `harness update` runs `mise self-update` first. Setup sets
+  `MISE_SELF_UPDATE_AUTO=0`, so the binary does not change during a run.
 - The T3 Code nightly cask owns the app and its `~/.t3/bin/t3` launcher, and
   the app updates both. Setup only links Homebrew's `bin/t3` to that launcher,
   and it keeps any other `t3` command.
@@ -75,13 +77,15 @@ request cannot reinstall them. `harness update` updates the agent CLIs in
 parallel and reports every failure. Setup installs missing or broken agents.
 The interactive zsh `mise` helper also updates installed agents. The helper runs the
 updater after a successful install or upgrade, including when no mise tools
-change. After `mise up`, or `mise install` without tool names, the helper first runs
-`mise prune --tools` for the tools in the global config. A full prune would
-also delete project tools whose untrusted configs mise does not track. mise's own upgrade prune waits 24 hours, so a broken version can
-go back, and it skips pin changes. Here the old version goes at once; going
-back means a new install.
+change. `mise up` leaves pruning to mise (`upgrade.auto_prune`): it removes
+the replaced version after 24 hours, so a running program can keep using it
+and a broken version can go back. mise skips pin changes, so after
+`mise install` without tool names the helper runs `mise prune --tools` for
+the tools in the global config. A full prune would also delete project tools
+whose untrusted configs mise does not track.
 
-mise owns pnpm before Node, so Corepack wrappers do not shadow it.
+mise owns pnpm and npm. Node.js 26 ships no Corepack, and mise enables
+Corepack only with `node.corepack`, so no Corepack wrapper shadows them.
 
 ### mise configuration files
 
@@ -129,7 +133,10 @@ one shared lock, each machine would remove the tools of the other profiles. A
 `conf.d` file has this problem, because it shares the global lock. The
 environment applies in every folder, so a project file named
 `mise.<profile>.toml` also loads. For this reason the Mac profile has the
-machine's name, `macowl`, which no other project uses.
+machine's name, `macowl`, which no other project uses. mise also exports the
+profile to every project: tasks and `mise exec` see `MISE_ENV=<profile>`, and
+templates see `mise_env`. A project that tests `MISE_ENV` or `mise_env` for
+its own environments gets the profile name.
 
 Two settings keep tools working inside the repository. mise refuses an
 untrusted file with `[dotfiles]` entries, and then every shim in this folder
@@ -153,8 +160,8 @@ link where a real file is, and one refused entry stops the whole apply.
 - It moves a real file at a link target to `~/.dotfiles-backups/links-*/`. It
   copies a file that mise will overwrite or merge into, and it keeps an old
   link as a link. If mise then stops, it moves the files back.
-- It refuses a settings file that is a link, and it creates a missing settings
-  file with mode 0600. mise would use 0644.
+- It refuses a settings file that is a link. Each merge entry sets
+  `permissions = "0600"`, so mise creates a missing settings file as private.
 - It keeps mise's output for merges out of the terminal and the setup logs,
   because a parse error can quote the file. `--diff` names the merged files
   without their content.
@@ -210,10 +217,12 @@ run the sandbox. `bin/save-settings` never saves a `/defaults` source, and the
 sandbox key is private, so one host's value cannot reach the others. The Codex target remains
 `~/.codex/config.toml`, independent of `CODEX_HOME`.
 
-The shell checkout declarations are in `mise.toml`. The existing missing-path
-filter remains because a conflicting checkout stops native repository apply.
+The shell checkout declarations are in `mise.toml`, including TPM, which
+`bin/setup-tmux` also clones through mise. Setup clones only the missing paths,
+and `bin/dotfiles-update` fast-forwards only the current ones with
+`--skip-dirty`, because a conflicting checkout stops native repository apply.
 Mac preferences are in `mise.macos.toml`; `macos/defaults.sh` keeps the
-input-source changes, Dock pruning, pmset, and service reloads.
+input-source changes, pmset, and service reloads.
 
 `configs/mise/config/mise.lock` and its sidecar folder
 `configs/mise/config/locks/` preserve the global dependency graphs for
@@ -287,9 +296,16 @@ tools from the common mise inventory.
 On Linux, the mobile step installs only the Android SDK, so an agent on the
 NAS can build Android apps and drive a USB phone. Google publishes the Linux
 SDK packages only for x86_64. `ANDROID_HOME` is `~/Android/Sdk`, where the T3
-device hub and agent-device also look for `adb`. The JDK is Debian's
-`default-jdk-headless`, OpenJDK 21 on Debian 13, because Debian 13 has no
-OpenJDK 17. Android Gradle plugin 9 needs JDK 17 or later.
+device hub and agent-device also look for `adb`. Android Gradle plugin 9
+needs JDK 17 or later.
+
+Both systems get Zulu 17 from mise (`java = "zulu-17"`), not from a Homebrew
+cask or apt. Debian 13 has no OpenJDK 17 package. `JAVA_HOME` defaults to
+`~/.local/share/mise/installs/java/global`, a link that mise moves to the
+installed version, so the path stays the same after an upgrade. Activated
+shells get the versioned path from mise. The JDK is not registered with
+`/usr/libexec/java_home`, because that needs `sudo` and a link that does not
+follow upgrades. Android Studio uses its own JDK.
 
 The Android SDK has one location, `ANDROID_HOME`. The mobile step downloads
 Google's Command Line Tools at a pinned SHA-256 into a temporary folder. That
@@ -339,8 +355,8 @@ commands with `zsh -c` (OpenCode, Claude), `zsh -lc` (Codex), `zsh -ilc`
 zprofile for `zsh -lc`, interactive.zsh for an interactive shell, and Pi's
 `shellCommandPrefix` for bash. A command then gets the tool versions of its
 folder without `mise exec`. A tool starts directly, not through a shim that
-starts the 135 MB mise binary each time. Activation takes the shims folder off
-PATH, because `not_found_auto_install = false`. Activation costs about 0.2 s
+starts the 135 MB mise binary each time. Activation does not add the shims folder
+to PATH (`activate_shims = false`). Activation costs about 0.2 s
 for each zsh, and it skips a shell that `mise exec TOOL@VERSION` or a mise
 task started. It never installs tools or looks up credentials.
 
@@ -377,12 +393,12 @@ before the snapshot, so a command has the `[env]` variables and the
 a `cd` in a command, the activation hook sets PATH for the new folder.
 
 The wrapper removes the `mise/installs` folders. Shims ahead of them are not
-sufficient. When the version for a folder is not installed, a shim runs the
-next executable of that name on PATH (`not_found_system_fallback`, which is on
-by default). An install folder behind the shims then gives the global version
-with no error. Without those folders, the shim stops with
-`Tool not installed for shim`, unless Homebrew or the system has an executable
-of that name. Each executable in those folders has a shim, so no command is
+sufficient. By default, when the version for a folder is not installed, a shim
+runs the next executable of that name on PATH. An install folder behind the
+shims then gives the global version with no error. The global config sets
+`not_found_system_fallback = false`, so the shim stops with
+`Tool not installed for shim` and does not run a Homebrew or system
+executable of that name either. Each executable in those folders has a shim, so no command is
 lost.
 
 A shim call takes about 0.08 s more than a direct call, and `which node`
@@ -439,8 +455,13 @@ exception: the user opts in for a run on a macOS beta build. It does not cover a
 pending update or a prerelease Xcode.
 
 App privacy permissions are manual. Setup does not grant TCC consent or edit
-its database. Touch ID for sudo and login items are automatic. Login items are
-matched by app path. General defaults run once per stamp. Screenshot repair
+its database. Touch ID for sudo and login items are automatic. mise owns the
+login items, the Dock apps, and the Touch ID block in `/etc/pam.d/sudo_local`.
+Login items are matched by app path, and mise leaves undeclared ones alone. The
+Dock list is exact: mise adds, removes, and orders the pinned apps.
+`bin/configure-sudo-touch-id` keeps the check that Apple's `sudo` file includes
+`sudo_local`, and `--disable`, which mise does not have. General defaults run
+once per stamp. Screenshot repair
 runs separately, so the stamp cannot block it.
 
 Live Text is off in the global defaults (`AppleLiveTextEnabled`). Without it,
@@ -487,7 +508,7 @@ See [NAS agent proxy](apps/remote-development.md#nas-agent-proxy).
 macowl is the personal MacBook Pro. The Mac mini is a development machine that
 you use through SSH and sometimes at its monitor. The shared Mac lists hold
 what both need: the root `Brewfile`, `apps/manifest.tsv`,
-`apps/login-items.txt`, `mise.macos.toml`, and the Mac tools in
+`mise.macos.toml`, and the Mac tools in
 `configs/mise/config/config.toml`. An entry for one Mac goes in that
 profile's files. A shared list with one extra file per profile keeps one
 place for each app. A complete list per profile would repeat most entries, and

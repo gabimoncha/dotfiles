@@ -35,6 +35,41 @@ fi
 
 log "Running setup"
 DOTFILES_SKIP_MACOS_DEFAULTS=1 "${repo_root}/bin/setup" --continue "$@"
+
+# Setup clones the missing shell checkouts of [bootstrap.repos] in mise.toml.
+# This fast-forwards the current ones. A checkout with local changes stays as
+# it is, and one in another state (a conflict) is not passed to mise.
+log "Updating the shell framework checkouts"
+current_repos=()
+repos_listed=0
+if repo_list="$("${repo_root}/bin/repo-mise" bootstrap repos status --json |
+  /usr/bin/ruby -rjson -e 'JSON.parse(STDIN.read).fetch("repos").each { |r| puts r["path"] if r["state"] == "current" }')"; then
+  repos_listed=1
+  while IFS= read -r path; do
+    [[ -n "$path" ]] && current_repos+=("$path")
+  done <<<"$repo_list"
+fi
+if [[ "$repos_listed" == 0 ]]; then
+  printf 'Could not list the shell checkouts. Run: ./bin/repo-mise bootstrap repos status\n' >&2
+elif [[ ${#current_repos[@]} -eq 0 ]]; then
+  log "No shell framework checkout to update"
+elif [[ "$dry_run" == 1 ]]; then
+  "${repo_root}/bin/repo-mise" bootstrap repos update --dry-run --skip-dirty "${current_repos[@]}"
+else
+  "${repo_root}/bin/repo-mise" bootstrap repos update --yes --skip-dirty "${current_repos[@]}" ||
+    printf 'Could not update the shell checkouts. Rerun: ./bin/repo-mise bootstrap repos update --skip-dirty\n' >&2
+fi
+
+# Setup installs missing system packages only. Only Linux has entries.
+if [[ "$(uname -s)" == Linux ]]; then
+  log "Upgrading the apt packages in the mise files"
+  if [[ "$dry_run" == 1 ]]; then
+    "${repo_root}/bin/repo-mise" bootstrap packages upgrade --dry-run
+  else
+    "${repo_root}/bin/repo-mise" bootstrap packages upgrade --yes ||
+      printf 'Could not upgrade the apt packages. Rerun: ./bin/repo-mise bootstrap packages upgrade\n' >&2
+  fi
+fi
 [[ "$dry_run" == 1 ]] || "${repo_root}/bin/save-lock" || true
 
 log "Dotfiles update complete"

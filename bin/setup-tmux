@@ -28,8 +28,9 @@ ensure_tpm() {
     return 1
   fi
 
+  # mise.toml declares the checkout in [bootstrap.repos].
   log "Installing TPM"
-  git clone --depth=1 https://github.com/tmux-plugins/tpm "$tpm_dir"
+  "${repo_root}/bin/repo-mise" bootstrap repos update --yes "$tpm_dir"
 }
 
 ensure_tmux_conf() {

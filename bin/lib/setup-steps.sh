@@ -145,7 +145,6 @@ cask_app_bundle_name() {
     yaak) printf 'Yaak' ;;
     zen) printf 'Zen' ;;
     zoom) printf 'zoom.us' ;;
-    zulu@17) printf '' ;;
     *) printf '' ;;
   esac
 }
@@ -448,7 +447,9 @@ install_brewfile() {
 
 install_mise_tools_unlocked() {
   local status=0 refresh_status=0
-  "${repo_root}/bin/repo-mise" --global install || status=$?
+  # --locked installs the versions and checksums of the committed lock, and
+  # stops when the lock has no entry for a configured tool.
+  "${repo_root}/bin/repo-mise" --global install --locked || status=$?
   # Successful downloads must remain usable even if another backend failed.
   "${repo_root}/bin/repo-mise" --global reshim || refresh_status=$?
   [[ "$status" -ne 0 ]] || status="$refresh_status"
@@ -601,6 +602,12 @@ setup_editor_extensions() { install_cursor_extensions; }
 setup_shell() {
   local status=0
   install_shell_framework || status=1
+  # configs/zsh/interactive.zsh adds the folder of this file to fpath.
+  # mise prints the fpath line to stderr.
+  "${repo_root}/bin/repo-mise" completion zsh --install >/dev/null 2>&1 || {
+    warn 'Could not install the mise zsh completions. Run ./bin/repo-mise completion zsh --install.'
+    status=1
+  }
   local tmux_path
   if tmux_path="$(setup_real_tool tmux)"; then PATH="$(dirname "$tmux_path"):$PATH" "${repo_root}/bin/setup-tmux" || status=1; fi
   return "$status"
@@ -623,7 +630,6 @@ setup_code_folders() {
 setup_t3_service() { "${repo_root}/bin/setup-t3-service"; }
 setup_remote_access() { "${repo_root}/bin/configure-remote-access"; }
 setup_tokenburnmarket() { "${repo_root}/bin/setup-tokenburnmarket"; }
-setup_app_settings() { "${repo_root}/bin/configure-app-settings"; }
 setup_screenshots() { "${repo_root}/bin/configure-screenshots"; }
 # macOS asks for App Management the first time a process changes an app from
 # another developer in /Applications. A new Mac has no such app, so the prompt

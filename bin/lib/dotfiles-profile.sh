@@ -43,14 +43,12 @@ dotfiles_profile_validate() {
 }
 
 # Prints the app lists of one kind for a profile: the list for every Mac, then
-# the profile's own list when it exists. KIND is brewfile, manifest, or
-# login-items.
+# the profile's own list when it exists. KIND is brewfile or manifest.
 dotfiles_profile_app_lists() {
   local root="$1" profile="$2" kind="$3" shared own
   case "$kind" in
     brewfile) shared="$root/Brewfile" own="$root/apps/$profile.Brewfile" ;;
     manifest) shared="$root/apps/manifest.tsv" own="$root/apps/manifest.$profile.tsv" ;;
-    login-items) shared="$root/apps/login-items.txt" own="$root/apps/login-items.$profile.txt" ;;
     *) return 2 ;;
   esac
   printf '%s\n' "$shared"

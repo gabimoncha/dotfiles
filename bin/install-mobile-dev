@@ -159,11 +159,7 @@ install_android_sdk() {
     return 0
   fi
   if [[ ! -x "${mobile_java_home}/bin/java" ]]; then
-    if [[ "$(uname -s)" == Darwin ]]; then
-      warn "sdkmanager needs Java at ${mobile_java_home}. Install the zulu@17 cask from the Brewfile."
-    else
-      warn "sdkmanager needs Java at ${mobile_java_home}. Run ./bin/setup; mise.linux.toml installs default-jdk-headless."
-    fi
+    warn "sdkmanager needs Java at ${mobile_java_home}. Run ./bin/repo-mise --global install java."
     return 1
   fi
   if ! mobile_android_metrics_off && [[ "$dry_run" -eq 0 ]]; then

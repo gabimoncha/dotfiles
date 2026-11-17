@@ -13,6 +13,12 @@ codex-state-*.tar.gz.age
 /.miserc.local.toml
 mise.local.toml
 mise.*.local.toml
+# ~/.config/mise links to configs/mise/config, so mise's local and override
+# global config files are written in this checkout.
+/configs/mise/config/config.local.toml
+/configs/mise/config/config.*.local.toml
+/configs/mise/config/config.override.toml
+/configs/mise/config/config.*.override.toml
 
 # Local companions stay on this machine. Keep the examples tracked.
 /local/*

@@ -1,7 +1,0 @@
-AeroSpace
-Expo Orbit
-Ghostty
-Mole
-Raycast
-Tailscale
-Vorssaint

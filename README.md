@@ -45,10 +45,10 @@ profile for one command.
 printf 'env = ["macowl"]\n' > .miserc.local.toml
 ```
 
-Every Mac gets the root `Brewfile`, `apps/manifest.tsv`, and
-`apps/login-items.txt`. A Mac profile adds its own apps in
-`apps/<profile>.Brewfile`, `apps/manifest.<profile>.tsv`, and
-`apps/login-items.<profile>.txt`. Only macowl has these files: they hold its
+Every Mac gets the root `Brewfile`, `apps/manifest.tsv`, and the login items
+in `mise.macos.toml`. A Mac profile adds its own apps in
+`apps/<profile>.Brewfile`, `apps/manifest.<profile>.tsv`, and the login items
+in its `mise.<profile>.toml`. Only macowl has these files: they hold its
 personal, media, and dictation apps, Synology Drive, and the T3 Code desktop
 app. The Mac mini gets the shared lists only. The
 [Mac mini guide](apps/remote-development.md#mac-mini) covers its T3 server,
@@ -92,8 +92,10 @@ because those files can hold tokens.
 
 These mise tasks run the same scripts from any folder, for the checkout in
 `$DOTFILES_ROOT`, or the checkout that `~/.config/mise` links to: `dot:status`, `dot:diff`,
-`dot:apply`, `dot:save`, `dot:drift`, `setup`, `update`, `packages`, `backup`, `restore`,
-and `doctor`. For example, run `mise run dot:apply -- --dry-run`.
+`dot:apply`, `dot:save`, `dot:drift`, `dot:setup`, `dot:update`, `dot:packages`,
+`dot:backup`, `dot:restore`, and `dot:doctor`. For example, run
+`mise run dot:apply --dry-run`. Each name starts with `dot:`, because a
+project task with the same name replaces a global task.
 
 ### Package manager defaults
 
@@ -228,17 +230,21 @@ git pull --ff-only
 ./bin/link-dotfiles
 ```
 
-The repository's mise commands need mise 2026.11.6. If `bin/repo-mise`
+The repository's mise commands need mise 2026.11.8. If `bin/repo-mise`
 reports an older mise, run `./bin/install-standalone mise` first. After a pull
 that moves files, `bin/link-dotfiles` points the old links at the new sources.
 It also moves local files from the old layout, such as
 `home/.config/local/secrets.zsh`, to `local/`.
 `dotfiles-update` pulls, then runs the setup continuation without the general
-macOS defaults. It does not upgrade every installed package. The shell's daily
+macOS defaults. It then fast-forwards the shell checkouts, and on Linux it
+upgrades the apt packages in the mise files.
+It does not upgrade every installed package. The shell's daily
 background check only reports new commits. `./bin/prepare-sync` compares the
 live inventory with `Brewfile`, the profile's `apps/<profile>.Brewfile`,
 `apps/mobile.Brewfile`, and the mise lists, and saves a copy of these Brewfiles under
-`.sync-backups/`.
+`.sync-backups/`. For mise, it lists the configured tools that are missing, the
+installed versions that no config uses, and the tools whose registry backend
+changed.
 
 ## Set up a new Mac
 
@@ -355,8 +361,8 @@ Linux runs every step in one run. It has no App Store or restart step.
    (`apps/standalone.tsv`), then links the shared files.
 4. The mobile step installs the Android SDK packages in
    [android-sdk.txt](apps/android-sdk.txt) into `~/Android/Sdk` on x86_64. The
-   JDK is Debian's `default-jdk-headless` from `mise.linux.toml`, OpenJDK 21 on
-   Debian 13. The Mac uses Zulu 17. `--skip-mobile-dev` skips this step.
+   JDK is Zulu 17, the `java` tool of mise, as on the Mac. `--skip-mobile-dev`
+   skips this step.
 
 Tools marked `os = "macos"` in `configs/mise/config/config.toml` stay on the
 Mac. Tools for one profile are in `configs/mise/config/config.<profile>.toml`.
@@ -410,9 +416,11 @@ To let a coding agent repair a failed step, ask it to follow
 permission step, rerun `./bin/setup`. After that step, use
 `./bin/setup --continue`. Setup reuses existing links and installs. Homebrew
 installs use `--no-upgrade`. Setup replaces a mise older than the pin, and it
-does not update a newer one. Between setup runs, mise updates itself because
-the runtime config sets `self_update.auto`. The four-day release delay does not
-apply to mise itself. Setup turns self-update off for its own run.
+does not update a newer one. Between setup runs, mise updates itself before
+an interactive command, because the runtime config sets `self_update.auto`. It
+skips that check in non-interactive sessions, so `harness update` also runs
+`mise self-update`. The four-day release delay does not apply to mise itself.
+Setup turns self-update off for its own run.
 
 Each run prints its private `.local/setup-runs/<run-id>/` folder:
 
@@ -430,7 +438,10 @@ Authentication output is omitted. Review logs before you share them.
 
 | Command                                                 | Use                                                                                                                                                                                                                                                        |
 | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `./bin/preflight`                                       | Check macOS updates and the repository prerequisites.                                                                                                                                                                                                      |
+| `./bin/preflight`                                       | Check macOS updates, the repository prerequisites, the mise keys, and the lock sidecars.                                                                                                                                                                   |
+| `./bin/repo-mise run check`                             | Run the repository checks: `git diff --check`, the task checks, and `./bin/preflight`.                                                                                                                                                                     |
+| `./bin/repo-mise doctor project`                        | Check the installed tools, mobile readiness on a Mac, and app state on macowl.                                                                                                                                                                             |
+| `./bin/repo-mise bootstrap status`                      | Compare this machine with the checkouts, files, preferences, and login jobs in the mise files.                                                                                                                                                             |
 | `./bin/link-dotfiles [--status \| --diff \| --dry-run]` | Apply, check, or preview the managed files.                                                                                                                                                                                                                |
 | `./bin/repo-mise bootstrap repos status`                | Check the Oh My Zsh, plugin, and TPM checkouts.                                                                                                                                                                                                            |
 | `./bin/repo-mise bootstrap macos defaults status`       | Compare macOS preferences with `mise.macos.toml`.                                                                                                                                                                                                          |
@@ -449,7 +460,7 @@ Authentication output is omitted. Review logs before you share them.
 | `./bin/install-mobile-dev [--dry-run]`                  | Install or repair Xcode, iOS support, Android Studio, the Android SDK, and the mobile formulae. On Linux, install only the Android SDK.                                                                                                                    |
 | `./bin/sudo-grant --check`                              | Report a leftover sudo grant. `--enable` and `--disable` change it.                                                                                                                                                                                        |
 | `./bin/setup-tmux`                                      | Install missing TPM plugins and reload a running server.                                                                                                                                                                                                   |
-| `./bin/configure-app-settings`                          | Retry the login-item setup.                                                                                                                                                                                                                                |
+| `./bin/repo-mise bootstrap macos defaults status`       | Compare the macOS preferences, Dock apps, and login items with the mise files.                                                                                                                                                                             |
 | `./bin/configure-telemetry [--dry-run]`                 | Apply the telemetry opt-outs to installed tools.                                                                                                                                                                                                           |
 | `./bin/configure-screenshots`                           | Repair the PNG destination at `~/Screenshots`.                                                                                                                                                                                                             |
 | `./bin/finder-sidebar-favorites`                        | Retry the `code`, `work`, `personal`, and `screenshots` favorites.                                                                                                                                                                                         |
@@ -522,7 +533,7 @@ keeps its versions in `mise.<profile>.lock`, so another profile never prunes
 them. A profile without tools of its own, such as macmini and container, has
 no config file here.
 
-After an interactive `mise install` or `mise up`, and after `mise run update`,
+After an interactive `mise install` or `mise up`, and after `mise run dot:update`,
 `./bin/save-lock` commits a changed lockfile and pushes it to `main`, so the
 other machines get the same versions at their next pull. The commit holds only
 the lock files that HEAD already tracks and their pipx sidecar files. The
@@ -537,8 +548,8 @@ off. Every lock entry has a checksum for both platforms, so a plain
 reuses healthy installs. Run it for one tool, for example
 `./bin/install-standalone codex`. `harness update` updates the installed tools
 in parallel and reports every failure. `--dry-run` previews the commands, and
-`--installed-only` skips absent tools. It skips mise, which updates itself, and
-the Linux T3 server, which the T3 app updates. Each update stops after 30
+`--installed-only` skips absent tools. It runs `mise self-update` first, then
+the other updates. It skips the Linux T3 server, which the T3 app updates. Each update stops after 30
 seconds without new output (`DOTFILES_HARNESS_IDLE_TIMEOUT_SECONDS`). The
 interactive zsh `mise` helper runs `harness update --installed-only` after a
 successful `mise install` or `mise up`. Setup installs missing or broken
@@ -563,11 +574,12 @@ Gatekeeper before it replaces the app, and it keeps the old app under
 installing it, and `--check` checks the installed app. Quit Steam before a
 replacement. See [DECISIONS.md](DECISIONS.md#native-steam-installer).
 
-Setup adds the apps in [the login item list](apps/login-items.txt) and in the
-profile's `apps/login-items.<profile>.txt` as login items. This can ask for Automation access to System Events. After it adds T3
-Code Nightly, it removes the `/Applications/Codex.app` login item. Run
-`./bin/configure-app-settings --dry-run` to preview the changes. Privacy
-permissions are manual for every app.
+Setup adds the apps in `[bootstrap.settings.macos.login_items]` of
+`mise.macos.toml` and of the profile file as login items. It leaves other
+login items alone. It also sets the Dock apps in
+`[bootstrap.settings.macos.dock]`, in that order. Run
+`./bin/repo-mise bootstrap macos defaults status` to compare this Mac with
+them. Privacy permissions are manual for every app.
 
 [SHELL.md](SHELL.md) covers local secrets, GitHub account routing, command
 helpers, package runners, and Android paths. [SECURITY.md](SECURITY.md) lists

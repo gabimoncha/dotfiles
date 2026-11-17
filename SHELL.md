@@ -126,8 +126,9 @@ updates, and the command returns nonzero when any update fails.
 
 In interactive zsh, the `mise` helper runs the updater for installed agents
 after a successful `mise install`, `mise up`, or `mise up --local`.
-It also runs when no mise tools change. After `mise up`, or
-`mise install` without tool names, the helper first deletes the unused
-versions of the tools in the global config (`mise prune --tools TOOL...`). Help and dry-run commands do not
+It also runs when no mise tools change. After `mise install` without tool
+names, the helper first deletes the unused versions of the tools in the global
+config (`mise prune --tools TOOL...`). `mise up` removes the version it
+replaced after 24 hours. Help and dry-run commands do not
 update agents. `command mise` bypasses the shell helper and does not update
 agents. Package resolution, `mise exec`, and shim calls do not start agent updates.

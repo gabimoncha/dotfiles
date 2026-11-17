@@ -7,7 +7,8 @@
 # Usage: save-lock [--dry-run]
 #
 # The commit holds only the lock files that HEAD already tracks in
-# configs/mise/config, and the sidecar files in its locks folder. Other
+# configs/mise/config, and the sidecar files in its locks folder.
+# bin/preflight fails when mise names a sidecar outside that folder. Other
 # changes stay as they are. The script stops without a commit when a lock file
 # is new, when these paths have staged changes, or when origin/main changed the
 # lock too. A new lock file comes from a lock layout change, which you commit

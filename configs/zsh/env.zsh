@@ -12,11 +12,12 @@ export MISE_DATA_DIR="${MISE_DATA_DIR:-$HOME/.local/share/mise}"
 export RIPGREP_CONFIG_PATH="${RIPGREP_CONFIG_PATH:-$HOME/.rgrc}"
 # Cargo caches compiler output through sccache, once mise has installed it.
 [ ! -x "$MISE_DATA_DIR/shims/sccache" ] || export RUSTC_WRAPPER="${RUSTC_WRAPPER:-$MISE_DATA_DIR/shims/sccache}"
+# The JDK that the global mise config selects. mise keeps this link on the
+# installed version. Activated shells get the versioned path from mise.
+export JAVA_HOME="${JAVA_HOME:-$MISE_DATA_DIR/installs/java/global}"
 if [[ "$OSTYPE" == darwin* ]]; then
-  export JAVA_HOME="${JAVA_HOME:-/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home}"
   export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
 else
-  export JAVA_HOME="${JAVA_HOME:-/usr/lib/jvm/default-java}"
   export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
   # SSH commands start a non-login shell, which never reads path.zsh.
   typeset -U path

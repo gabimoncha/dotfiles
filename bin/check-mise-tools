@@ -58,9 +58,12 @@ load_homebrew_shellenv() {
 
 load_homebrew_shellenv
 export PATH="${shim_dir}:${mise_bin_dir}:${PATH}"
+# `repo-mise doctor project` runs this check with the settings that hide the
+# global config. The node shim that npm tools start needs that config.
+unset MISE_CONFIG_DIR MISE_GLOBAL_CONFIG_FILE
 # Capability checks must never provision tools or prompt for downloads.
 export MISE_OFFLINE=1 MISE_AUTO_INSTALL=0
-export COREPACK_ENABLE_NETWORK=0 COREPACK_ENABLE_DOWNLOAD_PROMPT=0 CI=1
+export CI=1
 check_timeout="${DOTFILES_TOOL_CHECK_TIMEOUT_SECONDS:-10}"
 if [[ ! "$check_timeout" =~ ^[1-9][0-9]*$ ]]; then
   warn "DOTFILES_TOOL_CHECK_TIMEOUT_SECONDS must be a positive integer"
@@ -113,12 +116,6 @@ for command_name in "${smoke_commands[@]}"; do
   resolved="$(bounded_check "$repo_root/bin/repo-mise" --global which "$command_name" 2>/dev/null)" || resolved=""
   if [[ -z "$resolved" || ! -x "$resolved" || "$resolved" == "$shim_dir/"* ]]; then
     warn "Installed executable unavailable: ${command_name}"
-    status=1
-    continue
-  fi
-  real_path="$(/usr/bin/ruby -e 'print File.realpath(ARGV.fetch(0))' "$resolved")"
-  if [[ "$real_path" == */corepack/dist/* ]]; then
-    warn "Installed executable unavailable: ${command_name} resolves to Corepack; install the managed tool"
     status=1
     continue
   fi
