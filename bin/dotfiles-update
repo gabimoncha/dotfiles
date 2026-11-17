@@ -41,11 +41,17 @@ DOTFILES_SKIP_MACOS_DEFAULTS=1 "${repo_root}/bin/setup" --continue "$@"
 # it is, and one in another state (a conflict) is not passed to mise.
 log "Updating the shell framework checkouts"
 current_repos=()
-while IFS= read -r path; do
-  [[ -n "$path" ]] && current_repos+=("$path")
-done < <("${repo_root}/bin/repo-mise" bootstrap repos status --json |
-  /usr/bin/ruby -rjson -e 'JSON.parse(STDIN.read).fetch("repos").each { |r| puts r["path"] if r["state"] == "current" }')
-if [[ ${#current_repos[@]} -eq 0 ]]; then
+repos_listed=0
+if repo_list="$("${repo_root}/bin/repo-mise" bootstrap repos status --json |
+  /usr/bin/ruby -rjson -e 'JSON.parse(STDIN.read).fetch("repos").each { |r| puts r["path"] if r["state"] == "current" }')"; then
+  repos_listed=1
+  while IFS= read -r path; do
+    [[ -n "$path" ]] && current_repos+=("$path")
+  done <<<"$repo_list"
+fi
+if [[ "$repos_listed" == 0 ]]; then
+  printf 'Could not list the shell checkouts. Run: ./bin/repo-mise bootstrap repos status\n' >&2
+elif [[ ${#current_repos[@]} -eq 0 ]]; then
   log "No shell framework checkout to update"
 elif [[ "$dry_run" == 1 ]]; then
   "${repo_root}/bin/repo-mise" bootstrap repos update --dry-run --skip-dirty "${current_repos[@]}"

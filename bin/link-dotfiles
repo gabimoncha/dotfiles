@@ -148,6 +148,8 @@ if [[ ${#targets[@]} -gt 0 ]]; then
   done
 fi
 file_targets=()
+plain_targets=()
+each_targets=()
 merge_targets=()
 template_targets=()
 changing_rows=()
@@ -172,6 +174,11 @@ while IFS=$'\t' read -r state entry_mode target; do
     merge_targets+=("$target")
   else
     file_targets+=("$target")
+    if [[ "$entry_mode" == symlink-each ]]; then
+      each_targets+=("$target")
+    else
+      plain_targets+=("$target")
+    fi
     [[ "$entry_mode" != template ]] || template_targets+=("$target")
   fi
   [[ "$state" == applied ]] || changing_rows+=("$entry_mode"$'\t'"$target")
@@ -395,9 +402,16 @@ for link in "${retired_links[@]}"; do
 done
 rmdir "$HOME/.config/mise/tasks/dot" "$HOME/.config/mise/tasks" "$HOME/.config/telemetry" 2>/dev/null || true
 
-if [[ ${#file_targets[@]} -gt 0 ]] && ! repo_mise dot apply --yes "${file_targets[@]}"; then
+if [[ ${#plain_targets[@]} -gt 0 ]] && ! repo_mise dot apply --yes "${plain_targets[@]}"; then
   printf 'link-dotfiles: mise stopped. Putting the moved files back.\n' >&2
   restore_moved
+  exit 1
+fi
+# A symlink-each entry never replaces a real file in its folder without
+# --force. The folder is in the backup already, so --force loses nothing.
+# mise leaves the files in the folder that have no source alone.
+if [[ ${#each_targets[@]} -gt 0 ]] && ! repo_mise dot apply --force --yes "${each_targets[@]}"; then
+  printf 'link-dotfiles: mise stopped. The old folders are in %s.\n' "${backup_root:-~/.dotfiles-backups}" >&2
   exit 1
 fi
 # Saves a checkpoint of the track-local files in configs/mise/config/config.toml:

@@ -133,17 +133,20 @@ enable() {
   ensure_supported
   [[ $dry_run -eq 0 ]] || apply_flag=--dry-run
 
-  if [[ -f "$sudo_local_file" ]]; then
-    comment_unmarked_lines
-  fi
-  # mise uses sudo for the write, and creates a missing file.
+  # mise uses sudo for the write, and creates a missing file. The old line
+  # stays active until the block verifies, so a failed apply keeps Touch ID.
   "${repo_root}/bin/repo-mise" bootstrap files apply "$apply_flag"
-  [[ $dry_run -eq 0 ]] || return 0
+  if [[ $dry_run -eq 1 ]]; then
+    [[ "$(count_tid_lines outside)" -eq 0 ]] ||
+      log "dry-run: would then comment out the pam_tid.so line outside the mise block in ${sudo_local_file}"
+    return 0
+  fi
 
   if [[ "$(count_tid_lines inside)" -eq 0 ]]; then
     warn "Touch ID sudo setup did not verify. Does this profile's mise file declare the touch-id block?"
     return 1
   fi
+  comment_unmarked_lines
   log "Touch ID for sudo is enabled"
 }
 
