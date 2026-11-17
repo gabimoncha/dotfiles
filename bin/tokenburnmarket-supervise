@@ -29,26 +29,39 @@ pause() {
   sleep "$1" &
   wait $! || true
 }
-# pitchfork kills this script 5 seconds after its stop signal, so the daemon
-# gets 4 seconds. The daemon has its own process group, so kill that too.
-# Waits up to 4 seconds for process $1 to exit.
+# Waits up to $2 half-seconds for process $1 to exit.
 wait_gone() {
   local _
-  for _ in 1 2 3 4 5 6 7 8; do
+  for _ in $(seq "$2"); do
     kill -0 "$1" 2>/dev/null || return 0
     pause 0.5
   done
   return 1
 }
+# pitchfork kills this script 5 seconds after its stop signal. The daemon gets
+# 3.5 seconds, then SIGKILL to its own process group, and 1 second to exit.
+# Returns 1 when the daemon still runs after SIGKILL.
 stop_daemon() {
   kill -TERM "$pid" 2>/dev/null || return 0
-  wait_gone "$pid" || kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+  wait_gone "$pid" 7 && return 0
+  kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+  wait_gone "$pid" 2
 }
 # An earlier copy of this script that got SIGTERM and still stops its daemon.
 # A stop of this script waits for it too.
 stopping=""
-finish_stopping() { wait_gone "$stopping" || kill -KILL "$stopping" 2>/dev/null || true; }
-trap '[[ -z "$pid" ]] || stop_daemon; [[ -z "$stopping" ]] || finish_stopping; exit 0' TERM INT HUP
+finish_stopping() {
+  wait_gone "$stopping" 7 && return 0
+  kill -KILL "$stopping" 2>/dev/null || true
+  wait_gone "$stopping" 2
+}
+trap '[[ -z "$pid" ]] || stop_daemon || true; [[ -z "$stopping" ]] || finish_stopping || true; exit 0' TERM INT HUP
+# Exits instead of starting a second daemon next to one that still runs.
+# pitchfork starts this script again later.
+not_gone() {
+  log "PID $1 still runs after SIGKILL; not starting a second daemon"
+  exit 1
+}
 
 # Only one daemon may sync. An earlier copy of this script can still run when
 # pitchfork died and started again. SIGTERM lets its trap stop its daemon.
@@ -58,14 +71,14 @@ for old in $(pgrep -u "$(id -u)" -f -- '/bin/tokenburnmarket-supervise$'); do
   kill -TERM "$old" 2>/dev/null || continue
   stopping="$old"
   log "stopping an earlier supervisor (PID $old)"
-  finish_stopping
+  finish_stopping || not_gone "$old"
   stopping=""
 done
 # A daemon whose script was killed before its trap ran, for example by the
 # out-of-memory killer, or one that was started by hand.
 for pid in $(pgrep -u "$(id -u)" -f -- 'tokenburnmarket daemon$' || true); do
   log "stopping a daemon that this supervisor did not start (PID $pid)"
-  stop_daemon
+  stop_daemon || not_gone "$pid"
 done
 pid=""
 

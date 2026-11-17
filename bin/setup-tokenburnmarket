@@ -134,6 +134,14 @@ if [[ "$mode" == mise-daemon ]]; then
       sleep 0.5
     done
     kill -KILL "$p" 2>/dev/null || true
+    for _ in 1 2 3 4; do
+      kill -0 "$p" 2>/dev/null || break
+      sleep 0.5
+    done
+    if kill -0 "$p" 2>/dev/null; then
+      printf 'tokenburnmarket daemon %s still runs after SIGKILL. Not restarting the mise daemon.\n' "$p" >&2
+      exit 1
+    fi
     printf 'Stopped a tokenburnmarket daemon that mise did not start (PID %s)\n' "$p"
   done
   # A restart also starts a stopped daemon, and replaces one that runs an old
