@@ -411,16 +411,18 @@ fi
 # --force. The folder is in the backup already, so --force loses nothing.
 # mise leaves the files in the folder that have no source alone.
 if [[ ${#each_targets[@]} -gt 0 ]] && ! repo_mise dot apply --force --yes "${each_targets[@]}"; then
-  printf 'link-dotfiles: mise stopped. The old folders are in %s.\n' "${backup_root:-~/.dotfiles-backups}" >&2
+  printf 'link-dotfiles: mise stopped. Putting the moved files back. The old folders are in %s.\n' "${backup_root:-~/.dotfiles-backups}" >&2
+  restore_moved
   exit 1
 fi
 # Saves a checkpoint of the track-local files in configs/mise/config/config.toml:
 # the settings files that this script merges into. The history holds their
-# private keys, so its folder is private. A failed save does not stop the run.
+# private keys, so its folder is private. A failed save prints a message and
+# does not stop the run. mise skips a merge target that does not exist yet.
 save_local_history() {
   local history_dir="${MISE_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/mise}/history-local"
   mkdir -p "$history_dir" && chmod 700 "$history_dir" || return 0
-  "$repo_root/bin/repo-mise" --global dot save --best-effort --description "$1" >/dev/null 2>&1 ||
+  "$repo_root/bin/repo-mise" --global dot save --description "$1" >/dev/null 2>&1 ||
     printf 'Could not save the local history of the settings files.\n' >&2
 }
 if [[ ${#merge_targets[@]} -gt 0 ]]; then
