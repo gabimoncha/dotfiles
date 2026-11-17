@@ -1,0 +1,33 @@
+# Runs the repository checks on Linux: ./bin/repo-mise run check. The macOS
+# checks need a real Mac and are not run here. The pinned mise installer from
+# bin/lib/mise-pin.sh installs mise, as setup does, so its checksum is checked.
+name: check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # A runner is not a container, so name the Linux profile.
+      DOTFILES_PROFILE: container
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # preflight checks the zsh files with zsh -n.
+      - run: sudo apt-get install -y --no-install-recommends zsh
+      - run: ./bin/install-standalone install mise
+      - run: ./bin/repo-mise run --output summary check
