@@ -63,22 +63,51 @@ run, and the mise tool list. A change that works only on the Mac breaks Linux.
 - Linux hosts have no Homebrew, GUI apps, launchd, or Keychain. A container
   can also lack systemd and the agent sandboxes.
 
+## mise first
+
+Before you propose or write a `bin/` script, a shell function, a Homebrew
+entry, or a manual step, find the mise feature for the need, and read its page
+at the pinned tag. Put the result in your recommendation: the mise feature
+that fits, or the gap and the documentation section that shows it. Write a
+script only for a gap that mise cannot fill, and record the gap and its
+documentation section in a comment or in DECISIONS.md.
+
+| Need                                           | mise feature                                                     |
+| ---------------------------------------------- | ---------------------------------------------------------------- |
+| A file or link in HOME, and its mode           | `[dotfiles]`: `mode`, `merge`, `permissions`, `symlink-each`     |
+| Local history of a file that an app rewrites   | `[dotfiles]` with `mode = "track-local"`                         |
+| A file or a block of lines outside HOME        | `[bootstrap.files]`, with `block` for a file that macOS owns     |
+| A Git checkout, such as a shell plugin         | `[bootstrap.repos]`; update with `bootstrap repos update`        |
+| A system package and its upgrade               | `[bootstrap.packages]`; `bootstrap packages upgrade`             |
+| A macOS preference, login item, or Dock app    | `[bootstrap.settings.macos]`: `defaults`, `login_items`, `dock`  |
+| A login job                                    | `[bootstrap.macos.launchd.agents]`; mise expands `~/`            |
+| A CLI tool, runtime, or JDK                    | `[tools]`; check `mise registry <name>` first                    |
+| Shims, pruning, release age, retries, or trust | `[settings]`; read `settings.toml` at the pinned tag             |
+| A readiness or drift check                     | `[doctor.checks]`, `bootstrap status --missing`, `ls --missing`  |
+| A command for people or agents                 | a task: `dot:<name>` in the global config, or one in `mise.toml` |
+| A reminder after a file in this repo changes   | `[[watch_files]]`                                                |
+
+Read mise state with `--json`, for example `ls --json` or
+`lock --sidecars --json`, not by parsing table output.
+
 ## Editing
 
 - Edit tracked sources here, not live files under HOME.
 - Edit only in a worktree or on a branch, never on `main`.
+- `~/.config/mise` links to `configs/mise/config/` in the main checkout. A
+  command that writes global config, such as `mise use -g`,
+  `mise settings set`, or `mise lock --global`, changes `main`. Edit the files
+  in a worktree, or use `./bin/repo-mise --global`, which uses the worktree's
+  copy.
 - Keep setup rerunnable. Preserve link backups and existing user state.
 - `bin/setup` lists the setup steps in order: two phases on macOS, one on
   Linux. The step functions are in `bin/lib/setup-steps.sh`. Mark a step
   `--optional` when the later steps can run without it.
-- Use a mise feature before you propose or write a script, a manual step, or a
-  Homebrew entry. Put a file or link in HOME in a `[dotfiles]` entry, a tool in
-  mise `[tools]`, and a setting in mise `[settings]`. Use `[bootstrap]` for
-  packages, macOS defaults, and LaunchAgents, and mise tasks for commands.
-  Before you recommend a design, check the mise documentation yourself, and put
-  the result in the recommendation: the mise feature that fits, or the gap and
-  the documentation section that shows it. Write a `bin/` script only for a gap
-  that mise cannot fill, and record that gap in a comment or in DECISIONS.md.
+- To raise the mise pin, change `bin/lib/mise-pin.sh` (the version and the
+  installer SHA-256) and both `min_version` values in one change. Then read
+  the mise changelog since the old pin, and recheck each workaround that names
+  a mise limit: the Homebrew notes in `apps/manifest*.tsv`, the reasons in
+  DECISIONS.md for a script or a Homebrew entry, and the pinned tool versions.
 - Add GUI apps through mas when available, then use mise for supported tools,
   then Homebrew. Coding agent CLIs, mise, and the T3 server on Linux and on
   the Mac mini are standalone exceptions, listed in `apps/standalone.tsv`.
@@ -172,6 +201,8 @@ line when the checks pass, and the full output when they fail.
 `./bin/repo-mise tasks log check` prints the output of the last run. CI runs
 the same task on Linux for each pull request. For a tool or lock
 change, also run `./bin/repo-mise --global install --locked --dry-run`. For
+a `[bootstrap]` or `[dotfiles]` change, also run
+`./bin/repo-mise bootstrap status` and read the rows that you changed. For
 setup or app-install changes, also run the matching `--dry-run` path.
 `./bin/repo-mise doctor project` checks this machine's readiness. Do not
 validate with live installs, account changes, personal restores, or macOS
