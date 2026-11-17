@@ -91,8 +91,11 @@ Do not commit actual host addresses, identities, keys, or pairing links.
 The example preserves the existing named home and SSH host-key volumes and
 workspace bind mount. The compose file does not install T3 or the agent CLIs;
 `./bin/setup` installs them in the persistent home (see "Dotfiles on the box").
-Changes take effect on a container restart; port-mapping changes require a
-project rebuild. Do not delete persistent volumes.
+A restart keeps the container's command, ports, and stop grace period. A
+change to any of them in the compose file takes effect only after a project
+rebuild. Do not delete persistent volumes. After a rebuild,
+`docker inspect nasbox --format '{{.Config.StopTimeout}}'` prints the grace
+period in seconds.
 
 ### Daemons
 
@@ -101,11 +104,14 @@ T3 and the tokenburnmarket sync daemon as `box`, under the pitchfork
 supervisor. The compose command starts them when the container starts. When
 the container stops, it stops them first, so T3 can stop its server.
 `stop_grace_period` gives it the time. Copy those lines from the example into
-the compose file on the NAS.
+the compose file on the NAS, and rebuild the project.
 
 Run every daemons command through `./bin/container-daemons`, not
 `./bin/repo-mise daemons`. The supervisor keeps the environment of the command
-that starts it, and `repo-mise` hides the global tools.
+that starts it, and `repo-mise` hides the global tools. Run it in the main
+checkout. The daemons use the fixed namespace `nasbox`, so a start from a
+second checkout or a worktree stops with "external configuration conflicts
+with namespace 'nasbox'".
 
 ```bash
 ./bin/container-daemons status
@@ -116,8 +122,11 @@ that starts it, and `repo-mise` hides the global tools.
 Each daemon runs a script from this checkout: `bin/t3-dev-supervise` and
 `bin/tokenburnmarket-supervise`. The script restarts its service after every
 exit, as the systemd units of T3 and tokenburnmarket do. pitchfork keeps one
-copy of each script and keeps their output. The setup step `tokenburnmarket`
-signs in, and restarts its daemon when `mise up` has moved node or the CLI.
+copy of each script and keeps their output. `running` in `status` means that
+the script runs, not that T3 answers. Check T3 in the app, or read
+`logs t3` for "no complete runtime" and launcher errors. The setup step
+`tokenburnmarket` signs in, and restarts its daemon when `mise up` has moved
+node or the CLI.
 
 A restart keeps the container and its system packages. A build makes a new
 container from the image, which removes what apt installed. At each start, the

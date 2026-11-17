@@ -29,6 +29,13 @@ experimental = true
 # restart (pitchfork's "Automatic retries"). See DECISIONS.md. `retry`
 # restarts a script that stops by itself. pitchfork stops the script, and the
 # script stops its service.
+
+# One set of daemon IDs for the host. A second checkout or a worktree then
+# reaches the same two daemons instead of starting a second copy of each.
+[daemons_settings]
+namespace = "nasbox"
+namespace_per_worktree = false
+
 [daemons.t3]
 run = "exec {{ vars.dotfiles_bin | quote }}/t3-dev-supervise"
 retry = true

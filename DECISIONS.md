@@ -287,7 +287,11 @@ container is the only Linux host.
   the systemd units of both services restart after every exit. Its retry
   count also never resets after a good run, so the wait before a retry grows
   up to one hour. With `exec` on the script, pitchfork also waits for the
-  script, which gives T3's launcher its 90 seconds to stop. The daemons start
+  script, which gives T3's launcher its 90 seconds to stop. pitchfork signals
+  the whole process group, and T3's launcher handles only its first SIGTERM,
+  so each script starts its service with `setsid` and sends the one stop
+  signal itself. The daemons use the fixed namespace `nasbox`, so a second
+  checkout cannot start a second copy. The daemons start
   through `bin/container-daemons`, because the supervisor keeps the
   environment of the command that starts it, and `bin/repo-mise` hides the
   global tools.

@@ -59,20 +59,24 @@ pause() {
   wait $! || true
 }
 # The launcher stops the server first. 90 seconds matches T3's launchd job.
-# pitchfork waits for this script, so the launcher gets that time.
+# pitchfork waits for this script, so the launcher gets that time. The
+# launcher runs in its own process group, so it gets only this SIGTERM.
 stop_launcher() {
   kill -TERM "$pid" 2>/dev/null || return 0
   for _ in $(seq 90); do
     kill -0 "$pid" 2>/dev/null || return 0
     pause 1
   done
-  kill -KILL "$pid" 2>/dev/null || true
+  kill -KILL -- "-$pid" 2>/dev/null || true
 }
 trap '[[ -z "$pid" ]] || stop_launcher; exit 0' TERM INT HUP
 
 while true; do
   if seed_service_state; then
-    "$HOME/.local/bin/t3" __service-launcher &
+    # pitchfork stops a daemon with a signal to its whole process group. The
+    # launcher handles only its first SIGTERM, and a second one would end its
+    # cleanup. setsid gives it its own group, and stop_launcher signals it.
+    setsid "$HOME/.local/bin/t3" __service-launcher &
     pid=$!
     wait "$pid" || log "launcher exited with status $?"
     pid=""

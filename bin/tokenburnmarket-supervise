@@ -29,11 +29,23 @@ pause() {
   sleep "$1" &
   wait $! || true
 }
-trap '[[ -z "$pid" ]] || { kill -TERM "$pid" 2>/dev/null; wait "$pid"; } || true; exit 0' TERM INT HUP
+# pitchfork kills this script 5 seconds after its stop signal, so the daemon
+# gets 4 seconds. The daemon has its own process group, so kill that too.
+stop_daemon() {
+  kill -TERM "$pid" 2>/dev/null || return 0
+  for _ in 1 2 3 4 5 6 7 8; do
+    kill -0 "$pid" 2>/dev/null || return 0
+    pause 0.5
+  done
+  kill -KILL -- "-$pid" 2>/dev/null || true
+}
+trap '[[ -z "$pid" ]] || stop_daemon; exit 0' TERM INT HUP
 
 while true; do
   if node="$(real_tool node)" && cli="$(real_tool tokenburnmarket)"; then
-    "$node" "$cli" daemon &
+    # pitchfork stops a daemon with a signal to its whole process group. setsid
+    # gives the daemon its own group, so it gets only the trap's one SIGTERM.
+    setsid "$node" "$cli" daemon &
     pid=$!
     wait "$pid" || log "daemon exited with status $?"
     pid=""

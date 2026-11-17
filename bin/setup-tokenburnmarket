@@ -63,9 +63,30 @@ connect_if_needed() {
 }
 
 if [[ "$mode" == mise-daemon ]]; then
-  # bin/tokenburnmarket-supervise starts the daemon with the node and CLI
-  # paths that mise gives now.
-  daemon_current() { pgrep -u "$(id -u)" -x -f "$node $cli daemon" >/dev/null; }
+  # The tokenburnmarket daemon processes, and whether a supervise loop of this
+  # repository started one. pitchfork runs that loop as the mise daemon.
+  daemon_pids() { pgrep -u "$(id -u)" -f -- "tokenburnmarket daemon\$" || true; }
+  supervised() {
+    local parent
+    parent="$(ps -o ppid= -p "$1" | tr -d ' ')" || return 1
+    tr '\0' ' ' <"/proc/$parent/cmdline" 2>/dev/null | grep -q '/bin/tokenburnmarket-supervise'
+  }
+  # Current: the mise daemon runs, and its loop started the daemon with the
+  # node and CLI that mise gives now.
+  daemon_current() {
+    local p
+    "$repo_root/bin/container-daemons" status tokenburnmarket 2>/dev/null | grep -qx 'Status: running' || return 1
+    for p in $(daemon_pids); do
+      supervised "$p" || continue
+      [[ "$(readlink -f "/proc/$p/exe")" == "$(readlink -f "$node")" ]] || continue
+      tr '\0' ' ' <"/proc/$p/cmdline" | grep -qF -- "$cli daemon" && return 0
+    done
+    return 1
+  }
+  unmanaged_pids() {
+    local p
+    for p in $(daemon_pids); do supervised "$p" || printf '%s\n' "$p"; done
+  }
   # Before the mise daemon, setup installed the supervisor here and started it.
   old_supervisor="$HOME/.local/bin/tokenburnmarket-supervise"
   # The entrypoint of the container starts the daemons after a restart.
@@ -75,7 +96,7 @@ if [[ "$mode" == mise-daemon ]]; then
     echo 'daemon lines from local/nasbox.compose.yaml.example into the compose file on the host.'
   }
 
-  if [[ "$connected" == 1 && ! -e "$old_supervisor" ]] && daemon_current; then
+  if [[ "$connected" == 1 && ! -e "$old_supervisor" && -z "$(unmanaged_pids)" ]] && daemon_current; then
     echo 'tokenburnmarket is connected and its mise daemon runs.'
     boot_note
     exit 0
@@ -83,6 +104,7 @@ if [[ "$mode" == mise-daemon ]]; then
   if [[ "$dry_run" == 1 ]]; then
     [[ "$connected" == 1 ]] || echo 'Would run tokenburnmarket connect (browser sign-in).'
     [[ ! -e "$old_supervisor" ]] || printf 'Would stop and remove the old supervisor %s\n' "$old_supervisor"
+    [[ -z "$(unmanaged_pids)" ]] || echo 'Would stop the tokenburnmarket daemons that mise did not start.'
     echo 'Would restart the tokenburnmarket mise daemon.'
     exit 0
   fi
@@ -94,6 +116,10 @@ if [[ "$mode" == mise-daemon ]]; then
     rm -f "$old_supervisor"
     printf 'Stopped and removed the old supervisor %s\n' "$old_supervisor"
   fi
+  for p in $(unmanaged_pids); do
+    kill -TERM "$p" 2>/dev/null || true
+    printf 'Stopped a tokenburnmarket daemon that mise did not start (PID %s)\n' "$p"
+  done
   # A restart also starts a stopped daemon, and replaces one that runs an old
   # node or CLI.
   "$repo_root/bin/container-daemons" restart tokenburnmarket
