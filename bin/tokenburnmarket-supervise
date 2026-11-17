@@ -24,6 +24,14 @@ log() { printf 'tokenburnmarket-supervise: %s\n' "$1"; }
 real_tool() { MISE_AUTO_INSTALL=0 "$HOME/.local/bin/mise" which "$1" 2>/dev/null; }
 
 pid=""
+# The PID that already got this script's SIGTERM, so it never gets a second.
+signaled=""
+# An earlier copy of this script that got SIGTERM and still stops its daemon.
+stopping=""
+# Set while the daemon starts and its PID is not known yet.
+launching=""
+stop_requested=""
+
 # Background sleeps let the trap run at once instead of after the sleep ends.
 pause() {
   sleep "$1" &
@@ -39,23 +47,35 @@ wait_gone() {
   return 1
 }
 # pitchfork kills this script 5 seconds after its stop signal. The daemon gets
-# 3.5 seconds, then SIGKILL to its own process group, and 1 second to exit.
-# Returns 1 when the daemon still runs after SIGKILL.
+# 3 seconds, then SIGKILL to its own process group, and half a second to exit.
+# Returns 1 when it still runs after SIGKILL.
 stop_daemon() {
-  kill -TERM "$pid" 2>/dev/null || return 0
-  wait_gone "$pid" 7 && return 0
+  if [[ "$signaled" != "$pid" ]]; then
+    kill -TERM "$pid" 2>/dev/null || return 0
+    signaled="$pid"
+  fi
+  wait_gone "$pid" 6 && return 0
   kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
-  wait_gone "$pid" 2
+  wait_gone "$pid" 1
 }
-# An earlier copy of this script that got SIGTERM and still stops its daemon.
-# A stop of this script waits for it too.
-stopping=""
+# The earlier copy needs at most 3.5 seconds, so it finishes first.
 finish_stopping() {
-  wait_gone "$stopping" 7 && return 0
+  wait_gone "$stopping" 8 && return 0
   kill -KILL "$stopping" 2>/dev/null || true
-  wait_gone "$stopping" 2
+  wait_gone "$stopping" 1
 }
-trap '[[ -z "$pid" ]] || stop_daemon || true; [[ -z "$stopping" ]] || finish_stopping || true; exit 0' TERM INT HUP
+# The stop also waits for an earlier copy. Further stop signals are ignored.
+on_stop() {
+  if [[ -n "$launching" ]]; then
+    stop_requested=1
+    return
+  fi
+  trap '' TERM INT HUP
+  [[ -z "$pid" ]] || stop_daemon || true
+  [[ -z "$stopping" ]] || finish_stopping || true
+  exit 0
+}
+trap on_stop TERM INT HUP
 # Exits instead of starting a second daemon next to one that still runs.
 # pitchfork starts this script again later.
 not_gone() {
@@ -68,8 +88,11 @@ not_gone() {
 # pgrep is the only command in $(...), so no copy of this script runs it.
 for old in $(pgrep -u "$(id -u)" -f -- '/bin/tokenburnmarket-supervise$'); do
   [[ "$old" != "$$" ]] || continue
-  kill -TERM "$old" 2>/dev/null || continue
   stopping="$old"
+  if ! kill -TERM "$old" 2>/dev/null; then
+    stopping=""
+    continue
+  fi
   log "stopping an earlier supervisor (PID $old)"
   finish_stopping || not_gone "$old"
   stopping=""
@@ -81,6 +104,7 @@ for pid in $(pgrep -u "$(id -u)" -f -- 'tokenburnmarket daemon$' || true); do
   stop_daemon || not_gone "$pid"
 done
 pid=""
+signaled=""
 
 # The CLI's lock records a PID and checks only that the PID exists. After an
 # unclean container stop, a new process can have that PID, and the daemon then
@@ -102,11 +126,15 @@ while true; do
   if node="$(real_tool node)" && cli="$(real_tool tokenburnmarket)"; then
     clear_stale_lock
     # pitchfork stops a daemon with a signal to its whole process group. setsid
-    # gives the daemon its own group, so it gets only the trap's one SIGTERM.
+    # gives the daemon its own group, so it gets only this script's SIGTERM.
+    launching=1
     setsid "$node" "$cli" daemon &
     pid=$!
+    launching=""
+    [[ -z "$stop_requested" ]] || on_stop
     wait "$pid" || log "daemon exited with status $?"
     pid=""
+    signaled=""
   else
     log "mise has no tokenburnmarket or node; run ./bin/setup"
   fi

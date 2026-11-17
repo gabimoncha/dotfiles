@@ -53,14 +53,20 @@ seed_service_state() {
 }
 
 pid=""
+# The PID that already got this script's SIGTERM. The launcher handles only
+# its first SIGTERM, so it never gets a second one.
+signaled=""
+# An earlier copy of this script that got SIGTERM and still stops its launcher.
+stopping=""
+# Set while the launcher starts and its PID is not known yet.
+launching=""
+stop_requested=""
+
 # Background sleeps let the trap run at once instead of after the sleep ends.
 pause() {
   sleep "$1" &
   wait $! || true
 }
-# The launcher stops the server first. 90 seconds matches T3's launchd job.
-# pitchfork waits for this script, so the launcher gets that time. The
-# launcher runs in its own process group, so it gets only this SIGTERM.
 # Waits up to $2 seconds for process $1 to exit.
 wait_gone() {
   local _
@@ -70,23 +76,37 @@ wait_gone() {
   done
   return 1
 }
-# Returns 1 when the launcher still runs 2 seconds after SIGKILL.
+# The launcher stops the server first. 90 seconds matches T3's launchd job,
+# and pitchfork waits 95 seconds for this script. The launcher runs in its own
+# process group. Returns 1 when it still runs 2 seconds after SIGKILL.
 stop_launcher() {
-  kill -TERM "$pid" 2>/dev/null || return 0
+  if [[ "$signaled" != "$pid" ]]; then
+    kill -TERM "$pid" 2>/dev/null || return 0
+    signaled="$pid"
+  fi
   wait_gone "$pid" 90 && return 0
   kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
   wait_gone "$pid" 2
 }
-# An earlier copy of this script that got SIGTERM and still stops its launcher.
-# A stop of this script waits for it too, so the container does not end
-# before that launcher stops.
-stopping=""
+# The earlier copy needs at most 92 seconds, so it finishes first.
 finish_stopping() {
-  wait_gone "$stopping" 95 && return 0
+  wait_gone "$stopping" 93 && return 0
   kill -KILL "$stopping" 2>/dev/null || true
-  wait_gone "$stopping" 2
+  wait_gone "$stopping" 1
 }
-trap '[[ -z "$pid" ]] || stop_launcher || true; [[ -z "$stopping" ]] || finish_stopping || true; exit 0' TERM INT HUP
+# The stop also waits for an earlier copy, so the container does not end
+# before that copy's launcher stops. Further stop signals are ignored.
+on_stop() {
+  if [[ -n "$launching" ]]; then
+    stop_requested=1
+    return
+  fi
+  trap '' TERM INT HUP
+  [[ -z "$pid" ]] || stop_launcher || true
+  [[ -z "$stopping" ]] || finish_stopping || true
+  exit 0
+}
+trap on_stop TERM INT HUP
 # Exits instead of starting a second launcher next to one that still runs.
 # pitchfork starts this script again later.
 not_gone() {
@@ -99,8 +119,11 @@ not_gone() {
 # pgrep is the only command in $(...), so no copy of this script runs it.
 for old in $(pgrep -u "$(id -u)" -f -- '/bin/t3-dev-supervise$'); do
   [[ "$old" != "$$" ]] || continue
-  kill -TERM "$old" 2>/dev/null || continue
   stopping="$old"
+  if ! kill -TERM "$old" 2>/dev/null; then
+    stopping=""
+    continue
+  fi
   log "stopping an earlier supervisor (PID $old)"
   finish_stopping || not_gone "$old"
   stopping=""
@@ -112,16 +135,21 @@ for pid in $(pgrep -u "$(id -u)" -f -- 't3 __service-launcher' || true); do
   stop_launcher || not_gone "$pid"
 done
 pid=""
+signaled=""
 
 while true; do
   if seed_service_state; then
     # pitchfork stops a daemon with a signal to its whole process group. The
     # launcher handles only its first SIGTERM, and a second one would end its
     # cleanup. setsid gives it its own group, and stop_launcher signals it.
+    launching=1
     setsid "$HOME/.local/bin/t3" __service-launcher &
     pid=$!
+    launching=""
+    [[ -z "$stop_requested" ]] || on_stop
     wait "$pid" || log "launcher exited with status $?"
     pid=""
+    signaled=""
   else
     log "no complete runtime at ~/.local/bin/t3; rerun the T3 install script"
   fi
