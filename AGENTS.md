@@ -24,9 +24,9 @@ For mise behavior, the source of truth is the mise documentation at
 | Runtime tools and mise tasks                       | `configs/mise/config/config.toml`                                                                                                  |
 | Runtime tools for one profile                      | `configs/mise/config/config.<profile>.toml`                                                                                        |
 | Homebrew formulae, casks, and App Store apps       | `Brewfile` for every Mac; `apps/<profile>.Brewfile` for one Mac                                                                    |
-| Manifest apps and login items for one Mac          | `apps/manifest.<profile>.tsv` and `apps/login-items.<profile>.txt`                                                                 |
+| Manifest apps for one Mac                          | `apps/manifest.<profile>.tsv`                                                                                                      |
 | Apt packages                                       | `mise.linux.toml` or the profile file                                                                                              |
-| macOS preferences                                  | `[bootstrap.macos]` in `mise.macos.toml`, and `macos/defaults.sh`                                                                  |
+| macOS preferences, Dock apps, and login items      | `[bootstrap.settings.macos]` in `mise.macos.toml` or the profile file, and `macos/defaults.sh`                                     |
 | Agent CLIs, mise, and other vendor-installed tools | `apps/standalone.tsv`                                                                                                              |
 | Setup steps                                        | `bin/`                                                                                                                             |
 
@@ -100,8 +100,7 @@ run, and the mise tool list. A change that works only on the Mac breaks Linux.
   pattern such as `@tsrs/*`, because pnpm checks the packages of every
   platform and stops on a blocked one.
 - Set a tool on `minimum_release_age_excludes` to `latest`. Don't pin its
-  version; `mise.lock` records it. `github:flowcopilot/aether` stays pinned,
-  because the mise versions host lists no release for it.
+  version; `mise.lock` records it.
 - Change the installed skills with the `skills` CLI, not by hand: `skills add
   <source> -g -a claude-code codex -y -s <skill>`, `skills update -g`, or
   `skills remove -g <skill>`. The CLI writes through `~/.agents/skills` into
@@ -136,14 +135,14 @@ mise task in `configs/mise/config/config.toml`; `mise tasks` lists them.
    settings into `configs/`. `mise run dot:drift` reports the installed apps
    and tools that differ from the Brewfiles and the mise lists. The user's
    commits are pushed.
-2. Back up portable state with `mise run backup`: Mackup app settings, an
+2. Back up portable state with `mise run dot:backup`: Mackup app settings, an
    encrypted Codex archive, and a Raycast export. On the Mac mini, run only
    `./bin/file-backup raycast`; it has no Mackup and no Synology Drive. The user types the
    passwords and completes the Raycast export in its window.
 3. The backup is done when the new files are in the Synology or iCloud
    folders of [MACKUP.md](MACKUP.md). A zero exit status does not prove it.
 
-`mise run restore` restores this state. `./bin/file-restore --debug` shows the
+`mise run dot:restore` restores this state. `./bin/file-restore --debug` shows the
 storage folders.
 
 When you add, rename, or remove a backup or sync script, update its mise task
@@ -166,9 +165,16 @@ Direct the user to System Settings, restart if needed, and rerun setup.
 
 ## Validation
 
-The repo has no test suite. Run `bash -n` or `zsh -n` on changed shell files,
-`./bin/preflight`, and `git diff --check`. For setup or app-install changes,
-also run the matching `--dry-run` path. Do not validate with live installs,
-account changes, personal restores, or macOS defaults. For a change to a shared
+The repo has no test suite. Run `./bin/repo-mise run --output summary check`.
+It runs `git diff --check`, the mise task checks, and `./bin/preflight`, which
+checks the shell syntax, the mise keys, and the lock sidecars. It prints one
+line when the checks pass, and the full output when they fail.
+`./bin/repo-mise tasks log check` prints the output of the last run. CI runs
+the same task on Linux for each pull request. For a tool or lock
+change, also run `./bin/repo-mise --global install --locked --dry-run`. For
+setup or app-install changes, also run the matching `--dry-run` path.
+`./bin/repo-mise doctor project` checks this machine's readiness. Do not
+validate with live installs, account changes, personal restores, or macOS
+defaults. For a change to a shared
 file, run the same checks on a Linux host when you can reach one. Report what
 remains unchecked on a real Mac and on Linux.

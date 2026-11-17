@@ -12,12 +12,10 @@
 "~/bin/dotfiles-lock-screen" = { source = "bin/lock-screen", mode = "symlink" }
 
 # Automatic login shows the desktop with no password. This job locks the screen
-# right after login, and the session stays active behind the lock. launchd does
-# not expand ~ or $HOME in a program path, so /bin/sh finds the script.
+# right after login, and the session stays active behind the lock.
 # bin/configure-telemetry applies it.
 [bootstrap.macos.launchd.agents.lock-screen]
-program = "/bin/sh"
-args = ["-c", 'exec "$HOME/bin/dotfiles-lock-screen"']
+program = "~/bin/dotfiles-lock-screen"
 run_at_load = true
 
 # Vorssaint fan curve for the Mac mini (M4, one fan). The fan stays at its
@@ -25,7 +23,7 @@ run_at_load = true
 # at 98 °C, below the temperature where the chip reduces its speed. The sensor
 # is the CPU average, so a short load peak does not make the fan pulse. The
 # shared Vorssaint preferences are in mise.macos.toml.
-[bootstrap.macos.defaults."com.vorssaint.utils"]
+[bootstrap.settings.macos.defaults."com.vorssaint.utils"]
 fanControlMode = "curve"
 fanControlCoolingLevel = 100
 fanControlCurves = '[{"points":[{"coolingLevel":0,"temperature":50},{"coolingLevel":25,"temperature":65},{"coolingLevel":45,"temperature":75},{"coolingLevel":65,"temperature":85},{"coolingLevel":85,"temperature":92},{"coolingLevel":100,"temperature":98}],"sensor":"averageCPU"}]'

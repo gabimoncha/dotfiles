@@ -12,8 +12,15 @@ standalone_manifest="${repo_root}/apps/standalone.tsv"
 # The config folder does not exist, so mise finds no global or system config
 # there. Callers name the config files they want.
 standalone_mise_isolate() {
+  local name
   cd / || return
   unset MISE_CONFIG_FILE MISE_GLOBAL_CONFIG_FILE MISE_SYSTEM_CONFIG_FILE MISE_ENV MISE_DOTFILES_ROOT MISE_ENV_FILE MISE_CD
+  # These skip the config's env, hooks, or code, or add env conf.d files.
+  unset MISE_NO_ENV MISE_NO_HOOKS MISE_SAFE MISE_ENV_CONF_D
+  # `mise shell` and callers set MISE_<TOOL>_VERSION, which beats the config.
+  for name in $(compgen -e); do
+    case "$name" in MISE_?*_VERSION) unset "$name" ;; esac
+  done
   export MISE_CONFIG_DIR="${repo_root}/.local/no-mise-config"
   # A character device cannot contain system config or miserc files.
   export MISE_SYSTEM_CONFIG_DIR=/dev/null

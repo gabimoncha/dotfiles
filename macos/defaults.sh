@@ -36,44 +36,8 @@ ensure_keyboard_input_sources() {
     '{ InputSourceKind = "Keyboard Layout"; "KeyboardLayout ID" = -38; "KeyboardLayout Name" = "Romanian-Standard"; }'
 }
 
-dock_persistent_app_is_allowed() {
-  case "$1" in
-    com.apple.apps.launcher | \
-      com.apple.Safari | \
-      com.apple.Photos | \
-      com.apple.FaceTime | \
-      com.apple.AppStore | \
-      com.apple.campo | \
-      com.apple.systempreferences)
-      return 0
-      ;;
-    *)
-      return 1
-      ;;
-  esac
-}
-
-prune_dock_persistent_apps() {
-  local plist="${HOME}/Library/Preferences/com.apple.dock.plist"
-  local app_count index bundle_id
-
-  if [[ ! -f "$plist" ]]; then
-    return 0
-  fi
-
-  app_count="$(plutil -extract persistent-apps raw "$plist" 2>/dev/null || printf '0')"
-  if [[ ! "$app_count" =~ ^[0-9]+$ ]]; then
-    return 0
-  fi
-
-  for ((index = app_count - 1; index >= 0; index--)); do
-    bundle_id="$(/usr/libexec/PlistBuddy -c "Print :persistent-apps:${index}:tile-data:bundle-identifier" "$plist" 2>/dev/null || true)"
-    if [[ -n "$bundle_id" ]] && ! dock_persistent_app_is_allowed "$bundle_id"; then
-      /usr/libexec/PlistBuddy -c "Delete :persistent-apps:${index}" "$plist" >/dev/null
-    fi
-  done
-}
-
+# The preferences, the Dock apps, and the login items of mise.macos.toml and
+# the profile file.
 log "Applying the macOS preferences in mise.macos.toml"
 "${script_dir}/../bin/repo-mise" bootstrap macos defaults apply --yes
 
@@ -82,9 +46,6 @@ ensure_keyboard_input_sources
 
 log "Applying screenshot defaults"
 "${script_dir}/../bin/configure-screenshots"
-
-log "Removing Dock apps that are not allowed"
-prune_dock_persistent_apps
 
 log "Applying display sleep defaults"
 sudo pmset -b displaysleep 0

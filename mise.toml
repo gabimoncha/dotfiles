@@ -4,24 +4,21 @@
 # mise.macowl.toml, mise.macmini.toml, mise.air.toml, or mise.container.toml.
 # bin/repo-mise requires the pinned mise. A soft minimum only warns, so tools
 # in this folder keep working while an older mise is installed.
-min_version = { soft = "2026.11.6" }
+min_version = { soft = "2026.11.8" }
 
 [dotfiles]
 "~/.zshenv" = { source = "configs/zsh/zshenv", mode = "symlink" }
 "~/.zprofile" = { source = "configs/zsh/zprofile", mode = "symlink" }
 "~/.zshrc" = { source = "configs/zsh/zshrc", mode = "symlink" }
 "~/.p10k.zsh" = { source = "configs/zsh/p10k.zsh", mode = "symlink" }
-"~/.config/zsh/aliases.zsh" = { source = "configs/zsh/aliases.zsh", mode = "symlink" }
-"~/.config/zsh/check-updates.zsh" = { source = "configs/zsh/check-updates.zsh", mode = "symlink" }
-"~/.config/zsh/env.zsh" = { source = "configs/zsh/env.zsh", mode = "symlink" }
-"~/.config/zsh/functions.zsh" = { source = "configs/zsh/functions.zsh", mode = "symlink" }
-"~/.config/zsh/harness.zsh" = { source = "configs/zsh/harness.zsh", mode = "symlink" }
-"~/.config/zsh/interactive.zsh" = { source = "configs/zsh/interactive.zsh", mode = "symlink" }
-"~/.config/zsh/mise-activate.zsh" = { source = "configs/zsh/mise-activate.zsh", mode = "symlink" }
-"~/.config/zsh/mise-npx.zsh" = { source = "configs/zsh/mise-npx.zsh", mode = "symlink" }
-"~/.config/zsh/path.zsh" = { source = "configs/zsh/path.zsh", mode = "symlink" }
-"~/.config/zsh/profile.zsh" = { source = "configs/zsh/profile.zsh", mode = "symlink" }
-"~/.config/zsh/telemetry.sh" = { source = "configs/zsh/telemetry.sh", mode = "symlink" }
+# Each other file in configs/zsh gets its own link in ~/.config/zsh. mise
+# removes the link of a file that is deleted from configs/zsh.
+"~/.config/zsh" = { source = "configs/zsh", mode = "symlink-each", exclude = [
+  "zshenv",
+  "zprofile",
+  "zshrc",
+  "p10k.zsh",
+] }
 "~/.config/bash/mise-activate.bash" = { source = "configs/bash/mise-activate.bash", mode = "symlink" }
 "~/.bash_profile" = { source = "configs/bash/bash_profile", mode = "symlink" }
 
@@ -33,7 +30,7 @@ min_version = { soft = "2026.11.6" }
 "~/.rgrc" = { source = "configs/ripgrep/rgrc", mode = "symlink" }
 "~/.androidrc" = { source = "configs/android/androidrc", mode = "symlink" }
 "~/.config/.bunfig.toml" = { source = "configs/bun/bunfig.toml", mode = "symlink" }
-"~/.config/pnpm/config.yaml/dotfiles" = { source = "configs/pnpm/config.yaml", merge = true }
+"~/.config/pnpm/config.yaml/dotfiles" = { source = "configs/pnpm/config.yaml", merge = true, permissions = "0600" }
 "~/.config/tsrs/tsgo" = { source = "configs/tsrs/tsgo", mode = "symlink" }
 "~/.config/nvim" = { source = "configs/nvim", mode = "symlink" }
 
@@ -61,15 +58,16 @@ min_version = { soft = "2026.11.6" }
 "~/.agents/skills" = { source = "configs/agents/skills", mode = "symlink" }
 "~/.agents/.skill-lock.json" = { source = "configs/agents/skill-lock.json", mode = "symlink" }
 "~/.claude/skills/*" = { source = "configs/agents/skills/*", mode = "symlink" }
-# These apps rewrite their settings. mise sets only the keys in the sources.
-"~/.claude/settings.json/dotfiles" = { source = "configs/claude/settings.json", merge = true }
-"~/.codex/config.toml/dotfiles" = { source = "configs/codex/config.toml", merge = true }
+# These apps rewrite their settings. mise sets only the keys in the sources,
+# and creates a missing file with mode 0600, because it can hold tokens.
+"~/.claude/settings.json/dotfiles" = { source = "configs/claude/settings.json", merge = true, permissions = "0600" }
+"~/.codex/config.toml/dotfiles" = { source = "configs/codex/config.toml", merge = true, permissions = "0600" }
 # A "/defaults" entry sets a key only when the file has none, so a profile can
 # override it. bin/save-settings never saves these sources.
-"~/.codex/config.toml/defaults" = { source = "configs/codex/defaults.toml", merge = "missing" }
-"~/.t3/userdata/settings.json/dotfiles" = { source = "configs/t3/settings.json", merge = true }
-"~/.config/opencode/opencode.json/dotfiles" = { source = "configs/opencode/opencode.json", merge = true }
-"~/.pi/agent/settings.json/dotfiles" = { source = "configs/pi/settings.json", merge = true }
+"~/.codex/config.toml/defaults" = { source = "configs/codex/defaults.toml", merge = "missing", permissions = "0600" }
+"~/.t3/userdata/settings.json/dotfiles" = { source = "configs/t3/settings.json", merge = true, permissions = "0600" }
+"~/.config/opencode/opencode.json/dotfiles" = { source = "configs/opencode/opencode.json", merge = true, permissions = "0600" }
+"~/.pi/agent/settings.json/dotfiles" = { source = "configs/pi/settings.json", merge = true, permissions = "0600" }
 
 # mise keeps a glob link after its source goes away. This hook removes the
 # broken skill links, the CLI's (../../.agents/skills/<name>) and mise's. It runs
@@ -94,3 +92,34 @@ true
 "{{ env.ZSH_CUSTOM | default(value='~/.oh-my-zsh/custom') }}/plugins/zsh-autosuggestions" = { url = "https://github.com/zsh-users/zsh-autosuggestions.git", depth = 1 }
 "{{ env.ZSH_CUSTOM | default(value='~/.oh-my-zsh/custom') }}/plugins/zsh-fzf-history-search" = { url = "https://github.com/joshskidmore/zsh-fzf-history-search.git", depth = 1 }
 "~/.tmux/plugins/tpm" = { url = "https://github.com/tmux-plugins/tpm", depth = 1 }
+
+# In an activated shell in this folder, a pull or checkout that changes the
+# file entries prints a reminder. Edits in a worktree print nothing, because
+# file changes apply only from the main checkout after a merge.
+[[watch_files]]
+patterns = ["mise.toml", "mise.*.toml"]
+run = '[ -z "$MISE_WATCH_FILES_GIT_REWRITTEN" ] || echo "The file entries changed. Run ./bin/link-dotfiles --dry-run, then ./bin/link-dotfiles."'
+
+# The repository checks from the Validation section of AGENTS.md:
+# ./bin/repo-mise run check. preflight also checks the shell syntax.
+# `./bin/repo-mise run --output summary check` prints one line when the checks
+# pass. `./bin/repo-mise tasks log check` prints the output of the last run.
+[settings.task]
+logs = true
+
+[tasks.check]
+description = "Run the repository checks"
+run = [
+  "git diff --check",
+  "./bin/repo-mise --global tasks validate --errors-only",
+  "./bin/repo-mise tasks validate --errors-only",
+  "./bin/preflight",
+]
+
+# Readiness checks: ./bin/repo-mise doctor project. Each check only reads
+# state. The platform and profile files add their own checks.
+[doctor.checks.mise-tools]
+description = "The configured mise tools are installed and start"
+run = "bin/check-mise-tools"
+hint = "Run ./bin/repo-mise --global install --locked"
+timeout = "300s"

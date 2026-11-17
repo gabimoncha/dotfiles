@@ -1,12 +1,19 @@
 #!/usr/bin/env bash
+# Enables Touch ID for sudo. The block is the [bootstrap.files] entry for
+# /etc/pam.d/sudo_local in the profile's mise file (mise.macowl.toml); mise
+# keeps it between its markers and leaves the other lines alone. This script
+# adds what mise does not do: it checks that Apple's /etc/pam.d/sudo includes
+# sudo_local, comments out an unmarked pam_tid.so line from an older setup,
+# and turns Touch ID off with --disable.
 
 set -euo pipefail
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-pam_dir="${DOTFILES_PAM_DIR:-/etc/pam.d}"
+pam_dir=/etc/pam.d
 sudo_file="${pam_dir}/sudo"
 sudo_local_file="${pam_dir}/sudo_local"
-sudo_local_template="${pam_dir}/sudo_local.template"
-touch_id_line="auth       sufficient     pam_tid.so"
+marker_start='# >>> mise:touch-id >>>'
+marker_end='# <<< mise:touch-id <<<'
 mode="enable"
 dry_run=0
 
@@ -45,15 +52,6 @@ sudo_includes_sudo_local() {
   ' "$sudo_file"
 }
 
-touch_id_enabled() {
-  [[ -f "$sudo_local_file" ]] || return 1
-
-  awk '
-    $1 == "auth" && $2 == "sufficient" && $3 == "pam_tid.so" { found = 1 }
-    END { exit found ? 0 : 1 }
-  ' "$sudo_local_file"
-}
-
 ensure_supported() {
   if sudo_includes_sudo_local; then
     return 0
@@ -64,105 +62,56 @@ ensure_supported() {
   return 1
 }
 
-render_enabled_file() {
-  local source_file="$1"
-
-  awk -v line="$touch_id_line" '
-    /^[[:space:]]*#[[:space:]]*auth[[:space:]]+sufficient[[:space:]]+pam_tid\.so([[:space:]]|$)/ {
-      print line
-      added = 1
-      next
-    }
+# Usage: count_tid_lines inside|outside. Counts the active pam_tid.so lines
+# inside or outside the mise markers.
+count_tid_lines() {
+  [[ -f "$sudo_local_file" ]] || {
+    printf '0\n'
+    return 0
+  }
+  awk -v where="$1" -v start="$marker_start" -v end="$marker_end" '
+    index($0, start) == 1 { inside = 1; next }
+    index($0, end) == 1 { inside = 0; next }
     $1 == "auth" && $2 == "sufficient" && $3 == "pam_tid.so" {
-      print line
-      added = 1
-      next
+      if ((where == "inside") == (inside == 1)) count++
     }
-    {
-      print
-    }
-    END {
-      if (!added) {
-        print line
-      }
-    }
-  ' "$source_file"
-}
-
-render_disabled_file() {
-  awk '
-    $1 == "auth" && $2 == "sufficient" && $3 == "pam_tid.so" {
-      print "#" $0
-      next
-    }
-    {
-      print
-    }
+    END { print count + 0 }
   ' "$sudo_local_file"
 }
 
-write_default_enabled_file() {
-  cat <<EOF
-# sudo_local: local config file which survives system update and is included for sudo
-${touch_id_line}
-EOF
+touch_id_enabled() {
+  [[ "$(count_tid_lines inside)" -gt 0 || "$(count_tid_lines outside)" -gt 0 ]]
 }
 
-write_new_content() {
-  local target="$1"
-
-  case "$mode" in
-    enable)
-      if [[ -f "$sudo_local_file" ]]; then
-        render_enabled_file "$sudo_local_file" >"$target"
-      elif [[ -f "$sudo_local_template" ]]; then
-        render_enabled_file "$sudo_local_template" >"$target"
-      else
-        write_default_enabled_file >"$target"
-      fi
-      ;;
-    disable)
-      if [[ -f "$sudo_local_file" ]]; then
-        render_disabled_file >"$target"
-      else
-        : >"$target"
-      fi
-      ;;
-    *)
-      warn "Unknown mode: ${mode}"
-      return 1
-      ;;
-  esac
-}
-
-backup_existing_file() {
-  local backup
-  local timestamp
-
-  [[ -f "$sudo_local_file" ]] || return 0
-
-  timestamp="$(date +%Y%m%d%H%M%S)"
-  backup="${sudo_local_file}.dotfiles-backup-${timestamp}"
-
-  if [[ "$pam_dir" == "/etc/pam.d" ]]; then
-    sudo cp -p "$sudo_local_file" "$backup"
-  else
-    cp -p "$sudo_local_file" "$backup"
+# Usage: write_sudo_local WHAT AWK_PROGRAM. Backs up the file, then writes
+# the output of the awk program as the new file.
+write_sudo_local() {
+  local what="$1" program="$2" temp_file backup
+  temp_file="$(mktemp)"
+  awk -v start="$marker_start" -v end="$marker_end" "$program" "$sudo_local_file" >"$temp_file"
+  if [[ $dry_run -eq 1 ]]; then
+    log "dry-run: would ${what} in ${sudo_local_file}"
+    rm -f "$temp_file"
+    return 0
   fi
-
-  log "Backed up existing sudo_local to ${backup}"
+  backup="${sudo_local_file}.dotfiles-backup-$(date +%Y%m%d%H%M%S)"
+  log "Requesting administrator access to update ${sudo_local_file}"
+  sudo cp -p "$sudo_local_file" "$backup"
+  log "Backed up sudo_local to ${backup}"
+  sudo install -o root -g wheel -m 0644 "$temp_file" "$sudo_local_file"
+  rm -f "$temp_file"
 }
 
-install_new_file() {
-  local source="$1"
-
-  if [[ "$pam_dir" == "/etc/pam.d" ]]; then
-    log "Requesting administrator access to update ${sudo_local_file}"
-    sudo -v
-    sudo install -o root -g wheel -m 0644 "$source" "$sudo_local_file"
-  else
-    install -m 0644 "$source" "$sudo_local_file"
-  fi
+# An older setup wrote an unmarked line. With the mise block too, a canceled
+# Touch ID prompt would ask a second time.
+comment_unmarked_lines() {
+  [[ "$(count_tid_lines outside)" -gt 0 ]] || return 0
+  write_sudo_local 'comment out the pam_tid.so line outside the mise block' '
+    index($0, start) == 1 { inside = 1 }
+    index($0, end) == 1 { inside = 0 }
+    !inside && $1 == "auth" && $2 == "sufficient" && $3 == "pam_tid.so" { print "#" $0; next }
+    { print }
+  '
 }
 
 check_status() {
@@ -178,48 +127,42 @@ check_status() {
   return 1
 }
 
-apply_change() {
-  local temp_file
+enable() {
+  local apply_flag=--yes
+  ensure_macos
+  ensure_supported
+  [[ $dry_run -eq 0 ]] || apply_flag=--dry-run
 
+  if [[ -f "$sudo_local_file" ]]; then
+    comment_unmarked_lines
+  fi
+  # mise uses sudo for the write, and creates a missing file.
+  "${repo_root}/bin/repo-mise" bootstrap files apply "$apply_flag"
+  [[ $dry_run -eq 0 ]] || return 0
+
+  if [[ "$(count_tid_lines inside)" -eq 0 ]]; then
+    warn "Touch ID sudo setup did not verify. Does this profile's mise file declare the touch-id block?"
+    return 1
+  fi
+  log "Touch ID for sudo is enabled"
+}
+
+# mise has no command that removes a block, so this comments out every
+# pam_tid.so line. The next --enable or `mise bootstrap files apply` writes
+# the block again.
+disable() {
   ensure_macos
   ensure_supported
 
-  if [[ "$mode" == "enable" ]] && touch_id_enabled; then
-    log "Touch ID for sudo is already enabled"
-    return 0
-  fi
-
-  if [[ "$mode" == "disable" ]] && ! touch_id_enabled; then
+  if ! touch_id_enabled; then
     log "Touch ID for sudo is already disabled"
     return 0
   fi
-
-  temp_file="$(mktemp)"
-  trap 'rm -f "$temp_file"' RETURN
-  write_new_content "$temp_file"
-
-  if [[ -f "$sudo_local_file" ]] && cmp -s "$temp_file" "$sudo_local_file"; then
-    log "No sudo_local changes needed"
-    return 0
-  fi
-
-  if [[ $dry_run -eq 1 ]]; then
-    log "dry-run: would update ${sudo_local_file}"
-    return 0
-  fi
-
-  backup_existing_file
-  install_new_file "$temp_file"
-
-  if [[ "$mode" == "enable" ]] && ! touch_id_enabled; then
-    warn "Touch ID sudo setup did not verify after updating ${sudo_local_file}"
-    return 1
-  fi
-
-  case "$mode" in
-    enable) log "Touch ID for sudo is enabled" ;;
-    disable) log "Touch ID for sudo is disabled" ;;
-  esac
+  write_sudo_local 'comment out every pam_tid.so line' '
+    $1 == "auth" && $2 == "sufficient" && $3 == "pam_tid.so" { print "#" $0; next }
+    { print }
+  '
+  [[ $dry_run -eq 1 ]] || log "Touch ID for sudo is disabled"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -251,8 +194,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ "$mode" == "check" ]]; then
-  check_status
-else
-  apply_change
-fi
+case "$mode" in
+  check) check_status ;;
+  enable) enable ;;
+  disable) disable ;;
+esac

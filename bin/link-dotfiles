@@ -400,34 +400,27 @@ if [[ ${#file_targets[@]} -gt 0 ]] && ! repo_mise dot apply --yes "${file_target
   restore_moved
   exit 1
 fi
+# Saves a checkpoint of the track-local files in configs/mise/config/config.toml:
+# the settings files that this script merges into. The history holds their
+# private keys, so its folder is private. A failed save does not stop the run.
+save_local_history() {
+  local history_dir="${MISE_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/mise}/history-local"
+  mkdir -p "$history_dir" && chmod 700 "$history_dir" || return 0
+  "$repo_root/bin/repo-mise" --global dot save --best-effort --description "$1" >/dev/null 2>&1 ||
+    printf 'Could not save the local history of the settings files.\n' >&2
+}
 if [[ ${#merge_targets[@]} -gt 0 ]]; then
-  created=()
-  for target in "${merge_targets[@]}"; do
-    [[ ! -e "$target" ]] || continue
-    # mise would create the file with mode 0644. Agent settings stay private.
-    mkdir -p "$(dirname "$target")" || {
-      printf 'link-dotfiles: could not create %s.\n' "$(home_name "$target")" >&2
-      exit 1
-    }
-    case "$target" in
-      *.json) (umask 077 && printf '{}\n' >"$target") ;;
-      *) (umask 077 && : >"$target") ;;
-    esac || {
-      printf 'link-dotfiles: could not create %s.\n' "$(home_name "$target")" >&2
-      exit 1
-    }
-    created+=("$target")
-  done
+  save_local_history 'before bin/link-dotfiles merged settings'
   # A parse error from mise can quote a settings file, so its output stays
-  # out of the terminal and the setup logs.
+  # out of the terminal and the setup logs. Each merge entry sets
+  # permissions = "0600", so mise creates a missing file as private.
   if ! repo_mise dot apply --yes "${merge_targets[@]}" >/dev/null 2>&1; then
-    # The files that this run created hold no settings yet.
-    for target in ${created[@]+"${created[@]}"}; do rm -f "$target"; done
     printf 'link-dotfiles: mise could not merge the settings. Output omitted; it can contain private values.\n' >&2
     printf 'Check these files are valid JSON, TOML, or YAML, then rerun: %s\n' "${merge_targets[*]}" >&2
     exit 1
   fi
   printf 'Merged settings in %s\n' "${merge_targets[*]}"
+  save_local_history 'after bin/link-dotfiles merged settings'
   # bin/save-settings saves only after this machine merged the current files.
   "$repo_root/bin/save-settings" --record "${merge_targets[@]}" ||
     printf 'Could not record the merge for bin/save-settings.\n' >&2

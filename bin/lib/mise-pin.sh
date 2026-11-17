@@ -7,10 +7,10 @@
 # release's install.sh digest in GitHub's release metadata. Raise the pin only
 # when this repository needs a newer release. mise updates itself without the
 # four-day delay, so the installed mise is often newer than the pin.
-# Security exception to the four-day delay: rmcp 3.9.0 in this release fixes
-# RUSTSEC-2026-0462 (GHSA-c9f9-cp8h-jcj5). Earlier November releases use 3.8.0.
-pinned_mise_version=2026.11.6
-pinned_installer_sha256=2a58dd5a58832180431da1372f223ccad5b037114471c088a7ba3a395b6135c3
+# 2026.11.8 is the first release that reads [bootstrap.settings.macos], which
+# the macOS files use.
+pinned_mise_version=2026.11.8
+pinned_installer_sha256=2c36cbf7b9b1ab5c8aed6db5004e15fcdab9311242d1fb90dfadb19de6afb7cc
 
 # An older mise can refuse the current global config, so read only its version.
 mise_installed_version() {

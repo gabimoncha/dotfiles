@@ -4,6 +4,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 . "${repo_root}/bin/lib/dotfiles-profile.sh"
+. "${repo_root}/bin/lib/mise-pin.sh"
 DOTFILES_PROFILE="$(dotfiles_profile)" || exit 1
 export DOTFILES_PROFILE
 failures=0
@@ -257,6 +258,65 @@ check_layout() {
   [[ -z "$skill_files" ]] || warn "agents that edit these skill folders also read: ${skill_files//$'\n'/ }"
 }
 
+# Checks that need the pinned mise. A new machine has no mise yet, so these
+# checks only warn there. config explain marks keys that mise does not know or
+# reads only for an older spelling. lock --sidecars lists the dependency-graph
+# folders that the locks name. bootstrap status compares this machine with the
+# root mise files.
+check_mise_config() {
+  local mise_bin="${MISE_INSTALL_PATH:-${HOME}/.local/bin/mise}" file scope findings bad=0
+  if ! mise_at_pin "$mise_bin"; then
+    warn "mise ${pinned_mise_version} is not installed; skipped the mise config checks"
+    return 0
+  fi
+  if [[ ! -x /usr/bin/ruby ]]; then
+    warn "/usr/bin/ruby is missing; skipped the mise config checks"
+    return 0
+  fi
+  while IFS= read -r file; do
+    case "$file" in
+      configs/mise/config/config*.toml) scope=--global ;;
+      mise.toml | mise.*.toml) scope= ;;
+      *) continue ;;
+    esac
+    findings="$("${repo_root}/bin/repo-mise" ${scope:+"$scope"} config explain --file "${repo_root}/${file}" --json 2>/dev/null |
+      /usr/bin/ruby -rjson -e '
+        JSON.parse($stdin.read).each do |key|
+          next if key["known"] && !key["deprecated"]
+          puts "line #{key["line"]}: #{key["key"]} (#{key["known"] ? "deprecated" : "unknown"})"
+        end')" || {
+      fail "mise could not explain ${file}"
+      bad=1
+      continue
+    }
+    [[ -z "$findings" ]] && continue
+    fail "${file} has keys to fix: ${findings//$'\n'/; }"
+    bad=1
+  done < <(git -C "$repo_root" ls-files -- 'mise.toml' 'mise.*.toml' 'configs/mise/config/config*.toml')
+  [[ "$bad" == 1 ]] || pass "the mise files use only current keys"
+
+  # bin/save-lock commits the sidecars only from configs/mise/config/locks.
+  findings="$("${repo_root}/bin/repo-mise" --global lock --global --sidecars --json 2>/dev/null |
+    /usr/bin/ruby -rjson -e '
+      JSON.parse($stdin.read).each do |lock|
+        lock["sidecars"].each do |s|
+          puts "#{s["tool"]}@#{s["version"]} is missing" unless s["exists"]
+          puts "#{s["tool"]}@#{s["version"]} is outside configs/mise/config/locks" unless s["path"].include?("/configs/mise/config/locks/")
+        end
+      end')" || findings="the sidecar list failed"
+  if [[ -z "$findings" ]]; then
+    pass "every lock sidecar exists in configs/mise/config/locks"
+  else
+    fail "lock sidecars: ${findings//$'\n'/; }. Run ./bin/repo-mise --global lock --global, then commit configs/mise/config/locks"
+  fi
+
+  if "${repo_root}/bin/repo-mise" bootstrap status --missing >/dev/null 2>&1; then
+    pass "this machine matches the bootstrap and dotfiles entries"
+  else
+    warn "this machine differs from the mise files; run ./bin/repo-mise bootstrap status"
+  fi
+}
+
 check_repo_state() {
   local file
   if git -C "$repo_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -310,6 +370,7 @@ esac
 # API and SSH checks belong to the authentication steps.
 check_repo_state
 check_layout
+check_mise_config
 check_app_manifest
 check_standalone_manifest
 # The temporary sudoers grant is part of the macOS plan only.

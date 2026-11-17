@@ -53,10 +53,10 @@ compare_brewfiles() {
 
 if command -v brew >/dev/null 2>&1; then
   log "Capturing current Homebrew bundle to a temp file"
-  brew bundle dump --file "$temp_brewfile" --force
   cp "${brewfiles[@]}" "$backup_dir/"
-  drift="$(compare_brewfiles "${brewfiles[@]}" "$temp_brewfile")"
-  if [[ -z "$drift" ]]; then
+  if ! brew bundle dump --file "$temp_brewfile" --force; then
+    log "brew bundle dump failed; skipping the Brewfile comparison"
+  elif drift="$(compare_brewfiles "${brewfiles[@]}" "$temp_brewfile")" && [[ -z "$drift" ]]; then
     log "Installed Homebrew entries match the Brewfiles of the ${DOTFILES_PROFILE} profile"
   else
     log "Homebrew drift (+ installed, not in a Brewfile; - in a Brewfile, not installed)"
@@ -66,11 +66,33 @@ else
   log "Homebrew is not available; skipping the Brewfile comparison"
 fi
 
-if command -v mise >/dev/null 2>&1; then
-  log "Current mise tool state"
-  "$repo_root/bin/repo-mise" --global current || true
+# Each list is empty when the installed tools match the runtime config.
+mise_drift() {
+  local title="$1" output
+  shift
+  output="$("$repo_root/bin/repo-mise" --global "$@" 2>&1)" || {
+    log "${title}: the check failed"
+    printf '%s\n' "$output"
+    return 0
+  }
+  if [[ -z "$output" ]]; then
+    log "${title}: none"
+  else
+    log "$title"
+    printf '%s\n' "$output"
+  fi
+}
+
+if [[ -x "${MISE_INSTALL_PATH:-${HOME}/.local/bin/mise}" ]]; then
+  mise_drift "mise tools in the config that are not installed" ls --current --missing --no-header
+  # The same scope as `mise prune`: tools that no tracked config uses,
+  # including project configs.
+  mise_drift "Installed mise tool versions that no config uses" ls --prunable --no-header
+  # Prints one line when every tool already uses the registry's backend.
+  log "mise tools whose registry backend changed"
+  "$repo_root/bin/repo-mise" --global backends switch --global --dry-run 2>&1 || true
 else
-  log "mise is not available; skipping mise current"
+  log "mise is not installed; skipping the mise comparison"
 fi
 
 cat <<EOF

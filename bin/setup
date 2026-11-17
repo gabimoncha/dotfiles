@@ -110,13 +110,6 @@ step() {
 skip_step() { runtime_record deferred "$1" "skipped: $2"; }
 
 setup_sudo_steps() {
-  if [[ "${DOTFILES_SKIP_SUDO_TOUCH_ID:-0}" == 1 ]]; then
-    skip_step touch_id DOTFILES_SKIP_SUDO_TOUCH_ID=1
-  elif [[ "$DOTFILES_PROFILE" == macmini ]]; then
-    skip_step touch_id 'the Mac mini has no Touch ID sensor'
-  else
-    step --optional touch_id sensitive setup_touch_id
-  fi
   # The grant goes first: it asks for the password one time and creates the
   # timestamp that the sudo step then finds. Without the grant, the sudo step asks.
   if [[ "${DOTFILES_SKIP_SUDO_GRANT:-0}" == 1 ]]; then
@@ -126,6 +119,17 @@ setup_sudo_steps() {
   fi
   step sudo sensitive setup_sudo
   step sudo_keepalive local setup_keepalive
+}
+
+# mise writes the Touch ID block, so this step runs after the mise step.
+setup_touch_id_step() {
+  if [[ "${DOTFILES_SKIP_SUDO_TOUCH_ID:-0}" == 1 ]]; then
+    skip_step touch_id DOTFILES_SKIP_SUDO_TOUCH_ID=1
+  elif [[ "$DOTFILES_PROFILE" == macmini ]]; then
+    skip_step touch_id 'the Mac mini has no Touch ID sensor'
+  else
+    step --optional touch_id sensitive setup_touch_id
+  fi
 }
 
 # Signs in to tokenburnmarket and installs its sync daemon. It needs the mise
@@ -154,6 +158,7 @@ setup_macos_prepare() {
   setup_sudo_steps
   step homebrew capture setup_homebrew
   step mise capture setup_mise
+  setup_touch_id_step
   step install_gh capture setup_install_gh
   step brew_environment local setup_brew_environment
   step standalone_agents capture setup_standalone_agents
@@ -168,6 +173,7 @@ setup_macos_continue() {
   setup_sudo_steps
   step homebrew capture setup_homebrew
   step mise capture setup_mise
+  setup_touch_id_step
   step install_gh capture setup_install_gh
   step brew_environment local setup_brew_environment
   # The mise config links must exist before setup checks mise's GitHub access.
@@ -192,10 +198,10 @@ setup_macos_continue() {
   step --optional standalone_agents capture setup_standalone_agents
   step --optional restores sensitive setup_restores
   step --optional final_links capture setup_final_links
-  # macos/defaults.sh applies mise.macos.toml with the standalone mise.
+  # macos/defaults.sh applies mise.macos.toml with the standalone mise,
+  # including the Dock apps and the login items.
   step --optional defaults sensitive setup_defaults
   step --optional screenshots capture setup_screenshots
-  step --optional app_settings sensitive setup_app_settings
   step --optional finder sensitive setup_finder
   setup_macmini_steps
   setup_tokenburnmarket_step
@@ -251,7 +257,9 @@ export PATH="${HOME}/.local/bin:${HOME}/.local/share/mise/shims:$PATH"
 export MISE_AUTO_INSTALL=0
 # A mise self-update during setup would replace the binary that later steps use.
 export MISE_SELF_UPDATE_AUTO=0
-export MISE_HTTP_TIMEOUT="${MISE_HTTP_TIMEOUT:-60}" MISE_HTTP_RETRIES="${MISE_HTTP_RETRIES:-0}"
+# mise retries only transient errors, three times with backoff. It does not
+# retry an exhausted GitHub quota (403).
+export MISE_HTTP_TIMEOUT="${MISE_HTTP_TIMEOUT:-60}"
 export GIT_HTTP_LOW_SPEED_LIMIT="${GIT_HTTP_LOW_SPEED_LIMIT:-1024}" GIT_HTTP_LOW_SPEED_TIME="${GIT_HTTP_LOW_SPEED_TIME:-60}"
 export DOTFILES_SETUP_API_READY=0
 # Keep the system awake only for this process's lifetime; preserve display lock.

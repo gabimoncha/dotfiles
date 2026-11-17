@@ -1,7 +1,7 @@
 typeset -U path
 
 if [[ "$OSTYPE" == darwin* ]]; then
-  java_home="${JAVA_HOME:-/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home}"
+  java_home="${JAVA_HOME:-${MISE_DATA_DIR:-$HOME/.local/share/mise}/installs/java/global}"
   android_sdk_home="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
   path=(
     "$HOME/bin"
