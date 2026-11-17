@@ -31,15 +31,24 @@ pause() {
 }
 # pitchfork kills this script 5 seconds after its stop signal, so the daemon
 # gets 4 seconds. The daemon has its own process group, so kill that too.
-stop_daemon() {
-  kill -TERM "$pid" 2>/dev/null || return 0
+# Waits up to 4 seconds for process $1 to exit.
+wait_gone() {
+  local _
   for _ in 1 2 3 4 5 6 7 8; do
-    kill -0 "$pid" 2>/dev/null || return 0
+    kill -0 "$1" 2>/dev/null || return 0
     pause 0.5
   done
-  kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+  return 1
 }
-trap '[[ -z "$pid" ]] || stop_daemon; exit 0' TERM INT HUP
+stop_daemon() {
+  kill -TERM "$pid" 2>/dev/null || return 0
+  wait_gone "$pid" || kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+}
+# An earlier copy of this script that got SIGTERM and still stops its daemon.
+# A stop of this script waits for it too.
+stopping=""
+finish_stopping() { wait_gone "$stopping" || kill -KILL "$stopping" 2>/dev/null || true; }
+trap '[[ -z "$pid" ]] || stop_daemon; [[ -z "$stopping" ]] || finish_stopping; exit 0' TERM INT HUP
 
 # Only one daemon may sync. An earlier copy of this script can still run when
 # pitchfork died and started again. SIGTERM lets its trap stop its daemon.
@@ -47,12 +56,10 @@ trap '[[ -z "$pid" ]] || stop_daemon; exit 0' TERM INT HUP
 for old in $(pgrep -u "$(id -u)" -f -- '/bin/tokenburnmarket-supervise$'); do
   [[ "$old" != "$$" ]] || continue
   kill -TERM "$old" 2>/dev/null || continue
+  stopping="$old"
   log "stopping an earlier supervisor (PID $old)"
-  for _ in $(seq 10); do
-    kill -0 "$old" 2>/dev/null || break
-    pause 1
-  done
-  kill -KILL "$old" 2>/dev/null || true
+  finish_stopping
+  stopping=""
 done
 # A daemon whose script was killed before its trap ran, for example by the
 # out-of-memory killer, or one that was started by hand.
