@@ -482,7 +482,7 @@ aliases (`npm`, `pnpm`, `cargo`, ...) stay there, because `sfw` adds about
 mise, Bun, and pnpm. Current behavior differs for Claude Code: its snapshot
 shell sources `~/.zshrc`, so Claude Code shells have both groups too.
 
-A login job on each Mac logs free memory and the busiest processes each minute
+A login job on macowl and the Mac mini logs free memory and the busiest processes each minute
 into `~/.local/state/dotfiles/process-log/`, for 7 days. It keeps process names
 and parent names, never command arguments.
 

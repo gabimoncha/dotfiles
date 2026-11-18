@@ -17,6 +17,18 @@
 "~/.aerospace.toml" = { source = "configs/aerospace/aerospace.toml", mode = "symlink" }
 "~/.config/karabiner/karabiner.json" = { source = "configs/karabiner/karabiner.json", mode = "symlink" }
 "~/scripts/toggle_function_keys.sh" = { source = "configs/karabiner/toggle_function_keys.sh", mode = "symlink" }
+# The script of the process-log login job below.
+"~/bin/dotfiles-process-log" = { source = "bin/log-processes", mode = "symlink" }
+
+# Each minute, log free memory and the busiest processes into
+# ~/.local/state/dotfiles/process-log/. A later memory incident then shows what
+# grew and which parent started it. bin/configure-telemetry applies it. The
+# MacBook Air does not run it.
+[bootstrap.macos.launchd.agents.process-log]
+program = "~/bin/dotfiles-process-log"
+run_at_load = true
+start_interval = 60
+process_type = "Background"
 
 [bootstrap.macos.launchd.agents.t3-settings-autosave]
 program = "~/bin/dotfiles-t3-autosave"

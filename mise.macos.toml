@@ -7,23 +7,12 @@
 "~/Library/Application Support/com.mitchellh.ghostty/config" = { source = "configs/ghostty/config", mode = "symlink" }
 # The login script that gives GUI apps the telemetry opt-outs.
 "~/bin/dotfiles-telemetry-env" = { source = "macos/dotfiles-telemetry-env", mode = "symlink" }
-# The script of the process-log login job below.
-"~/bin/dotfiles-process-log" = { source = "bin/log-processes", mode = "symlink" }
 
 # The login job runs that script. mise expands ~/ in program when it writes the
 # plist. bin/configure-telemetry applies it.
 [bootstrap.macos.launchd.agents.telemetry-env]
 program = "~/bin/dotfiles-telemetry-env"
 run_at_load = true
-
-# Each minute, log free memory and the busiest processes into
-# ~/.local/state/dotfiles/process-log/. A later memory incident then shows what
-# grew and which parent started it. bin/configure-telemetry applies it.
-[bootstrap.macos.launchd.agents.process-log]
-program = "~/bin/dotfiles-process-log"
-run_at_load = true
-start_interval = 60
-process_type = "Background"
 
 [bootstrap.settings.macos.defaults.NSGlobalDomain]
 AppleLocale = "en_US@currency=RON"

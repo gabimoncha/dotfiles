@@ -52,8 +52,13 @@ age = "latest"
 yq = "latest"
 # Git hooks for repos with an hk.pkl, including this one.
 hk = "latest"
+# mise installs the precompiled Ruby (see [settings.ruby] below).
+ruby = "3.4.12"
+# Expo builds and submissions.
+"npm:eas-cli" = "latest"
 # Every Mac.
 fastfetch = { version = "latest", os = "macos" }
+turbo = { version = "latest", os = "macos" }
 mas = { version = "latest", os = "macos" }
 "conda:wget" = { version = "latest", os = "macos" }
 # Drives a browser for the agents. Linux hosts have no browser.

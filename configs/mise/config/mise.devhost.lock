@@ -1271,11 +1271,6 @@ version = "0.11.0"
 backend = "npm:ctx7"
 specifiers = ["latest"]
 
-[[tools."npm:eas-cli"]]
-version = "27.10.0"
-backend = "npm:eas-cli"
-specifiers = ["latest"]
-
 [[tools."npm:ios-deploy"]]
 version = "1.12.2"
 backend = "npm:ios-deploy"
@@ -1461,28 +1456,6 @@ conda_deps = [
     "ca-certificates-2026.10.19-hbd8a1cb_0",
 ]
 
-[[tools.ruby]]
-version = "3.4.12"
-backend = "core:ruby"
-specifiers = ["3.4.12"]
-
-[tools.ruby.options]
-compile = "false"
-precompiled_url = "jdx/ruby"
-ruby_build_opts = "--without-baseruby --disable-install-doc"
-ruby_build_repo = "https://github.com/rbenv/ruby-build.git"
-ruby_install = "false"
-
-[tools.ruby."platforms.linux-x64"]
-checksum = "sha256:12bbaa27dd857892daa21d5c57e1a48908c37b03540388474cf96974d03770d1"
-url = "https://github.com/jdx/ruby/releases/download/3.4.12-1/ruby-3.4.12.x86_64_linux.tar.gz"
-provenance = "github-attestations"
-
-[tools.ruby."platforms.macos-arm64"]
-checksum = "sha256:865b429c511c40a96fe3c25466bbf9b300e5cae22c70c7dd68e0af003b849de4"
-url = "https://github.com/jdx/ruby/releases/download/3.4.12-1/ruby-3.4.12.macos.tar.gz"
-provenance = "github-attestations"
-
 [[tools.rust]]
 version = "1.99.1"
 backend = "core:rust"
@@ -1534,11 +1507,6 @@ url_api = "https://api.github.com/repos/mvdan/sh/releases/assets/547320883"
 checksum = "sha256:b7c872db63553ccffc7253aba3ed7d4885a27d83f1ba567b1138c6315a5847e5"
 url = "https://github.com/mvdan/sh/releases/download/v3.14.1/shfmt_v3.14.1_darwin_arm64"
 url_api = "https://api.github.com/repos/mvdan/sh/releases/assets/547320930"
-
-[[tools.turbo]]
-version = "2.11.11"
-backend = "npm:turbo"
-specifiers = ["latest"]
 
 [[tools.typst]]
 version = "0.15.1"

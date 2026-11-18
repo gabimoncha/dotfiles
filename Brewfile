@@ -19,6 +19,8 @@ brew "curl"
 # stay in Homebrew.
 brew "ffmpeg"
 brew "git"
+# mise compiles Ruby when it finds no precompiled build, and psych then needs libyaml.
+brew "libyaml"
 brew "mole"
 brew "openssl@3"
 brew "smartmontools"

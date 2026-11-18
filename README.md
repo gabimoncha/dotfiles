@@ -521,7 +521,7 @@ If needed, select `~/Screenshots` in Shift-Command-5 > Options > Save to.
 
 ### Known limits
 
-- The general defaults turn off display sleep on battery and on power.
+- The general defaults turn off display sleep on battery and on power, except on the MacBook Air, which keeps the macOS display sleep.
 - If Homebrew reports the Xcode app as too old, setup skips `borders` and does
   not retry it after Xcode installs. Rerun `./bin/setup --continue`.
 - A direct `./bin/install-mobile-dev` run skips the macOS update check. It

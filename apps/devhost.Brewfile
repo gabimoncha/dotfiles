@@ -14,8 +14,6 @@ brew "glyph"
 brew "grpc"
 brew "homebrew-zathura/zathura/zathura-cb"
 brew "homebrew-zathura/zathura/zathura-pdf-mupdf"
-# mise compiles Ruby when it finds no precompiled build, and psych then needs libyaml.
-brew "libyaml"
 brew "postgresql@18"
 brew "switchaudio-osx"
 brew "telnet"

@@ -47,9 +47,16 @@ ensure_keyboard_input_sources
 log "Applying screenshot defaults"
 "${script_dir}/../bin/configure-screenshots"
 
-log "Applying display sleep defaults"
-sudo pmset -b displaysleep 0
-sudo pmset -c displaysleep 0
+# macowl and the Mac mini keep the display on. The MacBook Air keeps the macOS
+# display sleep, to save its battery.
+. "${script_dir}/../bin/lib/dotfiles-profile.sh"
+if [[ "$(dotfiles_profile "${script_dir}/.." 2>/dev/null || true)" == air ]]; then
+  log "Keeping the macOS display sleep settings on the MacBook Air"
+else
+  log "Applying display sleep defaults"
+  sudo pmset -b displaysleep 0
+  sudo pmset -c displaysleep 0
+fi
 
 log "Activating the Spotlight, Minimize, and Arrange shortcut changes"
 apply_symbolic_hotkey_changes

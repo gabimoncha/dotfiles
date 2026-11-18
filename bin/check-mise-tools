@@ -22,6 +22,7 @@ smoke_commands=(
   age
   yq
   hk
+  ruby
 )
 # The development machines also install configs/mise/config/config.devhost.toml.
 # A tool for one profile, such as mackup on macowl, is not here: the
@@ -30,10 +31,10 @@ smoke_commands=(
 profile="$(dotfiles_profile "$repo_root" 2>/dev/null)" || profile=""
 devhost=0
 [[ -z "$profile" ]] || case " $(dotfiles_profile_layers "$profile" | tr '\n' ' ')" in *" devhost "*) devhost=1 ;; esac
-[[ "$devhost" == 0 ]] || smoke_commands+=(bun uv sccache python ruby shellcheck)
+[[ "$devhost" == 0 ]] || smoke_commands+=(bun uv sccache python shellcheck)
 if [[ "$(uname -s)" == Darwin ]]; then
-  smoke_commands+=(mas)
-  [[ "$devhost" == 0 ]] || smoke_commands+=(turbo vercel)
+  smoke_commands+=(mas turbo)
+  [[ "$devhost" == 0 ]] || smoke_commands+=(vercel)
 fi
 
 log() {
