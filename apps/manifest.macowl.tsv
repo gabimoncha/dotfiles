@@ -12,7 +12,6 @@ notion-calendar	cask	notion-calendar	Notion Calendar	Homebrew cask.
 obs	cask	obs	OBS	Homebrew cask supported by OBS; settings restored by Mackup.
 obsidian	cask	obsidian	Obsidian	Homebrew cask.
 pgadmin4	cask	pgadmin4	pgAdmin 4	Homebrew cask.
-pinokio	manual	https://pinokio.computer/	Pinokio	No Homebrew cask currently exists; install from vendor.
 scrawl	cask	kitlangton/tap/scrawl	Scrawl	Vendor Homebrew cask for screen and voice captures.
 signal	cask	signal	Signal	Homebrew cask.
 slack	cask	slack	Slack	Homebrew cask.

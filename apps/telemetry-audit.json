@@ -3,8 +3,8 @@
   "scope": "Tracked mise/Brewfile/app inventories, explicit setup tools, and managed shell/tmux plugins. Excludes project dependencies, other plugins, the Neovim plugins of configs/nvim/, and unrelated manually installed tools. Excludes tools from the GitHub owners gabimoncha, flowcopilot, and TudorAndrei, which belong to the owner's team.",
   "verification": "Official documentation and upstream source reviews; fake-command tests only. No live installations, account changes, personal settings edits, or network-capture tests.",
   "coverage": {
-    "total": 176,
-    "reviewed": 176,
+    "total": 175,
+    "reviewed": 175,
     "pending": 0
   },
   "limitations": [
@@ -3156,25 +3156,6 @@
           "https://documents.blackmagicdesign.com/UserManuals/DaVinci_Resolve_20_Reference_Manual.pdf"
         ],
         "notes": "Accessible privacy policy describes software registration/activation device data and website/service traffic analytics, but does not establish Resolve crash-upload settings. Official support search excerpts mention automatic crash reports and manual diagnostics; full forum/manual content could not be retrieved, so exact opt-out behavior remains unverified. Local diagnostic logs, manually submitted support bundles, registration/licensing, Blackmagic Cloud, and updates are separate. Preserve preferences, presets, project libraries/databases, and media; do not reset settings or replace local configuration. No app/runtime was inspected.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {}
-    },
-    {
-      "id": "pinokio",
-      "tool": "pinokio",
-      "source": "manifest",
-      "kind": "app",
-      "research": {
-        "tool": "Pinokio desktop app",
-        "status": "none_found",
-        "mechanism": "No documented general desktop analytics, usage, or crash-report opt-out found. The opened upstream entry point and package metadata establish no supported telemetry environment variable, persistent preference key, or disabling command. No app configuration edit is supported by this bounded evidence.",
-        "sources": [
-          "https://raw.githubusercontent.com/pinokiocomputer/pinokio/main/package.json",
-          "https://raw.githubusercontent.com/pinokiocomputer/pinokio/main/main.js",
-          "https://beta.pinokio.co/privacy"
-        ],
-        "notes": "Pinokio desktop delegates runtime behavior to pinokiod; only limited shell source was inspected, not a full dependency audit. Registry privacy policy effective June 4, 2026 covers registry websites/APIs, including optional product analytics and check-in/desktop bridge device metadata; it explicitly has separate scope and gives no verified desktop telemetry switch. Registry browsing, explicit check-ins, GitHub/Hugging Face discovery/downloads, updates, and launched third-party apps are separate network activity with their own behavior. Preserve app preferences, configured home, installed apps/models, logs, and credentials; no live settings or runtime traffic was inspected.",
         "checked_date": "2026-10-03"
       },
       "setup_actions": {}

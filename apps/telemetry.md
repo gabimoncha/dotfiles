@@ -1,6 +1,6 @@
 # Telemetry controls
 
-Reviewed on 2026-10-03. Coverage: 177 of 177 tracked entries.
+Reviewed on 2026-10-03. The audit covers 175 of 175 entries.
 
 Tools from the owner's team are out of scope: the GitHub owners `gabimoncha`, `flowcopilot`, and `TudorAndrei`. Do not add audit entries for them.
 
