@@ -506,8 +506,15 @@ configure_github_ssh() {
     ensure_ssh_key || return 1
     add_ssh_key_to_agent || return 1
     upload_ssh_key_to_github authentication || return 1
+  else
+    # Git signs commits with ~/.ssh/id_ed25519 on every Mac
+    # (configs/git/macos.gitconfig), so the key must exist here too. The
+    # Keychain must keep its passphrase, so the ssh-keychain login job can
+    # load it after a restart.
+    ensure_ssh_key || return 1
+    add_ssh_key_to_agent ||
+      warn "Could not store the SSH key passphrase in the Keychain; rerun ./bin/auth-setup --ssh-only in a terminal"
   fi
-  # Git signs commits with this key on every Mac (configs/git/macos.gitconfig).
   upload_ssh_key_to_github signing
   verify_github_ssh || return 1
   configure_gh_git_protocol
