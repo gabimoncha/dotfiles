@@ -383,7 +383,9 @@ The login asks for the `workflow` scope, so Git can push changes to GitHub
 Actions files. On an existing login, `./bin/auth-setup --api-only` adds a
 missing scope. Linux uses Git over HTTPS with the GitHub CLI token, not an SSH
 key. Agents on a headless host start without an SSH agent and cannot unlock a
-protected key.
+protected key. So Linux hosts do not sign their commits. On a Mac,
+`./bin/auth-setup` also uploads the SSH key as a signing key, and Git signs
+every commit with it.
 
 ## Manual completion
 

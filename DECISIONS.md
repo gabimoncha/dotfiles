@@ -367,6 +367,23 @@ mise install. SSH readiness is a separate check.
 
 Git identity, SSH identity, and API account routing stay separate and local.
 
+### Commit signing
+
+Every Mac signs its commits with SSH, from `configs/git/macos.gitconfig`. The
+signature uses the same `~/.ssh/id_ed25519` key as Git over SSH, so setup makes
+no second key. `bin/auth-setup` uploads the key twice, because GitHub keeps the
+authentication keys and the signing keys in separate lists. Each list needs its
+own scope: `admin:public_key` and `admin:ssh_signing_key`.
+
+ssh-keygen gets the private key from the SSH agent, so agents can sign without
+a terminal. After a restart, the agent is empty until an ssh command loads the
+key. The `ssh-keychain` login job runs `ssh-add --apple-load-keychain` at login,
+so the first commit after a restart is signed too.
+
+Linux hosts do not sign. Their agents start with no SSH agent, so they cannot
+unlock a protected key, and an unprotected signing key on a container was
+rejected. Their commits show as unsigned on GitHub.
+
 ### gh extensions
 
 gh installs the gh extensions, through the `dot:gh-extensions` mise task. The
