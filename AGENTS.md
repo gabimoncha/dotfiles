@@ -152,6 +152,17 @@ Read mise state with `--json`, for example `ls --json` or
   through the temporary one. When the temporary folder is deleted, those
   installs break and `mise prune` stops. For the real tools, set
   `MISE_DATA_DIR` to the real folder path, not to a path through a link.
+- In a test, do not set `XDG_DATA_HOME`, `XDG_CONFIG_HOME`, or
+  `XDG_STATE_HOME` to a temporary folder. Every program in the command reads
+  them, not only the one under test. A self-updater, such as the one of Claude
+  Code, can then write its files into the temporary folder and move a real
+  link, such as `~/.local/bin/claude`, into it. Use the program's own variable,
+  such as `GH_CONFIG_DIR` or `MISE_DATA_DIR`.
+- Before you delete a temporary folder, find the real paths that point into
+  it: `find ~/.local/bin ~/bin -type l -lname '<folder>*'`. Point each one
+  back to its target from before the test, and then run the program to check
+  it. Then delete the folder. If you cannot restore a link, keep the folder and
+  tell the user.
 - Keep macOS changes conservative and reversible. Correct documentation drift
   when found; distinguish current behavior from proposed fixes.
 - Write every PR body from `.github/pull_request_template.md`. Delete the

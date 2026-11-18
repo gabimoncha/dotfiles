@@ -115,7 +115,7 @@ because those files can hold tokens.
 These mise tasks run the same scripts from any folder, for the checkout in
 `$DOTFILES_ROOT`, or the checkout that `~/.config/mise` links to: `dot:status`, `dot:diff`,
 `dot:apply`, `dot:save`, `dot:drift`, `dot:setup`, `dot:update`, `dot:packages`,
-`dot:backup`, `dot:restore`, and `dot:doctor`. For example, run
+`dot:gh-extensions`, `dot:backup`, `dot:restore`, and `dot:doctor`. For example, run
 `mise run dot:apply --dry-run`. Each name starts with `dot:`, because a
 project task with the same name replaces a global task.
 

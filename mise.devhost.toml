@@ -51,7 +51,6 @@ true
 apps = [
   "/Applications/AeroSpace.app",
   "/Applications/Expo Orbit.app",
-  "/Applications/Mole.app",
   "/Applications/Vorssaint.app",
 ]
 

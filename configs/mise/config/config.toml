@@ -212,6 +212,25 @@ run = '"{{vars.dotfiles_root}}/bin/install-apps"'
 raw_args = true
 raw = true
 
+# gh installs the extensions, so `gh extension list` and
+# `gh extension upgrade --all` work for them. See "gh extensions" in
+# DECISIONS.md. gh needs a login for both commands.
+[tasks."dot:gh-extensions"]
+description = "Install the missing gh extensions"
+run = '''
+installed="$(gh extension list)" || exit 1
+status=0
+for repo in github/gh-stack github/gh-combine github/gh-actions-lock sudosubin/gh-attach seachicken/gh-poi; do
+  if printf '%s\n' "$installed" | cut -f2 | grep -Fqx "$repo"; then
+    printf '%s is already installed\n' "$repo"
+  else
+    printf 'Installing %s\n' "$repo"
+    gh extension install "$repo" || status=1
+  fi
+done
+exit "$status"
+'''
+
 [tasks."dot:backup"]
 description = "Back up portable app state"
 run = '"{{vars.dotfiles_root}}/bin/file-backup"'

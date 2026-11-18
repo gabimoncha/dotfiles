@@ -27,6 +27,7 @@ process_type = "Background"
 # Login items for this Mac. mise adds them to the list in mise.macos.toml.
 [bootstrap.settings.macos.login_items]
 apps = [
+  "/Applications/Mole.app",
   "/Applications/Notion Calendar.app",
   "/Applications/superwhisper.app",
   "/Applications/Synology Drive Client.app",
