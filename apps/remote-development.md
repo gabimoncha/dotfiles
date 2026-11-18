@@ -97,6 +97,51 @@ rebuild. Do not delete persistent volumes. After a rebuild,
 `docker inspect nasbox --format '{{.Config.StopTimeout}}'` prints the grace
 period in seconds.
 
+### Rebuild after a Compose edit
+
+If Container Manager shows a name such as `<id>_nasbox` after a rebuild,
+compare the project with Docker before you remove anything. Run these
+read-only commands on DSM:
+
+```sh
+docker compose ls --all
+docker ps -a --filter label=com.docker.compose.project=nasbox --format '{{.ID}} {{.Names}} {{.Status}}'
+docker inspect nasbox --format '{{with .Config.Labels}}{{println (index . "com.docker.compose.project") (index . "com.docker.compose.service")}}{{println (index . "com.docker.compose.project.working_dir")}}{{index . "com.docker.compose.project.config_files"}}{{end}}'
+docker inspect nasbox --format '{{range .Mounts}}{{println .Type .Name .Destination}}{{end}}'
+```
+
+Compose can give the replacement container a temporary name that includes
+the old container ID. It then removes the old container and renames the
+replacement. A temporary name in DSM alone does not identify a container
+that is safe to remove.
+[Compose replacement sequence](https://github.com/docker/compose/blob/v2.20.1/pkg/compose/convergence.go#L419-L465)
+
+For future edits, build with no old `dev` container present. This avoids
+the temporary rename. Use this procedure when you can open the DSM project:
+
+1. Prepare the private Compose file before the outage. Keep a copy of the
+   working file. Check the new file with `docker compose -p nasbox -f FILE config -q`
+   in the project folder. Keep the deployed SSH public key and the 130-second
+   stop grace period.
+2. Check that exactly one container belongs to project `nasbox`, service
+   `dev`. Check its project folder and configuration file against DSM.
+   Confirm that `nasbox_dev-home` mounts at `/home/box` and
+   `nasbox_ssh-host-keys` mounts at `/var/lib/nasbox-ssh`. Check both
+   external volume names and the workspace bind mount in the new file.
+   If a check fails, resolve the difference before you stop the box.
+3. Schedule the outage from DSM. SSH, T3, and the sync daemon stop with
+   the container. With the owner's approval, run
+   `docker stop --time 130 ID && docker rm ID` in a one-time root task.
+   Use the verified container ID in both commands. This removes its
+   writable layer and keeps the volumes and the shared network.
+4. Apply the prepared file to the same project. In Container Manager,
+   select **Action > Build**, then **Start** if the container is stopped.
+   If the build fails, restore the saved file and build again.
+5. Reopen the project and its YAML editor. Compare its container ID with
+   Docker, then check the mounts and the stop grace period. Connect with
+   `ssh nasbox` and run `~/code/personal/dotfiles/bin/container-daemons status`.
+   Delete the root task after use.
+
 ### Daemons
 
 The container has no systemd. Two mise daemons in `mise.container.toml` run
@@ -118,7 +163,7 @@ starts nothing without it. Then replace the whole `command` block in the
 compose file on the NAS with the one in the example, and add
 `stop_grace_period: 130s`. The old command started two loops from
 `~/.local/bin`, and a rebuild with only the new grace period keeps them. Then
-rebuild the project, and keep the volumes.
+follow [Rebuild after a Compose edit](#rebuild-after-a-compose-edit).
 
 Run every daemons command through `./bin/container-daemons`, not
 `./bin/repo-mise daemons`. The supervisor keeps the environment of the command
