@@ -119,7 +119,8 @@ clear_stale_lock() {
   [[ -f "$lock" ]] || return 0
   held="$(sed -n 's/.*"pid": *\([0-9][0-9]*\).*/\1/p' "$lock")"
   [[ -n "$held" ]] || return 0
-  tr '\0' ' ' <"/proc/$held/cmdline" 2>/dev/null | grep -q 'tokenburnmarket daemon' && return 0
+  # The shell opens the input before it applies 2>, so 2> goes first.
+  tr '\0' ' ' 2>/dev/null <"/proc/$held/cmdline" | grep -q 'tokenburnmarket daemon' && return 0
   rm -f "$lock"
   log "removed a stale daemon lock: PID $held is not a tokenburnmarket daemon"
 }
