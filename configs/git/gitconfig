@@ -26,6 +26,11 @@
 [hook "hk-prepare-commit-msg"]
 	command = test \"${HK:-1}\" = \"0\" || ~/.local/share/mise/shims/hk run prepare-commit-msg --from-hook
 	event = prepare-commit-msg
+# The macOS commit signing settings (configs/git/macos.gitconfig). Git skips a
+# missing file, so Linux hosts do not sign. ~/.gitconfig.local comes last, so
+# it wins.
+[include]
+	path = ~/.config/git/macos
 [include]
 	path = ~/.gitconfig.local
 [credential "https://github.com"]
