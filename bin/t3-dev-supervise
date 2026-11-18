@@ -30,14 +30,28 @@ log() { printf 't3-supervise: %s\n' "$1"; }
 # does not print it. When a T3 error names a new protocol, change this number.
 launcher_protocol=4
 
+# Prints the runtime binary that ~/.local/bin/t3 runs. The official installer
+# links it into the version folder. Since 0.1.11-nightly.20261118.4877, an
+# update writes a shell file that runs `exec '<version folder>/t3' "$@"`.
+launcher_runtime() {
+  local launcher="$HOME/.local/bin/t3" runtime
+  if [[ -L "$launcher" ]]; then
+    readlink -f "$launcher"
+    return
+  fi
+  runtime="$(sed -n "s/^exec '\([^']*\)' \"\$@\"\$/\1/p" "$launcher" 2>/dev/null | tail -n 1)"
+  [[ -n "$runtime" && -x "$runtime" ]] || return 1
+  printf '%s\n' "$runtime"
+}
+
 # The launcher runs the version in service-state.json, and that server must
 # speak the launcher's protocol. The container has no `t3 service install`, so do
-# its work here: pin the runtime that the official installer linked as
-# ~/.local/bin/t3 when the file is missing or pins an older version. Keep a
-# newer version, which an update from the T3 app installed.
+# its work here: pin the runtime that ~/.local/bin/t3 runs when the file is
+# missing or pins an older version. Keep a newer version, which an update from
+# the T3 app installed.
 seed_service_state() {
   local runtime version active
-  runtime="$(readlink -f "$HOME/.local/bin/t3")" || return 1
+  runtime="$(launcher_runtime)" || return 1
   version="$(basename "$(dirname "$runtime")")"
   [[ "$(cat "$(dirname "$runtime")/.install-complete" 2>/dev/null)" == "$version" ]] || return 1
   if [[ -f "$service_state" ]]; then
