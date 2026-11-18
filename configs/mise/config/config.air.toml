@@ -1,0 +1,7 @@
+# Settings for the air profile, the MacBook Air, only. miserc.local.toml selects
+# the profile, so mise loads this file after config.toml. The Air installs only
+# the tools in config.toml: it does not load config.devhost.toml.
+
+# The Air has no Bun, so pnpm installs the npm: tools.
+[settings.npm]
+package_manager = "pnpm"

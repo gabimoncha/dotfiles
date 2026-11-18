@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Apply this machine's managed files with mise: the [dotfiles] entries in
-# mise.toml, mise.macos.toml or mise.linux.toml, and the profile's file.
+# mise.toml, mise.macos.toml or mise.linux.toml, mise.devhost.toml on every
+# profile except air, and the profile's file.
 #
 # mise refuses to put a link where a real file or folder is, and one refused
 # entry stops the whole apply. mise also overwrites copies and templates and
@@ -244,16 +245,28 @@ move_old_local_files() {
 
 # ~/.config/mise/miserc.local.toml links to this file, so mise loads the
 # profile's config in every folder. A container can run setup without the file,
-# so save the profile that dotfiles_profile selected.
+# so save the profile that dotfiles_profile selected. The env line also lists
+# the profile's layers, so update an older line such as env = ["macowl"]. Keep
+# the other lines of the file.
 save_profile() {
-  local file="$repo_root/.miserc.local.toml"
-  [[ ! -e "$file" && ! -L "$file" ]] || return 0
+  local file="$repo_root/.miserc.local.toml" expected current="" line rest=""
+  expected="$(dotfiles_profile_miserc_line "$DOTFILES_PROFILE")"
+  if [[ -e "$file" || -L "$file" ]]; then
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      if [[ "$line" =~ ^[[:space:]]*env[[:space:]]*= ]]; then
+        current="$line"
+      else
+        rest="${rest}${line}"$'\n'
+      fi
+    done <"$file"
+    [[ "$current" != "$expected" ]] || return 0
+  fi
   if [[ "$dry_run" == 1 ]]; then
-    printf 'Would save env = ["%s"] in .miserc.local.toml\n' "$DOTFILES_PROFILE"
+    printf 'Would save %s in .miserc.local.toml\n' "$expected"
     return 0
   fi
-  printf 'env = ["%s"]\n' "$DOTFILES_PROFILE" >"$file"
-  printf 'Saved env = ["%s"] in .miserc.local.toml\n' "$DOTFILES_PROFILE"
+  printf '%s%s\n' "$rest" "$expected" >"$file"
+  printf 'Saved %s in .miserc.local.toml\n' "$expected"
 }
 
 # Links that older versions of this repository made. Remove each one only

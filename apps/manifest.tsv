@@ -1,14 +1,9 @@
-# Apps for every Mac. apps/manifest.<profile>.tsv adds the apps of one profile.
+# Apps for every Mac. apps/manifest.devhost.tsv adds the apps of the development
+# Macs, and apps/manifest.<profile>.tsv adds the apps of one profile.
 # key	type	token_or_url	app_bundle	notes
-aerospace	cask	nikitabobko/tap/aerospace	AeroSpace	Homebrew cask; the mise registry has no aerospace entry.
 cursor	cask	cursor	Cursor	Homebrew cask.
-gcc	formula	gcc	-	Homebrew formula; the mise registry has no gcc entry.
 ghostty	cask	ghostty	Ghostty	Homebrew cask.
 google-chrome	cask	google-chrome	Google Chrome	Homebrew cask.
 mole	formula	mole	-	Homebrew formula; the mise entry github:tw93/Mole gets only the analyze and status helpers, not the mo and mole commands.
-mole-app	cask	mole-app	Mole	Homebrew cask for the Mole GUI app.
-neardrop	cask	neardrop	NearDrop	Homebrew cask from grishka/grishka; macOS quarantine and consent are preserved.
-postgresql	formula	postgresql@18	-	Homebrew formula; it owns the data folder /opt/homebrew/var/postgresql@18. The mise entry is postgres (conda:postgresql).
 raycast	cask	raycast	Raycast	Homebrew cask; restore settings with a .rayconfig export.
 tailscale	cask	tailscale-app	Tailscale	Homebrew cask for the menu-bar app and full Mac UX.
-vorssaint	cask	vorssaint	Vorssaint	Homebrew cask for the menu bar toolkit.

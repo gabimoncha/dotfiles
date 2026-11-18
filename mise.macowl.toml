@@ -1,7 +1,7 @@
-# Profile: macowl, the MacBook Pro. It adds these entries to mise.toml and
-# mise.macos.toml. Put settings here that only macowl needs. Its runtime tools
-# are in configs/mise/config/config.macowl.toml, and its apps are in
-# apps/macowl.Brewfile and apps/manifest.macowl.tsv.
+# Profile: macowl, the MacBook Pro. It adds these entries to mise.toml,
+# mise.macos.toml, and mise.devhost.toml. Put settings here that only macowl
+# needs. Its runtime tools are in configs/mise/config/config.macowl.toml, and
+# its apps are in apps/macowl.Brewfile and apps/manifest.macowl.tsv.
 
 # This Mac is the source of the shared T3 settings. The login job saves them
 # into configs/t3/settings.json each minute that T3 changes them, and never
@@ -11,6 +11,12 @@
 # Dictation and the Mackup backup, which stores its files in Synology Drive.
 "~/Documents/superwhisper/settings/settings.json" = { source = "configs/superwhisper/settings.json", mode = "symlink" }
 "~/.mackup.cfg" = { source = "configs/mackup/mackup.cfg", mode = "symlink" }
+# The window manager and keyboard tools of the development Macs. These links
+# are here and in the other development Mac's profile file, because Linux also
+# loads mise.devhost.toml.
+"~/.aerospace.toml" = { source = "configs/aerospace/aerospace.toml", mode = "symlink" }
+"~/.config/karabiner/karabiner.json" = { source = "configs/karabiner/karabiner.json", mode = "symlink" }
+"~/scripts/toggle_function_keys.sh" = { source = "configs/karabiner/toggle_function_keys.sh", mode = "symlink" }
 
 [bootstrap.macos.launchd.agents.t3-settings-autosave]
 program = "~/bin/dotfiles-t3-autosave"
@@ -48,7 +54,7 @@ DictationIMPreferredLanguageIdentifiers = ["ro_RO", "en_US"]
 VisibleNetworkSRLocaleIdentifiers = { ro_RO = true, en_US = true }
 
 # Vorssaint fan curve for the MacBook Pro, as set in the app. The shared
-# Vorssaint preferences are in mise.macos.toml.
+# Vorssaint preferences are in mise.devhost.toml.
 [bootstrap.settings.macos.defaults."com.vorssaint.utils"]
 fanControlMode = "curve"
 fanControlCoolingLevel = 100
@@ -62,3 +68,9 @@ description = "App configs link to this checkout, and the app-state backups exis
 run = "bin/app-state-doctor"
 hint = "Run ./bin/app-state-doctor for the details"
 timeout = "60s"
+
+[doctor.checks.mobile]
+description = "Xcode, the simulators, and the Android SDK are ready"
+run = "bin/check-mobile-ready"
+hint = "Run ./bin/install-mobile-dev, or ./bin/setup --continue"
+timeout = "120s"

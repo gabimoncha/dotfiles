@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # The machine profile selects one mise.<profile>.toml file at the repository
 # root: macowl, macmini, and air on macOS, and container on Linux. A macOS
-# profile can also have app lists in apps/. Bash 3.2 compatible.
+# profile can also have app lists in apps/. The development machines, every
+# profile except air, also load the devhost layer before their own files.
+# Bash 3.2 compatible.
 
 # Accept the profile names that older versions of this repository used.
 dotfiles_profile_normalize() {
@@ -34,41 +36,75 @@ dotfiles_profile_validate() {
       return 2
       ;;
   esac
-  case "$profile" in
-    air)
-      printf 'dotfiles: profile %s is not set up yet. No changes were made.\n' "$profile" >&2
-      return 2
-      ;;
+}
+
+# Prints the shared layers that a profile loads before its own files, one per
+# line. The devhost layer holds what the development machines share:
+# mise.devhost.toml, configs/mise/config/config.devhost.toml, and the devhost
+# app lists in apps/. The name is unusual on purpose: mise loads the
+# mise.<env>.toml of every project folder too, and projects often use dev.
+dotfiles_profile_layers() {
+  case "${1:-}" in
+    air) ;;
+    *) printf 'devhost\n' ;;
   esac
 }
 
-# Prints the app lists of one kind for a profile: the list for every Mac, then
-# the profile's own list when it exists. KIND is brewfile or manifest.
+# Prints the mise environments of a profile, comma separated: the layers, then
+# the profile. A later environment wins, so the profile file overrides a layer.
+dotfiles_profile_mise_env() {
+  local layer envs=""
+  for layer in $(dotfiles_profile_layers "${1:-}"); do
+    envs="${envs}${layer},"
+  done
+  printf '%s%s\n' "$envs" "${1:-}"
+}
+
+# Prints the env line that .miserc.local.toml holds for a profile.
+dotfiles_profile_miserc_line() {
+  local env line="" IFS=,
+  for env in $(dotfiles_profile_mise_env "${1:-}"); do
+    line="${line:+$line, }\"$env\""
+  done
+  printf 'env = [%s]\n' "$line"
+}
+
+# Prints the app lists of one kind for a profile: the list for every Mac, the
+# list of each layer, then the profile's own list. A missing list is skipped.
+# KIND is brewfile or manifest.
 dotfiles_profile_app_lists() {
-  local root="$1" profile="$2" kind="$3" shared own
+  local root="$1" profile="$2" kind="$3" name list
   case "$kind" in
-    brewfile) shared="$root/Brewfile" own="$root/apps/$profile.Brewfile" ;;
-    manifest) shared="$root/apps/manifest.tsv" own="$root/apps/manifest.$profile.tsv" ;;
+    brewfile) printf '%s\n' "$root/Brewfile" ;;
+    manifest) printf '%s\n' "$root/apps/manifest.tsv" ;;
     *) return 2 ;;
   esac
-  printf '%s\n' "$shared"
-  [[ ! -f "$own" ]] || printf '%s\n' "$own"
+  for name in $(dotfiles_profile_layers "$profile") "$profile"; do
+    case "$kind" in
+      brewfile) list="$root/apps/$name.Brewfile" ;;
+      manifest) list="$root/apps/manifest.$name.tsv" ;;
+    esac
+    [[ ! -f "$list" ]] || printf '%s\n' "$list"
+  done
 }
 
 # Prints the backup groups that setup restores on a profile. The Mac mini has
-# no Synology Drive and no Mackup, so it restores only the Raycast export.
+# no Synology Drive and no Mackup, so it restores only the Raycast export. The
+# Air starts fresh and restores nothing.
 dotfiles_profile_restores() {
   case "${1:-}" in
     macmini) printf 'raycast\n' ;;
+    air) ;;
     *) printf 'mackup raycast codex\n' ;;
   esac
 }
 
-# Prints the profile. DOTFILES_PROFILE wins, then env = ["<profile>"] in the
-# ignored .miserc.local.toml. A Linux container without either uses container.
+# Prints the profile. DOTFILES_PROFILE wins, then the last name of the env list
+# in the ignored .miserc.local.toml. A Linux container without either uses container.
 dotfiles_profile() {
   local root="${1:-}" profile="${DOTFILES_PROFILE:-}" saved line system
-  local pattern='^[[:space:]]*env[[:space:]]*=[[:space:]]*\[[[:space:]]*"([a-z/-]+)"[[:space:]]*,?[[:space:]]*\][[:space:]]*$'
+  # The last name in the list is the profile. The names before it are layers.
+  local pattern='^[[:space:]]*env[[:space:]]*=[[:space:]]*\[[[:space:]]*("[a-z/-]+"[[:space:]]*,[[:space:]]*)*"([a-z/-]+)"[[:space:]]*,?[[:space:]]*\][[:space:]]*$'
   if [[ -z "$root" ]]; then
     root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)" || return
   fi
@@ -84,7 +120,7 @@ dotfiles_profile() {
     while IFS= read -r line || [[ -n "$line" ]]; do
       line="${line%%#*}"
       if [[ "$line" =~ $pattern ]]; then
-        profile="${BASH_REMATCH[1]}"
+        profile="${BASH_REMATCH[2]}"
       fi
     done <"$saved"
     [[ -n "$profile" ]] || {

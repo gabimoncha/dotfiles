@@ -10,11 +10,12 @@ each setting lives. [DECISIONS.md](DECISIONS.md) explains the design.
 mise.toml             file links and shell checkouts for every host
 mise.macos.toml       Mac file links and macOS preferences
 mise.linux.toml       apt packages and the login shell for Linux
+mise.devhost.toml     file links for the development machines: every profile but air
 mise.<profile>.toml   one file per machine: macowl, macmini, air, container
 configs/<app>/        the settings files, one folder per app
 Brewfile              Homebrew formulae, casks, taps, and App Store apps for every Mac
-apps/                 the app manifest, vendor-installed tools, login items,
-                      and the app lists of one profile
+apps/                 the app manifests, vendor-installed tools, and the app
+                      lists of the devhost layer and of one profile
 bin/                  setup and repair scripts
 macos/                the macOS defaults script and the telemetry login script
 local/                ignored local files; only the examples are tracked
@@ -30,12 +31,12 @@ into their settings, so mise merges selected keys from `configs/claude/`,
 
 ## Profiles
 
-| Profile     | Machine                   | Status                                                  |
-| ----------- | ------------------------- | ------------------------------------------------------- |
-| `macowl`    | MacBook Pro               | Set up.                                                 |
-| `macmini`   | Mac mini                  | Ready for its first setup run.                          |
-| `air`       | MacBook Air               | Not set up yet. Setup stops before it changes anything. |
-| `container` | NAS development container | Set up.                                                 |
+| Profile     | Machine                   | Status                         |
+| ----------- | ------------------------- | ------------------------------ |
+| `macowl`    | MacBook Pro               | Set up.                        |
+| `macmini`   | Mac mini                  | Ready for its first setup run. |
+| `air`       | MacBook Air               | Ready for its first setup run. |
+| `container` | NAS development container | Set up.                        |
 
 Save the machine's profile in the ignored `.miserc.local.toml`. A Linux
 container without this file uses `container`. `DOTFILES_PROFILE=macowl` selects a
@@ -45,14 +46,35 @@ profile for one command.
 printf 'env = ["macowl"]\n' > .miserc.local.toml
 ```
 
-Every Mac gets the root `Brewfile`, `apps/manifest.tsv`, and the login items
-in `mise.macos.toml`. A Mac profile adds its own apps in
-`apps/<profile>.Brewfile`, `apps/manifest.<profile>.tsv`, and the login items
-in its `mise.<profile>.toml`. Only macowl has these files: they hold its
-personal, media, and dictation apps, Synology Drive, and the T3 Code desktop
-app. The Mac mini gets the shared lists only. The
+Each profile loads three layers of files. A later layer adds to the earlier
+ones, and replaces an entry with the same name:
+
+| Layer      | Hosts                      | Files                                                                                                                        |
+| ---------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Every host | all profiles               | `mise.toml`, `mise.macos.toml` or `mise.linux.toml`, `Brewfile`, `apps/manifest.tsv`, `configs/mise/config/config.toml`      |
+| devhost    | macowl, macmini, container | `mise.devhost.toml`, `apps/devhost.Brewfile`, `apps/manifest.devhost.tsv`, `configs/mise/config/config.devhost.toml`         |
+| Profile    | one machine                | `mise.<profile>.toml`, `apps/<profile>.Brewfile`, `apps/manifest.<profile>.tsv`, `configs/mise/config/config.<profile>.toml` |
+
+The every-host layer holds a terminal, a browser, Cursor, and a short list of
+command-line tools. The devhost layer holds the development tools, the agent
+rules and skills, the T3, OpenCode, and pi settings, and the dev Mac apps such
+as AeroSpace, Karabiner, OrbStack, and Vorssaint. `bin/link-dotfiles` writes
+the layers into the env line, for example `env = ["devhost", "macowl"]`. The
+name is `devhost` and not `dev`, because mise also loads `mise.<env>.toml` in
+every project folder.
+
+macowl adds its personal, media, and dictation apps, Synology Drive, and the
+T3 Code desktop app. The Mac mini gets the shared and devhost lists only. The
 [Mac mini guide](apps/remote-development.md#mac-mini) covers its T3 server,
 proxy key, and remote access.
+
+The MacBook Air (`air`) is not a development machine, so it does not load the
+devhost layer. It adds Paper, Synology Drive, and Synology Image Assistant,
+Touch ID for `sudo`, pnpm as the default package manager
+(`configs/mise/config/config.air.toml`), and the `rbrtpop` Git identity
+(`configs/git/air.gitconfig`). It installs Codex CLI and Claude Code with
+their shared settings, but no agent rules or skills. Setup skips the restores,
+tokenburnmarket, and the mobile step on the Air.
 
 ## Checkout folders
 
@@ -192,8 +214,8 @@ the default T3 home; a custom `T3CODE_HOME` needs a matching file entry.
 ### Agent skills
 
 `configs/agents/skills/` holds the installed agent skills, and
-`configs/agents/skill-lock.json` records where each one comes from. Every host
-gets the same skills. `./bin/link-dotfiles` links `~/.agents/skills` to the
+`configs/agents/skill-lock.json` records where each one comes from. Every
+development host gets the same skills. The Air gets none. `./bin/link-dotfiles` links `~/.agents/skills` to the
 folder and `~/.agents/.skill-lock.json` to the lock. It also links each skill
 into `~/.claude/skills/`, because Claude Code does not read `~/.agents/skills`.
 Codex reads `~/.agents/skills`.
@@ -240,8 +262,9 @@ macOS defaults. It then fast-forwards the shell checkouts, and on Linux it
 upgrades the apt packages in the mise files.
 It does not upgrade every installed package. The shell's daily
 background check only reports new commits. `./bin/prepare-sync` compares the
-live inventory with `Brewfile`, the profile's `apps/<profile>.Brewfile`,
-`apps/mobile.Brewfile`, and the mise lists, and saves a copy of these Brewfiles under
+live inventory with `Brewfile`, `apps/devhost.Brewfile`, the profile's
+`apps/<profile>.Brewfile`, `apps/mobile.Brewfile` (not on the Air), and the
+mise lists, and saves a copy of these Brewfiles under
 `.sync-backups/`. For mise, it lists the configured tools that are missing, the
 installed versions that no config uses, and the tools whose registry backend
 changed.
@@ -266,7 +289,8 @@ printf 'env = ["macowl"]\n' > .miserc.local.toml
 ./bin/setup
 ```
 
-On the Mac mini, save `env = ["macmini"]` instead. See the
+On the Mac mini, save `env = ["macmini"]` instead, and on the MacBook Air,
+`env = ["air"]`. See the
 [Mac mini guide](apps/remote-development.md#mac-mini).
 
 Run setup as your normal user, not with `sudo`. If Git or setup opens the
@@ -285,7 +309,8 @@ Ctrl-C. Preflight reports a file that a killed run left behind. Set
 the terminal.
 
 The first phase installs the foundation tools: Homebrew, standalone mise, an
-isolated GitHub CLI, Codex CLI, Claude Code, Cursor Agent, and OpenCode v2.
+isolated GitHub CLI, Codex CLI, and Claude Code. On every profile except air,
+it also installs Cursor Agent and OpenCode v2.
 It also installs one app, Raycast, and changes an attribute of it, so that
 macOS shows the App Management prompt in this phase and not in the middle of
 the app installs. Then it stops:
@@ -320,11 +345,11 @@ Reopen apps after setup.
 [telemetry guide](apps/telemetry.md) lists every control, the manual settings,
 and the tools without an opt-out.
 
-| Option               | Effect                                                                                                                                                                    |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--dry-run`          | Run the preflight check and write private logs. List the other steps without running them. Add `--continue` to preview that phase.                                        |
-| `--allow-macos-beta` | Continue on a macOS beta build. Off by default. A pending macOS update and a prerelease Xcode still stop setup.                                                           |
-| `--skip-mobile-dev`  | Skip Xcode, iOS support, Android Studio, the Android SDK, and `apps/mobile.Brewfile`. On Linux, skip the Android SDK. Mobile tools in the shared mise list still install. |
+| Option               | Effect                                                                                                                                                                     |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--dry-run`          | Run the preflight check and write private logs. List the other steps without running them. Add `--continue` to preview that phase.                                         |
+| `--allow-macos-beta` | Continue on a macOS beta build. Off by default. A pending macOS update and a prerelease Xcode still stop setup.                                                            |
+| `--skip-mobile-dev`  | Skip Xcode, iOS support, Android Studio, the Android SDK, and `apps/mobile.Brewfile`. On Linux, skip the Android SDK. Mobile tools in the devhost mise list still install. |
 
 [bin/setup](bin/setup) lists the steps in order, and they run one at a time.
 The foundation steps are required: preflight, the Command Line Tools, `sudo`
@@ -364,8 +389,9 @@ Linux runs every step in one run. It has no App Store or restart step.
    JDK is Zulu 17, the `java` tool of mise, as on the Mac. `--skip-mobile-dev`
    skips this step.
 
-Tools marked `os = "macos"` in `configs/mise/config/config.toml` stay on the
-Mac. Tools for one profile are in `configs/mise/config/config.<profile>.toml`.
+Tools marked `os = "macos"` in `configs/mise/config/config.toml` and
+`config.devhost.toml` stay on the Mac. Tools for one profile are in
+`configs/mise/config/config.<profile>.toml`.
 Entries in `mise.macos.toml` do not load on Linux.
 
 Codex reads one global instructions file. On the container, mise renders
@@ -510,7 +536,8 @@ No script proves a fresh-Mac install. See
 
 Add packages in this order: the Mac App Store, then mise, then Homebrew. The
 agent CLIs and mise itself are vendor-installed exceptions in
-`apps/standalone.tsv`. Put an app for every Mac in the root `Brewfile`, and an
+`apps/standalone.tsv`. Put an app for every Mac, the Air too, in the root
+`Brewfile`, an app for the development Macs in `apps/devhost.Brewfile`, and an
 app for one Mac in `apps/<profile>.Brewfile`. On macowl, the T3 nightly
 desktop app is a Homebrew cask, and Hex and Scrawl come from their vendor
 taps, `anomalyco/tap` and `kitlangton/tap`. The Mac mini runs the T3 server
@@ -519,19 +546,22 @@ from `apps/standalone.tsv` instead.
 
 `~/.config/mise` links to `configs/mise/config/`, the global mise config
 folder. `mise install` installs the versions in its `mise.lock`, and `mise up`
-writes newer versions into that tracked file. To add a tool, add it to
-`configs/mise/config/config.toml`, then run `mise lock --global`, then commit
-the config, the lockfile, and the sidecar folder `configs/mise/config/locks/`.
+writes newer versions into that tracked file. To add a tool for every host,
+add it to `configs/mise/config/config.toml`. To add a development tool, add it
+to `config.devhost.toml`, which locks into `mise.devhost.lock`. Then run
+`mise lock --global`, and commit the config, the lockfiles, and the sidecar
+folder `configs/mise/config/locks/`.
 The sidecars hold the locked dependencies of the pipx tools. An older
 lockfile moves the tools back to its versions.
 
 A tool for one profile goes in `configs/mise/config/config.<profile>.toml`,
 for example Ollama and Mackup for macowl. The folder's
 `miserc.local.toml` links to this repository's `.miserc.local.toml`, so mise
-sets its environment to the profile and loads that file in every folder. mise
-keeps its versions in `mise.<profile>.lock`, so another profile never prunes
-them. A profile without tools of its own, such as macmini and container, has
-no config file here.
+sets its environments to the layers and the profile, and loads those files in
+every folder. mise keeps their versions in `mise.devhost.lock` and
+`mise.<profile>.lock`, so another profile never prunes them. A profile without
+tools of its own, such as macmini and container, has no config file here.
+`config.air.toml` holds settings only.
 
 After an interactive `mise install` or `mise up`, and after `mise run dot:update`,
 `./bin/save-lock` commits a changed lockfile and pushes it to `main`, so the
@@ -575,7 +605,7 @@ installing it, and `--check` checks the installed app. Quit Steam before a
 replacement. See [DECISIONS.md](DECISIONS.md#native-steam-installer).
 
 Setup adds the apps in `[bootstrap.settings.macos.login_items]` of
-`mise.macos.toml` and of the profile file as login items. It leaves other
+`mise.macos.toml`, `mise.devhost.toml`, and the profile file as login items. It leaves other
 login items alone. It also sets the Dock apps in
 `[bootstrap.settings.macos.dock]`, in that order. Run
 `./bin/repo-mise bootstrap macos defaults status` to compare this Mac with

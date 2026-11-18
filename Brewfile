@@ -1,67 +1,39 @@
-# Entries for every Mac. A profile adds its own entries in apps/<profile>.Brewfile,
-# for example apps/macowl.Brewfile. Setup installs both files.
+# Entries for every Mac, the MacBook Air too. The development Macs add
+# apps/devhost.Brewfile, and a profile adds its own entries in
+# apps/<profile>.Brewfile, for example apps/macowl.Brewfile. Setup installs all
+# of these files. See dotfiles_profile_app_lists in bin/lib/dotfiles-profile.sh.
 # Homebrew owns GUI apps, App Store apps, system packages, and CLIs that are not
 # already managed by mise or standalone installer exceptions. Runtimes and
 # overlapping developer tools stay in mise instead.
 
 # Every third-party tap here has been reviewed as part of this machine setup.
 # Persist that approval so later Homebrew commands use the same trust policy.
-tap "felixkratz/formulae", trusted: true
-tap "grishka/grishka", trusted: true
-tap "homebrew-zathura/zathura", trusted: true
-tap "nikitabobko/tap", trusted: true
 tap "xykong/tap", trusted: true
 
-brew "apktool"
 # Bash 5 comes first on PATH. The bin/ scripts stay Bash 3.2 compatible,
 # because a new Mac runs setup with /bin/bash before Homebrew exists.
 brew "bash"
-brew "borders"
 brew "btop"
 brew "curl"
 # Other apps look for ffmpeg and yt-dlp in /opt/homebrew/bin, so these two
-# stay in Homebrew. mise installs exiftool, minisign, and poppler.
+# stay in Homebrew.
 brew "ffmpeg"
-brew "gcc"
 brew "git"
-brew "ghostscript"
-brew "glyph"
-brew "grpc"
-brew "homebrew-zathura/zathura/zathura-cb"
-brew "homebrew-zathura/zathura/zathura-pdf-mupdf"
-# mise compiles Ruby when it finds no precompiled build, and psych then needs libyaml.
-brew "libyaml"
 brew "mole"
 brew "openssl@3"
-brew "postgresql@18"
 brew "smartmontools"
-brew "switchaudio-osx"
-brew "telnet"
 brew "webp"
 brew "yt-dlp"
-brew "zlib"
 
 # Mac App Store
-mas "DevCleaner for Xcode", id: 1388020431
-mas "TestFlight", id: 899247664
 mas "The Unarchiver", id: 425424353
-mas "Transporter", id: 1450874784
 
-cask "nikitabobko/tap/aerospace"
-cask "blackhole-2ch"
 cask "cursor"
-cask "expo-orbit"
 cask "font-hack-nerd-font"
 cask "ghostty"
 cask "google-chrome"
-cask "karabiner-elements"
-cask "mole-app"
-cask "neardrop"
-cask "ngrok"
-cask "orbstack"
 cask "raycast"
 cask "tailscale-app"
-cask "vorssaint"
 cask "xykong/tap/flux-markdown"
 
 vscode "anysphere.remote-containers"

@@ -5,32 +5,35 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 mise_bin_dir="${HOME}/.local/bin"
 shim_dir="${HOME}/.local/share/mise/shims"
-# Commands from the Mac and Linux tool list in configs/mise/config/config.toml.
+# Commands from the Mac and Linux tool list in configs/mise/config/config.toml,
+# which every host installs.
 smoke_commands=(
   tmux
   gh
-  bun
   node
   pnpm
   sfw
-  uv
   rg
   fd
   fzf
   jq
   lazygit
   nvim
-  sccache
   age
-  python
-  ruby
   yq
-  shellcheck
+  hk
 )
-# Tools for every Mac (os = "macos" in the config). A tool for one profile, such
-# as mackup on macowl, is not here: the missing-tools check covers it.
+# The development machines also install configs/mise/config/config.devhost.toml.
+# A tool for one profile, such as mackup on macowl, is not here: the
+# missing-tools check covers it.
+. "${repo_root}/bin/lib/dotfiles-profile.sh"
+profile="${DOTFILES_PROFILE:-$(dotfiles_profile "$repo_root" 2>/dev/null)}" || profile=""
+devhost=0
+case " $(dotfiles_profile_layers "$profile" | tr '\n' ' ')" in *" devhost "*) devhost=1 ;; esac
+[[ "$devhost" == 0 ]] || smoke_commands+=(bun uv sccache python ruby shellcheck)
 if [[ "$(uname -s)" == Darwin ]]; then
-  smoke_commands+=(turbo vercel)
+  smoke_commands+=(mas)
+  [[ "$devhost" == 0 ]] || smoke_commands+=(turbo vercel)
 fi
 
 log() {

@@ -1,2 +1,24 @@
-# Profile: the MacBook Air. Not set up yet: bin/lib/dotfiles-profile.sh stops
-# setup and linking for this profile before they change anything.
+# Profile: air, the MacBook Air. It is not a development machine: it loads
+# mise.toml and mise.macos.toml, but not mise.devhost.toml. So it has no agent
+# rules, no skills, and no T3, OpenCode, or pi settings. Its runtime tools are
+# the list in configs/mise/config/config.toml, with the settings in
+# config.air.toml. Its apps are in the root Brewfile and apps/air.Brewfile.
+
+[dotfiles]
+# The Air's Git identity. configs/git/gitconfig includes this path.
+"~/.config/git/profile" = { source = "configs/git/air.gitconfig", mode = "symlink" }
+
+# The Air's login items. mise adds them to the list in mise.macos.toml.
+[bootstrap.settings.macos.login_items]
+apps = ["/Applications/Synology Drive Client.app", "/Applications/Synology Image Assistant.app"]
+
+# Touch ID for sudo, as on macowl. Apple's /etc/pam.d/sudo includes sudo_local,
+# and a macOS update keeps that file. mise keeps this block in it and leaves the
+# other lines alone. bin/configure-sudo-touch-id checks the include, then
+# applies it.
+[bootstrap.files."/etc/pam.d/sudo_local"]
+id = "touch-id"
+block = "auth       sufficient     pam_tid.so"
+owner = "root"
+group = "wheel"
+mode = "0644"

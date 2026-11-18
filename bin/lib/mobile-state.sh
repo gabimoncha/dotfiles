@@ -50,8 +50,8 @@ mobile_android_studio_ready() {
 }
 
 # The same defaults as configs/zsh/env.zsh, because setup runs outside zsh.
-# The JDK is the java tool in configs/mise/config/config.toml. mise keeps the
-# global link on the installed version.
+# The JDK is the java tool in configs/mise/config/config.devhost.toml. mise
+# keeps the global link on the installed version.
 mobile_java_home="${JAVA_HOME:-${MISE_DATA_DIR:-$HOME/.local/share/mise}/installs/java/global}"
 if [[ "$(uname -s)" == Darwin ]]; then
   mobile_android_sdk_root="${ANDROID_HOME:-$HOME/Library/Android/sdk}"

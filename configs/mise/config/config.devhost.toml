@@ -1,0 +1,98 @@
+# Runtime tools for the development machines: every profile except air.
+# dotfiles_profile_mise_env in bin/lib/dotfiles-profile.sh adds the devhost
+# environment before the profile, so mise loads this file after config.toml
+# and locks its tools in mise.devhost.lock. The settings in config.toml apply
+# here too.
+
+[tools]
+# Mac and Linux.
+rust = "latest"
+# Security exception to the four-day delay: 1.27.0 updates zstd-safe for
+# RUSTSEC-2026-0395 through RUSTSEC-2026-0406 and rustix for RUSTSEC-2026-0486.
+cargo-binstall = "1.27.0"
+sccache = "latest"
+direnv = "latest"
+bun = "1.4.4"
+uv = "0.13.7"
+# Security exception to the four-day delay: 3.15.2 fixes CVE-2026-115557
+# and CVE-2026-114583.
+python = "3.15.2"
+ruby = "3.4.12"
+ast-grep = "latest"
+cloudflared = "2026.10.2"
+cmake = "latest"
+redis = "latest"
+worktrunk = "latest"
+yamlfmt = "latest"
+"npm:ctx7" = "latest"
+# Installs and updates the agent skills in configs/agents/skills.
+"npm:skills" = "latest"
+"npm:eas-cli" = "latest"
+# Drives iOS simulators and Android devices for the agents and the T3 device hub.
+"npm:agent-device" = "latest"
+"pipx:httpie" = { version = "latest", python = "3.15", with = ["certifi==2026.10.19"] }
+"github:boyter/scc" = "latest"
+"github:flowcopilot/aether" = "latest"
+"conda:aria2" = "latest"
+"conda:sox" = "latest"
+"conda:tig" = "latest"
+"conda:tree" = "latest"
+"npm:cf" = "latest"
+# Needs node 22.15 or later. bin/setup-tokenburnmarket signs in and installs
+# the sync daemon, and refreshes it after `mise up` moves node or this tool.
+"npm:tokenburnmarket" = "latest"
+# Security exception to the four-day delay: 4.153.0 includes Undici 7.30.1
+# for CVE-2026-109383, CVE-2026-109932, and CVE-2026-87018.
+wrangler = { version = "4.153.0", allow_builds = ["esbuild", "sharp", "workerd"] }
+# Formats Markdown in repos whose hk.pkl runs it, including this one.
+"npm:oxfmt" = "latest"
+shellcheck = "latest"
+shfmt = "latest"
+# TypeScript checks and the editor language server (~/.config/tsrs/tsgo).
+"npm:tsrs" = "latest"
+# Linux only: the Mac installs btop with Homebrew, and btop ships no macOS build.
+btop = { version = "latest", os = "linux" }
+# The JDK for Android builds and sdkmanager. mise sets JAVA_HOME in activated
+# shells. Scripts and configs/zsh/env.zsh use the link that follows upgrades:
+# ~/.local/share/mise/installs/java/global.
+java = "zulu-17"
+
+# Every development Mac. Add a tool to the list above when a Linux box needs
+# it. A tool for one Mac only goes in config.<profile>.toml.
+perl = { version = "5.44.0", os = "macos" }
+ccache = { version = "latest", os = "macos" }
+cocoapods = { version = "latest", os = "macos" }
+coreutils = { version = "latest", os = "macos" }
+xcodes = { version = "latest", os = "macos" }
+awscli = { version = "2.38.4", os = "macos" }
+gcloud = { version = "589.0.0", os = "macos" }
+mkcert = { version = "latest", os = "macos" }
+hub = { version = "latest", os = "macos" }
+# Security exception to the four-day delay: 0.2.97 fixes
+# GHSA-5xfg-9629-mqgg, GHSA-jpm2-x6wf-fxjc, GHSA-74m9-q5m3-x53f,
+# GHSA-9xfw-6wqp-rq8f, and GHSA-9j7q-g3ch-2283.
+act = { version = "0.2.97", os = "macos" }
+pandoc = { version = "latest", os = "macos" }
+typst = { version = "latest", os = "macos" }
+imagemagick = { version = "latest", os = "macos" }
+infisical = { version = "0.45.8", os = "macos" }
+portless = { version = "latest", os = "macos" }
+vercel = { version = "latest", os = "macos" }
+turbo = { version = "latest", os = "macos" }
+"npm:agent-browser" = { version = "latest", os = "macos" }
+"npm:agent-desktop" = { version = "latest", os = "macos" }
+"npm:@yaakapp/cli" = { version = "latest", os = "macos" }
+"github:ryanoasis/nerd-fonts" = { version = "latest", asset_pattern = "Hack.zip", os = "macos" }
+"github:coollabsio/coolify-cli" = { version = "latest", os = "macos" }
+"gem:fastlane" = { version = "2.241.2", install_env = { GEMRC = "{{ config_source | dirname }}/gemrc" }, os = "macos" }
+"npm:ios-deploy" = { version = "latest", os = "macos" }
+"github:OpenVPN/easy-rsa" = { version = "latest", os = "macos" }
+"pipx:tldr" = { version = "latest", os = "macos" }
+"conda:bfg" = { version = "latest", os = "macos" }
+# ffmpeg and yt-dlp stay in the Brewfile: other apps look for them in
+# /opt/homebrew/bin.
+exiftool = { version = "latest", os = "macos" }
+minisign = { version = "latest", os = "macos" }
+poppler = { version = "latest", os = "macos" }
+xcodegen = { version = "latest", os = "macos" }
+"npm:oh-my-t3" = "latest"

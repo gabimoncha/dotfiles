@@ -1,7 +1,9 @@
-# Files and checkouts for every host. Apply them with ./bin/link-dotfiles.
-# mise also loads mise.macos.toml or mise.linux.toml for the platform, and the
-# profile file that the ignored .miserc.local.toml selects:
-# mise.macowl.toml, mise.macmini.toml, mise.air.toml, or mise.container.toml.
+# Files and checkouts for every host, the MacBook Air too. Apply them with
+# ./bin/link-dotfiles. mise also loads mise.macos.toml or mise.linux.toml for
+# the platform, mise.devhost.toml on the development machines (every profile
+# except air), and the profile file that the ignored .miserc.local.toml
+# selects: mise.macowl.toml, mise.macmini.toml, mise.air.toml, or
+# mise.container.toml.
 # bin/repo-mise requires the pinned mise. A soft minimum only warns, so tools
 # in this folder keep working while an older mise is installed.
 min_version = { soft = "2026.11.8" }
@@ -28,10 +30,7 @@ min_version = { soft = "2026.11.8" }
 
 "~/.tmux.conf" = { source = "configs/tmux/tmux.conf", mode = "symlink" }
 "~/.rgrc" = { source = "configs/ripgrep/rgrc", mode = "symlink" }
-"~/.androidrc" = { source = "configs/android/androidrc", mode = "symlink" }
-"~/.config/.bunfig.toml" = { source = "configs/bun/bunfig.toml", mode = "symlink" }
 "~/.config/pnpm/config.yaml/dotfiles" = { source = "configs/pnpm/config.yaml", merge = true, permissions = "0600" }
-"~/.config/tsrs/tsgo" = { source = "configs/tsrs/tsgo", mode = "symlink" }
 "~/.config/nvim" = { source = "configs/nvim", mode = "symlink" }
 
 # The global mise config folder: runtime tools and settings, each profile's
@@ -39,25 +38,10 @@ min_version = { soft = "2026.11.8" }
 # repository's .miserc.local.toml, so mise loads this machine's profile file.
 "~/.config/mise" = { source = "configs/mise/config", mode = "symlink" }
 
-# A link to mise acts as a shim: mise runs the tool that the link name names.
-# The Claude and Codex MCP configs start this path. A link to the tool's
-# install folder would fail, because setup links files before mise installs
-# tools, and one missing source stops the whole apply.
-"~/.local/bin/aether" = { source = "~/.local/bin/mise", mode = "symlink" }
-
 "~/bin/harness" = { source = "configs/harness/harness", mode = "symlink" }
 "~/bin/claude" = { source = "configs/claude/claude", mode = "symlink" }
 "~/bin/npx" = { source = "configs/npx/npx", mode = "symlink" }
 "~/bin/px" = { source = "configs/npx/npx", mode = "symlink" }
-"~/.claude/CLAUDE.md" = { source = "configs/agents/instructions.md", mode = "symlink" }
-"~/.codex/AGENTS.md" = { source = "configs/agents/instructions.md", mode = "symlink" }
-# Agent skills for every host. The skills CLI writes through these two links
-# into the repository, so commit configs/agents after `skills add`, `update`,
-# or `remove`. Claude Code reads only ~/.claude/skills, so each skill also gets
-# a link there. The glob leaves Claude Code's own items in that folder alone.
-"~/.agents/skills" = { source = "configs/agents/skills", mode = "symlink" }
-"~/.agents/.skill-lock.json" = { source = "configs/agents/skill-lock.json", mode = "symlink" }
-"~/.claude/skills/*" = { source = "configs/agents/skills/*", mode = "symlink" }
 # These apps rewrite their settings. mise sets only the keys in the sources,
 # and creates a missing file with mode 0600, because it can hold tokens.
 "~/.claude/settings.json/dotfiles" = { source = "configs/claude/settings.json", merge = true, permissions = "0600" }
@@ -65,26 +49,6 @@ min_version = { soft = "2026.11.8" }
 # A "/defaults" entry sets a key only when the file has none, so a profile can
 # override it. bin/save-settings never saves these sources.
 "~/.codex/config.toml/defaults" = { source = "configs/codex/defaults.toml", merge = "missing", permissions = "0600" }
-"~/.t3/userdata/settings.json/dotfiles" = { source = "configs/t3/settings.json", merge = true, permissions = "0600" }
-"~/.config/opencode/opencode.json/dotfiles" = { source = "configs/opencode/opencode.json", merge = true, permissions = "0600" }
-"~/.pi/agent/settings.json/dotfiles" = { source = "configs/pi/settings.json", merge = true, permissions = "0600" }
-
-# mise keeps a glob link after its source goes away. This hook removes the
-# broken skill links, the CLI's (../../.agents/skills/<name>) and mise's. It runs
-# after each `mise dot apply` and must not fail: a failure makes
-# bin/link-dotfiles undo the apply.
-[bootstrap.hooks.post-dotfiles]
-description = "Remove broken links in ~/.claude/skills"
-run = """
-for link in "$HOME"/.claude/skills/* "$HOME"/.claude/skills/.[!.]*; do
-  [ -L "$link" ] && [ ! -e "$link" ] || continue
-  case "$(readlink "$link" || true)" in
-    */.agents/skills/* | */configs/agents/skills/*)
-      rm -f "$link" && echo "Removed the broken skill link $link" || true ;;
-  esac
-done
-true
-"""
 
 [bootstrap.repos]
 "~/.oh-my-zsh" = { url = "https://github.com/ohmyzsh/ohmyzsh.git", depth = 1 }

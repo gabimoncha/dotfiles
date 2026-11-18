@@ -429,7 +429,7 @@ prepare_brewfiles() {
   : >"$xcode_brewfile"
   : >"$mas_brewfile"
   : >"$cursor_extensions_brewfile"
-  # The Brewfile for every Mac, then the profile's own Brewfile.
+  # The Brewfile for every Mac, then the layer and profile Brewfiles.
   local brewfile
   while IFS= read -r brewfile; do
     filter_brewfile_for_existing_apps "$brewfile" "$temp_brewfile" "$xcode_brewfile" "$mas_brewfile" "$cursor_extensions_brewfile"
