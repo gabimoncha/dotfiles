@@ -170,9 +170,9 @@ link where a real file is, and one refused entry stops the whole apply.
 - It removes links that older versions made, only while they point into this
   repository. It moves local files from the old layout, such as
   `mise/setup/miserc.local.toml`, to their new place.
-- On a Mac, it runs `bin/link-t3-command`. That step and the telemetry login job
-  in `bin/configure-telemetry` run only when `$HOME` is the account's home
-  folder, so a test with a temporary HOME cannot change them.
+- On a Mac, it runs `bin/link-t3-command`. That step and the login jobs of
+  `bin/load-login-jobs` run only when `$HOME` is the account's home folder, so
+  a test with a temporary HOME cannot change them.
 
 Agent and T3 settings remain regular files because the apps rewrite them and
 write private data into them: project paths, hook state, and MCP server

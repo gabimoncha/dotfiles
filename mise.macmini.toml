@@ -13,7 +13,7 @@
 
 # Automatic login shows the desktop with no password. This job locks the screen
 # right after login, and the session stays active behind the lock.
-# bin/configure-telemetry applies it.
+# bin/load-login-jobs applies it.
 [bootstrap.macos.launchd.agents.lock-screen]
 program = "~/bin/dotfiles-lock-screen"
 run_at_load = true
