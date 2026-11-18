@@ -19,6 +19,10 @@ minimumReleaseAgeExclude:
   - "@oxlint/binding-*"
   - "@oxfmt/binding-*"
   - "@fallow-cli/*"
+  - "@agent-browser/*"
+  # eas-cli adds new @expo packages in its releases.
+  - eas-cli
+  - "@expo/*"
   - fallow-type-aware
   - oxlint-plugin-react-doctor
   - bun-types

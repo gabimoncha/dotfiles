@@ -1,0 +1,270 @@
+# Files for the development machines: every profile except air. The devhost
+# environment loads before the profile, so a profile file can replace an entry
+# here, as mise.container.toml does for ~/.codex/AGENTS.md.
+
+[dotfiles]
+"~/.androidrc" = { source = "configs/android/androidrc", mode = "symlink" }
+"~/.config/.bunfig.toml" = { source = "configs/bun/bunfig.toml", mode = "symlink" }
+
+# A link to mise acts as a shim: mise runs the tool that the link name names.
+# The Claude and Codex MCP configs start this path. A link to the tool's
+# install folder would fail, because setup links files before mise installs
+# tools, and one missing source stops the whole apply.
+"~/.local/bin/aether" = { source = "~/.local/bin/mise", mode = "symlink" }
+
+"~/.codex/AGENTS.md" = { source = "configs/agents/instructions.md", mode = "symlink" }
+"~/.claude/CLAUDE.md" = { source = "~/.codex/AGENTS.md", mode = "symlink", relative = true, depends = [
+  "~/.codex/AGENTS.md",
+] }
+# Agent skills. The skills CLI writes through these two links
+# into the repository, so commit configs/agents after `skills add`, `update`,
+# or `remove`. Claude Code reads only ~/.claude/skills, so each skill also gets
+# a link there. The glob leaves Claude Code's own items in that folder alone.
+"~/.agents/skills" = { source = "configs/agents/skills", mode = "symlink" }
+"~/.agents/.skill-lock.json" = { source = "configs/agents/skill-lock.json", mode = "symlink" }
+"~/.claude/skills/*" = { source = "configs/agents/skills/*", mode = "symlink" }
+# These apps rewrite their settings. mise sets only the keys in the sources,
+# and creates a missing file with mode 0600, because it can hold tokens.
+"~/.t3/userdata/settings.json/dotfiles" = { source = "configs/t3/settings.json", merge = true, permissions = "0600" }
+"~/.config/opencode/opencode.json/dotfiles" = { source = "configs/opencode/opencode.json", merge = true, permissions = "0600" }
+"~/.pi/agent/settings.json/dotfiles" = { source = "configs/pi/settings.json", merge = true, permissions = "0600" }
+
+# mise keeps a glob link after its source goes away. This hook removes the
+# broken skill links, the CLI's (../../.agents/skills/<name>) and mise's. It runs
+# after each `mise dot apply` and must not fail: a failure makes
+# bin/link-dotfiles undo the apply.
+[bootstrap.hooks.post-dotfiles]
+description = "Remove broken links in ~/.claude/skills"
+run = """
+for link in "$HOME"/.claude/skills/* "$HOME"/.claude/skills/.[!.]*; do
+  [ -L "$link" ] && [ ! -e "$link" ] || continue
+  case "$(readlink "$link" || true)" in
+    */.agents/skills/* | */configs/agents/skills/*)
+      rm -f "$link" && echo "Removed the broken skill link $link" || true ;;
+  esac
+done
+true
+"""
+
+# The macOS preferences of the development Macs. Linux reads this file too, but
+# only macos/defaults.sh applies [bootstrap.settings.macos], and only on a Mac.
+# mise adds these login items to the list in mise.macos.toml.
+[bootstrap.settings.macos.login_items]
+apps = [
+  "/Applications/AeroSpace.app",
+  "/Applications/Expo Orbit.app",
+  "/Applications/Vorssaint.app",
+]
+
+# Text input, mouse, and trackpad. mise merges these keys with the
+# NSGlobalDomain keys in mise.macos.toml.
+[bootstrap.settings.macos.defaults.NSGlobalDomain]
+# Language & Region > Live Text. Off, so a paused video in Safari does not turn
+# into selectable text.
+AppleLiveTextEnabled = false
+NSAutomaticCapitalizationEnabled = false
+NSAutomaticDashSubstitutionEnabled = true
+NSAutomaticQuoteSubstitutionEnabled = true
+NSAutomaticSpellingCorrectionEnabled = false
+KB_SpellingLanguage = { KB_SpellingLanguageIsAutomatic = true }
+NSSpellCheckerAutomaticallyIdentifiesLanguages = true
+"com.apple.mouse.scaling" = 3.0
+"com.apple.scrollwheel.scaling" = 1.7
+"com.apple.swipescrolldirection" = true
+"com.apple.trackpad.forceClick" = false
+"com.apple.trackpad.scaling" = 3.0
+
+[bootstrap.settings.macos.defaults."com.apple.AppleMultitouchMouse"]
+MouseButtonMode = "OneButton"
+MouseHorizontalScroll = true
+MouseMomentumScroll = true
+MouseOneFingerDoubleTapGesture = 1
+MouseTwoFingerHorizSwipeGesture = 2
+
+[bootstrap.settings.macos.defaults."com.apple.AppleMultitouchTrackpad"]
+Clicking = true
+Dragging = false
+TrackpadRightClick = true
+TrackpadThreeFingerDrag = false
+
+[bootstrap.settings.macos.defaults."com.apple.driver.AppleBluetoothMultitouch.trackpad"]
+Clicking = true
+TrackpadRightClick = true
+TrackpadThreeFingerDrag = false
+
+# The apps pinned in the Dock, in this order. mise adds, removes, and orders
+# them. Folders and files in the Dock stay as they are.
+[bootstrap.settings.macos.dock]
+apps = [
+  "/System/Applications/Apps.app",
+  "/Applications/Safari.app",
+  "/System/Applications/Photos.app",
+  "/System/Applications/FaceTime.app",
+  "/System/Applications/App Store.app",
+  "/System/Applications/Siri AI.app",
+  "/System/Applications/System Settings.app",
+]
+
+[bootstrap.settings.macos.defaults."com.apple.dock"]
+autohide = true
+largesize = 51
+magnification = true
+orientation = "bottom"
+"expose-group-apps" = true
+tilesize = 34
+
+# Portable Vorssaint preferences captured from version 3.4.2.
+# Device identifiers, calibration, and session state stay local. Each profile
+# file has the fan curve of its machine.
+[bootstrap.settings.macos.defaults."com.vorssaint.utils"]
+"appAppearance" = "system"
+"audioPriorityInputEnabled" = true
+"audioPriorityOutputEnabled" = true
+"batteryLimitPercent" = 10
+"bluetoothSleepEnabled" = true
+"brightnessControlEnabled" = true
+"clamshellPreferred" = true
+"defaultDurationMinutes" = 0
+"extraBrightnessEnabled" = false
+"extraBrightnessLevel" = 100
+"featureAvailable.appUpdates" = false
+"featureAvailable.audioPriority" = true
+"featureAvailable.autoQuit" = false
+"featureAvailable.bluetoothSleep" = true
+"featureAvailable.brightness" = true
+"featureAvailable.cameraPreview" = true
+"featureAvailable.cleaner" = false
+"featureAvailable.cleaningMode" = false
+"featureAvailable.clipboardHistory" = false
+"featureAvailable.colorPicker" = true
+"featureAvailable.commandBar" = false
+"featureAvailable.connectedDevices" = true
+"featureAvailable.diskImageInstaller" = false
+"featureAvailable.dockClick" = false
+"featureAvailable.dockPreview" = false
+"featureAvailable.extraBrightness" = true
+"featureAvailable.fanControl" = true
+"featureAvailable.finderCutPaste" = false
+"featureAvailable.finderRename" = false
+"featureAvailable.focusFollowsMouse" = false
+"featureAvailable.homebrew" = true
+"featureAvailable.keepAwake" = true
+"featureAvailable.keyboardDebounce" = false
+"featureAvailable.killProcess" = false
+"featureAvailable.linearScroll" = false
+"featureAvailable.mediaTools" = false
+"featureAvailable.micMute" = true
+"featureAvailable.middleClick" = false
+"featureAvailable.mixer" = true
+"featureAvailable.monitorCPU" = true
+"featureAvailable.monitorDisk" = true
+"featureAvailable.monitorGPU" = true
+"featureAvailable.monitorMemory" = true
+"featureAvailable.monitorNetwork" = true
+"featureAvailable.monitorPower" = true
+"featureAvailable.mouseAcceleration" = false
+"featureAvailable.mouseButtonShortcuts" = false
+"featureAvailable.mouseClickDebounce" = false
+"featureAvailable.mouseNavigation" = false
+"featureAvailable.musicBlock" = true
+"featureAvailable.notch" = true
+"featureAvailable.notchAccessories" = true
+"featureAvailable.notchAgents" = false
+"featureAvailable.notchCalendar" = true
+"featureAvailable.notchDownloads" = true
+"featureAvailable.notchGestures" = true
+"featureAvailable.notchLiveEqualizer" = true
+"featureAvailable.notchLyrics" = true
+"featureAvailable.notchMascot" = true
+"featureAvailable.notchNotifications" = true
+"featureAvailable.notchQueue" = true
+"featureAvailable.notchTimer" = true
+"featureAvailable.notchWatch" = true
+"featureAvailable.pastePlain" = false
+"featureAvailable.portManager" = false
+"featureAvailable.quickLauncher" = false
+"featureAvailable.quickToggles" = false
+"featureAvailable.quitWindowProtection" = false
+"featureAvailable.radialMenu" = false
+"featureAvailable.scratchpad" = false
+"featureAvailable.screenOCR" = false
+"featureAvailable.screenRecorder" = false
+"featureAvailable.screenshot" = true
+"featureAvailable.scrollHorizontal" = false
+"featureAvailable.scrollInverter" = false
+"featureAvailable.shelf" = false
+"featureAvailable.smoothScroll" = false
+"featureAvailable.soundOutputSwitcher" = true
+"featureAvailable.spacesOrder" = false
+"featureAvailable.superKey" = false
+"featureAvailable.switcher" = false
+"featureAvailable.textSnippets" = false
+"featureAvailable.uninstaller" = false
+"featureAvailable.urlCleaner" = false
+"featureAvailable.wallpaper" = false
+"featureAvailable.windowLayout" = true
+"featureAvailable.windowMaximizer" = false
+"keepAwakeActiveIcon" = "coffee"
+"keepAwakeAutoStart" = true
+"keepAwakeIconTint" = "orange"
+"keepAwakeMouseJiggleEnabled" = false
+"keepAwakeMouseJiggleIntervalMinutes" = 5
+"keepAwakeRightClickToggle" = true
+"keepAwakeSwitchUsesUntil" = false
+"liquidGlassEnabled" = true
+"menuBarIconSymbol" = "circle.hexagongrid.fill"
+"menuBarMetricAppearance" = "values"
+"mixerHeadphonesDisconnectSilenceAllowed" = true
+"monitorAlertBattery" = true
+"monitorAlertBatteryPercent" = 15
+"monitorAlertBatteryTemperatureThreshold" = 40
+"monitorAlertCPUTemperatureThreshold" = 90
+"monitorAlertCPUThreshold" = 90
+"monitorAlertCooldownMinutes" = 15
+"monitorAlertDisk" = true
+"monitorAlertDiskFreePercent" = 10
+"monitorIntervalSeconds" = 2
+"monitorMemoryMetric" = "app"
+"monitorPwrPeripherals" = false
+"monitorPwrTemperature" = true
+"monitorSysAlerts" = true
+"monitorSysCPU" = true
+"monitorSysCPUCores" = true
+"monitorSysConnectedDevices" = true
+"monitorSysGPU" = true
+"monitorSysMemory" = true
+"monitorSysTemps" = true
+"monitorSysUptime" = true
+"musicBlockEnabled" = true
+"notchAccessoriesEnabled" = true
+"notchCalendarEnabled" = true
+"notchDownloadsEnabled" = true
+"notchEnabled" = true
+"notchGesturesEnabled" = true
+"notchHiddenControls" = "commandBar,keyboardLight,microphone,panel,recording,scratchpad,screenshot,speedTest"
+"notchHideMenuBarGap" = true
+"notchHideUntilHover" = false
+"notchHoverExpands" = false
+"notchKeepAwakeActivity" = false
+"notchKeyboardLightControlHidden" = true
+"notchLiquidGlassEnabled" = true
+"notchLyricsEnabled" = true
+"notchMascotEnabled" = true
+"notchNotificationsEnabled" = true
+"notchOpenOnHover" = false
+"notchOutlineEnabled" = false
+"notchQueueEnabled" = true
+"notchScratchpadControlHidden" = true
+"notchSize" = "spacious"
+"notchTimerEnabled" = true
+"notchWatchEnabled" = true
+"panelControlWindowsExpanded" = false
+"panelSectionOrder" = "keepAwake,brightness,mixer,system,fanControl,network,disk,power,utilities,controls,toggles,wallpaper"
+"panelSystemOrder" = ""
+"scrollInverterHorizontalEnabled" = false
+"soundOutputSwitcherEnabled" = true
+"switcherEnabled" = false
+"switcherPreviewSize" = "normal"
+"windowLayoutScreenGap" = 8
+"windowLayoutShortcutsEnabled" = true
+"windowLayoutWindowGap" = 8

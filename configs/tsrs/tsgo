@@ -1,13 +1,26 @@
 #!/bin/sh
-# The TypeScript 7 extension searches for an executable named tsgo or tsc.
-# The tsrs command from npm is a Node.js launcher that adds about 100 ms to
-# each start, so run the native binary from the platform package. Bun installs
-# only the packages for this CPU; on Linux, the GNU package sorts before musl.
-# In Cursor, a project sets js/ts.tsdk.path to its own launcher. For other
-# projects, set it to the absolute path of ~/.config/tsrs in the user settings.
+# The TypeScript Native Preview extension in Cursor and VS Code runs only an
+# executable named tsc or tsgo from the folder that js/ts.tsdk.path names. So
+# this file is named tsgo, and the user settings set that path to the absolute
+# path of ~/.config/tsrs. Neovim runs it too (configs/nvim/lua/plugins/tsrs.lua).
+#
+# The tsrs command from npm, and the tsdk/tsgo file in the tsrs package, are
+# Node.js launchers that add about 100 ms to each start. This file runs the
+# native binary from the platform package. The package manager installs only
+# the packages for this CPU; on Linux, the GNU package sorts before musl.
+#
+# A project that installs tsrs as a dev dependency uses its own copy. Set
+# "js/ts.experimental.useTsgo": true and
+# "js/ts.tsdk.path": "./node_modules/tsrs/tsdk" in .vscode/settings.json.
 mise="$HOME/.local/bin/mise"
-dir=$("$mise" where npm:tsrs 2>/dev/null)
-for exe in "$dir"/node_modules/@tsrs/*/tsrs; do
-  [ -x "$exe" ] && exec "$exe" "$@"
+dir=$("$mise" where npm:tsrs 2>/dev/null) || dir=""
+# Bun puts the package in node_modules. pnpm (on the MacBook Air) puts it in a
+# global folder, such as v11/<id>/node_modules, as a link to its store, and
+# the platform package is next to the real folder.
+for pkg in "$dir"/node_modules/tsrs "$dir"/*/*/node_modules/tsrs; do
+  [ -n "$dir" ] && [ -d "$pkg" ] || continue
+  for exe in "$(cd -P "$pkg/.." && pwd -P)"/@tsrs/*/tsrs; do
+    [ -x "$exe" ] && exec "$exe" "$@"
+  done
 done
 exec "$mise" exec -- tsrs "$@"

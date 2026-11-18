@@ -55,11 +55,12 @@ record_file() {
   printf '%s/%s.sha256' "$state_dir" "${name//\//_}"
 }
 
-# One line per merge that mise.toml declares: the live file and its source.
+# One line per merge that mise.toml or mise.devhost.toml declares: the live
+# file and its source. A profile file's merge is that machine's own.
 entries="$("$repo_root/bin/repo-mise" dot status --json)" || exit
 rows="$(printf '%s' "$entries" | /usr/bin/ruby -rjson -e '
   home = ENV.fetch("HOME")
-  shared = File.realpath(ARGV.fetch(0))
+  shared = ARGV.select { |path| File.exist?(path) }.map { |path| File.realpath(path) }
   expand = ->(path) { path.start_with?("~/") ? File.join(home, path[2..-1]) : path }
   JSON.parse($stdin.read).fetch("edits").each do |row|
     # A "/defaults" entry uses merge = "missing": the app owns the value after
@@ -67,10 +68,10 @@ rows="$(printf '%s' "$entries" | /usr/bin/ruby -rjson -e '
     next if row.fetch("edit") == "merge:defaults"
     origin = row.fetch("origin")
     config = expand.(origin.fetch("config"))
-    next unless File.exist?(config) && File.realpath(config) == shared
+    next unless File.exist?(config) && shared.include?(File.realpath(config))
     puts [expand.(row.fetch("path")), expand.(origin.fetch("source"))].join("\t")
   end
-' "$repo_root/mise.toml")"
+' "$repo_root/mise.toml" "$repo_root/mise.devhost.toml")"
 
 if [[ "$record_only" == 1 ]]; then
   mkdir -p "$state_dir"

@@ -20,10 +20,11 @@ log() {
 mkdir -p "$backup_dir"
 . "${repo_root}/bin/lib/dotfiles-profile.sh"
 DOTFILES_PROFILE="$(dotfiles_profile "$repo_root")" || exit
-# The Brewfile for every Mac, the profile's own Brewfile, and the mobile one.
+# The Brewfile for every Mac, the layer and profile Brewfiles, and the mobile
+# one, which setup installs on every profile except air.
 brewfiles=()
 while IFS= read -r brewfile; do brewfiles+=("$brewfile"); done < <(dotfiles_profile_app_lists "$repo_root" "$DOTFILES_PROFILE" brewfile)
-brewfiles+=("${repo_root}/apps/mobile.Brewfile")
+[[ "$DOTFILES_PROFILE" == air ]] || brewfiles+=("${repo_root}/apps/mobile.Brewfile")
 
 # Compares the entries of the Brewfiles (all but the last file) with the dump
 # of the installed state (the last file). Order and comments do not count.

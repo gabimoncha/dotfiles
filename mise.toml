@@ -1,7 +1,9 @@
-# Files and checkouts for every host. Apply them with ./bin/link-dotfiles.
-# mise also loads mise.macos.toml or mise.linux.toml for the platform, and the
-# profile file that the ignored .miserc.local.toml selects:
-# mise.macowl.toml, mise.macmini.toml, mise.air.toml, or mise.container.toml.
+# Files and checkouts for every host, the MacBook Air too. Apply them with
+# ./bin/link-dotfiles. mise also loads mise.macos.toml or mise.linux.toml for
+# the platform, mise.devhost.toml on the development machines (every profile
+# except air), and the profile file that the ignored .miserc.local.toml
+# selects: mise.macowl.toml, mise.macmini.toml, mise.air.toml, or
+# mise.container.toml.
 # bin/repo-mise requires the pinned mise. A soft minimum only warns, so tools
 # in this folder keep working while an older mise is installed.
 min_version = { soft = "2026.11.8" }
@@ -28,38 +30,19 @@ min_version = { soft = "2026.11.8" }
 
 "~/.tmux.conf" = { source = "configs/tmux/tmux.conf", mode = "symlink" }
 "~/.rgrc" = { source = "configs/ripgrep/rgrc", mode = "symlink" }
-"~/.androidrc" = { source = "configs/android/androidrc", mode = "symlink" }
-"~/.config/.bunfig.toml" = { source = "configs/bun/bunfig.toml", mode = "symlink" }
 "~/.config/pnpm/config.yaml/dotfiles" = { source = "configs/pnpm/config.yaml", merge = true, permissions = "0600" }
-"~/.config/tsrs/tsgo" = { source = "configs/tsrs/tsgo", mode = "symlink" }
 "~/.config/nvim" = { source = "configs/nvim", mode = "symlink" }
+"~/.config/tsrs/tsgo" = { source = "configs/tsrs/tsgo", mode = "symlink" }
 
 # The global mise config folder: runtime tools and settings, each profile's
 # config.<profile>.toml, and their locks. Its miserc.local.toml links to this
 # repository's .miserc.local.toml, so mise loads this machine's profile file.
 "~/.config/mise" = { source = "configs/mise/config", mode = "symlink" }
 
-# A link to mise acts as a shim: mise runs the tool that the link name names.
-# The Claude and Codex MCP configs start this path. A link to the tool's
-# install folder would fail, because setup links files before mise installs
-# tools, and one missing source stops the whole apply.
-"~/.local/bin/aether" = { source = "~/.local/bin/mise", mode = "symlink" }
-
 "~/bin/harness" = { source = "configs/harness/harness", mode = "symlink" }
 "~/bin/claude" = { source = "configs/claude/claude", mode = "symlink" }
 "~/bin/npx" = { source = "configs/npx/npx", mode = "symlink" }
 "~/bin/px" = { source = "configs/npx/npx", mode = "symlink" }
-"~/.codex/AGENTS.md" = { source = "configs/agents/instructions.md", mode = "symlink" }
-"~/.claude/CLAUDE.md" = { source = "~/.codex/AGENTS.md", mode = "symlink", relative = true, depends = [
-  "~/.codex/AGENTS.md",
-] }
-# Agent skills for every host. The skills CLI writes through these two links
-# into the repository, so commit configs/agents after `skills add`, `update`,
-# or `remove`. Claude Code reads only ~/.claude/skills, so each skill also gets
-# a link there. The glob leaves Claude Code's own items in that folder alone.
-"~/.agents/skills" = { source = "configs/agents/skills", mode = "symlink" }
-"~/.agents/.skill-lock.json" = { source = "configs/agents/skill-lock.json", mode = "symlink" }
-"~/.claude/skills/*" = { source = "configs/agents/skills/*", mode = "symlink" }
 # These apps rewrite their settings. mise sets only the keys in the sources,
 # and creates a missing file with mode 0600, because it can hold tokens.
 "~/.claude/settings.json/dotfiles" = { source = "configs/claude/settings.json", merge = true, permissions = "0600" }
@@ -67,26 +50,6 @@ min_version = { soft = "2026.11.8" }
 # A "/defaults" entry sets a key only when the file has none, so a profile can
 # override it. bin/save-settings never saves these sources.
 "~/.codex/config.toml/defaults" = { source = "configs/codex/defaults.toml", merge = "missing", permissions = "0600" }
-"~/.t3/userdata/settings.json/dotfiles" = { source = "configs/t3/settings.json", merge = true, permissions = "0600" }
-"~/.config/opencode/opencode.json/dotfiles" = { source = "configs/opencode/opencode.json", merge = true, permissions = "0600" }
-"~/.pi/agent/settings.json/dotfiles" = { source = "configs/pi/settings.json", merge = true, permissions = "0600" }
-
-# mise keeps a glob link after its source goes away. This hook removes the
-# broken skill links, the CLI's (../../.agents/skills/<name>) and mise's. It runs
-# after each `mise dot apply` and must not fail: a failure makes
-# bin/link-dotfiles undo the apply.
-[bootstrap.hooks.post-dotfiles]
-description = "Remove broken links in ~/.claude/skills"
-run = """
-for link in "$HOME"/.claude/skills/* "$HOME"/.claude/skills/.[!.]*; do
-  [ -L "$link" ] && [ ! -e "$link" ] || continue
-  case "$(readlink "$link" || true)" in
-    */.agents/skills/* | */configs/agents/skills/*)
-      rm -f "$link" && echo "Removed the broken skill link $link" || true ;;
-  esac
-done
-true
-"""
 
 [bootstrap.repos]
 "~/.oh-my-zsh" = { url = "https://github.com/ohmyzsh/ohmyzsh.git", depth = 1 }
@@ -118,10 +81,38 @@ run = [
   "./bin/preflight",
 ]
 
+# Starts each npm tool that ships its binary in a platform package. Bun skips a
+# blocked platform package with no error, so `mise install` passes and the tool
+# fails to start. mise has no read-only check for this: `mise test-tool`
+# deletes the installs and installs them again. Setup runs this task after
+# `mise install`. The settings stop `mise exec` from installing a missing tool.
+[tasks."check:tools"]
+description = "Check that the npm tools with platform packages start"
+env = { MISE_OFFLINE = "1", MISE_EXEC_AUTO_INSTALL = "0", MISE_AUTO_INSTALL = "0" }
+run = '''
+tools="tsrs oxlint oxfmt agent-device"
+[ "$(uname -s)" != Darwin ] || tools="$tools agent-browser"
+status=0
+for tool in $tools; do
+  if ! ./bin/repo-mise --global exec -- "$tool" --version >/dev/null 2>&1; then
+    echo "$tool did not start" >&2
+    status=1
+  fi
+done
+exit "$status"
+'''
+
 # Readiness checks: ./bin/repo-mise doctor project. Each check only reads
 # state. The platform and profile files add their own checks.
 [doctor.checks.mise-tools]
-description = "The configured mise tools are installed and start"
-run = "bin/check-mise-tools"
+description = "The configured mise tools are installed"
+run = "./bin/repo-mise --global install --dry-run-code"
 hint = "Run ./bin/repo-mise --global install --locked"
-timeout = "300s"
+timeout = "60s"
+
+[doctor.checks.npm-tools]
+description = "The npm tools with platform packages start"
+depends = "mise-tools"
+run = "./bin/repo-mise run check:tools"
+hint = "Add the missing platform package to configs/bun/bunfig.toml or configs/pnpm/config.yaml, then run ./bin/repo-mise --global install --force <tool>"
+timeout = "60s"

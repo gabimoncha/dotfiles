@@ -422,6 +422,20 @@ upload_ssh_key_to_github() {
     return 0
   fi
 
+  # GitHub verifies a signature only when the key and the commit email belong to
+  # the same account. The Air commits as rbrtpop (configs/git/air.gitconfig), so
+  # its key must not go to another account.
+  if [[ "$type" == signing ]]; then
+    local login email
+    login="$(run_gh api user --jq .login 2>/dev/null || true)"
+    email="$(default_git_email)"
+    if [[ -n "$login" && "$email" == *@users.noreply.github.com &&
+      "$email" != *"+${login}@users.noreply.github.com" ]]; then
+      warn "Git commits as ${email}, but the GitHub CLI is signed in as ${login}; the SSH signing key was not uploaded. Sign in as the account of that email, then rerun ./bin/auth-setup --ssh-only"
+      return 0
+    fi
+  fi
+
   key_contents="$(awk '{ print $1 " " $2 }' "$key_path")"
   set +e
   keys="$(run_gh api "$endpoint" --jq '.[].key' 2>&1)"

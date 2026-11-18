@@ -1,0 +1,7 @@
+# Apps for the development Macs (the devhost layer): macowl and macmini.
+# key	type	token_or_url	app_bundle	notes
+aerospace	cask	nikitabobko/tap/aerospace	AeroSpace	Homebrew cask; the mise registry has no aerospace entry.
+gcc	formula	gcc	-	Homebrew formula; the mise registry has no gcc entry.
+neardrop	cask	neardrop	NearDrop	Homebrew cask from grishka/grishka; macOS quarantine and consent are preserved.
+postgresql	formula	postgresql@18	-	Homebrew formula; it owns the data folder /opt/homebrew/var/postgresql@18. The mise entry is postgres (conda:postgresql).
+vorssaint	cask	vorssaint	Vorssaint	Homebrew cask for the menu bar toolkit.

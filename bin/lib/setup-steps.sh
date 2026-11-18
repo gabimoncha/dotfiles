@@ -429,7 +429,7 @@ prepare_brewfiles() {
   : >"$xcode_brewfile"
   : >"$mas_brewfile"
   : >"$cursor_extensions_brewfile"
-  # The Brewfile for every Mac, then the profile's own Brewfile.
+  # The Brewfile for every Mac, then the layer and profile Brewfiles.
   local brewfile
   while IFS= read -r brewfile; do
     filter_brewfile_for_existing_apps "$brewfile" "$temp_brewfile" "$xcode_brewfile" "$mas_brewfile" "$cursor_extensions_brewfile"
@@ -465,7 +465,7 @@ install_mise_tools() {
 install_and_check_mise_tools() {
   local install_status=0 check_status=0
   install_mise_tools || install_status=$?
-  "${repo_root}/bin/check-mise-tools" || check_status=$?
+  "${repo_root}/bin/repo-mise" run check:tools || check_status=$?
   [[ "$install_status" -eq 0 ]] || return "$install_status"
   return "$check_status"
 }
@@ -498,7 +498,11 @@ apply_macos_defaults_once() {
   local defaults_script="${repo_root}/macos/defaults.sh"
   local defaults_config="${repo_root}/mise.macos.toml"
   local profile_config="${repo_root}/mise.${DOTFILES_PROFILE}.toml"
-  local status=0
+  local layer_config="" layer status=0
+  # A layer file, such as mise.devhost.toml, holds preferences too.
+  for layer in $(dotfiles_profile_layers "$DOTFILES_PROFILE"); do
+    [[ ! "${repo_root}/mise.${layer}.toml" -nt "$layer_config" ]] || layer_config="${repo_root}/mise.${layer}.toml"
+  done
 
   runtime_acquire_lock "macos-defaults" "macOS defaults" || return 1
 
@@ -509,7 +513,8 @@ apply_macos_defaults_once() {
   fi
 
   if [[ -f "$macos_defaults_flag" && ! "$defaults_script" -nt "$macos_defaults_flag" &&
-    ! "$defaults_config" -nt "$macos_defaults_flag" && ! "$profile_config" -nt "$macos_defaults_flag" ]]; then
+    ! "$defaults_config" -nt "$macos_defaults_flag" && ! "$profile_config" -nt "$macos_defaults_flag" &&
+    ! "$layer_config" -nt "$macos_defaults_flag" ]]; then
     log "macOS defaults already applied"
     runtime_release_lock "macos-defaults"
     return 0

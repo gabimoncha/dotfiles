@@ -51,7 +51,7 @@ install_xcode() {
     return 0
   fi
   if ! mas_bin="$(resolve_mas)"; then
-    warn "mas is unavailable. It comes from the mise inventory; run ./bin/check-mise-tools."
+    warn "mas is unavailable. It comes from the mise inventory; run ./bin/repo-mise doctor project."
     return 1
   fi
   log "Installing Xcode from the App Store; this is a large download"

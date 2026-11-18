@@ -1,0 +1,5 @@
+# The MacBook Air's Git identity. mise.air.toml links this file to
+# ~/.config/git/profile, which configs/git/gitconfig includes.
+[user]
+	name = rbrtpop
+	email = 299485338+rbrtpop@users.noreply.github.com

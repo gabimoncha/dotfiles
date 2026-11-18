@@ -327,7 +327,8 @@ check_repo_state() {
   else
     fail "not inside a git repo"
   fi
-  for file in Brewfile mise.toml configs/mise/config/config.toml apps/manifest.tsv; do
+  for file in Brewfile apps/devhost.Brewfile mise.toml mise.devhost.toml configs/mise/config/config.toml \
+    configs/mise/config/config.devhost.toml configs/mise/config/config.air.toml apps/manifest.tsv; do
     if [[ -f "${repo_root}/${file}" ]]; then
       pass "${file} present"
     else

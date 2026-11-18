@@ -9,26 +9,27 @@ For mise behavior, the source of truth is the mise documentation at
 
 ## Where things live
 
-| To change                                          | Edit                                                                                                                               |
-| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| An app's settings file                             | `configs/<app>/`                                                                                                                   |
-| Where a file goes in HOME                          | the `[dotfiles]` entry in a root mise file                                                                                         |
-| Entries for every host                             | `mise.toml`                                                                                                                        |
-| Entries for one platform                           | `mise.macos.toml` or `mise.linux.toml`                                                                                             |
-| Entries for one machine                            | the profile file: `mise.macowl.toml`, `mise.macmini.toml`, `mise.air.toml`, or `mise.container.toml`                               |
-| Agent and T3 settings that sync between machines   | the merge sources in `configs/claude/`, `configs/codex/`, and `configs/t3/`; save them with `./bin/save-settings`                  |
-| Which agent settings sync                          | `configs/<app>/sync-keys`: one `public` rule per setting, including each key of the merge source, and `private` rules for sections |
-| Agent rules for every host                         | `configs/agents/instructions.md`                                                                                                   |
-| Agent rules for one host                           | `configs/agents/<profile>.md`                                                                                                      |
-| Installed agent skills                             | `configs/agents/skills/` and `configs/agents/skill-lock.json`, through the `skills` CLI                                            |
-| Runtime tools and mise tasks                       | `configs/mise/config/config.toml`                                                                                                  |
-| Runtime tools for one profile                      | `configs/mise/config/config.<profile>.toml`                                                                                        |
-| Homebrew formulae, casks, and App Store apps       | `Brewfile` for every Mac; `apps/<profile>.Brewfile` for one Mac                                                                    |
-| Manifest apps for one Mac                          | `apps/manifest.<profile>.tsv`                                                                                                      |
-| Apt packages                                       | `mise.linux.toml` or the profile file                                                                                              |
-| macOS preferences, Dock apps, and login items      | `[bootstrap.settings.macos]` in `mise.macos.toml` or the profile file, and `macos/defaults.sh`                                     |
-| Agent CLIs, mise, and other vendor-installed tools | `apps/standalone.tsv`                                                                                                              |
-| Setup steps                                        | `bin/`                                                                                                                             |
+| To change                                                       | Edit                                                                                                                               |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| An app's settings file                                          | `configs/<app>/`                                                                                                                   |
+| Where a file goes in HOME                                       | the `[dotfiles]` entry in a root mise file                                                                                         |
+| Entries for every host, the MacBook Air too                     | `mise.toml`                                                                                                                        |
+| Entries for the development machines (every profile except air) | `mise.devhost.toml`                                                                                                                |
+| Entries for one platform                                        | `mise.macos.toml` or `mise.linux.toml`                                                                                             |
+| Entries for one machine                                         | the profile file: `mise.macowl.toml`, `mise.macmini.toml`, `mise.air.toml`, or `mise.container.toml`                               |
+| Agent and T3 settings that sync between machines                | the merge sources in `configs/claude/`, `configs/codex/`, and `configs/t3/`; save them with `./bin/save-settings`                  |
+| Which agent settings sync                                       | `configs/<app>/sync-keys`: one `public` rule per setting, including each key of the merge source, and `private` rules for sections |
+| Agent rules for every development host                          | `configs/agents/instructions.md`                                                                                                   |
+| Agent rules for one host                                        | `configs/agents/<profile>.md`                                                                                                      |
+| Installed agent skills                                          | `configs/agents/skills/` and `configs/agents/skill-lock.json`, through the `skills` CLI                                            |
+| Runtime tools and mise tasks                                    | `configs/mise/config/config.toml` for every host; `config.devhost.toml` for the development machines                               |
+| Runtime tools for one profile                                   | `configs/mise/config/config.<profile>.toml`                                                                                        |
+| Homebrew formulae, casks, and App Store apps                    | `Brewfile` for every Mac; `apps/devhost.Brewfile` for macowl and macmini; `apps/<profile>.Brewfile` for one Mac                    |
+| Manifest apps                                                   | `apps/manifest.tsv` for every Mac; `apps/manifest.devhost.tsv` and `apps/manifest.<profile>.tsv` as for the Brewfiles              |
+| Apt packages                                                    | `mise.linux.toml` or the profile file                                                                                              |
+| macOS preferences, Dock apps, and login items                   | `[bootstrap.settings.macos]` in `mise.macos.toml`, `mise.devhost.toml`, or the profile file, and `macos/defaults.sh`               |
+| Agent CLIs, mise, and other vendor-installed tools              | `apps/standalone.tsv`                                                                                                              |
+| Setup steps                                                     | `bin/`                                                                                                                             |
 
 Apply file changes with `./bin/link-dotfiles`. Preview them first with
 `./bin/link-dotfiles --dry-run`. Apply them only from the main checkout,
@@ -139,7 +140,9 @@ Read mise state with `--json`, for example `ls --json` or
   `licenses/skills/`.
 - Keep local companions under ignored `local/`; only examples belong in Git.
 - Keep the profile checks in `bin/lib/dotfiles-profile.sh` before setup writes.
-  The Air profile stays deferred.
+- The MacBook Air is not a development machine. Put a development tool, link,
+  or app in the devhost layer (`mise.devhost.toml`, `config.devhost.toml`,
+  `apps/devhost.Brewfile`), not in a file for every host.
 - Never commit credentials, private identities, backup payloads, or machine-local
   state. See [SECURITY.md](SECURITY.md).
 - Keep test fixtures and diagnostic scratch files in system temporary directories.

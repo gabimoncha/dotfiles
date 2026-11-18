@@ -36,6 +36,7 @@ minimumReleaseAgeExcludes = [
   "@oxfmt/binding-linux-x64-gnu",
   "@fallow-cli/darwin-arm64",
   "@fallow-cli/linux-x64-gnu",
+  "@agent-browser/cli-darwin-arm64",
   "fallow-type-aware",
   "oxlint-plugin-react-doctor",
   "bun-types",

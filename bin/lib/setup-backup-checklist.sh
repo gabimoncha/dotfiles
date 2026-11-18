@@ -32,6 +32,8 @@ setup_backup_checklist() {
   local secondary="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
   local kind pattern kinds
   kinds="$(dotfiles_profile_restores "$DOTFILES_PROFILE")"
+  # A profile with no restores, such as air, needs no backups.
+  [[ -n "$kinds" ]] || return 0
   cat <<EOF
 
 Cloud backups needed for restore

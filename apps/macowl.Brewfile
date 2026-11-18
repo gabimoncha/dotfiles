@@ -1,4 +1,4 @@
-# Entries for the macowl profile only: personal, media, and dictation apps,
+# Entries for the macowl profile only: personal, media, design, and dictation apps,
 # Synology, and the T3 Code desktop app. The root Brewfile has the entries for
 # every Mac. Each third-party tap here was reviewed, as in the root Brewfile.
 tap "anomalyco/tap", trusted: true
@@ -22,6 +22,7 @@ cask "mole-app"
 cask "notion-calendar"
 cask "obs"
 cask "obsidian"
+cask "paper-design"
 cask "pgadmin4"
 cask "kitlangton/tap/scrawl"
 cask "signal"

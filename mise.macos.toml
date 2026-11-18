@@ -1,17 +1,13 @@
 # macOS only. mise loads this file on every Mac. macos/defaults.sh applies the
 # [bootstrap.settings.macos] preferences, Dock apps, and login items of this
-# file and of the profile file, then sets input sources and display sleep,
-# which mise cannot set.
+# file, of mise.devhost.toml, and of the profile file, then sets input sources
+# and display sleep, which mise cannot set. The text, mouse, trackpad, and Dock
+# settings are in mise.devhost.toml, so the MacBook Air keeps its own.
 
 [dotfiles]
-"~/.aerospace.toml" = { source = "configs/aerospace/aerospace.toml", mode = "symlink" }
 "~/Library/Application Support/com.mitchellh.ghostty/config" = { source = "configs/ghostty/config", mode = "symlink" }
-"~/.config/karabiner/karabiner.json" = { source = "configs/karabiner/karabiner.json", mode = "symlink" }
-"~/scripts/toggle_function_keys.sh" = { source = "configs/karabiner/toggle_function_keys.sh", mode = "symlink" }
 # The login script that gives GUI apps the telemetry opt-outs.
 "~/bin/dotfiles-telemetry-env" = { source = "macos/dotfiles-telemetry-env", mode = "symlink" }
-# The script of the process-log login job below.
-"~/bin/dotfiles-process-log" = { source = "bin/log-processes", mode = "symlink" }
 # Commit signing. configs/git/gitconfig includes it.
 "~/.config/git/macos" = { source = "configs/git/macos.gitconfig", mode = "symlink" }
 
@@ -29,54 +25,13 @@ program = "/usr/bin/ssh-add"
 args = ["--apple-load-keychain"]
 run_at_load = true
 
-# Each minute, log free memory and the busiest processes into
-# ~/.local/state/dotfiles/process-log/. A later memory incident then shows what
-# grew and which parent started it. bin/load-login-jobs applies it.
-[bootstrap.macos.launchd.agents.process-log]
-program = "~/bin/dotfiles-process-log"
-run_at_load = true
-start_interval = 60
-process_type = "Background"
-
 [bootstrap.settings.macos.defaults.NSGlobalDomain]
 AppleLocale = "en_US@currency=RON"
 AppleKeyboardUIMode = 3
-# Language & Region > Live Text. Off, so a paused video in Safari does not turn
-# into selectable text.
-AppleLiveTextEnabled = false
 ApplePressAndHoldEnabled = false
 InitialKeyRepeat = 15
 KeyRepeat = 2
-NSAutomaticCapitalizationEnabled = false
-NSAutomaticDashSubstitutionEnabled = true
-NSAutomaticQuoteSubstitutionEnabled = true
-NSAutomaticSpellingCorrectionEnabled = false
-KB_SpellingLanguage = { KB_SpellingLanguageIsAutomatic = true }
-NSSpellCheckerAutomaticallyIdentifiesLanguages = true
 "com.apple.keyboard.fnState" = false
-"com.apple.mouse.scaling" = 3.0
-"com.apple.scrollwheel.scaling" = 1.7
-"com.apple.swipescrolldirection" = true
-"com.apple.trackpad.forceClick" = false
-"com.apple.trackpad.scaling" = 3.0
-
-[bootstrap.settings.macos.defaults."com.apple.AppleMultitouchMouse"]
-MouseButtonMode = "OneButton"
-MouseHorizontalScroll = true
-MouseMomentumScroll = true
-MouseOneFingerDoubleTapGesture = 1
-MouseTwoFingerHorizSwipeGesture = 2
-
-[bootstrap.settings.macos.defaults."com.apple.AppleMultitouchTrackpad"]
-Clicking = true
-Dragging = false
-TrackpadRightClick = true
-TrackpadThreeFingerDrag = false
-
-[bootstrap.settings.macos.defaults."com.apple.driver.AppleBluetoothMultitouch.trackpad"]
-Clicking = true
-TrackpadRightClick = true
-TrackpadThreeFingerDrag = false
 
 [bootstrap.settings.macos.defaults."com.apple.finder"]
 AppleShowAllFiles = true
@@ -87,38 +42,11 @@ ShowStatusBar = true
 [bootstrap.settings.macos.defaults."com.apple.screencapture"]
 "disable-shadow" = true
 
-# The apps that open at login on every Mac. A profile file adds its own apps.
+# The apps that open at login on every Mac. mise.devhost.toml and the profile
+# file add their own apps.
 # mise adds the missing ones and leaves other login items alone.
 [bootstrap.settings.macos.login_items]
-apps = [
-  "/Applications/AeroSpace.app",
-  "/Applications/Expo Orbit.app",
-  "/Applications/Ghostty.app",
-  "/Applications/Raycast.app",
-  "/Applications/Tailscale.app",
-  "/Applications/Vorssaint.app",
-]
-
-# The apps pinned in the Dock, in this order. mise adds, removes, and orders
-# them. Folders and files in the Dock stay as they are.
-[bootstrap.settings.macos.dock]
-apps = [
-  "/System/Applications/Apps.app",
-  "/Applications/Safari.app",
-  "/System/Applications/Photos.app",
-  "/System/Applications/FaceTime.app",
-  "/System/Applications/App Store.app",
-  "/System/Applications/Siri AI.app",
-  "/System/Applications/System Settings.app",
-]
-
-[bootstrap.settings.macos.defaults."com.apple.dock"]
-autohide = true
-largesize = 51
-magnification = true
-orientation = "bottom"
-"expose-group-apps" = true
-tilesize = 34
+apps = ["/Applications/Ghostty.app", "/Applications/Raycast.app", "/Applications/Tailscale.app"]
 
 [bootstrap.settings.macos.defaults."com.apple.ActivityMonitor"]
 SortDirection = 1
@@ -126,162 +54,6 @@ SortDirection = 1
 [bootstrap.settings.macos.defaults."com.apple.SoftwareUpdate"]
 AutomaticCheckEnabled = true
 AutomaticDownload = true
-
-# Portable Vorssaint preferences captured from version 3.4.2.
-# Device identifiers, calibration, and session state stay local. Each profile
-# file has the fan curve of its machine.
-[bootstrap.settings.macos.defaults."com.vorssaint.utils"]
-"appAppearance" = "system"
-"audioPriorityInputEnabled" = true
-"audioPriorityOutputEnabled" = true
-"batteryLimitPercent" = 10
-"bluetoothSleepEnabled" = true
-"brightnessControlEnabled" = true
-"clamshellPreferred" = true
-"defaultDurationMinutes" = 0
-"extraBrightnessEnabled" = false
-"extraBrightnessLevel" = 100
-"featureAvailable.appUpdates" = false
-"featureAvailable.audioPriority" = true
-"featureAvailable.autoQuit" = false
-"featureAvailable.bluetoothSleep" = true
-"featureAvailable.brightness" = true
-"featureAvailable.cameraPreview" = true
-"featureAvailable.cleaner" = false
-"featureAvailable.cleaningMode" = false
-"featureAvailable.clipboardHistory" = false
-"featureAvailable.colorPicker" = true
-"featureAvailable.commandBar" = false
-"featureAvailable.connectedDevices" = true
-"featureAvailable.diskImageInstaller" = false
-"featureAvailable.dockClick" = false
-"featureAvailable.dockPreview" = false
-"featureAvailable.extraBrightness" = true
-"featureAvailable.fanControl" = true
-"featureAvailable.finderCutPaste" = false
-"featureAvailable.finderRename" = false
-"featureAvailable.focusFollowsMouse" = false
-"featureAvailable.homebrew" = true
-"featureAvailable.keepAwake" = true
-"featureAvailable.keyboardDebounce" = false
-"featureAvailable.killProcess" = false
-"featureAvailable.linearScroll" = false
-"featureAvailable.mediaTools" = false
-"featureAvailable.micMute" = true
-"featureAvailable.middleClick" = false
-"featureAvailable.mixer" = true
-"featureAvailable.monitorCPU" = true
-"featureAvailable.monitorDisk" = true
-"featureAvailable.monitorGPU" = true
-"featureAvailable.monitorMemory" = true
-"featureAvailable.monitorNetwork" = true
-"featureAvailable.monitorPower" = true
-"featureAvailable.mouseAcceleration" = false
-"featureAvailable.mouseButtonShortcuts" = false
-"featureAvailable.mouseClickDebounce" = false
-"featureAvailable.mouseNavigation" = false
-"featureAvailable.musicBlock" = true
-"featureAvailable.notch" = true
-"featureAvailable.notchAccessories" = true
-"featureAvailable.notchAgents" = false
-"featureAvailable.notchCalendar" = true
-"featureAvailable.notchDownloads" = true
-"featureAvailable.notchGestures" = true
-"featureAvailable.notchLiveEqualizer" = true
-"featureAvailable.notchLyrics" = true
-"featureAvailable.notchMascot" = true
-"featureAvailable.notchNotifications" = true
-"featureAvailable.notchQueue" = true
-"featureAvailable.notchTimer" = true
-"featureAvailable.notchWatch" = true
-"featureAvailable.pastePlain" = false
-"featureAvailable.portManager" = false
-"featureAvailable.quickLauncher" = false
-"featureAvailable.quickToggles" = false
-"featureAvailable.quitWindowProtection" = false
-"featureAvailable.radialMenu" = false
-"featureAvailable.scratchpad" = false
-"featureAvailable.screenOCR" = false
-"featureAvailable.screenRecorder" = false
-"featureAvailable.screenshot" = true
-"featureAvailable.scrollHorizontal" = false
-"featureAvailable.scrollInverter" = false
-"featureAvailable.shelf" = false
-"featureAvailable.smoothScroll" = false
-"featureAvailable.soundOutputSwitcher" = true
-"featureAvailable.spacesOrder" = false
-"featureAvailable.superKey" = false
-"featureAvailable.switcher" = false
-"featureAvailable.textSnippets" = false
-"featureAvailable.uninstaller" = false
-"featureAvailable.urlCleaner" = false
-"featureAvailable.wallpaper" = false
-"featureAvailable.windowLayout" = true
-"featureAvailable.windowMaximizer" = false
-"keepAwakeActiveIcon" = "coffee"
-"keepAwakeAutoStart" = true
-"keepAwakeIconTint" = "orange"
-"keepAwakeMouseJiggleEnabled" = false
-"keepAwakeMouseJiggleIntervalMinutes" = 5
-"keepAwakeRightClickToggle" = true
-"keepAwakeSwitchUsesUntil" = false
-"liquidGlassEnabled" = true
-"menuBarIconSymbol" = "circle.hexagongrid.fill"
-"menuBarMetricAppearance" = "values"
-"mixerHeadphonesDisconnectSilenceAllowed" = true
-"monitorAlertBattery" = true
-"monitorAlertBatteryPercent" = 15
-"monitorAlertBatteryTemperatureThreshold" = 40
-"monitorAlertCPUTemperatureThreshold" = 90
-"monitorAlertCPUThreshold" = 90
-"monitorAlertCooldownMinutes" = 15
-"monitorAlertDisk" = true
-"monitorAlertDiskFreePercent" = 10
-"monitorIntervalSeconds" = 2
-"monitorMemoryMetric" = "app"
-"monitorPwrPeripherals" = false
-"monitorPwrTemperature" = true
-"monitorSysAlerts" = true
-"monitorSysCPU" = true
-"monitorSysCPUCores" = true
-"monitorSysConnectedDevices" = true
-"monitorSysGPU" = true
-"monitorSysMemory" = true
-"monitorSysTemps" = true
-"monitorSysUptime" = true
-"musicBlockEnabled" = true
-"notchAccessoriesEnabled" = true
-"notchCalendarEnabled" = true
-"notchDownloadsEnabled" = true
-"notchEnabled" = true
-"notchGesturesEnabled" = true
-"notchHiddenControls" = "commandBar,keyboardLight,microphone,panel,recording,scratchpad,screenshot,speedTest"
-"notchHideMenuBarGap" = true
-"notchHideUntilHover" = false
-"notchHoverExpands" = false
-"notchKeepAwakeActivity" = false
-"notchKeyboardLightControlHidden" = true
-"notchLiquidGlassEnabled" = true
-"notchLyricsEnabled" = true
-"notchMascotEnabled" = true
-"notchNotificationsEnabled" = true
-"notchOpenOnHover" = false
-"notchOutlineEnabled" = false
-"notchQueueEnabled" = true
-"notchScratchpadControlHidden" = true
-"notchSize" = "spacious"
-"notchTimerEnabled" = true
-"notchWatchEnabled" = true
-"panelControlWindowsExpanded" = false
-"panelSectionOrder" = "keepAwake,brightness,mixer,system,fanControl,network,disk,power,utilities,controls,toggles,wallpaper"
-"panelSystemOrder" = ""
-"scrollInverterHorizontalEnabled" = false
-"soundOutputSwitcherEnabled" = true
-"switcherEnabled" = false
-"switcherPreviewSize" = "normal"
-"windowLayoutScreenGap" = 8
-"windowLayoutShortcutsEnabled" = true
-"windowLayoutWindowGap" = 8
 
 [[bootstrap.settings.macos.defaults_entries]]
 domain = "com.apple.controlcenter"
@@ -350,9 +122,3 @@ domain = "com.apple.symbolichotkeys"
 key = "AppleSymbolicHotKeys"
 path = ["256", "enabled"]
 value = false
-
-[doctor.checks.mobile]
-description = "Xcode, the simulators, and the Android SDK are ready"
-run = "bin/check-mobile-ready"
-hint = "Run ./bin/install-mobile-dev, or ./bin/setup --continue"
-timeout = "120s"

@@ -137,6 +137,8 @@ setup_touch_id_step() {
 setup_tokenburnmarket_step() {
   if [[ "${DOTFILES_SKIP_TOKENBURNMARKET:-0}" == 1 ]]; then
     skip_step tokenburnmarket DOTFILES_SKIP_TOKENBURNMARKET=1
+  elif [[ "$DOTFILES_PROFILE" == air ]]; then
+    skip_step tokenburnmarket 'the Air does not install tokenburnmarket'
   else
     step --optional tokenburnmarket sensitive setup_tokenburnmarket
   fi
@@ -178,7 +180,11 @@ setup_macos_continue() {
   step brew_environment local setup_brew_environment
   # The mise config links must exist before setup checks mise's GitHub access.
   step links capture setup_links
-  step --optional code_folders local setup_code_folders
+  if [[ "$DOTFILES_PROFILE" == air ]]; then
+    skip_step code_folders 'the Air is not a development machine'
+  else
+    step --optional code_folders local setup_code_folders
+  fi
   # The GitHub steps are optional: setup_mise_inventory and bin/install-apps
   # check the API access themselves, and the other steps do not need it.
   step --optional authenticate_api sensitive setup_api
@@ -197,19 +203,31 @@ setup_macos_continue() {
   step --optional shell capture setup_shell
   # Pi needs Node from the mise inventory.
   step --optional standalone_agents capture setup_standalone_agents
-  step --optional restores sensitive setup_restores
+  if [[ -n "$(dotfiles_profile_restores "$DOTFILES_PROFILE")" ]]; then
+    step --optional restores sensitive setup_restores
+  else
+    skip_step restores "the ${DOTFILES_PROFILE} profile restores no backups"
+  fi
   step --optional final_links capture setup_final_links
   # macos/defaults.sh applies mise.macos.toml with the standalone mise,
   # including the Dock apps and the login items.
   step --optional defaults sensitive setup_defaults
-  step --optional screenshots capture setup_screenshots
-  step --optional finder sensitive setup_finder
+  # The Air keeps the macOS screenshot folder and Finder sidebar.
+  if [[ "$DOTFILES_PROFILE" == air ]]; then
+    skip_step screenshots 'the Air keeps the macOS screenshot folder'
+    skip_step finder 'the Air keeps its Finder sidebar'
+  else
+    step --optional screenshots capture setup_screenshots
+    step --optional finder sensitive setup_finder
+  fi
   setup_macmini_steps
   setup_tokenburnmarket_step
   # After every interactive step, so the long Xcode download runs unattended.
   # Before telemetry, so its opt-outs cover the installed mobile tools.
   if [[ "${DOTFILES_SKIP_MOBILE_DEV:-0}" == 1 ]]; then
     skip_step mobile_setup --skip-mobile-dev
+  elif [[ "$DOTFILES_PROFILE" == air ]]; then
+    skip_step mobile_setup 'the Air is not a development machine'
   else
     step --optional mobile_setup capture setup_mobile
   fi
@@ -247,6 +265,8 @@ setup_linux() {
   # Linux gets only the Android SDK. The download runs after the other steps.
   if [[ "${DOTFILES_SKIP_MOBILE_DEV:-0}" == 1 ]]; then
     skip_step mobile_setup --skip-mobile-dev
+  elif [[ "$DOTFILES_PROFILE" == air ]]; then
+    skip_step mobile_setup 'the Air is not a development machine'
   else
     step --optional mobile_setup capture setup_mobile
   fi

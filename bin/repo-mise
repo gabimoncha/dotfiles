@@ -2,11 +2,13 @@
 # Run the pinned standalone mise on this repository's config only.
 #
 #   ./bin/repo-mise <mise arguments...>
-#     Loads mise.toml, mise.macos.toml or mise.linux.toml, and the profile's
-#     mise.<profile>.toml from the repository root. Example: dot status
+#     Loads mise.toml, mise.macos.toml or mise.linux.toml, the profile's
+#     layers (mise.devhost.toml), and the profile's mise.<profile>.toml from the
+#     repository root. Example: dot status
 #   ./bin/repo-mise --global <mise arguments...>
 #     Uses configs/mise/config as the config folder, as ~/.config/mise does:
-#     config.toml and the profile's config.<profile>.toml, when it exists.
+#     config.toml, config.devhost.toml for every profile except air, and the
+#     profile's config.<profile>.toml, when they exist.
 #     Example: --global install
 set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -48,13 +50,16 @@ if ! mise_at_pin "$mise_bin"; then
     "$mise_bin" "$pinned_mise_version" >&2
   exit 1
 fi
+# The profile's layers load before its own files: devhost,macowl.
+mise_env=""
+[[ -z "$profile" ]] || mise_env="$(dotfiles_profile_mise_env "$profile")"
 if [[ "$scope" == global ]]; then
   # MISE_ENV wins over miserc.local.toml, which can be missing before setup.
-  MISE_CONFIG_DIR="${repo_root}/configs/mise/config" MISE_ENV="$profile" MISE_AUTO_ENV=0 exec "$mise_bin" "$@"
+  MISE_CONFIG_DIR="${repo_root}/configs/mise/config" MISE_ENV="$mise_env" MISE_AUTO_ENV=0 exec "$mise_bin" "$@"
 fi
 cd "$repo_root"
 # The ceiling stops mise from loading a config file in a parent folder. mise
 # reads ~/.config/mise/config.toml again after it links it, so trust it too.
 MISE_GLOBAL_CONFIG_FILE="${MISE_CONFIG_DIR}/config.toml" MISE_CEILING_PATHS="$(dirname "$repo_root")" \
-MISE_TRUSTED_CONFIG_PATHS="${repo_root}:${repo_root}/configs/mise:${HOME}/.config/mise" MISE_AUTO_ENV=1 MISE_ENV="$profile" \
+MISE_TRUSTED_CONFIG_PATHS="${repo_root}:${repo_root}/configs/mise:${HOME}/.config/mise" MISE_AUTO_ENV=1 MISE_ENV="$mise_env" \
 DOTFILES_PROFILE="$profile" exec "$mise_bin" "$@"
