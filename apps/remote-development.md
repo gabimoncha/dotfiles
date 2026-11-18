@@ -142,7 +142,11 @@ from stopping the daemons. `running` in `status` means that
 the script runs, not that T3 answers. Check T3 in the app, or read
 `logs t3` for "no complete runtime" and launcher errors. The setup step
 `tokenburnmarket` signs in, and restarts its daemon when `mise up` has moved
-node or the CLI.
+node or the CLI. The tokenburnmarket script also checks once an hour, so a
+`mise up` outside setup reaches the daemon within an hour. mise owns the
+tokenburnmarket updates, so the script sets `TBM_NO_UPDATE_CHECK=1`. The CLI
+cannot update a mise install itself, and its update notice names an npm
+install that mise does not track.
 
 A restart keeps the container and its system packages. A build makes a new
 container from the image, which removes what apt installed. At each start, the

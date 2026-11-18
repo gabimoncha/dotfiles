@@ -2,8 +2,9 @@
 # The run command of the tokenburnmarket daemon in mise.container.toml, on a
 # Linux host without systemd, such as the NAS container. It does what the unit
 # from `tokenburnmarket daemon install` does: it keeps the daemon running.
-# Each start finds node and the CLI through mise again, so a restart follows
-# `mise up`.
+# Each start finds node and the CLI through mise again. Once an hour, the
+# script also restarts the daemon when mise has moved either of them, for
+# example after `mise up`.
 #
 # pitchfork, through mise, starts this script, keeps one copy and its output,
 # and stops it. The restart loop stays here: the unit restarts the daemon after
@@ -24,7 +25,18 @@ cd "$HOME"
 log() { printf 'tokenburnmarket-supervise: %s\n' "$1"; }
 real_tool() { MISE_AUTO_INSTALL=0 "$HOME/.local/bin/mise" which "$1" 2>/dev/null; }
 
+# mise owns the updates, with its release delay and mise.lock. The CLI picks
+# its update command from the path that it runs from, and has none for a mise
+# install (installMethod in dist/index.js, 0.5.0). Without this switch, the
+# daemon logs an npm install command at each sync when npm has a newer
+# version, and that command would add a second install outside mise.
+export TBM_NO_UPDATE_CHECK=1
+# Seconds between the checks for a node or CLI that mise has moved.
+check_every=3600
+
 pid=""
+# The sleep that times the next check, while the daemon runs.
+timer=""
 # The PID that already got this script's SIGTERM, so it never gets a second.
 signaled=""
 # An earlier copy of this script that got SIGTERM and still stops its daemon.
@@ -73,6 +85,7 @@ on_stop() {
     return
   fi
   trap '' TERM INT HUP
+  [[ -z "$timer" ]] || kill "$timer" 2>/dev/null || true
   [[ -z "$pid" ]] || stop_daemon || true
   [[ -z "$stopping" ]] || finish_stopping || true
   exit 0
@@ -127,7 +140,16 @@ clear_stale_lock() {
   log "removed a stale daemon lock: PID $held is not a tokenburnmarket daemon"
 }
 
+# True when mise now gives another node or CLI than the daemon runs. False
+# when mise gives none, for example during an install.
+tools_moved() {
+  local now_node now_cli
+  now_node="$(real_tool node)" && now_cli="$(real_tool tokenburnmarket)" || return 1
+  [[ "$now_node" != "$node" || "$now_cli" != "$cli" ]]
+}
+
 while true; do
+  moved=""
   if node="$(real_tool node)" && cli="$(real_tool tokenburnmarket)"; then
     clear_stale_lock
     # pitchfork stops a daemon with a signal to its whole process group. setsid
@@ -137,11 +159,32 @@ while true; do
     pid=$!
     deferring=""
     [[ -z "$stop_requested" ]] || on_stop
-    wait "$pid" || log "daemon exited with status $?"
+    # Wait for the daemon or the next check, whichever comes first. wait -n -p
+    # needs Bash 5.1; Debian 12 and 13 have 5.2.
+    while :; do
+      sleep "$check_every" &
+      timer=$!
+      done_pid=""
+      status=0
+      wait -n -p done_pid "$pid" "$timer" || status=$?
+      if [[ "$done_pid" == "$timer" ]]; then
+        timer=""
+        tools_moved || continue
+        log "mise moved node or tokenburnmarket; restarting the daemon on them"
+        stop_daemon || not_gone "$pid"
+        wait "$pid" 2>/dev/null || true
+        moved=1
+        break
+      fi
+      kill "$timer" 2>/dev/null || true
+      timer=""
+      [[ "$status" == 0 ]] || log "daemon exited with status $status"
+      break
+    done
     pid=""
     signaled=""
   else
     log "mise has no tokenburnmarket or node; run ./bin/setup"
   fi
-  pause 30
+  [[ -n "$moved" ]] || pause 30
 done
