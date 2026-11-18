@@ -20,6 +20,9 @@ mise.*.local.toml
 /configs/mise/config/config.override.toml
 /configs/mise/config/config.*.override.toml
 
+# Claude Code puts the worktrees of its sessions here.
+/.claude/worktrees/
+
 # Local companions stay on this machine. Keep the examples tracked.
 /local/*
 !/local/*.example
