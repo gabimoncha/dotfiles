@@ -45,6 +45,9 @@ shellcheck = "latest"
 shfmt = "latest"
 # Linux only: the Mac installs btop with Homebrew, and btop ships no macOS build.
 btop = { version = "latest", os = "linux" }
+# Linux only: the supervisor of the [daemons] in mise.container.toml. The Macs
+# run their services with launchd.
+pitchfork = { version = "latest", os = "linux" }
 # The JDK for Android builds and sdkmanager. mise sets JAVA_HOME in activated
 # shells. Scripts and configs/zsh/env.zsh use the link that follows upgrades:
 # ~/.local/share/mise/installs/java/global.

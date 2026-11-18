@@ -498,7 +498,11 @@ apply_macos_defaults_once() {
   local defaults_script="${repo_root}/macos/defaults.sh"
   local defaults_config="${repo_root}/mise.macos.toml"
   local profile_config="${repo_root}/mise.${DOTFILES_PROFILE}.toml"
-  local status=0
+  local layer_config="" layer status=0
+  # A layer file, such as mise.devhost.toml, holds preferences too.
+  for layer in $(dotfiles_profile_layers "$DOTFILES_PROFILE"); do
+    [[ ! "${repo_root}/mise.${layer}.toml" -nt "$layer_config" ]] || layer_config="${repo_root}/mise.${layer}.toml"
+  done
 
   runtime_acquire_lock "macos-defaults" "macOS defaults" || return 1
 
@@ -509,7 +513,8 @@ apply_macos_defaults_once() {
   fi
 
   if [[ -f "$macos_defaults_flag" && ! "$defaults_script" -nt "$macos_defaults_flag" &&
-    ! "$defaults_config" -nt "$macos_defaults_flag" && ! "$profile_config" -nt "$macos_defaults_flag" ]]; then
+    ! "$defaults_config" -nt "$macos_defaults_flag" && ! "$profile_config" -nt "$macos_defaults_flag" &&
+    ! "$layer_config" -nt "$macos_defaults_flag" ]]; then
     log "macOS defaults already applied"
     runtime_release_lock "macos-defaults"
     return 0

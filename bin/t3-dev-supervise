@@ -1,42 +1,58 @@
 #!/usr/bin/env bash
-# Install as ~/.local/bin/t3-supervise for the non-root NAS container user.
-# The container has no systemd, so this loop does what the unit from
+# The run command of the t3 daemon in mise.container.toml, on a Linux host
+# without systemd, such as the NAS container. It does what the unit from
 # `t3 service install` does: it keeps T3's service launcher running. The
 # launcher starts `t3 serve`, so the desktop app can update this server. An
 # update gets a database backup, and a failed update goes back to the old version.
+#
+# pitchfork, through mise, starts this script, keeps one copy and its output,
+# and stops it. The restart loop stays here: T3's unit restarts the launcher
+# 5 seconds after every exit, and pitchfork restarts only after a failure, with
+# a wait that grows with each restart.
 set -eu
 [[ "$(uname -s)" == Linux && "$(id -u)" != 0 ]] || {
   printf 'Run this supervisor as the non-root Linux development user.\n' >&2
   exit 1
 }
 umask 077
+. "$(dirname "${BASH_SOURCE[0]}")/lib/daemon-procs.sh"
+. "$(dirname "${BASH_SOURCE[0]}")/lib/t3-launcher.sh"
 export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
-# After a container recreate the login shell is bash, which skips the zsh
-# files that load the telemetry opt-outs. T3 and its agents inherit them here.
+# The daemon does not read the zsh files that load the telemetry opt-outs.
+# T3 and its agents inherit them here.
 [ ! -r "$HOME/.config/zsh/telemetry.sh" ] || . "$HOME/.config/zsh/telemetry.sh"
 export T3CODE_HOME="$HOME/.t3" T3CODE_HOST=0.0.0.0 T3CODE_PORT=3773
 # `t3 serve` uses the working directory for provider sessions.
 cd /workspace
-logs="$HOME/.local/state/t3"
 service_state="$T3CODE_HOME/runtime/service-state.json"
-mkdir -p "$logs"
-exec 9>"$logs/supervisor.lock"
-flock -n 9 || exit 0
 
-log() { printf 't3-supervise: %s\n' "$1" >>"$logs/server.log"; }
+log() { printf 't3-supervise: %s\n' "$1"; }
 
 # The protocol that `t3 service install` writes for the installed CLI. The CLI
 # does not print it. When a T3 error names a new protocol, change this number.
 launcher_protocol=4
 
+# Prints the runtime binary that ~/.local/bin/t3 runs: the target of a link
+# from an older installer, or the version that the launcher file runs.
+launcher_runtime() {
+  local launcher="$HOME/.local/bin/t3" runtime
+  if [[ -L "$launcher" ]]; then
+    readlink -f "$launcher"
+    return
+  fi
+  runtime="$(t3_launcher_target "$launcher")" || return 1
+  [[ -x "$runtime" ]] || return 1
+  printf '%s\n' "$runtime"
+}
+
 # The launcher runs the version in service-state.json, and that server must
 # speak the launcher's protocol. The container has no `t3 service install`, so do
-# its work here: pin the runtime that the official installer linked as
-# ~/.local/bin/t3 when the file is missing or pins an older version. Keep a
-# newer version, which an update from the T3 app installed.
+# its work here: pin the runtime that ~/.local/bin/t3 runs when the file is
+# missing or pins an older version. Keep a newer version, which an update from
+# the T3 app installed.
 seed_service_state() {
   local runtime version active
-  runtime="$(readlink -f "$HOME/.local/bin/t3")" || return 1
+  runtime="$(launcher_runtime)" || return 1
   version="$(basename "$(dirname "$runtime")")"
   [[ "$(cat "$(dirname "$runtime")/.install-complete" 2>/dev/null)" == "$version" ]] || return 1
   if [[ -f "$service_state" ]]; then
@@ -52,29 +68,142 @@ seed_service_state() {
 }
 
 pid=""
+# The PID that already got this script's SIGTERM. The launcher handles only
+# its first SIGTERM, so it never gets a second one.
+signaled=""
+# An earlier copy of this script that got SIGTERM and still stops its launcher.
+stopping=""
+# Set while a stop must wait: while the launcher starts and its PID is not
+# known yet, and between recording an earlier copy and sending it SIGTERM.
+deferring=""
+stop_requested=""
+
 # Background sleeps let the trap run at once instead of after the sleep ends.
 pause() {
   sleep "$1" &
   wait $! || true
 }
-# The launcher stops the server first. 90 seconds matches T3's launchd job.
-stop_launcher() {
-  kill -TERM "$pid" 2>/dev/null || return 0
-  for _ in $(seq 90); do
-    kill -0 "$pid" 2>/dev/null || return 0
+# Waits up to $2 seconds for process $1 to exit. A zombie counts as exited.
+wait_gone() {
+  local _
+  for _ in $(seq "$2"); do
+    proc_alive "$1" || return 0
     pause 1
   done
-  kill -KILL "$pid" 2>/dev/null || true
+  ! proc_alive "$1"
 }
-trap '[[ -z "$pid" ]] || stop_launcher; exit 0' TERM INT HUP
+# The launcher that got a SIGTERM, as "<PID> <start time>". A copy of this
+# script, or the --stop-orphans step, that finds a launcher whose script died
+# reads it, so that launcher never gets a second SIGTERM.
+sigterm_mark="$HOME/.local/state/dotfiles/t3-launcher-sigterm"
+sigterm_sent() {
+  local start
+  start="$(proc_start "$1")" || return 1
+  [[ "$(cat "$sigterm_mark" 2>/dev/null)" == "$1 $start" ]]
+}
+# The launcher stops the server first. 90 seconds matches T3's launchd job,
+# and pitchfork waits 95 seconds for this script. The launcher runs in its own
+# process group. Returns 1 when it still runs 2 seconds after SIGKILL.
+stop_launcher() {
+  if [[ "$signaled" != "$pid" ]] && ! sigterm_sent "$pid"; then
+    # The mark goes first, so a script that dies right after the signal
+    # leaves it.
+    mkdir -p "${sigterm_mark%/*}"
+    printf '%s %s\n' "$pid" "$(proc_start "$pid")" >"$sigterm_mark"
+    kill -TERM "$pid" 2>/dev/null || return 0
+  fi
+  signaled="$pid"
+  wait_gone "$pid" 90 && return 0
+  # Linux can give a gone launcher's PID to a new process.
+  t3_launcher_pid "$pid" || return 0
+  kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+  wait_gone "$pid" 2
+}
+# The earlier copy needs at most 92 seconds, so it finishes first.
+finish_stopping() {
+  wait_gone "$stopping" 93 && return 0
+  supervise_pid "$stopping" t3-dev-supervise || return 0
+  kill -KILL "$stopping" 2>/dev/null || true
+  wait_gone "$stopping" 1
+}
+# The stop also waits for an earlier copy, so the container does not end
+# before that copy's launcher stops. Further stop signals are ignored.
+on_stop() {
+  if [[ -n "$deferring" ]]; then
+    stop_requested=1
+    return
+  fi
+  trap '' TERM INT HUP
+  [[ -z "$pid" ]] || stop_launcher || true
+  [[ -z "$stopping" ]] || finish_stopping || true
+  exit 0
+}
+trap on_stop TERM INT HUP
+# Exits instead of starting a second launcher next to one that still runs.
+# pitchfork starts this script again later.
+not_gone() {
+  log "PID $1 still runs after SIGKILL; not starting a second launcher"
+  exit 1
+}
+
+# The compose command runs this after `pitchfork supervisor stop`. pitchfork
+# signals only the process group of this script, so a launcher whose script
+# died, for example from the out-of-memory killer, would miss its clean stop.
+# Each script stops its own launcher first, so this finds a launcher only
+# when no script runs, and the launcher still gets only one SIGTERM.
+if [[ "${1:-}" == --stop-orphans ]]; then
+  matching_pids '__service-launcher' t3_launcher_pid
+  for pid in ${matched[@]+"${matched[@]}"}; do
+    # The stop of an earlier PID can take 92 seconds. Check this one again.
+    t3_launcher_pid "$pid" || continue
+    supervise_pid "$(ps -o ppid= -p "$pid" | tr -d ' ')" t3-dev-supervise && continue
+    log "stopping a launcher whose supervisor is gone (PID $pid)"
+    signaled=""
+    stop_launcher || log "PID $pid still runs after SIGKILL"
+  done
+  exit 0
+fi
+
+# Only one launcher may run. An earlier copy of this script can still run when
+# pitchfork died and started again. SIGTERM lets its trap stop its launcher.
+matching_pids '/bin/t3-dev-supervise$' supervise_pid t3-dev-supervise
+for old in ${matched[@]+"${matched[@]}"}; do
+  # The stop of an earlier PID can take 93 seconds. Check this one again.
+  supervise_pid "$old" t3-dev-supervise || continue
+  deferring=1
+  stopping="$old"
+  kill -TERM "$old" 2>/dev/null || stopping=""
+  deferring=""
+  [[ -z "$stop_requested" ]] || on_stop
+  [[ -n "$stopping" ]] || continue
+  log "stopping an earlier supervisor (PID $old)"
+  finish_stopping || not_gone "$old"
+  stopping=""
+done
+# A launcher whose script was killed before its trap ran, for example by the
+# out-of-memory killer, still runs in its own process group.
+matching_pids '__service-launcher' t3_launcher_pid
+for pid in ${matched[@]+"${matched[@]}"}; do
+  t3_launcher_pid "$pid" || continue
+  log "stopping a launcher that an earlier supervisor left (PID $pid)"
+  stop_launcher || not_gone "$pid"
+done
+pid=""
+signaled=""
 
 while true; do
-  [[ ! -f "$logs/server.log" ]] || mv -f "$logs/server.log" "$logs/server.log.1"
   if seed_service_state; then
-    "$HOME/.local/bin/t3" __service-launcher >>"$logs/server.log" 2>&1 &
+    # pitchfork stops a daemon with a signal to its whole process group. The
+    # launcher handles only its first SIGTERM, and a second one would end its
+    # cleanup. setsid gives it its own group, and stop_launcher signals it.
+    deferring=1
+    setsid "$HOME/.local/bin/t3" __service-launcher &
     pid=$!
+    deferring=""
+    [[ -z "$stop_requested" ]] || on_stop
     wait "$pid" || log "launcher exited with status $?"
     pid=""
+    signaled=""
   else
     log "no complete runtime at ~/.local/bin/t3; rerun the T3 install script"
   fi

@@ -2,7 +2,7 @@
 # Installs the T3 server as a login service on a Mac that runs it with no
 # desktop app, such as the Mac mini. bin/install-standalone installs the t3
 # command first. The T3 app on another machine then updates this server. The
-# NAS container has no service manager and uses bin/t3-dev-supervise instead.
+# NAS container has no service manager and runs T3 as a mise daemon instead.
 # Exit 20 means deferred: the t3 command is not installed yet.
 #
 # Usage: setup-t3-service [--dry-run]

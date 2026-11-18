@@ -335,6 +335,9 @@ version = "0.27.2"
 backend = "npm:tree-sitter-cli"
 specifiers = ["latest"]
 
+[tools."npm:tree-sitter-cli".options]
+allow_builds = '["tree-sitter-cli"]'
+
 [[tools."npm:tsrs"]]
 version = "7.1.0-beta.tsrs2"
 backend = "npm:tsrs"

@@ -91,15 +91,79 @@ Do not commit actual host addresses, identities, keys, or pairing links.
 The example preserves the existing named home and SSH host-key volumes and
 workspace bind mount. The compose file does not install T3 or the agent CLIs;
 `./bin/setup` installs them in the persistent home (see "Dotfiles on the box").
-Install `bin/t3-dev-supervise` there as `~/.local/bin/t3-supervise` (mode 0700). The
-container starts it as that user. Changes take effect on a container restart;
-port-mapping changes require a project rebuild. Do not delete persistent volumes.
+A restart keeps the container's command, ports, and stop grace period. A
+change to any of them in the compose file takes effect only after a project
+rebuild. Do not delete persistent volumes. After a rebuild,
+`docker inspect nasbox --format '{{.Config.StopTimeout}}'` prints the grace
+period in seconds.
 
-The tokenburnmarket sync daemon also needs a supervisor here. The setup step
-`tokenburnmarket` signs in, installs `bin/tokenburnmarket-supervise` as
-`~/.local/bin/tokenburnmarket-supervise`, and starts it. The example compose
-file starts it after a container restart. Copy that line into the compose file
-on the NAS. The daemon logs to `~/.local/state/tokenburnmarket/daemon.log`.
+### Check a stale container name after a rebuild
+
+If DSM shows `<old-id>_nasbox` and the project editor will not open,
+look up the running container by name. Run this on the NAS in a one-time
+DSM Task Scheduler task as `root`:
+
+```sh
+synowebapi --exec api=SYNO.Docker.Container version=1 method=get name=nasbox |
+  jq '{success,code:.error.code}'
+```
+
+If the lookup returns `success: true`, reopen **Container**, then
+**Project > nasbox > YAML Configurations**. Delete the root task after use.
+
+### Daemons
+
+The container has no systemd. Two mise daemons in `mise.container.toml` run
+T3 and the tokenburnmarket sync daemon as `box`, under the pitchfork
+supervisor. The compose command starts them when the container starts. It
+tries again each minute until a first start succeeds, for example while setup
+still installs mise. Later, within a minute after pitchfork dies or another
+pitchfork replaces it, it starts every daemon again. When the container stops, it runs `pitchfork supervisor stop` before it
+stops sshd. The supervisor refuses new starts, waits for a start in progress,
+and stops every daemon with its own stop timeout, so T3 can stop its server.
+Then `bin/t3-dev-supervise --stop-orphans` stops a T3 launcher whose script
+died, which pitchfork cannot reach. `stop_grace_period: 130s` covers the t3
+daemon's 95 seconds.
+
+To move the NAS to these daemons, first update the checkout in the box:
+`git -C ~/code/personal/dotfiles pull`, then check that
+`~/code/personal/dotfiles/bin/container-daemons` exists. The new command
+starts nothing without it. Then replace the whole `command` block in the
+compose file on the NAS with the one in the example, and add
+`stop_grace_period: 130s`. The old command started two loops from
+`~/.local/bin`, and a rebuild with only the new grace period keeps them. Then
+rebuild the project, and keep the volumes.
+
+Run every daemons command through `./bin/container-daemons`, not
+`./bin/repo-mise daemons`. The supervisor keeps the environment of the command
+that starts it, and `repo-mise` hides the global tools. Run it in the main
+checkout. The daemons use the fixed namespace `nasbox`, so a start from a
+second checkout or a worktree stops with "external configuration conflicts
+with namespace 'nasbox'".
+
+```bash
+./bin/container-daemons status
+./bin/container-daemons logs t3
+./bin/container-daemons restart tokenburnmarket
+```
+
+Each daemon runs a script from this checkout: `bin/t3-dev-supervise` and
+`bin/tokenburnmarket-supervise`. The script restarts its service after every
+exit, as the systemd units of T3 and tokenburnmarket do. pitchfork keeps one
+copy of each script and keeps their output. At its start, a script stops an
+earlier copy of itself and a service that an earlier run left, for example
+after the out-of-memory killer ended a script. The tokenburnmarket script also
+removes a stale `daemon.lock`, whose PID a new process can have after an
+unclean stop. `MISE_AUTO_INSTALL=0` keeps a failed install of another tool
+from stopping the daemons. `running` in `status` means that
+the script runs, not that T3 answers. Check T3 in the app, or read
+`logs t3` for "no complete runtime" and launcher errors. The setup step
+`tokenburnmarket` signs in, and restarts its daemon when `mise up` has moved
+node or the CLI. The tokenburnmarket script also checks once an hour, so a
+`mise up` outside setup reaches the daemon within an hour. mise owns the
+tokenburnmarket updates, so the script sets `TBM_NO_UPDATE_CHECK=1`. The CLI
+cannot update a mise install itself, and its update notice names an npm
+install that mise does not track.
 
 A restart keeps the container and its system packages. A build makes a new
 container from the image, which removes what apt installed. At each start, the
@@ -118,7 +182,9 @@ Install T3 with the official script, not the `t3` npm package:
 curl -fsSL https://t3.codes/install.sh | T3CODE_CHANNEL=nightly sh
 ```
 
-The script links `~/.local/bin/t3` to `~/.t3/runtime/versions/VERSION/t3`.
+The script writes `~/.local/bin/t3` as a two-line shell file that runs
+`~/.t3/runtime/versions/VERSION/t3`. Installers before
+0.1.11-nightly.20261118.4877 wrote a link there instead. Setup accepts both.
 The npm package runs only the runtime that matches its own version, so it
 ignores updates.
 Do not run `npm uninstall -g t3` after a change to the script install. npm
@@ -134,12 +200,11 @@ server must speak the protocol of the launcher. Otherwise the server stops at
 once with "The service launcher supplied invalid startup context". Before each
 start of the launcher, the supervisor does the work of `t3 service install`.
 When the file is missing, or names a version older than the runtime that
-`~/.local/bin/t3` links to, the supervisor writes that runtime and the
+`~/.local/bin/t3` runs, the supervisor writes that runtime and the
 protocol in `launcher_protocol` to the file. It keeps the old file as
 `service-state.json.bak`. It keeps a newer version that the app installed.
-When the launcher exits, the supervisor starts it again after 5 seconds. The
-current log is `~/.local/state/t3/server.log`, and the log of the previous
-start is `server.log.1`.
+When the launcher exits, the supervisor starts it again after 5 seconds.
+`./bin/container-daemons logs t3` shows the output.
 
 When the app reports that the launcher speaks an older protocol, install the
 CLI version from the error message with the install script. Then stop the
@@ -149,11 +214,9 @@ starts the new one. If the error names a protocol higher than
 SSH and the T3 terminal do not work, run the commands as root from a DSM Task
 Scheduler script with `docker exec -u box nasbox`.
 
-The container starts the supervisor only when the container starts. After a
-change to `bin/t3-dev-supervise`, run
-`install -m 0700 bin/t3-dev-supervise ~/.local/bin/t3-supervise` and restart
-the container. Do not use `cp`: it writes into the file that the running Bash
-reads, and Bash can then run broken lines.
+After a change to `bin/t3-dev-supervise` or to the daemons in
+`mise.container.toml`, pull the checkout and run
+`./bin/container-daemons restart t3`.
 
 SSH publishes port 2222 and T3 publishes port 3773 on the NAS interfaces, for
 LAN and Tailscale access. Do not bind SSH only to the NAS's Tailscale address:

@@ -6,6 +6,8 @@ standalone_manifest="${repo_root}/apps/standalone.tsv"
 . "${repo_root}/bin/lib/mise-pin.sh"
 # shellcheck source=bin/lib/dotfiles-profile.sh
 . "${repo_root}/bin/lib/dotfiles-profile.sh"
+# shellcheck source=bin/lib/t3-launcher.sh
+. "${repo_root}/bin/lib/t3-launcher.sh"
 
 # Keep inherited discovery settings from adding or omitting repository configs.
 # Preserve cache, state, data, and authentication settings for the caller.
@@ -114,6 +116,15 @@ standalone_installed() {
       return
       ;;
     pi) [[ -f "$root/install/managed-install.json" ]] || return 1 ;;
+    t3)
+      # A link from an older installer resolves above. The launcher file that
+      # newer installers write resolves to the version that it runs.
+      if [[ ! -L "$command" ]]; then
+        real="$(t3_launcher_target "$command")" || return 1
+        real="$(standalone_realpath "$real")" || return 1
+        [[ -f "$real" && -x "$real" ]] || return 1
+      fi
+      ;;
     cursor)
       # The installer creates both names; callers use either one.
       local alias_real

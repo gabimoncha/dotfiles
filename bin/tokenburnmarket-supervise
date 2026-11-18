@@ -1,44 +1,196 @@
 #!/usr/bin/env bash
-# bin/setup-tokenburnmarket installs this as ~/.local/bin/tokenburnmarket-supervise
-# on a Linux host without systemd, such as the NAS container. It does what the
-# unit from `tokenburnmarket daemon install` does: it keeps the daemon running.
-# Each start finds the mise CLI and node again, so a restart follows `mise up`.
+# The run command of the tokenburnmarket daemon in mise.container.toml, on a
+# Linux host without systemd, such as the NAS container. It does what the unit
+# from `tokenburnmarket daemon install` does: it keeps the daemon running.
+# Each start finds node and the CLI through mise again. Once an hour, the
+# script also restarts the daemon when mise has moved either of them, for
+# example after `mise up`.
+#
+# pitchfork, through mise, starts this script, keeps one copy and its output,
+# and stops it. The restart loop stays here: the unit restarts the daemon after
+# every exit, and pitchfork restarts only after a failure, with a wait that
+# grows with each restart.
 set -eu
 [[ "$(uname -s)" == Linux && "$(id -u)" != 0 ]] || {
   printf 'Run this supervisor as the non-root Linux development user.\n' >&2
   exit 1
 }
 umask 077
+. "$(dirname "${BASH_SOURCE[0]}")/lib/daemon-procs.sh"
 export PATH="$HOME/.local/bin:$PATH"
-# The container starts this with bash, which skips the zsh telemetry opt-outs.
+# The daemon does not read the zsh files that load the telemetry opt-outs.
 [ ! -r "$HOME/.config/zsh/telemetry.sh" ] || . "$HOME/.config/zsh/telemetry.sh"
 cd "$HOME"
-logs="$HOME/.local/state/tokenburnmarket"
-mkdir -p "$logs"
-exec 9>"$logs/supervisor.lock"
-flock -n 9 || exit 0
 
-log() { printf 'tokenburnmarket-supervise: %s\n' "$1" >>"$logs/daemon.log"; }
+log() { printf 'tokenburnmarket-supervise: %s\n' "$1"; }
 real_tool() { MISE_AUTO_INSTALL=0 "$HOME/.local/bin/mise" which "$1" 2>/dev/null; }
 
+# mise owns the updates, with its release delay and mise.lock. The CLI picks
+# its update command from the path that it runs from, and has none for a mise
+# install (installMethod in dist/index.js, 0.5.0). Without this switch, the
+# daemon logs an npm install command at each sync when npm has a newer
+# version, and that command would add a second install outside mise.
+export TBM_NO_UPDATE_CHECK=1
+# Seconds between the checks for a node or CLI that mise has moved.
+check_every=3600
+
 pid=""
+# The sleep that times the next check, while the daemon runs.
+timer=""
+# The PID that already got this script's SIGTERM, so it never gets a second.
+signaled=""
+# An earlier copy of this script that got SIGTERM and still stops its daemon.
+stopping=""
+# Set while a stop must wait: while the daemon starts and its PID is not
+# known yet, and between recording an earlier copy and sending it SIGTERM.
+deferring=""
+stop_requested=""
+
 # Background sleeps let the trap run at once instead of after the sleep ends.
 pause() {
   sleep "$1" &
   wait $! || true
 }
-trap '[[ -z "$pid" ]] || kill -TERM "$pid" 2>/dev/null || true; exit 0' TERM INT HUP
+# Waits up to $2 half-seconds for process $1 to exit. A zombie counts as exited.
+wait_gone() {
+  local _
+  for _ in $(seq "$2"); do
+    proc_alive "$1" || return 0
+    pause 0.5
+  done
+  ! proc_alive "$1"
+}
+# pitchfork kills this script 5 seconds after its stop signal. The daemon gets
+# 3 seconds, then SIGKILL to its own process group, and half a second to exit.
+# Returns 1 when it still runs after SIGKILL.
+stop_daemon() {
+  if [[ "$signaled" != "$pid" ]]; then
+    kill -TERM "$pid" 2>/dev/null || return 0
+    signaled="$pid"
+  fi
+  wait_gone "$pid" 6 && return 0
+  # Linux can give a gone daemon's PID to a new process.
+  tbm_daemon_pid "$pid" || return 0
+  kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+  wait_gone "$pid" 1
+}
+# The earlier copy needs at most 3.5 seconds, so it finishes first.
+finish_stopping() {
+  wait_gone "$stopping" 8 && return 0
+  supervise_pid "$stopping" tokenburnmarket-supervise || return 0
+  kill -KILL "$stopping" 2>/dev/null || true
+  wait_gone "$stopping" 1
+}
+# The stop also waits for an earlier copy. Further stop signals are ignored.
+on_stop() {
+  if [[ -n "$deferring" ]]; then
+    stop_requested=1
+    return
+  fi
+  trap '' TERM INT HUP
+  [[ -z "$timer" ]] || kill "$timer" 2>/dev/null || true
+  [[ -z "$pid" ]] || stop_daemon || true
+  [[ -z "$stopping" ]] || finish_stopping || true
+  exit 0
+}
+trap on_stop TERM INT HUP
+# Exits instead of starting a second daemon next to one that still runs.
+# pitchfork starts this script again later.
+not_gone() {
+  log "PID $1 still runs after SIGKILL; not starting a second daemon"
+  exit 1
+}
+
+# Only one daemon may sync. An earlier copy of this script can still run when
+# pitchfork died and started again. SIGTERM lets its trap stop its daemon.
+matching_pids '/bin/tokenburnmarket-supervise$' supervise_pid tokenburnmarket-supervise
+for old in ${matched[@]+"${matched[@]}"}; do
+  # The stop of an earlier PID can take long. Check this one again.
+  supervise_pid "$old" tokenburnmarket-supervise || continue
+  deferring=1
+  stopping="$old"
+  kill -TERM "$old" 2>/dev/null || stopping=""
+  deferring=""
+  [[ -z "$stop_requested" ]] || on_stop
+  [[ -n "$stopping" ]] || continue
+  log "stopping an earlier supervisor (PID $old)"
+  finish_stopping || not_gone "$old"
+  stopping=""
+done
+# A daemon whose script was killed before its trap ran, for example by the
+# out-of-memory killer, or one that was started by hand.
+matching_pids 'daemon' tbm_daemon_pid
+for pid in ${matched[@]+"${matched[@]}"}; do
+  tbm_daemon_pid "$pid" || continue
+  log "stopping a daemon that this supervisor did not start (PID $pid)"
+  stop_daemon || not_gone "$pid"
+done
+pid=""
+signaled=""
+
+# The CLI's lock records a PID. The CLI takes over a lock whose PID is gone,
+# but it refuses one whose PID exists (acquireLock in daemon.ts, 0.5.0). After
+# an unclean container stop, another process can have that PID. Remove the
+# lock only then. A lock whose PID is gone stays for the CLI to take over, so
+# this never removes a lock that a new daemon has just written.
+config_home="${XDG_CONFIG_HOME:-}"
+[[ "$config_home" == /* ]] || config_home="$HOME/.config"
+lock="$config_home/tokenburnmarket/daemon.lock"
+clear_stale_lock() {
+  local held
+  [[ -f "$lock" ]] || return 0
+  held="$(sed -n 's/.*"pid": *\([0-9][0-9]*\).*/\1/p' "$lock")"
+  [[ -n "$held" && -e "/proc/$held" ]] || return 0
+  ! tbm_daemon_pid "$held" || return 0
+  rm -f "$lock"
+  log "removed a stale daemon lock: PID $held is not a tokenburnmarket daemon"
+}
+
+# True when mise now gives another node or CLI than the daemon runs. False
+# when mise gives none, for example during an install.
+tools_moved() {
+  local now_node now_cli
+  now_node="$(real_tool node)" && now_cli="$(real_tool tokenburnmarket)" || return 1
+  [[ "$now_node" != "$node" || "$now_cli" != "$cli" ]]
+}
 
 while true; do
-  [[ ! -f "$logs/daemon.log" ]] || [[ "$(wc -c <"$logs/daemon.log")" -lt 1048576 ]] ||
-    mv -f "$logs/daemon.log" "$logs/daemon.log.1"
+  moved=""
   if node="$(real_tool node)" && cli="$(real_tool tokenburnmarket)"; then
-    "$node" "$cli" daemon >>"$logs/daemon.log" 2>&1 &
+    clear_stale_lock
+    # pitchfork stops a daemon with a signal to its whole process group. setsid
+    # gives the daemon its own group, so it gets only this script's SIGTERM.
+    deferring=1
+    setsid "$node" "$cli" daemon &
     pid=$!
-    wait "$pid" || log "daemon exited with status $?"
+    deferring=""
+    [[ -z "$stop_requested" ]] || on_stop
+    # Wait for the daemon or the next check, whichever comes first. wait -n -p
+    # needs Bash 5.1; Debian 12 and 13 have 5.2.
+    while :; do
+      sleep "$check_every" &
+      timer=$!
+      done_pid=""
+      status=0
+      wait -n -p done_pid "$pid" "$timer" || status=$?
+      if [[ "$done_pid" == "$timer" ]]; then
+        timer=""
+        tools_moved || continue
+        log "mise moved node or tokenburnmarket; restarting the daemon on them"
+        stop_daemon || not_gone "$pid"
+        wait "$pid" 2>/dev/null || true
+        moved=1
+        break
+      fi
+      kill "$timer" 2>/dev/null || true
+      timer=""
+      [[ "$status" == 0 ]] || log "daemon exited with status $status"
+      break
+    done
     pid=""
+    signaled=""
   else
     log "mise has no tokenburnmarket or node; run ./bin/setup"
   fi
-  pause 30
+  [[ -n "$moved" ]] || pause 30
 done
