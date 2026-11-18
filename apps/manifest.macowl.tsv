@@ -7,6 +7,7 @@ helium-browser	cask	helium-browser	Helium	Homebrew cask.
 hex	cask	anomalyco/tap/hex	Hex	Vendor Homebrew cask for local dictation.
 iina	cask	iina	IINA	Homebrew cask.
 linear	cask	linear	Linear	Homebrew cask.
+mole-app	cask	mole-app	Mole	Homebrew cask for the Mole GUI app.
 notion-calendar	cask	notion-calendar	Notion Calendar	Homebrew cask.
 obs	cask	obs	OBS	Homebrew cask supported by OBS; settings restored by Mackup.
 obsidian	cask	obsidian	Obsidian	Homebrew cask.
