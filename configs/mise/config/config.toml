@@ -73,6 +73,9 @@ wrangler = { version = "4.153.0", allow_builds = ["esbuild", "sharp", "workerd"]
 hk = "latest"
 # Formats Markdown in repos whose hk.pkl runs it, including this one.
 "npm:oxfmt" = "latest"
+# Lints JavaScript and TypeScript in Neovim (configs/nvim/lua/plugins/oxc.lua).
+# From 1.93 it runs tsrs-lint for the type-aware rules.
+"npm:oxlint" = "latest"
 shellcheck = "latest"
 shfmt = "latest"
 # TypeScript checks and the editor language server (~/.config/tsrs/tsgo).
