@@ -677,3 +677,18 @@ standalone helpers.
 
 The shell's daily background `git fetch` only notifies. `dotfiles-update`
 pulls and reapplies configuration.
+
+### Tool checks
+
+The `mise-tools` doctor check runs `mise install --dry-run-code`, which exits
+with status 1 when a configured tool is missing. It replaces the old
+`bin/check-mise-tools` script and its hand-written list of commands.
+
+mise has no read-only check that an installed tool starts. `mise test-tool`
+deletes the installs of each tool and installs them again. So the
+`check:tools` task in `mise.toml` runs `--version` for the npm tools that ship
+their binary in a platform package: tsrs, oxlint, oxfmt, agent-device, and
+agent-browser on a Mac. Bun skips a blocked platform package with no error, so
+`mise install` passes and only a start shows the failure. Setup runs the task
+after `mise install`, and the `npm-tools` doctor check runs it too. Add a new
+npm tool with platform packages to the task.

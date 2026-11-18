@@ -10,14 +10,11 @@ brew "apktool"
 brew "borders"
 brew "gcc"
 brew "ghostscript"
-brew "glyph"
 brew "grpc"
 brew "homebrew-zathura/zathura/zathura-cb"
 brew "homebrew-zathura/zathura/zathura-pdf-mupdf"
 brew "postgresql@18"
 brew "switchaudio-osx"
-brew "telnet"
-brew "zlib"
 
 # Mac App Store
 mas "DevCleaner for Xcode", id: 1388020431

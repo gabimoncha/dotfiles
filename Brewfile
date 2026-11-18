@@ -19,13 +19,16 @@ brew "curl"
 # stay in Homebrew.
 brew "ffmpeg"
 brew "git"
+brew "glyph"
 # mise compiles Ruby when it finds no precompiled build, and psych then needs libyaml.
 brew "libyaml"
 brew "mole"
 brew "openssl@3"
 brew "smartmontools"
+brew "telnet"
 brew "webp"
 brew "yt-dlp"
+brew "zlib"
 
 # Mac App Store
 mas "The Unarchiver", id: 425424353

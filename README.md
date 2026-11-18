@@ -483,7 +483,7 @@ Authentication output is omitted. Review logs before you share them.
 | `./bin/auth-setup --ssh-only`                           | Repair the Git identity and SSH access.                                                                                                                                                                                                               |
 | `./bin/auth-setup --git-only`                           | Linux: repair the Git identity and Git over HTTPS.                                                                                                                                                                                                    |
 | `./bin/auth-setup --verify-mise`                        | Check the direct credential helper.                                                                                                                                                                                                                   |
-| `./bin/check-mise-tools`                                | Check the installed tools without installing any.                                                                                                                                                                                                     |
+| `./bin/repo-mise run check:tools`                       | Check that the npm tools with platform packages start. `./bin/repo-mise doctor project` also checks for missing tools.                                                                                                                                |
 | `./bin/install-apps [--dry-run]`                        | Retry or preview the app manifest.                                                                                                                                                                                                                    |
 | `./bin/install-standalone status`                       | Report the vendor-installed tools in `apps/standalone.tsv`.                                                                                                                                                                                           |
 | `./bin/install-standalone [NAME...]`                    | Install or repair those tools. `--dry-run` previews.                                                                                                                                                                                                  |
@@ -501,7 +501,7 @@ Authentication output is omitted. Review logs before you share them.
 | `./bin/setup-tokenburnmarket [--dry-run]`               | Sign in to tokenburnmarket and install its sync daemon. A Linux host without systemd runs it as a mise daemon (`mise.container.toml`). A connected host with a current daemon is not changed. `DOTFILES_SKIP_TOKENBURNMARKET=1` skips the setup step. |
 | `./bin/configure-sudo-touch-id --check`                 | Inspect Touch ID for sudo. `--enable` and `--disable` change it.                                                                                                                                                                                      |
 
-Tool checks and version probes stop after 10 seconds. Set
+The version probes of the standalone tools stop after 10 seconds. Set
 `DOTFILES_TOOL_CHECK_TIMEOUT_SECONDS` to change that. The macOS update probe
 stops after 120 seconds (`DOTFILES_SOFTWAREUPDATE_TIMEOUT_SECONDS`).
 

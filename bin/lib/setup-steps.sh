@@ -465,7 +465,7 @@ install_mise_tools() {
 install_and_check_mise_tools() {
   local install_status=0 check_status=0
   install_mise_tools || install_status=$?
-  "${repo_root}/bin/check-mise-tools" || check_status=$?
+  "${repo_root}/bin/repo-mise" run check:tools || check_status=$?
   [[ "$install_status" -eq 0 ]] || return "$install_status"
   return "$check_status"
 }

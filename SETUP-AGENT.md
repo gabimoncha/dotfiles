@@ -58,7 +58,7 @@ run outside that directory before repeated repair attempts if you need its logs.
 | `shell`                   | `./bin/setup --continue` reruns it. Check with `./bin/repo-mise bootstrap repos status`. For a `conflict`, ask the user before you move the path aside. |
 | `defaults`                | `./macos/defaults.sh`                                                                                                                                   |
 | `manifest_apps`           | `./bin/install-apps`                                                                                                                                    |
-| `mise_inventory`          | `./bin/repo-mise --global install`, then `./bin/check-mise-tools`                                                                                       |
+| `mise_inventory`          | `./bin/repo-mise --global install`, then `./bin/repo-mise run check:tools`                                                                              |
 | `standalone_agents`       | `./bin/install-standalone` (`--first-only` in the first phase)                                                                                          |
 | `system_packages` (Linux) | `./bin/repo-mise bootstrap --only packages,user --yes`; check with `bootstrap packages status`                                                          |
 | Linux prerequisites       | `./bin/linux-prerequisites` (bin/setup runs it before the runtime starts)                                                                               |

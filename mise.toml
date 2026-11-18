@@ -81,10 +81,38 @@ run = [
   "./bin/preflight",
 ]
 
+# Starts each npm tool that ships its binary in a platform package. Bun skips a
+# blocked platform package with no error, so `mise install` passes and the tool
+# fails to start. mise has no read-only check for this: `mise test-tool`
+# deletes the installs and installs them again. Setup runs this task after
+# `mise install`. The settings stop `mise exec` from installing a missing tool.
+[tasks."check:tools"]
+description = "Check that the npm tools with platform packages start"
+env = { MISE_OFFLINE = "1", MISE_EXEC_AUTO_INSTALL = "0", MISE_AUTO_INSTALL = "0" }
+run = '''
+tools="tsrs oxlint oxfmt agent-device"
+[ "$(uname -s)" != Darwin ] || tools="$tools agent-browser"
+status=0
+for tool in $tools; do
+  if ! ./bin/repo-mise --global exec -- "$tool" --version >/dev/null 2>&1; then
+    echo "$tool did not start" >&2
+    status=1
+  fi
+done
+exit "$status"
+'''
+
 # Readiness checks: ./bin/repo-mise doctor project. Each check only reads
 # state. The platform and profile files add their own checks.
 [doctor.checks.mise-tools]
-description = "The configured mise tools are installed and start"
-run = "bin/check-mise-tools"
+description = "The configured mise tools are installed"
+run = "./bin/repo-mise --global install --dry-run-code"
 hint = "Run ./bin/repo-mise --global install --locked"
-timeout = "300s"
+timeout = "60s"
+
+[doctor.checks.npm-tools]
+description = "The npm tools with platform packages start"
+depends = "mise-tools"
+run = "./bin/repo-mise run check:tools"
+hint = "Add the missing platform package to configs/bun/bunfig.toml or configs/pnpm/config.yaml, then run ./bin/repo-mise --global install --force <tool>"
+timeout = "60s"
