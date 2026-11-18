@@ -225,9 +225,11 @@ sandbox key is private, so one host's value cannot reach the others. The Codex t
 `~/.codex/config.toml`, independent of `CODEX_HOME`.
 
 The shell checkout declarations are in `mise.toml`, including TPM, which
-`bin/setup-tmux` also clones through mise. Setup clones only the missing paths,
-and `bin/dotfiles-update` fast-forwards only the current ones with
-`--skip-dirty`, because a conflicting checkout stops native repository apply.
+`bin/setup-tmux` also clones through mise. Setup clones only the missing paths.
+`bin/dotfiles-update` uses `mise bootstrap repos exec` to fetch only the tip of
+each clean, unpinned branch from `origin` and fast-forward to it. The
+[`mise bootstrap repos update` options](https://github.com/jdx/mise/blob/v2026.11.8/docs/cli/bootstrap/repos/update.md#flags)
+have no flag to disable its tag fetch.
 Mac preferences are in `mise.macos.toml`; `macos/defaults.sh` keeps the
 input-source changes, pmset, and service reloads.
 

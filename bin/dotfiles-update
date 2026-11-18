@@ -36,14 +36,17 @@ fi
 log "Running setup"
 DOTFILES_SKIP_MACOS_DEFAULTS=1 "${repo_root}/bin/setup" --continue "$@"
 
-# Setup clones the missing shell checkouts of [bootstrap.repos] in mise.toml.
-# This fast-forwards the current ones. A checkout with local changes stays as
-# it is, and one in another state (a conflict) is not passed to mise.
+# mise bootstrap repos update always fetches tags. Its CLI reference has no
+# option to skip them. Use repos exec to pull each current, unpinned branch.
 log "Updating the shell framework checkouts"
 current_repos=()
 repos_listed=0
 if repo_list="$("${repo_root}/bin/repo-mise" bootstrap repos status --json |
-  /usr/bin/ruby -rjson -e 'JSON.parse(STDIN.read).fetch("repos").each { |r| puts r["path"] if r["state"] == "current" }')"; then
+  /usr/bin/ruby -rjson -e '
+    JSON.parse(STDIN.read).fetch("repos").each do |repo|
+      puts repo["path"] if repo["state"] == "current" && repo["ref"].nil?
+    end
+  ')"; then
   repos_listed=1
   while IFS= read -r path; do
     [[ -n "$path" ]] && current_repos+=("$path")
@@ -53,11 +56,22 @@ if [[ "$repos_listed" == 0 ]]; then
   printf 'Could not list the shell checkouts. Run: ./bin/repo-mise bootstrap repos status\n' >&2
 elif [[ ${#current_repos[@]} -eq 0 ]]; then
   log "No shell framework checkout to update"
-elif [[ "$dry_run" == 1 ]]; then
-  "${repo_root}/bin/repo-mise" bootstrap repos update --dry-run --skip-dirty "${current_repos[@]}"
 else
-  "${repo_root}/bin/repo-mise" bootstrap repos update --yes --skip-dirty "${current_repos[@]}" ||
-    printf 'Could not update the shell checkouts. Rerun: ./bin/repo-mise bootstrap repos update --skip-dirty\n' >&2
+  repo_exec=(bootstrap repos exec)
+  [[ "$dry_run" != 1 ]] || repo_exec+=(--dry-run)
+  "${repo_root}/bin/repo-mise" "${repo_exec[@]}" "${current_repos[@]}" -- sh -ec '
+    changes="$(git status --porcelain)"
+    if [ -n "$changes" ]; then
+      printf "Skipping %s because it has local changes.\n" "$PWD" >&2
+      exit 0
+    fi
+    branch="$(git branch --show-current)"
+    if [ -z "$branch" ]; then
+      printf "Skipping %s because HEAD is detached.\n" "$PWD" >&2
+      exit 0
+    fi
+    exec git pull --ff-only --no-tags --no-prune origin "refs/heads/$branch"
+  ' || printf 'Could not update the shell checkouts. See the Git output above.\n' >&2
 fi
 
 # Setup installs missing system packages only. Only Linux has entries.
