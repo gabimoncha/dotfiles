@@ -368,10 +368,10 @@ Tools marked `os = "macos"` in `configs/mise/config/config.toml` stay on the
 Mac. Tools for one profile are in `configs/mise/config/config.<profile>.toml`.
 Entries in `mise.macos.toml` do not load on Linux.
 
-Codex reads one global instructions file. On the container, mise renders
-`~/.codex/AGENTS.md` from `configs/agents/instructions.md` and the host rules in
-`configs/agents/container.md`. Claude reads the host rules from
-`~/.claude/rules/host.md`. The container also turns off the Codex sandbox in
+On each host, mise links `~/.claude/CLAUDE.md` to `~/.codex/AGENTS.md`.
+On the container, mise renders `~/.codex/AGENTS.md` from
+`configs/agents/instructions.md` and the host rules in
+`configs/agents/container.md`. The container also turns off the Codex sandbox in
 `configs/codex/container.toml`, because its kernel cannot start it.
 On other hosts, `configs/codex/defaults.toml` sets `workspace-write` only when
 `~/.codex/config.toml` has no sandbox value. `./bin/save-settings` does not save

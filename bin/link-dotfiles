@@ -59,7 +59,8 @@ read_status() {
     data = JSON.parse($stdin.read)
     rows = data.fetch("files").map { |row| [row.fetch("state"), row.fetch("mode"), row.fetch("target")] } +
            data.fetch("edits").map { |row| [row.fetch("state"), "merge", row.fetch("path")] }
-    order = %w[applied missing differs]
+    # A dependent entry can get its missing source during the apply.
+    order = %w[applied missing differs source_missing]
     rows.group_by { |_, _, target| target }.each do |target, entries|
       states = entries.map(&:first)
       unknown = states - order

@@ -270,9 +270,8 @@ container is the only Linux host.
 - One runtime tool list serves both systems. Mac-only tools carry
   `os = "macos"`. The platform and profile files add the file entries.
   `configs/mise/config/config.<profile>.toml` adds tools for one profile.
-- mise renders Codex's global instructions from the shared rules and the host
-  rules in `configs/agents/`. Claude reads the host file from
-  `~/.claude/rules/`.
+- mise renders `~/.codex/AGENTS.md` from the shared rules and the host rules.
+  Claude reads the same file through the `~/.claude/CLAUDE.md` link.
 - Linux hosts use Git over HTTPS with the GitHub CLI token. Agents there start
   without an SSH agent, so a protected SSH key would block every push, and an
   unprotected key would add a second credential next to the token.

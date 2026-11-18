@@ -49,8 +49,10 @@ min_version = { soft = "2026.11.8" }
 "~/bin/claude" = { source = "configs/claude/claude", mode = "symlink" }
 "~/bin/npx" = { source = "configs/npx/npx", mode = "symlink" }
 "~/bin/px" = { source = "configs/npx/npx", mode = "symlink" }
-"~/.claude/CLAUDE.md" = { source = "configs/agents/instructions.md", mode = "symlink" }
 "~/.codex/AGENTS.md" = { source = "configs/agents/instructions.md", mode = "symlink" }
+"~/.claude/CLAUDE.md" = { source = "~/.codex/AGENTS.md", mode = "symlink", relative = true, depends = [
+  "~/.codex/AGENTS.md",
+] }
 # Agent skills for every host. The skills CLI writes through these two links
 # into the repository, so commit configs/agents after `skills add`, `update`,
 # or `remove`. Claude Code reads only ~/.claude/skills, so each skill also gets
