@@ -28,6 +28,18 @@ proc_alive() {
   [[ -n "$stat" && "${stat%% *}" != Z ]]
 }
 
+# Prints the start time of process $1, in clock ticks after boot (field 22 of
+# /proc/<pid>/stat). With the PID, it names one process, even after Linux
+# gives the PID to a new process.
+proc_start() {
+  local stat
+  stat="$(cat "/proc/$1/stat" 2>/dev/null)" || return 1
+  stat="${stat##*) }"
+  # shellcheck disable=SC2086 # Split the fields after the command name.
+  set -- $stat
+  [[ -n "${20:-}" ]] && printf '%s\n' "${20}"
+}
+
 # Reads the arguments of process $1 into the array proc_args. Returns 1 when
 # the process is gone or has no arguments, as a zombie has none.
 proc_args() {
@@ -42,13 +54,11 @@ proc_args() {
   ((${#proc_args[@]} > 0))
 }
 
-# True when process $1 is bash running the script bin/$2 of a checkout.
+# True when process $1 is bash running the script bin/$2 of a checkout, with
+# no other arguments, as the shebang starts it.
 supervise_pid() {
-  local n
   proc_args "$1" || return 1
-  n=${#proc_args[@]}
-  ((n >= 2)) || return 1
-  [[ "${proc_args[n - 1]}" == */bin/"$2" && "${proc_args[n - 2]##*/}" == bash ]]
+  [[ ${#proc_args[@]} == 2 && "${proc_args[0]##*/}" == bash && "${proc_args[1]}" == */bin/"$2" ]]
 }
 
 # True when process $1 is T3's service launcher: a t3 executable, run directly
@@ -59,23 +69,44 @@ t3_launcher_pid() {
   [[ "${proc_args[1]:-}" == */t3 && "${proc_args[2]:-}" == __service-launcher ]]
 }
 
-# True when process $1 is a tokenburnmarket sync daemon: node runs the CLI,
-# through its bin link or its dist/index.js, with the command `daemon` and no
-# subcommand. Node options can come before the CLI path. The CLI's parser
-# (dist/index.js parseArgs in 0.5.0) also accepts flags such as --interval 60
-# around the command.
+# True when process $1 is a tokenburnmarket sync daemon: node runs the CLI's
+# dist/index.js, directly or through a link such as its bin entry, with the
+# command `daemon` and no subcommand. The entry point is node's first argument
+# after its options. A relative one is resolved in the process's folder. The
+# CLI's parser (dist/index.js parseArgs in 0.5.0) also accepts flags such as
+# --interval 60 around the command.
 tbm_daemon_pid() {
-  local i=1 n arg command="" subcommand=""
+  local i=1 n arg entry real command="" subcommand=""
   proc_args "$1" || return 1
   n=${#proc_args[@]}
   [[ "${proc_args[0]##*/}" == node* ]] || return 1
   while ((i < n)); do
     case "${proc_args[i]}" in
-      */tokenburnmarket | */tokenburnmarket/dist/index.js) break ;;
+      # Node options that take the next argument as their value.
+      -r | --require | --import | --loader | --experimental-loader | -C | --conditions | --env-file | --title | --input-type)
+        i=$((i + 2))
+        continue
+        ;;
+      # Node runs code from the command line, not a file.
+      -e | --eval | -p | --print | -) return 1 ;;
+      --)
+        i=$((i + 1))
+        break
+        ;;
+      -*) ;;
+      *) break ;;
     esac
     i=$((i + 1))
   done
   ((i < n)) || return 1
+  entry="${proc_args[i]}"
+  [[ "$entry" == /* ]] || entry="$(readlink "/proc/$1/cwd" 2>/dev/null)/$entry"
+  # A daemon whose install mise has since removed keeps its path as written.
+  real="$(readlink -f -- "$entry" 2>/dev/null)" || real=""
+  case "${real:-$entry}" in
+    */tokenburnmarket/dist/index.js | */bin/tokenburnmarket) ;;
+    *) return 1 ;;
+  esac
   i=$((i + 1))
   while ((i < n)); do
     arg="${proc_args[i]}"

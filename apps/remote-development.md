@@ -111,7 +111,10 @@ Then `bin/t3-dev-supervise --stop-orphans` stops a T3 launcher whose script
 died, which pitchfork cannot reach. `stop_grace_period: 130s` covers the t3
 daemon's 95 seconds.
 
-To move the NAS to these daemons, replace the whole `command` block in the
+To move the NAS to these daemons, first update the checkout in the box:
+`git -C ~/code/personal/dotfiles pull`, then check that
+`~/code/personal/dotfiles/bin/container-daemons` exists. The new command
+starts nothing without it. Then replace the whole `command` block in the
 compose file on the NAS with the one in the example, and add
 `stop_grace_period: 130s`. The old command started two loops from
 `~/.local/bin`, and a rebuild with only the new grace period keeps them. Then

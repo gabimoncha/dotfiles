@@ -106,21 +106,37 @@ wait_gone() {
   done
   ! proc_alive "$1"
 }
+# The launcher that got a SIGTERM, as "<PID> <start time>". A copy of this
+# script, or the --stop-orphans step, that finds a launcher whose script died
+# reads it, so that launcher never gets a second SIGTERM.
+sigterm_mark="$HOME/.local/state/dotfiles/t3-launcher-sigterm"
+sigterm_sent() {
+  local start
+  start="$(proc_start "$1")" || return 1
+  [[ "$(cat "$sigterm_mark" 2>/dev/null)" == "$1 $start" ]]
+}
 # The launcher stops the server first. 90 seconds matches T3's launchd job,
 # and pitchfork waits 95 seconds for this script. The launcher runs in its own
 # process group. Returns 1 when it still runs 2 seconds after SIGKILL.
 stop_launcher() {
-  if [[ "$signaled" != "$pid" ]]; then
+  if [[ "$signaled" != "$pid" ]] && ! sigterm_sent "$pid"; then
+    # The mark goes first, so a script that dies right after the signal
+    # leaves it.
+    mkdir -p "${sigterm_mark%/*}"
+    printf '%s %s\n' "$pid" "$(proc_start "$pid")" >"$sigterm_mark"
     kill -TERM "$pid" 2>/dev/null || return 0
-    signaled="$pid"
   fi
+  signaled="$pid"
   wait_gone "$pid" 90 && return 0
+  # Linux can give a gone launcher's PID to a new process.
+  t3_launcher_pid "$pid" || return 0
   kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
   wait_gone "$pid" 2
 }
 # The earlier copy needs at most 92 seconds, so it finishes first.
 finish_stopping() {
   wait_gone "$stopping" 93 && return 0
+  supervise_pid "$stopping" t3-dev-supervise || return 0
   kill -KILL "$stopping" 2>/dev/null || true
   wait_gone "$stopping" 1
 }

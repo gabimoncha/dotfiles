@@ -69,12 +69,15 @@ stop_daemon() {
     signaled="$pid"
   fi
   wait_gone "$pid" 6 && return 0
+  # Linux can give a gone daemon's PID to a new process.
+  tbm_daemon_pid "$pid" || return 0
   kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
   wait_gone "$pid" 1
 }
 # The earlier copy needs at most 3.5 seconds, so it finishes first.
 finish_stopping() {
   wait_gone "$stopping" 8 && return 0
+  supervise_pid "$stopping" tokenburnmarket-supervise || return 0
   kill -KILL "$stopping" 2>/dev/null || true
   wait_gone "$stopping" 1
 }
@@ -114,7 +117,7 @@ for old in ${matched[@]+"${matched[@]}"}; do
 done
 # A daemon whose script was killed before its trap ran, for example by the
 # out-of-memory killer, or one that was started by hand.
-matching_pids 'tokenburnmarket' tbm_daemon_pid
+matching_pids 'daemon' tbm_daemon_pid
 for pid in ${matched[@]+"${matched[@]}"}; do
   log "stopping a daemon that this supervisor did not start (PID $pid)"
   stop_daemon || not_gone "$pid"

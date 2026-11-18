@@ -87,7 +87,7 @@ if [[ "$mode" == mise-daemon ]]; then
     printf '%s\n' "$pid"
   }
   daemon_pids() {
-    matching_pids tokenburnmarket tbm_daemon_pid
+    matching_pids daemon tbm_daemon_pid
     [[ ${#matched[@]} == 0 ]] || printf '%s\n' "${matched[@]}"
   }
   parent_pid() { ps -o ppid= -p "$1" | tr -d ' '; }
@@ -120,11 +120,38 @@ if [[ "$mode" == mise-daemon ]]; then
   # The entrypoint of the container starts the daemons after a restart.
   boot_note() {
     tr '\0' ' ' </proc/1/cmdline 2>/dev/null | grep -q 'daemons start' && return 0
-    echo 'The container does not start the mise daemons after a restart. Copy the'
-    echo 'daemon lines from local/nasbox.compose.yaml.example into the compose file on the host.'
+    echo 'The container does not start the mise daemons after a restart. In the compose'
+    echo 'file on the host, replace the whole command block with the one in'
+    echo 'local/nasbox.compose.yaml.example, and add stop_grace_period: 130s. Then rebuild'
+    echo 'the project, and keep the volumes. A restart keeps the old command.'
+  }
+  # The CLI reads its sign-in from XDG_CONFIG_HOME when that is an absolute
+  # path, and from ~/.config otherwise. pitchfork keeps the environment of the
+  # command that started it, so the daemon can read another folder than setup.
+  config_home_of() {
+    local value
+    value="$(tr '\0' '\n' <"/proc/$1/environ" 2>/dev/null | sed -n 's/^XDG_CONFIG_HOME=//p' | head -n 1)"
+    [[ "$value" == /* ]] || value="$HOME/.config"
+    printf '%s\n' "$value"
+  }
+  setup_config_home="${XDG_CONFIG_HOME:-}"
+  [[ "$setup_config_home" == /* ]] || setup_config_home="$HOME/.config"
+  # Exits with an error when the managed loop, and so its daemon, reads
+  # another config folder than setup signed in with.
+  check_config_home() {
+    local managed daemon_home
+    managed="$(managed_pid)" || return 0
+    daemon_home="$(config_home_of "$managed")"
+    [[ "$daemon_home" == "$setup_config_home" ]] && return 0
+    printf 'The tokenburnmarket mise daemon reads its sign-in from %s, but setup used %s.\n' "$daemon_home" "$setup_config_home" >&2
+    echo 'pitchfork keeps the environment of the command that started it. From a shell with the' >&2
+    echo 'same XDG_CONFIG_HOME as setup, run "$(mise which pitchfork) supervisor stop", then' >&2
+    echo './bin/container-daemons start --all.' >&2
+    exit 1
   }
 
   if [[ "$connected" == 1 && ! -e "$old_supervisor" && -z "$(unmanaged_pids)" ]] && daemon_current; then
+    check_config_home
     echo 'tokenburnmarket is connected and its mise daemon runs.'
     boot_note
     exit 0
@@ -144,20 +171,25 @@ if [[ "$mode" == mise-daemon ]]; then
     rm -f "$old_supervisor"
     printf 'Stopped and removed the old supervisor %s\n' "$old_supervisor"
   fi
-  # Two daemons must not sync at once, so wait until these exit. A zombie
-  # counts as exited: it can no longer sync.
+  # Two daemons must not sync at once, so wait until these exit. Each check
+  # reads the process again, so a zombie, or a new process that Linux gave
+  # the PID to, counts as exited.
   for p in $(unmanaged_pids); do
+    # The watchdog can start pitchfork again since the list was made. A
+    # daemon that the managed loop now runs stays.
+    tbm_daemon_pid "$p" || continue
+    if managed="$(managed_pid)" && [[ "$(parent_pid "$p")" == "$managed" ]]; then continue; fi
     kill -TERM "$p" 2>/dev/null || true
     for _ in $(seq 20); do
-      proc_alive "$p" || break
+      tbm_daemon_pid "$p" || break
       sleep 0.5
     done
-    proc_alive "$p" && kill -KILL "$p" 2>/dev/null || true
+    if tbm_daemon_pid "$p"; then kill -KILL "$p" 2>/dev/null || true; fi
     for _ in 1 2 3 4; do
-      proc_alive "$p" || break
+      tbm_daemon_pid "$p" || break
       sleep 0.5
     done
-    if proc_alive "$p"; then
+    if tbm_daemon_pid "$p"; then
       printf 'tokenburnmarket daemon %s still runs after SIGKILL. Not restarting the mise daemon.\n' "$p" >&2
       exit 1
     fi
@@ -166,6 +198,7 @@ if [[ "$mode" == mise-daemon ]]; then
   # A restart also starts a stopped daemon, and replaces one that runs an old
   # node or CLI.
   "$repo_root/bin/container-daemons" restart tokenburnmarket
+  check_config_home
   boot_note
   exit 0
 fi

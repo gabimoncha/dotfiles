@@ -142,7 +142,8 @@ services:
           if test -x "$$daemons"; then
             su - box -c '
               pf=$$("$$HOME/.local/bin/mise" which pitchfork) &&
-                "$$pf" supervisor start && "$$pf" supervisor stop
+                "$$pf" supervisor start && "$$pf" supervisor stop ||
+                echo "nasbox: pitchfork supervisor stop failed; the daemons may miss their clean stop" >&2
               exec "$$HOME/code/personal/dotfiles/bin/t3-dev-supervise" --stop-orphans
             ' || true
           fi
@@ -153,10 +154,11 @@ services:
         # One background job starts the daemons, and then starts pitchfork
         # again when it dies, for example from the out-of-memory killer.
         # pitchfork has no watchdog of its own. The new scripts stop the
-        # copies and services that the old supervisor left. Until a first
-        # start succeeds, for example while setup still installs mise, the
-        # job tries again each minute. After that, a daemon that you stop
-        # stays stopped while pitchfork runs.
+        # copies and services that the old supervisor left. Until a start
+        # succeeds, for example while setup still installs mise, the job
+        # tries again each minute. That holds after pitchfork dies, too. After
+        # a start succeeds, a daemon that you stop stays stopped while the
+        # same pitchfork runs.
         if test -x "$$daemons"; then
           (
             trap 'trap "" TERM INT; for job in $$(jobs -pr); do kill -TERM "$$job" 2>/dev/null || true; done; wait || true; exit 0' TERM INT
@@ -169,9 +171,8 @@ services:
             while :; do
               sleep 60 &
               wait "$$!" || true
-              if test -z "$$started" || ! supervisor_runs; then
-                if start_all >/dev/null 2>&1; then started=1; fi
-              fi
+              supervisor_runs || started=
+              if test -z "$$started" && start_all >/dev/null 2>&1; then started=1; fi
             done
           ) &
           watchdog=$$!
