@@ -16,6 +16,7 @@ set -eu
 }
 umask 077
 . "$(dirname "${BASH_SOURCE[0]}")/lib/daemon-procs.sh"
+. "$(dirname "${BASH_SOURCE[0]}")/lib/t3-launcher.sh"
 export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
 # The daemon does not read the zsh files that load the telemetry opt-outs.
 # T3 and its agents inherit them here.
@@ -31,31 +32,16 @@ log() { printf 't3-supervise: %s\n' "$1"; }
 # does not print it. When a T3 error names a new protocol, change this number.
 launcher_protocol=4
 
-# Prints the runtime binary that ~/.local/bin/t3 runs. Older installers link it
-# into the version folder. Since 0.1.11-nightly.20261118.4877, the installer
-# and `t3 update` write a shell file that runs `exec '<version folder>/t3' "$@"`,
-# with each ' in the path written as '\''. This reads only that exact file, as
-# T3's own readPosixLauncherTarget does, and never runs it.
+# Prints the runtime binary that ~/.local/bin/t3 runs: the target of a link
+# from an older installer, or the version that the launcher file runs.
 launcher_runtime() {
-  local launcher="$HOME/.local/bin/t3" contents quoted runtime
-  local head=$'#!/bin/sh\nexec \'' tail=$'\' "$@"\n' escaped="'\\''" sq="'"
+  local launcher="$HOME/.local/bin/t3" runtime
   if [[ -L "$launcher" ]]; then
     readlink -f "$launcher"
     return
   fi
-  [[ -f "$launcher" && "$(wc -c <"$launcher")" -le 4096 ]] || return 1
-  # The x keeps the final newline through the command substitution.
-  contents="$(
-    cat "$launcher"
-    printf x
-  )" || return 1
-  contents="${contents%x}"
-  [[ "$contents" == "$head"*"$tail" ]] || return 1
-  quoted="${contents#"$head"}"
-  quoted="${quoted%"$tail"}"
-  [[ "${quoted//"$escaped"/}" != *"'"* ]] || return 1
-  runtime="${quoted//"$escaped"/$sq}"
-  [[ -n "$runtime" && -x "$runtime" ]] || return 1
+  runtime="$(t3_launcher_target "$launcher")" || return 1
+  [[ -x "$runtime" ]] || return 1
   printf '%s\n' "$runtime"
 }
 
