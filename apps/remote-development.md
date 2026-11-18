@@ -168,7 +168,9 @@ Install T3 with the official script, not the `t3` npm package:
 curl -fsSL https://t3.codes/install.sh | T3CODE_CHANNEL=nightly sh
 ```
 
-The script links `~/.local/bin/t3` to `~/.t3/runtime/versions/VERSION/t3`.
+The script writes `~/.local/bin/t3` as a two-line shell file that runs
+`~/.t3/runtime/versions/VERSION/t3`. Installers before
+0.1.11-nightly.20261118.4877 wrote a link there instead. Setup accepts both.
 The npm package runs only the runtime that matches its own version, so it
 ignores updates.
 Do not run `npm uninstall -g t3` after a change to the script install. npm
@@ -184,7 +186,7 @@ server must speak the protocol of the launcher. Otherwise the server stops at
 once with "The service launcher supplied invalid startup context". Before each
 start of the launcher, the supervisor does the work of `t3 service install`.
 When the file is missing, or names a version older than the runtime that
-`~/.local/bin/t3` links to, the supervisor writes that runtime and the
+`~/.local/bin/t3` runs, the supervisor writes that runtime and the
 protocol in `launcher_protocol` to the file. It keeps the old file as
 `service-state.json.bak`. It keeps a newer version that the app installed.
 When the launcher exits, the supervisor starts it again after 5 seconds.
