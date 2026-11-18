@@ -75,7 +75,9 @@ Touch ID for `sudo`, pnpm as the default package manager
 (`configs/mise/config/config.air.toml`), and the `rbrtpop` Git identity
 (`configs/git/air.gitconfig`). It installs Codex CLI and Claude Code with
 their shared settings, but no agent rules or skills. Setup skips the restores,
-tokenburnmarket, and the mobile step on the Air.
+tokenburnmarket, and the mobile step on the Air. The Air also keeps its own
+text, mouse, trackpad, and Dock settings, its screenshot folder, its Finder
+sidebar, and its display sleep, and setup makes no `~/code` folders on it.
 
 ## Checkout folders
 
@@ -91,7 +93,7 @@ Checkouts live in `~/code`:
 ```
 
 Setup creates `work`, `personal`, `contrib`, and `ref` when they are missing,
-and `client` on macowl only.
+and `client` on macowl only. It creates none of them on the MacBook Air.
 
 This repository goes in `~/code/personal/dotfiles`. `~/.config/mise` links
 into the checkout, and the shell and the mise tasks read the checkout's path
@@ -609,8 +611,8 @@ replacement. See [DECISIONS.md](DECISIONS.md#native-steam-installer).
 
 Setup adds the apps in `[bootstrap.settings.macos.login_items]` of
 `mise.macos.toml`, `mise.devhost.toml`, and the profile file as login items. It leaves other
-login items alone. It also sets the Dock apps in
-`[bootstrap.settings.macos.dock]`, in that order. Run
+login items alone. On macowl and the Mac mini, it also sets the Dock apps in
+`[bootstrap.settings.macos.dock]` of `mise.devhost.toml`, in that order. Run
 `./bin/repo-mise bootstrap macos defaults status` to compare this Mac with
 them. Privacy permissions are manual for every app.
 

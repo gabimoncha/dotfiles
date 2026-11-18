@@ -44,13 +44,20 @@ log "Applying the macOS preferences in mise.macos.toml"
 log "Applying input sources"
 ensure_keyboard_input_sources
 
-log "Applying screenshot defaults"
-"${script_dir}/../bin/configure-screenshots"
+. "${script_dir}/../bin/lib/dotfiles-profile.sh"
+profile="$(dotfiles_profile "${script_dir}/.." 2>/dev/null || true)"
+
+# The MacBook Air keeps the macOS screenshot folder.
+if [[ "$profile" == air ]]; then
+  log "Keeping the macOS screenshot folder on the MacBook Air"
+else
+  log "Applying screenshot defaults"
+  "${script_dir}/../bin/configure-screenshots"
+fi
 
 # macowl and the Mac mini keep the display on. The MacBook Air keeps the macOS
 # display sleep, to save its battery.
-. "${script_dir}/../bin/lib/dotfiles-profile.sh"
-if [[ "$(dotfiles_profile "${script_dir}/.." 2>/dev/null || true)" == air ]]; then
+if [[ "$profile" == air ]]; then
   log "Keeping the macOS display sleep settings on the MacBook Air"
 else
   log "Applying display sleep defaults"

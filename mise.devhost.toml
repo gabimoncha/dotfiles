@@ -54,6 +54,63 @@ apps = [
   "/Applications/Vorssaint.app",
 ]
 
+# Text input, mouse, and trackpad. mise merges these keys with the
+# NSGlobalDomain keys in mise.macos.toml.
+[bootstrap.settings.macos.defaults.NSGlobalDomain]
+# Language & Region > Live Text. Off, so a paused video in Safari does not turn
+# into selectable text.
+AppleLiveTextEnabled = false
+NSAutomaticCapitalizationEnabled = false
+NSAutomaticDashSubstitutionEnabled = true
+NSAutomaticQuoteSubstitutionEnabled = true
+NSAutomaticSpellingCorrectionEnabled = false
+KB_SpellingLanguage = { KB_SpellingLanguageIsAutomatic = true }
+NSSpellCheckerAutomaticallyIdentifiesLanguages = true
+"com.apple.mouse.scaling" = 3.0
+"com.apple.scrollwheel.scaling" = 1.7
+"com.apple.swipescrolldirection" = true
+"com.apple.trackpad.forceClick" = false
+"com.apple.trackpad.scaling" = 3.0
+
+[bootstrap.settings.macos.defaults."com.apple.AppleMultitouchMouse"]
+MouseButtonMode = "OneButton"
+MouseHorizontalScroll = true
+MouseMomentumScroll = true
+MouseOneFingerDoubleTapGesture = 1
+MouseTwoFingerHorizSwipeGesture = 2
+
+[bootstrap.settings.macos.defaults."com.apple.AppleMultitouchTrackpad"]
+Clicking = true
+Dragging = false
+TrackpadRightClick = true
+TrackpadThreeFingerDrag = false
+
+[bootstrap.settings.macos.defaults."com.apple.driver.AppleBluetoothMultitouch.trackpad"]
+Clicking = true
+TrackpadRightClick = true
+TrackpadThreeFingerDrag = false
+
+# The apps pinned in the Dock, in this order. mise adds, removes, and orders
+# them. Folders and files in the Dock stay as they are.
+[bootstrap.settings.macos.dock]
+apps = [
+  "/System/Applications/Apps.app",
+  "/Applications/Safari.app",
+  "/System/Applications/Photos.app",
+  "/System/Applications/FaceTime.app",
+  "/System/Applications/App Store.app",
+  "/System/Applications/Siri AI.app",
+  "/System/Applications/System Settings.app",
+]
+
+[bootstrap.settings.macos.defaults."com.apple.dock"]
+autohide = true
+largesize = 51
+magnification = true
+orientation = "bottom"
+"expose-group-apps" = true
+tilesize = 34
+
 # Portable Vorssaint preferences captured from version 3.4.2.
 # Device identifiers, calibration, and session state stay local. Each profile
 # file has the fan curve of its machine.
