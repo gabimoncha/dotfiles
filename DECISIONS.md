@@ -279,6 +279,25 @@ container is the only Linux host.
 - Kernel 4.4 on the NAS has no user namespaces, so the agent sandboxes cannot
   run there. The container is the boundary, so its Codex config sets
   `sandbox_mode = "danger-full-access"`.
+- The container has no systemd, so mise `[daemons]` (experimental) in
+  `mise.container.toml` run T3 and the tokenburnmarket sync daemon under
+  pitchfork. The compose command starts and stops them. Each daemon still runs
+  a restart loop script, for two gaps in pitchfork 2.34 ("Automatic retries",
+  checked in its source). It restarts a daemon only after a failed exit, but
+  the systemd units of both services restart after every exit. Its retry
+  count also never resets after a good run, so the wait before a retry grows
+  up to one hour. With `exec` on the script, pitchfork also waits for the
+  script, which gives T3's launcher its 90 seconds to stop. pitchfork signals
+  the whole process group, and T3's launcher handles only its first SIGTERM,
+  so each script starts its service with `setsid` and sends the one stop
+  signal itself. A service in its own group outlives a script that is
+  killed, so each script stops earlier copies and their services at its
+  start. pitchfork has no watchdog of its own, so the compose command starts
+  it again when it dies. The daemons use the fixed namespace `nasbox`, so a
+  second checkout cannot start a second copy. The daemons start
+  through `bin/container-daemons`, because the supervisor keeps the
+  environment of the command that starts it, and `bin/repo-mise` hides the
+  global tools.
 
 ## Xcode and mobile tools
 

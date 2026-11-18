@@ -10,8 +10,9 @@ automation.
   build. CPU: 4 threads (AMD Ryzen R1600).
 - Kernel 4.4 has no user namespaces, so `bwrap` and the agent sandboxes fail.
   Commands run without a sandbox, and the container is the only boundary.
-- There is no systemd and no Docker. T3 runs under `~/.local/bin/t3-supervise`,
-  and the tokenburnmarket daemon under `~/.local/bin/tokenburnmarket-supervise`.
+- There is no systemd and no Docker. T3 and the tokenburnmarket daemon run as
+  mise daemons. Manage them with `./bin/container-daemons` in the dotfiles
+  checkout, for example `status` or `logs t3`, not with `repo-mise daemons`.
 - A rebuild makes a new container and removes what apt installed. Add system
   packages to `mise.container.toml` in the dotfiles, not with `apt-get` alone.
 - Only Linux builds run here. iOS, Xcode, simulators, Android emulators, and
