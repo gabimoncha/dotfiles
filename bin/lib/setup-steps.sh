@@ -599,6 +599,14 @@ setup_mise_inventory() {
 setup_manifest_apps() { "${repo_root}/bin/install-apps"; }
 setup_app_store() { install_mas_apps; }
 setup_editor_extensions() { install_cursor_extensions; }
+setup_gh_extensions() {
+  # gh needs a login to list and install extensions.
+  if [[ "${DOTFILES_SETUP_API_READY:-0}" != 1 ]]; then
+    warn "Skipped the gh extensions: GitHub API access is not verified. Run ./bin/auth-setup --api-only, then: mise run dot:gh-extensions"
+    return 20
+  fi
+  "${repo_root}/bin/repo-mise" --global run dot:gh-extensions
+}
 setup_shell() {
   local status=0
   install_shell_framework || status=1
