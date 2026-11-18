@@ -31,7 +31,9 @@ neovim = "latest"
 "npm:tree-sitter-cli" = "latest"
 # TypeScript checks, and the language server for Neovim and Cursor
 # (~/.config/tsrs/tsgo).
-"npm:tsrs" = "latest"
+# The npm latest tag still names 0.25.0-ts7.1.0-beta, so pin the newest
+# release. Return to "latest" when the tag moves to 7.1.0-beta.tsrs2 or later.
+"npm:tsrs" = "7.1.0-beta.tsrs2"
 # Lint and format JavaScript, TypeScript, and Markdown in Neovim, Cursor, and
 # the repos whose hk.pkl runs them, including this one.
 "npm:oxlint" = "latest"

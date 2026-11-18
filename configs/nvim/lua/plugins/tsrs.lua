@@ -17,9 +17,14 @@ return {
   {
     "neovim/nvim-lspconfig",
     opts = function(_, opts)
-      local tsgo = opts.servers.tsgo or {}
+      -- tsrs takes the settings of the LazyVim TypeScript extra. LazyVim
+      -- commit c8cd5a0 renamed its server from tsgo to tsc, and it maps the
+      -- tsgo extra in lazyvim.json to tsc. Before that commit, there is no tsc.
+      local base = opts.servers.tsc or opts.servers.tsgo or {}
+      opts.servers.tsc = { enabled = false }
       opts.servers.tsgo = { enabled = false }
-      opts.servers.tsrs = vim.tbl_deep_extend("force", tsgo, {
+      opts.servers.tsrs = vim.tbl_deep_extend("force", base, {
+        enabled = true,
         mason = false,
         cmd = function(dispatchers, config)
           local root = config.root_dir or vim.fn.getcwd()
