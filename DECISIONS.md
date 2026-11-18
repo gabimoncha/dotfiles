@@ -177,9 +177,9 @@ link where a real file is, and one refused entry stops the whole apply.
 - It removes links that older versions made, only while they point into this
   repository. It moves local files from the old layout, such as
   `mise/setup/miserc.local.toml`, to their new place.
-- On a Mac, it runs `bin/link-t3-command`. That step and the telemetry login job
-  in `bin/configure-telemetry` run only when `$HOME` is the account's home
-  folder, so a test with a temporary HOME cannot change them.
+- On a Mac, it runs `bin/link-t3-command`. That step and the login jobs of
+  `bin/load-login-jobs` run only when `$HOME` is the account's home folder, so
+  a test with a temporary HOME cannot change them.
 
 Agent and T3 settings remain regular files because the apps rewrite them and
 write private data into them: project paths, hook state, and MCP server
@@ -277,9 +277,8 @@ container is the only Linux host.
 - The same runtime tool lists serve both systems. Mac-only tools carry
   `os = "macos"`. The platform and profile files add the file entries.
   `configs/mise/config/config.<profile>.toml` adds tools for one profile.
-- mise renders Codex's global instructions from the shared rules and the host
-  rules in `configs/agents/`. Claude reads the host file from
-  `~/.claude/rules/`.
+- mise renders `~/.codex/AGENTS.md` from the shared rules and the host rules.
+  Claude reads the same file through the `~/.claude/CLAUDE.md` link.
 - Linux hosts use Git over HTTPS with the GitHub CLI token. Agents there start
   without an SSH agent, so a protected SSH key would block every push, and an
   unprotected key would add a second credential next to the token.
@@ -373,6 +372,23 @@ real gh binary without shims or the routing wrapper. API access gates the large
 mise install. SSH readiness is a separate check.
 
 Git identity, SSH identity, and API account routing stay separate and local.
+
+### Commit signing
+
+Every Mac signs its commits with SSH, from `configs/git/macos.gitconfig`. The
+signature uses the same `~/.ssh/id_ed25519` key as Git over SSH, so setup makes
+no second key. `bin/auth-setup` uploads the key twice, because GitHub keeps the
+authentication keys and the signing keys in separate lists. Each list needs its
+own scope: `admin:public_key` and `admin:ssh_signing_key`.
+
+ssh-keygen gets the private key from the SSH agent, so agents can sign without
+a terminal. After a restart, the agent is empty until an ssh command loads the
+key. The `ssh-keychain` login job runs `ssh-add --apple-load-keychain` at login,
+so the first commit after a restart is signed too.
+
+Linux hosts do not sign. Their agents start with no SSH agent, so they cannot
+unlock a protected key, and an unprotected signing key on a container was
+rejected. Their commits show as unsigned on GitHub.
 
 ### gh extensions
 

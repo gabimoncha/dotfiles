@@ -397,10 +397,10 @@ Tools marked `os = "macos"` in `configs/mise/config/config.toml` and
 `configs/mise/config/config.<profile>.toml`.
 Entries in `mise.macos.toml` do not load on Linux.
 
-Codex reads one global instructions file. On the container, mise renders
-`~/.codex/AGENTS.md` from `configs/agents/instructions.md` and the host rules in
-`configs/agents/container.md`. Claude reads the host rules from
-`~/.claude/rules/host.md`. The container also turns off the Codex sandbox in
+On each development host, mise links `~/.claude/CLAUDE.md` to `~/.codex/AGENTS.md`.
+On the container, mise renders `~/.codex/AGENTS.md` from
+`configs/agents/instructions.md` and the host rules in
+`configs/agents/container.md`. The container also turns off the Codex sandbox in
 `configs/codex/container.toml`, because its kernel cannot start it.
 On other hosts, `configs/codex/defaults.toml` sets `workspace-write` only when
 `~/.codex/config.toml` has no sandbox value. `./bin/save-settings` does not save
@@ -412,7 +412,10 @@ The login asks for the `workflow` scope, so Git can push changes to GitHub
 Actions files. On an existing login, `./bin/auth-setup --api-only` adds a
 missing scope. Linux uses Git over HTTPS with the GitHub CLI token, not an SSH
 key. Agents on a headless host start without an SSH agent and cannot unlock a
-protected key.
+protected key. So Linux hosts do not sign their commits. On a Mac,
+`./bin/auth-setup` also uploads the SSH key as a signing key, and Git signs
+every commit with it. It uploads the key only when the GitHub CLI account owns
+the commit email, so the MacBook Air's key goes to `rbrtpop`.
 
 ## Manual completion
 
@@ -491,6 +494,7 @@ Authentication output is omitted. Review logs before you share them.
 | `./bin/setup-tmux`                                      | Install missing TPM plugins and reload a running server.                                                                                                                                                                                              |
 | `./bin/repo-mise bootstrap macos defaults status`       | Compare the macOS preferences, Dock apps, and login items with the mise files.                                                                                                                                                                        |
 | `./bin/configure-telemetry [--dry-run]`                 | Apply the telemetry opt-outs to installed tools.                                                                                                                                                                                                      |
+| `./bin/load-login-jobs [--dry-run]`                     | Mac: write and load the login jobs of `[bootstrap.macos.launchd.agents]` in the mise files. `./bin/configure-telemetry` runs it too.                                                                                                                  |
 | `./bin/container-daemons status`                        | Linux container: check the T3 and tokenburnmarket daemons. `logs <name>` and `restart <name>` read and restart one.                                                                                                                                   |
 | `./bin/configure-screenshots`                           | Repair the PNG destination at `~/Screenshots`.                                                                                                                                                                                                        |
 | `./bin/finder-sidebar-favorites`                        | Retry the `code`, `work`, `personal`, and `screenshots` favorites.                                                                                                                                                                                    |

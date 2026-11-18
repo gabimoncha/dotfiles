@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# Write and load the macOS login jobs of [bootstrap.macos.launchd.agents] in
+# the mise files, with mise. Each job file is ~/Library/LaunchAgents/dev.mise.<name>.plist.
+# bin/configure-telemetry runs this script after it prepares the telemetry job.
+# Usage: load-login-jobs [--dry-run]
+set -euo pipefail
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+dry_run=0
+for argument in "$@"; do
+  case "$argument" in
+    --dry-run) dry_run=1 ;;
+    -h | --help)
+      printf 'Usage: load-login-jobs [--dry-run]\n'
+      exit 0
+      ;;
+    *)
+      printf 'Unknown argument: %s\n' "$argument" >&2
+      exit 2
+      ;;
+  esac
+done
+[[ "${DOTFILES_RUN_MODE:-normal}" != dry-run ]] || dry_run=1
+
+# launchd exists only on macOS.
+[[ "$(uname -s)" == Darwin ]] || exit 0
+
+agents="$HOME/Library/LaunchAgents"
+# The jobs load into the account's GUI session. A run with a temporary HOME
+# must not replace them.
+account_home="$(dscl . -read "/Users/$(id -un)" NFSHomeDirectory 2>/dev/null | awk '{print $2}')" || account_home=""
+if [[ -z "$account_home" || "$(cd "$account_home" 2>/dev/null && pwd -P)" != "$(cd "$HOME" && pwd -P)" ]]; then
+  printf 'Skipped the login jobs: HOME is not the home folder of this account.\n'
+  exit 0
+fi
+# mise writes the job files, and it follows links. As for bin/link-dotfiles,
+# the folder must resolve inside HOME and outside this repository.
+folder="$agents"
+while [[ ! -d "$folder" ]]; do folder="$(dirname "$folder")"; done
+folder="$(cd "$folder" && pwd -P)"
+links=0
+for plist in "$agents"/dev.mise.*.plist "$agents/com.dotfiles.telemetry-env.plist"; do
+  [[ ! -L "$plist" ]] || links=1
+done
+if [[ "$folder/" != "$(cd "$HOME" && pwd -P)/"* || "$folder/" == "$(cd "$repo_root" && pwd -P)/"* || "$links" == 1 ]]; then
+  printf 'Could not load the login jobs: ~/Library/LaunchAgents must be a folder in HOME, and its job files must not be links.\n' >&2
+  exit 1
+fi
+if [[ "$dry_run" == 1 ]]; then
+  printf 'Would write and load the login jobs:\n'
+  "$repo_root/bin/repo-mise" bootstrap macos launchd-agents status || true
+  exit 0
+fi
+
+backup_dir=""
+# Usage: backup FILE mv|cp. Keeps FILE in one private folder per run.
+backup() {
+  if [[ -z "$backup_dir" ]]; then
+    if [[ -L "$HOME/.dotfiles-backups" ]]; then
+      printf '~/.dotfiles-backups is a link. Replace it with a folder.\n' >&2
+      return 1
+    fi
+    mkdir -p "$HOME/.dotfiles-backups" && chmod 700 "$HOME/.dotfiles-backups" &&
+      backup_dir="$(mktemp -d "$HOME/.dotfiles-backups/login-jobs-$(date +%Y%m%d-%H%M%S)-XXXXXX")" || return
+  fi
+  case "$2" in
+    mv) mv "$1" "$backup_dir/" ;;
+    *) cp -p "$1" "$backup_dir/" ;;
+  esac
+}
+
+# Setup copied its own telemetry job file before mise managed the jobs.
+old_job="com.dotfiles.telemetry-env"
+if [[ -f "$agents/$old_job.plist" ]]; then
+  backup "$agents/$old_job.plist" mv || {
+    printf 'Could not back up the old login job %s.\n' "$old_job" >&2
+    exit 1
+  }
+  /bin/launchctl bootout "gui/$UID/$old_job" >/dev/null 2>&1 || true
+  printf 'Unloaded the old login job %s. Its file is in %s\n' "$old_job" "$backup_dir"
+fi
+# mise replaces a job file that differs from its config. Keep a copy first.
+if ! "$repo_root/bin/repo-mise" bootstrap macos launchd-agents status --missing >/dev/null 2>&1; then
+  for plist in "$agents"/dev.mise.*.plist; do
+    [[ -f "$plist" ]] || continue
+    backup "$plist" cp || {
+      printf 'Could not back up the current login job files.\n' >&2
+      exit 1
+    }
+  done
+  [[ -z "$backup_dir" ]] || printf 'Copied the current login job files to %s\n' "$backup_dir"
+fi
+if ! "$repo_root/bin/repo-mise" bootstrap macos launchd-agents apply --yes; then
+  printf 'Could not load the login jobs; rerun ./bin/load-login-jobs in your macOS GUI session.\n' >&2
+  exit 1
+fi
+printf 'Loaded the login jobs.\n'

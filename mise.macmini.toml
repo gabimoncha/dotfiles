@@ -22,7 +22,7 @@
 
 # Each minute, log free memory and the busiest processes into
 # ~/.local/state/dotfiles/process-log/. A later memory incident then shows what
-# grew and which parent started it. bin/configure-telemetry applies it. The
+# grew and which parent started it. bin/load-login-jobs applies it. The
 # MacBook Air does not run it.
 [bootstrap.macos.launchd.agents.process-log]
 program = "~/bin/dotfiles-process-log"
@@ -32,7 +32,7 @@ process_type = "Background"
 
 # Automatic login shows the desktop with no password. This job locks the screen
 # right after login, and the session stays active behind the lock.
-# bin/configure-telemetry applies it.
+# bin/load-login-jobs applies it.
 [bootstrap.macos.launchd.agents.lock-screen]
 program = "~/bin/dotfiles-lock-screen"
 run_at_load = true

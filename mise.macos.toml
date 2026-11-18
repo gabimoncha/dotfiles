@@ -8,11 +8,21 @@
 "~/Library/Application Support/com.mitchellh.ghostty/config" = { source = "configs/ghostty/config", mode = "symlink" }
 # The login script that gives GUI apps the telemetry opt-outs.
 "~/bin/dotfiles-telemetry-env" = { source = "macos/dotfiles-telemetry-env", mode = "symlink" }
+# Commit signing. configs/git/gitconfig includes it.
+"~/.config/git/macos" = { source = "configs/git/macos.gitconfig", mode = "symlink" }
 
 # The login job runs that script. mise expands ~/ in program when it writes the
-# plist. bin/configure-telemetry applies it.
+# plist. bin/load-login-jobs applies it.
 [bootstrap.macos.launchd.agents.telemetry-env]
 program = "~/bin/dotfiles-telemetry-env"
+run_at_load = true
+
+# Loads the SSH keys whose passphrases are in the Keychain into the SSH agent at
+# login. Then Git can sign a commit before any ssh command loads the key.
+# bin/load-login-jobs applies it.
+[bootstrap.macos.launchd.agents.ssh-keychain]
+program = "/usr/bin/ssh-add"
+args = ["--apple-load-keychain"]
 run_at_load = true
 
 [bootstrap.settings.macos.defaults.NSGlobalDomain]

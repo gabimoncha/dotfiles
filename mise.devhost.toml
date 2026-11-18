@@ -12,8 +12,10 @@
 # tools, and one missing source stops the whole apply.
 "~/.local/bin/aether" = { source = "~/.local/bin/mise", mode = "symlink" }
 
-"~/.claude/CLAUDE.md" = { source = "configs/agents/instructions.md", mode = "symlink" }
 "~/.codex/AGENTS.md" = { source = "configs/agents/instructions.md", mode = "symlink" }
+"~/.claude/CLAUDE.md" = { source = "~/.codex/AGENTS.md", mode = "symlink", relative = true, depends = [
+  "~/.codex/AGENTS.md",
+] }
 # Agent skills. The skills CLI writes through these two links
 # into the repository, so commit configs/agents after `skills add`, `update`,
 # or `remove`. Claude Code reads only ~/.claude/skills, so each skill also gets

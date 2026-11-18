@@ -22,7 +22,7 @@
 
 # Each minute, log free memory and the busiest processes into
 # ~/.local/state/dotfiles/process-log/. A later memory incident then shows what
-# grew and which parent started it. bin/configure-telemetry applies it. The
+# grew and which parent started it. bin/load-login-jobs applies it. The
 # MacBook Air does not run it.
 [bootstrap.macos.launchd.agents.process-log]
 program = "~/bin/dotfiles-process-log"

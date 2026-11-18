@@ -58,7 +58,8 @@ retry = true
 logs = { line_retention = 20000 }
 
 [dotfiles]
-# Codex reads one global file, so it gets the shared and the host rules joined.
+# Render the shared and host rules for both agents.
 "~/.codex/AGENTS.md" = { source = "configs/agents/instructions.md.tera", mode = "template" }
-"~/.claude/rules/host.md" = { source = "configs/agents/container.md", mode = "symlink" }
+# Remove the old host link after CLAUDE.md points to the rendered rules.
+"~/.claude/rules/host.md" = { mode = "absent", depends = ["~/.claude/CLAUDE.md"] }
 "~/.codex/config.toml/host" = { source = "configs/codex/container.toml", merge = true, permissions = "0600" }

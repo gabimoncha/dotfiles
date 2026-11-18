@@ -1,0 +1,12 @@
+# macOS only: mise.macos.toml links this file to ~/.config/git/macos. Git signs
+# each commit with the SSH key that bin/auth-setup makes and uploads to GitHub
+# as a signing key. ssh-keygen gets the private key from the SSH agent, so an
+# agent with no terminal can sign too. The ssh-keychain login job loads the key
+# into the SSH agent after a restart. Linux hosts do not sign, because their
+# agents start with no SSH agent (README, "Set up a Linux host").
+[gpg]
+	format = ssh
+[user]
+	signingKey = ~/.ssh/id_ed25519.pub
+[commit]
+	gpgSign = true
