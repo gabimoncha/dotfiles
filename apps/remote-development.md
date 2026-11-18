@@ -129,6 +129,18 @@ for f in /var/packages/ContainerManager/etc/*nasbox.config; do
 done
 ```
 
+Before changing a package file, ask DSM for the container by its final name:
+
+```sh
+synowebapi --exec api=SYNO.Docker.Container version=1 method=get name=nasbox |
+  jq '{success,code:.error.code}'
+```
+
+Reopen the Container tab and the project's YAML editor. On the affected NAS,
+the Container tab showed `nasbox` again after this lookup. The box kept
+running. The timing suggests DSM refreshed the name during the lookup.
+If the row and editor both work, leave the package records in place.
+
 For future edits, build with no old `dev` container present. This avoids
 the temporary rename. Use this procedure when you can open the DSM project:
 
