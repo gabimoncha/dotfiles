@@ -61,11 +61,17 @@ supervise_pid() {
   [[ ${#proc_args[@]} == 2 && "${proc_args[0]##*/}" == bash && "${proc_args[1]}" == */bin/"$2" ]]
 }
 
-# True when process $1 is T3's service launcher: a t3 executable, run directly
-# or by an interpreter, with the argument __service-launcher.
+# True when process $1 is T3's service launcher: a t3 executable with the
+# argument __service-launcher, run directly or by the shell of its shebang,
+# as in `/bin/sh ~/.local/bin/t3 __service-launcher`. Another program with the
+# same arguments, such as `watch`, does not match.
 t3_launcher_pid() {
   proc_args "$1" || return 1
   [[ "${proc_args[0]##*/}" == t3 && "${proc_args[1]:-}" == __service-launcher ]] && return 0
+  case "${proc_args[0]##*/}" in
+    sh | dash | bash) ;;
+    *) return 1 ;;
+  esac
   [[ "${proc_args[1]:-}" == */t3 && "${proc_args[2]:-}" == __service-launcher ]]
 }
 

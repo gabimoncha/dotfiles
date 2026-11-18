@@ -142,7 +142,8 @@ if [[ "$mode" == mise-daemon ]]; then
     local managed daemon_home
     managed="$(managed_pid)" || return 0
     daemon_home="$(config_home_of "$managed")"
-    [[ "$daemon_home" == "$setup_config_home" ]] && return 0
+    # -ef compares the folders, so a trailing slash or a link is the same one.
+    [[ "$daemon_home" == "$setup_config_home" || "$daemon_home" -ef "$setup_config_home" ]] && return 0
     printf 'The tokenburnmarket mise daemon reads its sign-in from %s, but setup used %s.\n' "$daemon_home" "$setup_config_home" >&2
     echo 'pitchfork keeps the environment of the command that started it. From a shell with the' >&2
     echo 'same XDG_CONFIG_HOME as setup, run "$(mise which pitchfork) supervisor stop", then' >&2

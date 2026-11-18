@@ -125,7 +125,7 @@ services:
         watchdog=
         sshd=
         # The path anchor keeps this command's own text from matching.
-        supervisor_runs() { pgrep -u box -f '^/[^ ]*/pitchfork supervisor run' >/dev/null; }
+        supervisor_pid() { pgrep -u box -o -f '^/[^ ]*/pitchfork supervisor run'; }
         # docker stop sends SIGTERM to this shell through init. Stop the start
         # and watchdog job first. Then stop the pitchfork supervisor: it refuses
         # new starts, waits for a start in progress, and stops every daemon
@@ -156,9 +156,11 @@ services:
         # pitchfork has no watchdog of its own. The new scripts stop the
         # copies and services that the old supervisor left. Until a start
         # succeeds, for example while setup still installs mise, the job
-        # tries again each minute. That holds after pitchfork dies, too. After
-        # a start succeeds, a daemon that you stop stays stopped while the
-        # same pitchfork runs.
+        # tries again each minute. started holds the PID of the pitchfork that
+        # the last start succeeded on. When that pitchfork dies, or another
+        # one replaces it, for example after a `container-daemons start t3`,
+        # the job starts every daemon on the new one. A daemon that you stop
+        # stays stopped while the same pitchfork runs.
         if test -x "$$daemons"; then
           (
             trap 'trap "" TERM INT; for job in $$(jobs -pr); do kill -TERM "$$job" 2>/dev/null || true; done; wait || true; exit 0' TERM INT
@@ -167,12 +169,12 @@ services:
               wait "$$!"
             }
             started=
-            if start_all; then started=1; fi
+            if start_all; then started=$$(supervisor_pid) || true; fi
             while :; do
               sleep 60 &
               wait "$$!" || true
-              supervisor_runs || started=
-              if test -z "$$started" && start_all >/dev/null 2>&1; then started=1; fi
+              test "$$(supervisor_pid)" = "$$started" || started=
+              if test -z "$$started" && start_all >/dev/null 2>&1; then started=$$(supervisor_pid) || true; fi
             done
           ) &
           watchdog=$$!

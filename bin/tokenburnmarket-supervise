@@ -105,6 +105,8 @@ not_gone() {
 # pitchfork died and started again. SIGTERM lets its trap stop its daemon.
 matching_pids '/bin/tokenburnmarket-supervise$' supervise_pid tokenburnmarket-supervise
 for old in ${matched[@]+"${matched[@]}"}; do
+  # The stop of an earlier PID can take long. Check this one again.
+  supervise_pid "$old" tokenburnmarket-supervise || continue
   deferring=1
   stopping="$old"
   kill -TERM "$old" 2>/dev/null || stopping=""
@@ -119,6 +121,7 @@ done
 # out-of-memory killer, or one that was started by hand.
 matching_pids 'daemon' tbm_daemon_pid
 for pid in ${matched[@]+"${matched[@]}"}; do
+  tbm_daemon_pid "$pid" || continue
   log "stopping a daemon that this supervisor did not start (PID $pid)"
   stop_daemon || not_gone "$pid"
 done

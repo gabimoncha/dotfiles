@@ -168,6 +168,8 @@ not_gone() {
 if [[ "${1:-}" == --stop-orphans ]]; then
   matching_pids '__service-launcher' t3_launcher_pid
   for pid in ${matched[@]+"${matched[@]}"}; do
+    # The stop of an earlier PID can take 92 seconds. Check this one again.
+    t3_launcher_pid "$pid" || continue
     supervise_pid "$(ps -o ppid= -p "$pid" | tr -d ' ')" t3-dev-supervise && continue
     log "stopping a launcher whose supervisor is gone (PID $pid)"
     signaled=""
@@ -180,6 +182,8 @@ fi
 # pitchfork died and started again. SIGTERM lets its trap stop its launcher.
 matching_pids '/bin/t3-dev-supervise$' supervise_pid t3-dev-supervise
 for old in ${matched[@]+"${matched[@]}"}; do
+  # The stop of an earlier PID can take 93 seconds. Check this one again.
+  supervise_pid "$old" t3-dev-supervise || continue
   deferring=1
   stopping="$old"
   kill -TERM "$old" 2>/dev/null || stopping=""
@@ -194,6 +198,7 @@ done
 # out-of-memory killer, still runs in its own process group.
 matching_pids '__service-launcher' t3_launcher_pid
 for pid in ${matched[@]+"${matched[@]}"}; do
+  t3_launcher_pid "$pid" || continue
   log "stopping a launcher that an earlier supervisor left (PID $pid)"
   stop_launcher || not_gone "$pid"
 done

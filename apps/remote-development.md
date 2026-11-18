@@ -103,8 +103,8 @@ The container has no systemd. Two mise daemons in `mise.container.toml` run
 T3 and the tokenburnmarket sync daemon as `box`, under the pitchfork
 supervisor. The compose command starts them when the container starts. It
 tries again each minute until a first start succeeds, for example while setup
-still installs mise, and later starts pitchfork again within a minute when it
-dies. When the container stops, it runs `pitchfork supervisor stop` before it
+still installs mise. Later, within a minute after pitchfork dies or another
+pitchfork replaces it, it starts every daemon again. When the container stops, it runs `pitchfork supervisor stop` before it
 stops sshd. The supervisor refuses new starts, waits for a start in progress,
 and stops every daemon with its own stop timeout, so T3 can stop its server.
 Then `bin/t3-dev-supervise --stop-orphans` stops a T3 launcher whose script
