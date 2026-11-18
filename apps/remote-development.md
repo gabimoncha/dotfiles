@@ -116,6 +116,19 @@ replacement. A temporary name in DSM alone does not identify a container
 that is safe to remove.
 [Compose replacement sequence](https://github.com/docker/compose/blob/v2.20.1/pkg/compose/convergence.go#L419-L465)
 
+On Container Manager 24.0.2-1707, DSM kept two files under
+`/var/packages/ContainerManager/etc/`: `nasbox.config` and
+`<old-id>_nasbox.config`. Both contained the replacement container's ID.
+DSM listed the temporary name, but a lookup of that name failed. A lookup
+of `nasbox` returned the running container. To check for this mismatch,
+read only the name and ID from each matching file:
+
+```sh
+for f in /var/packages/ContainerManager/etc/*nasbox.config; do
+  [ -f "$f" ] && jq '{name,id}' "$f"
+done
+```
+
 For future edits, build with no old `dev` container present. This avoids
 the temporary rename. Use this procedure when you can open the DSM project:
 
