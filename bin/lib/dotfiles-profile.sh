@@ -119,6 +119,8 @@ dotfiles_profile() {
     }
     while IFS= read -r line || [[ -n "$line" ]]; do
       line="${line%%#*}"
+      # Only a root key selects the profile. A table such as [env_sets] ends it.
+      [[ ! "$line" =~ ^[[:space:]]*\[ ]] || break
       if [[ "$line" =~ $pattern ]]; then
         profile="${BASH_REMATCH[2]}"
       fi

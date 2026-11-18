@@ -28,7 +28,9 @@ eza = "0.23.5"
 zoxide = "latest"
 neovim = "latest"
 # Builds the parsers for nvim-treesitter in the Neovim config (configs/nvim).
-"npm:tree-sitter-cli" = "latest"
+# Its install script downloads the binary. pnpm, on the MacBook Air, runs the
+# script only with allow_builds.
+"npm:tree-sitter-cli" = { version = "latest", allow_builds = ["tree-sitter-cli"] }
 # TypeScript checks, the language server for Neovim and Cursor
 # (~/.config/tsrs/tsgo), and the type-aware rules of oxlint 1.93 and later:
 # oxlint --type-aware runs tsrs-lint from node_modules/.bin, else from PATH.

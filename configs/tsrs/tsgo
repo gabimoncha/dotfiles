@@ -13,12 +13,12 @@
 # "js/ts.experimental.useTsgo": true and
 # "js/ts.tsdk.path": "./node_modules/tsrs/tsdk" in .vscode/settings.json.
 mise="$HOME/.local/bin/mise"
-dir=$("$mise" where npm:tsrs 2>/dev/null)
+dir=$("$mise" where npm:tsrs 2>/dev/null) || dir=""
 # Bun puts the package in node_modules. pnpm (on the MacBook Air) puts it in a
 # global folder, such as v11/<id>/node_modules, as a link to its store, and
 # the platform package is next to the real folder.
 for pkg in "$dir"/node_modules/tsrs "$dir"/*/*/node_modules/tsrs; do
-  [ -d "$pkg" ] || continue
+  [ -n "$dir" ] && [ -d "$pkg" ] || continue
   for exe in "$(cd -P "$pkg/.." && pwd -P)"/@tsrs/*/tsrs; do
     [ -x "$exe" ] && exec "$exe" "$@"
   done

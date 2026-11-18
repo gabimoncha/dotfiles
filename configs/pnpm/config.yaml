@@ -19,6 +19,7 @@ minimumReleaseAgeExclude:
   - "@oxlint/binding-*"
   - "@oxfmt/binding-*"
   - "@fallow-cli/*"
+  - "@agent-browser/*"
   - fallow-type-aware
   - oxlint-plugin-react-doctor
   - bun-types
