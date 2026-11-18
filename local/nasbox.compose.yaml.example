@@ -131,7 +131,8 @@ services:
         # new starts, waits for a start in progress, and stops every daemon
         # with its own stop signal and timeout, so T3 can stop its server. A
         # supervisor that died is started again first, so it can stop the
-        # daemons that it left.
+        # daemons that it left. pitchfork cannot reach a T3 launcher whose
+        # script died, so t3-dev-supervise --stop-orphans stops that one.
         stop_container() {
           trap '' TERM INT
           if test -n "$$watchdog"; then
@@ -140,9 +141,9 @@ services:
           fi
           if test -x "$$daemons"; then
             su - box -c '
-              pf=$$("$$HOME/.local/bin/mise" which pitchfork) || exit
-              "$$pf" supervisor start || exit
-              exec "$$pf" supervisor stop
+              pf=$$("$$HOME/.local/bin/mise" which pitchfork) &&
+                "$$pf" supervisor start && "$$pf" supervisor stop
+              exec "$$HOME/code/personal/dotfiles/bin/t3-dev-supervise" --stop-orphans
             ' || true
           fi
           test -z "$$sshd" || kill -TERM "$$sshd" 2>/dev/null || true
@@ -152,18 +153,24 @@ services:
         # One background job starts the daemons, and then starts pitchfork
         # again when it dies, for example from the out-of-memory killer.
         # pitchfork has no watchdog of its own. The new scripts stop the
-        # copies and services that the old supervisor left.
+        # copies and services that the old supervisor left. Until a first
+        # start succeeds, for example while setup still installs mise, the
+        # job tries again each minute. After that, a daemon that you stop
+        # stays stopped while pitchfork runs.
         if test -x "$$daemons"; then
           (
             trap 'trap "" TERM INT; for job in $$(jobs -pr); do kill -TERM "$$job" 2>/dev/null || true; done; wait || true; exit 0' TERM INT
-            su - box -c "exec $$daemons start --all" &
-            wait "$$!" || true
+            start_all() {
+              su - box -c "exec $$daemons start --all" &
+              wait "$$!"
+            }
+            started=
+            if start_all; then started=1; fi
             while :; do
               sleep 60 &
               wait "$$!" || true
-              if ! supervisor_runs; then
-                su - box -c "exec $$daemons start --all" >/dev/null 2>&1 &
-                wait "$$!" || true
+              if test -z "$$started" || ! supervisor_runs; then
+                if start_all >/dev/null 2>&1; then started=1; fi
               fi
             done
           ) &

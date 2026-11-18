@@ -15,6 +15,7 @@ set -eu
   exit 1
 }
 umask 077
+. "$(dirname "${BASH_SOURCE[0]}")/lib/daemon-procs.sh"
 export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
 # The daemon does not read the zsh files that load the telemetry opt-outs.
 # T3 and its agents inherit them here.
@@ -30,16 +31,30 @@ log() { printf 't3-supervise: %s\n' "$1"; }
 # does not print it. When a T3 error names a new protocol, change this number.
 launcher_protocol=4
 
-# Prints the runtime binary that ~/.local/bin/t3 runs. The official installer
-# links it into the version folder. Since 0.1.11-nightly.20261118.4877, an
-# update writes a shell file that runs `exec '<version folder>/t3' "$@"`.
+# Prints the runtime binary that ~/.local/bin/t3 runs. Older installers link it
+# into the version folder. Since 0.1.11-nightly.20261118.4877, the installer
+# and `t3 update` write a shell file that runs `exec '<version folder>/t3' "$@"`,
+# with each ' in the path written as '\''. This reads only that exact file, as
+# T3's own readPosixLauncherTarget does, and never runs it.
 launcher_runtime() {
-  local launcher="$HOME/.local/bin/t3" runtime
+  local launcher="$HOME/.local/bin/t3" contents quoted runtime
+  local head=$'#!/bin/sh\nexec \'' tail=$'\' "$@"\n' escaped="'\\''" sq="'"
   if [[ -L "$launcher" ]]; then
     readlink -f "$launcher"
     return
   fi
-  runtime="$(sed -n "s/^exec '\([^']*\)' \"\$@\"\$/\1/p" "$launcher" 2>/dev/null | tail -n 1)"
+  [[ -f "$launcher" && "$(wc -c <"$launcher")" -le 4096 ]] || return 1
+  # The x keeps the final newline through the command substitution.
+  contents="$(
+    cat "$launcher"
+    printf x
+  )" || return 1
+  contents="${contents%x}"
+  [[ "$contents" == "$head"*"$tail" ]] || return 1
+  quoted="${contents#"$head"}"
+  quoted="${quoted%"$tail"}"
+  [[ "${quoted//"$escaped"/}" != *"'"* ]] || return 1
+  runtime="${quoted//"$escaped"/$sq}"
   [[ -n "$runtime" && -x "$runtime" ]] || return 1
   printf '%s\n' "$runtime"
 }
@@ -82,14 +97,14 @@ pause() {
   sleep "$1" &
   wait $! || true
 }
-# Waits up to $2 seconds for process $1 to exit.
+# Waits up to $2 seconds for process $1 to exit. A zombie counts as exited.
 wait_gone() {
   local _
   for _ in $(seq "$2"); do
-    kill -0 "$1" 2>/dev/null || return 0
+    proc_alive "$1" || return 0
     pause 1
   done
-  return 1
+  ! proc_alive "$1"
 }
 # The launcher stops the server first. 90 seconds matches T3's launchd job,
 # and pitchfork waits 95 seconds for this script. The launcher runs in its own
@@ -129,11 +144,26 @@ not_gone() {
   exit 1
 }
 
+# The compose command runs this after `pitchfork supervisor stop`. pitchfork
+# signals only the process group of this script, so a launcher whose script
+# died, for example from the out-of-memory killer, would miss its clean stop.
+# Each script stops its own launcher first, so this finds a launcher only
+# when no script runs, and the launcher still gets only one SIGTERM.
+if [[ "${1:-}" == --stop-orphans ]]; then
+  matching_pids '__service-launcher' t3_launcher_pid
+  for pid in ${matched[@]+"${matched[@]}"}; do
+    supervise_pid "$(ps -o ppid= -p "$pid" | tr -d ' ')" t3-dev-supervise && continue
+    log "stopping a launcher whose supervisor is gone (PID $pid)"
+    signaled=""
+    stop_launcher || log "PID $pid still runs after SIGKILL"
+  done
+  exit 0
+fi
+
 # Only one launcher may run. An earlier copy of this script can still run when
 # pitchfork died and started again. SIGTERM lets its trap stop its launcher.
-# pgrep is the only command in $(...), so no copy of this script runs it.
-for old in $(pgrep -u "$(id -u)" -f -- '/bin/t3-dev-supervise$'); do
-  [[ "$old" != "$$" ]] || continue
+matching_pids '/bin/t3-dev-supervise$' supervise_pid t3-dev-supervise
+for old in ${matched[@]+"${matched[@]}"}; do
   deferring=1
   stopping="$old"
   kill -TERM "$old" 2>/dev/null || stopping=""
@@ -146,7 +176,8 @@ for old in $(pgrep -u "$(id -u)" -f -- '/bin/t3-dev-supervise$'); do
 done
 # A launcher whose script was killed before its trap ran, for example by the
 # out-of-memory killer, still runs in its own process group.
-for pid in $(pgrep -u "$(id -u)" -f -- 't3 __service-launcher' || true); do
+matching_pids '__service-launcher' t3_launcher_pid
+for pid in ${matched[@]+"${matched[@]}"}; do
   log "stopping a launcher that an earlier supervisor left (PID $pid)"
   stop_launcher || not_gone "$pid"
 done

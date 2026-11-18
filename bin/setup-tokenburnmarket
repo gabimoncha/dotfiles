@@ -63,6 +63,17 @@ connect_if_needed() {
 }
 
 if [[ "$mode" == mise-daemon ]]; then
+  . "$repo_root/bin/lib/dotfiles-profile.sh"
+  . "$repo_root/bin/lib/daemon-procs.sh"
+  profile="$(dotfiles_profile "$repo_root")" || exit
+  # The node and CLI that bin/tokenburnmarket-supervise starts: it runs
+  # `mise which` in HOME, with the environment of the mise daemons.
+  daemon_tool() {
+    (
+      daemon_env "$profile"
+      cd "$HOME" && MISE_AUTO_INSTALL=0 exec "$HOME/.local/bin/mise" which "$1"
+    ) 2>/dev/null
+  }
   # pitchfork runs bin/tokenburnmarket-supervise as the mise daemon. Its PID,
   # when pitchfork reports it running and that process is the supervise loop.
   # status reads pitchfork's saved state, so check the process too.
@@ -72,20 +83,27 @@ if [[ "$mode" == mise-daemon ]]; then
     printf '%s\n' "$status" | grep -qx 'Status: running' || return 1
     pid="$(printf '%s\n' "$status" | sed -n 's/^PID: *\([0-9][0-9]*\)$/\1/p')"
     [[ -n "$pid" ]] || return 1
-    tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null | grep -q '/bin/tokenburnmarket-supervise' || return 1
+    supervise_pid "$pid" tokenburnmarket-supervise || return 1
     printf '%s\n' "$pid"
   }
-  daemon_pids() { pgrep -u "$(id -u)" -f -- "tokenburnmarket daemon\$" || true; }
+  daemon_pids() {
+    matching_pids tokenburnmarket tbm_daemon_pid
+    [[ ${#matched[@]} == 0 ]] || printf '%s\n' "${matched[@]}"
+  }
   parent_pid() { ps -o ppid= -p "$1" | tr -d ' '; }
-  # Current: the managed loop started a daemon with the node and CLI that mise
-  # gives now.
+  # Current: the managed loop started a daemon with the node and CLI that the
+  # loop would start now.
   daemon_current() {
-    local managed p
+    local managed p arg want_node want_cli
     managed="$(managed_pid)" || return 1
+    want_node="$(daemon_tool node)" && want_cli="$(daemon_tool tokenburnmarket)" || return 1
     for p in $(daemon_pids); do
       [[ "$(parent_pid "$p")" == "$managed" ]] || continue
-      [[ "$(readlink -f "/proc/$p/exe")" == "$(readlink -f "$node")" ]] || continue
-      tr '\0' ' ' <"/proc/$p/cmdline" | grep -qF -- "$cli daemon" && return 0
+      [[ "$(readlink -f "/proc/$p/exe")" == "$(readlink -f "$want_node")" ]] || continue
+      proc_args "$p" || continue
+      for arg in "${proc_args[@]}"; do
+        [[ "$arg" != "$want_cli" ]] || return 0
+      done
     done
     return 1
   }
@@ -126,19 +144,20 @@ if [[ "$mode" == mise-daemon ]]; then
     rm -f "$old_supervisor"
     printf 'Stopped and removed the old supervisor %s\n' "$old_supervisor"
   fi
-  # Two daemons must not sync at once, so wait until these exit.
+  # Two daemons must not sync at once, so wait until these exit. A zombie
+  # counts as exited: it can no longer sync.
   for p in $(unmanaged_pids); do
     kill -TERM "$p" 2>/dev/null || true
     for _ in $(seq 20); do
-      kill -0 "$p" 2>/dev/null || break
+      proc_alive "$p" || break
       sleep 0.5
     done
-    kill -KILL "$p" 2>/dev/null || true
+    proc_alive "$p" && kill -KILL "$p" 2>/dev/null || true
     for _ in 1 2 3 4; do
-      kill -0 "$p" 2>/dev/null || break
+      proc_alive "$p" || break
       sleep 0.5
     done
-    if kill -0 "$p" 2>/dev/null; then
+    if proc_alive "$p"; then
       printf 'tokenburnmarket daemon %s still runs after SIGKILL. Not restarting the mise daemon.\n' "$p" >&2
       exit 1
     fi

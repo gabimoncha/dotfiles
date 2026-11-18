@@ -15,6 +15,7 @@ set -eu
   exit 1
 }
 umask 077
+. "$(dirname "${BASH_SOURCE[0]}")/lib/daemon-procs.sh"
 export PATH="$HOME/.local/bin:$PATH"
 # The daemon does not read the zsh files that load the telemetry opt-outs.
 [ ! -r "$HOME/.config/zsh/telemetry.sh" ] || . "$HOME/.config/zsh/telemetry.sh"
@@ -38,14 +39,14 @@ pause() {
   sleep "$1" &
   wait $! || true
 }
-# Waits up to $2 half-seconds for process $1 to exit.
+# Waits up to $2 half-seconds for process $1 to exit. A zombie counts as exited.
 wait_gone() {
   local _
   for _ in $(seq "$2"); do
-    kill -0 "$1" 2>/dev/null || return 0
+    proc_alive "$1" || return 0
     pause 0.5
   done
-  return 1
+  ! proc_alive "$1"
 }
 # pitchfork kills this script 5 seconds after its stop signal. The daemon gets
 # 3 seconds, then SIGKILL to its own process group, and half a second to exit.
@@ -86,9 +87,8 @@ not_gone() {
 
 # Only one daemon may sync. An earlier copy of this script can still run when
 # pitchfork died and started again. SIGTERM lets its trap stop its daemon.
-# pgrep is the only command in $(...), so no copy of this script runs it.
-for old in $(pgrep -u "$(id -u)" -f -- '/bin/tokenburnmarket-supervise$'); do
-  [[ "$old" != "$$" ]] || continue
+matching_pids '/bin/tokenburnmarket-supervise$' supervise_pid tokenburnmarket-supervise
+for old in ${matched[@]+"${matched[@]}"}; do
   deferring=1
   stopping="$old"
   kill -TERM "$old" 2>/dev/null || stopping=""
@@ -101,16 +101,19 @@ for old in $(pgrep -u "$(id -u)" -f -- '/bin/tokenburnmarket-supervise$'); do
 done
 # A daemon whose script was killed before its trap ran, for example by the
 # out-of-memory killer, or one that was started by hand.
-for pid in $(pgrep -u "$(id -u)" -f -- 'tokenburnmarket daemon$' || true); do
+matching_pids 'tokenburnmarket' tbm_daemon_pid
+for pid in ${matched[@]+"${matched[@]}"}; do
   log "stopping a daemon that this supervisor did not start (PID $pid)"
   stop_daemon || not_gone "$pid"
 done
 pid=""
 signaled=""
 
-# The CLI's lock records a PID and checks only that the PID exists. After an
-# unclean container stop, a new process can have that PID, and the daemon then
-# refuses to start. Remove a lock whose PID is not a tokenburnmarket daemon.
+# The CLI's lock records a PID. The CLI takes over a lock whose PID is gone,
+# but it refuses one whose PID exists (acquireLock in daemon.ts, 0.5.0). After
+# an unclean container stop, another process can have that PID. Remove the
+# lock only then. A lock whose PID is gone stays for the CLI to take over, so
+# this never removes a lock that a new daemon has just written.
 config_home="${XDG_CONFIG_HOME:-}"
 [[ "$config_home" == /* ]] || config_home="$HOME/.config"
 lock="$config_home/tokenburnmarket/daemon.lock"
@@ -118,9 +121,8 @@ clear_stale_lock() {
   local held
   [[ -f "$lock" ]] || return 0
   held="$(sed -n 's/.*"pid": *\([0-9][0-9]*\).*/\1/p' "$lock")"
-  [[ -n "$held" ]] || return 0
-  # The shell opens the input before it applies 2>, so 2> goes first.
-  tr '\0' ' ' 2>/dev/null <"/proc/$held/cmdline" | grep -q 'tokenburnmarket daemon' && return 0
+  [[ -n "$held" && -e "/proc/$held" ]] || return 0
+  ! tbm_daemon_pid "$held" || return 0
   rm -f "$lock"
   log "removed a stale daemon lock: PID $held is not a tokenburnmarket daemon"
 }

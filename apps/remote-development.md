@@ -101,13 +101,21 @@ period in seconds.
 
 The container has no systemd. Two mise daemons in `mise.container.toml` run
 T3 and the tokenburnmarket sync daemon as `box`, under the pitchfork
-supervisor. The compose command starts them when the container starts, and
-starts pitchfork again within a minute when it dies. When the container stops,
-it runs `pitchfork supervisor stop` before it stops sshd. The supervisor
-refuses new starts, waits for a start in progress, and stops every daemon with
-its own stop timeout, so T3 can stop its server. `stop_grace_period: 130s`
-covers the t3 daemon's 95 seconds. Copy those lines from the example into the
-compose file on the NAS, and rebuild the project.
+supervisor. The compose command starts them when the container starts. It
+tries again each minute until a first start succeeds, for example while setup
+still installs mise, and later starts pitchfork again within a minute when it
+dies. When the container stops, it runs `pitchfork supervisor stop` before it
+stops sshd. The supervisor refuses new starts, waits for a start in progress,
+and stops every daemon with its own stop timeout, so T3 can stop its server.
+Then `bin/t3-dev-supervise --stop-orphans` stops a T3 launcher whose script
+died, which pitchfork cannot reach. `stop_grace_period: 130s` covers the t3
+daemon's 95 seconds.
+
+To move the NAS to these daemons, replace the whole `command` block in the
+compose file on the NAS with the one in the example, and add
+`stop_grace_period: 130s`. The old command started two loops from
+`~/.local/bin`, and a rebuild with only the new grace period keeps them. Then
+rebuild the project, and keep the volumes.
 
 Run every daemons command through `./bin/container-daemons`, not
 `./bin/repo-mise daemons`. The supervisor keeps the environment of the command
