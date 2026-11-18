@@ -22,8 +22,6 @@ public .reviewGuideModelSelection.instanceId
 public .reviewGuideModelSelection.model
 public .reviewGuideModelSelection.options
 public .promptSuggestionsEnabled
-public .providerModelPreferences.fs_lab.hiddenModels
-public .providerModelPreferences.fs_lab.modelOrder
 public .providerInstances.codex.driver
 public .providerInstances.codex.config.launchArgs
 public .providerInstances.codex.config.customModels
