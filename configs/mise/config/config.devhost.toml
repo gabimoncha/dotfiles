@@ -18,7 +18,6 @@ uv = "0.13.7"
 # and CVE-2026-114583.
 python = "3.15.2"
 ruby = "3.4.12"
-ast-grep = "latest"
 cloudflared = "2026.10.2"
 cmake = "latest"
 redis = "latest"
@@ -28,8 +27,6 @@ yamlfmt = "latest"
 # Installs and updates the agent skills in configs/agents/skills.
 "npm:skills" = "latest"
 "npm:eas-cli" = "latest"
-# Drives iOS simulators and Android devices for the agents and the T3 device hub.
-"npm:agent-device" = "latest"
 "pipx:httpie" = { version = "latest", python = "3.15", with = ["certifi==2026.10.19"] }
 "github:boyter/scc" = "latest"
 "github:flowcopilot/aether" = "latest"
@@ -44,12 +41,8 @@ yamlfmt = "latest"
 # Security exception to the four-day delay: 4.153.0 includes Undici 7.30.1
 # for CVE-2026-109383, CVE-2026-109932, and CVE-2026-87018.
 wrangler = { version = "4.153.0", allow_builds = ["esbuild", "sharp", "workerd"] }
-# Formats Markdown in repos whose hk.pkl runs it, including this one.
-"npm:oxfmt" = "latest"
 shellcheck = "latest"
 shfmt = "latest"
-# TypeScript checks and the editor language server (~/.config/tsrs/tsgo).
-"npm:tsrs" = "latest"
 # Linux only: the Mac installs btop with Homebrew, and btop ships no macOS build.
 btop = { version = "latest", os = "linux" }
 # The JDK for Android builds and sdkmanager. mise sets JAVA_HOME in activated
@@ -79,7 +72,6 @@ infisical = { version = "0.45.8", os = "macos" }
 portless = { version = "latest", os = "macos" }
 vercel = { version = "latest", os = "macos" }
 turbo = { version = "latest", os = "macos" }
-"npm:agent-browser" = { version = "latest", os = "macos" }
 "npm:agent-desktop" = { version = "latest", os = "macos" }
 "npm:@yaakapp/cli" = { version = "latest", os = "macos" }
 "github:ryanoasis/nerd-fonts" = { version = "latest", asset_pattern = "Hack.zip", os = "macos" }

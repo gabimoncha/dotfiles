@@ -17,11 +17,6 @@ return {
   {
     "neovim/nvim-lspconfig",
     opts = function(_, opts)
-      -- The MacBook Air has no global tsrs (mise.devhost.toml links it), so it
-      -- keeps the tsgo server from the LazyVim extra.
-      if vim.fn.executable(global_tsrs) ~= 1 then
-        return
-      end
       local tsgo = opts.servers.tsgo or {}
       opts.servers.tsgo = { enabled = false }
       opts.servers.tsrs = vim.tbl_deep_extend("force", tsgo, {

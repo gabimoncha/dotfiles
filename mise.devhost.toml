@@ -5,7 +5,6 @@
 [dotfiles]
 "~/.androidrc" = { source = "configs/android/androidrc", mode = "symlink" }
 "~/.config/.bunfig.toml" = { source = "configs/bun/bunfig.toml", mode = "symlink" }
-"~/.config/tsrs/tsgo" = { source = "configs/tsrs/tsgo", mode = "symlink" }
 
 # A link to mise acts as a shim: mise runs the tool that the link name names.
 # The Claude and Codex MCP configs start this path. A link to the tool's

@@ -59,6 +59,23 @@ url = "https://github.com/FiloSottile/age/releases/download/v1.3.2/age-v1.3.2-da
 url_api = "https://api.github.com/repos/FiloSottile/age/releases/assets/535541897"
 provenance = "github-attestations"
 
+[[tools.ast-grep]]
+version = "0.51.2"
+backend = "aqua:ast-grep/ast-grep"
+specifiers = ["latest"]
+
+[tools.ast-grep."platforms.linux-x64"]
+checksum = "sha256:40604c21c38d4c7581c56bdddeef277c56bf3c0113620aa96e78ae87e82366df"
+checksum_source = "mise-versions"
+url = "https://github.com/ast-grep/ast-grep/releases/download/0.51.2/app-x86_64-unknown-linux-gnu.zip"
+url_api = "https://api.github.com/repos/ast-grep/ast-grep/releases/assets/734234607"
+
+[tools.ast-grep."platforms.macos-arm64"]
+checksum = "sha256:ea4f4082d25e5f8e0450add6fd488dd008a373c90483cc2031759c8431f1dcfb"
+checksum_source = "mise-versions"
+url = "https://github.com/ast-grep/ast-grep/releases/download/0.51.2/app-aarch64-apple-darwin.zip"
+url_api = "https://api.github.com/repos/ast-grep/ast-grep/releases/assets/734229272"
+
 [[tools.bat]]
 version = "0.26.1"
 backend = "aqua:sharkdp/bat"
@@ -288,6 +305,26 @@ url = "https://registry.npmjs.org/npm/-/npm-12.2.1.tgz"
 checksum = "blake3:b38b043f13b44b58ff4bf223c3345e3b23ee72347aa1a60a2b1d1f669b922f00"
 url = "https://registry.npmjs.org/npm/-/npm-12.2.1.tgz"
 
+[[tools."npm:agent-browser"]]
+version = "0.43.0"
+backend = "npm:agent-browser"
+specifiers = ["latest"]
+
+[[tools."npm:agent-device"]]
+version = "0.21.39"
+backend = "npm:agent-device"
+specifiers = ["latest"]
+
+[[tools."npm:oxfmt"]]
+version = "0.78.0"
+backend = "npm:oxfmt"
+specifiers = ["latest"]
+
+[[tools."npm:oxlint"]]
+version = "1.94.0"
+backend = "npm:oxlint"
+specifiers = ["latest"]
+
 [[tools."npm:sfw"]]
 version = "2.0.6"
 backend = "npm:sfw"
@@ -296,6 +333,11 @@ specifiers = ["latest"]
 [[tools."npm:tree-sitter-cli"]]
 version = "0.27.2"
 backend = "npm:tree-sitter-cli"
+specifiers = ["latest"]
+
+[[tools."npm:tsrs"]]
+version = "0.25.0-ts7.1.0-beta"
+backend = "npm:tsrs"
 specifiers = ["latest"]
 
 [[tools.pnpm]]

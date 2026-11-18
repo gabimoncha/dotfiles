@@ -29,6 +29,17 @@ zoxide = "latest"
 neovim = "latest"
 # Builds the parsers for nvim-treesitter in the Neovim config (configs/nvim).
 "npm:tree-sitter-cli" = "latest"
+# TypeScript checks, and the language server for Neovim and Cursor
+# (~/.config/tsrs/tsgo).
+"npm:tsrs" = "latest"
+# Lint and format JavaScript, TypeScript, and Markdown in Neovim, Cursor, and
+# the repos whose hk.pkl runs them, including this one.
+"npm:oxlint" = "latest"
+"npm:oxfmt" = "latest"
+# Searches and rewrites code by its syntax tree.
+ast-grep = "latest"
+# Drives iOS simulators and Android devices for the agents and the T3 device hub.
+"npm:agent-device" = "latest"
 "npm:sfw" = "latest"
 age = "latest"
 # Security exception to the four-day delay: the lock selects 4.54.3 for
@@ -40,6 +51,8 @@ hk = "latest"
 fastfetch = { version = "latest", os = "macos" }
 mas = { version = "latest", os = "macos" }
 "conda:wget" = { version = "latest", os = "macos" }
+# Drives a browser for the agents. Linux hosts have no browser.
+"npm:agent-browser" = { version = "latest", os = "macos" }
 
 [settings]
 experimental = true

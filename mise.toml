@@ -32,6 +32,7 @@ min_version = { soft = "2026.11.8" }
 "~/.rgrc" = { source = "configs/ripgrep/rgrc", mode = "symlink" }
 "~/.config/pnpm/config.yaml/dotfiles" = { source = "configs/pnpm/config.yaml", merge = true, permissions = "0600" }
 "~/.config/nvim" = { source = "configs/nvim", mode = "symlink" }
+"~/.config/tsrs/tsgo" = { source = "configs/tsrs/tsgo", mode = "symlink" }
 
 # The global mise config folder: runtime tools and settings, each profile's
 # config.<profile>.toml, and their locks. Its miserc.local.toml links to this
