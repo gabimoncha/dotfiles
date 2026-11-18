@@ -97,6 +97,20 @@ rebuild. Do not delete persistent volumes. After a rebuild,
 `docker inspect nasbox --format '{{.Config.StopTimeout}}'` prints the grace
 period in seconds.
 
+### Check a stale container name after a rebuild
+
+If DSM shows `<old-id>_nasbox` and the project editor will not open,
+look up the running container by name. Run this on the NAS in a one-time
+DSM Task Scheduler task as `root`:
+
+```sh
+synowebapi --exec api=SYNO.Docker.Container version=1 method=get name=nasbox |
+  jq '{success,code:.error.code}'
+```
+
+If the lookup returns `success: true`, reopen **Container**, then
+**Project > nasbox > YAML Configurations**. Delete the root task after use.
+
 ### Daemons
 
 The container has no systemd. Two mise daemons in `mise.container.toml` run
