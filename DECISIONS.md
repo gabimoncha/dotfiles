@@ -348,6 +348,20 @@ mise install. SSH readiness is a separate check.
 
 Git identity, SSH identity, and API account routing stay separate and local.
 
+### gh extensions
+
+gh installs the gh extensions, through the `dot:gh-extensions` mise task. The
+setup step `gh_extensions` runs the task after the GitHub login. Then
+`gh extension list` shows each extension's repository and version, and
+`gh extension upgrade --all` updates them.
+
+The mise `github:` backend can install the binaries, with lock checksums and
+the four-day release delay. But gh runs an extension only from its own
+extensions folder, not from PATH. The mise install then needs a link script in
+a postinstall hook, and gh sees a local extension that `gh extension upgrade`
+skips. The cost of the gh install: the extensions do not get the release
+delay or lock checksums.
+
 Every shell activates mise: `configs/zsh/mise-activate.zsh` for zsh, and
 `configs/bash/mise-activate.bash` for the bash commands of Pi. Agents run
 commands with `zsh -c` (OpenCode, Claude), `zsh -lc` (Codex), `zsh -ilc`

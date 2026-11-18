@@ -188,6 +188,7 @@ setup_macos_continue() {
   step brewfiles local setup_brewfiles
   step --optional homebrew_inventory capture setup_brew_inventory
   step --optional mise_inventory capture setup_mise_inventory
+  step --optional gh_extensions capture setup_gh_extensions
   step --optional manifest_apps capture setup_manifest_apps
   step --optional applications capture setup_verify_apps
   step --optional editor_extensions capture setup_editor_extensions
@@ -237,6 +238,7 @@ setup_linux() {
     [[ "$step_status" != 0 ]] || export DOTFILES_SETUP_API_READY=1
   fi
   step --optional mise_inventory capture setup_mise_inventory
+  step --optional gh_extensions capture setup_gh_extensions
   step --optional shell capture setup_shell
   # Pi needs Node from the mise inventory.
   step --optional standalone_agents capture setup_standalone_agents
