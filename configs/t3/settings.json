@@ -638,7 +638,6 @@
     "claudeAgent": {
       "driver": "claudeAgent",
       "config": {
-        "binaryPath": "~/.local/bin/claude",
         "customModels": [
 
         ]
