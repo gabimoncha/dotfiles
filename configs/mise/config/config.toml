@@ -70,7 +70,7 @@ experimental = true
 # when a command is not found. Setup and `mise install` install tools.
 not_found_auto_install = false
 # Activation does not add the shims folder to PATH, also when a project
-# declares a lazy tool. configs/claude/claude puts it on the PATH of Claude Code.
+# declares a lazy tool.
 activate_shims = false
 # A shim whose version is not installed stops with an error. It does not run
 # another executable of that name, such as /usr/bin/python3.

@@ -30,6 +30,18 @@
   "permissions": {
     "defaultMode": "auto"
   },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -z \"$CLAUDE_ENV_FILE\" ] || grep -qsF 'mise hook-env --force' \"$CLAUDE_ENV_FILE\" || printf '%s\\n' '[ -n \"${__MISE_TASK_TOOL_ARGS-}${MISE_TASK_NAME-}\" ] || eval \"$(mise hook-env --force -s \"${ZSH_VERSION:+zsh}${BASH_VERSION:+bash}\")\"' >> \"$CLAUDE_ENV_FILE\""
+          }
+        ]
+      }
+    ]
+  },
   "pluginConfigs": {
     "agents-md@builtin": {
       "options": {
