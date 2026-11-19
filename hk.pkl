@@ -12,7 +12,6 @@ local shellFiles =
     "bin/lib/*.sh",
     "configs/bash/*.bash",
     "configs/bash/bash_profile",
-    "configs/claude/claude",
     "configs/gh/gh",
     "configs/gh/dotfiles-gh-real",
     "configs/harness/harness",
