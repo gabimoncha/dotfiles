@@ -15,8 +15,13 @@ if [ ! -x "$real" ]; then
   exit 127
 fi
 
-# Inside `mise exec TOOL@VERSION` or a mise task, PATH has the versions that
-# mise chose. Keep them, as mise-activate.zsh does.
+# Inside a mise task, or a command that mise runs with given tool versions,
+# PATH has the versions that mise chose. Keep them, as mise-activate.zsh does.
+#
+# Do not write the word mise followed by "x" or "exec" anywhere in this file.
+# T3 Code reads this script to find how Claude Code is installed. When the
+# script matches that pattern, T3 Code treats Claude Code as a mise tool and
+# does not offer `claude update`.
 if [ -z "${__MISE_TASK_TOOL_ARGS-}${MISE_TASK_NAME-}" ]; then
   mise_data="${MISE_DATA_DIR:-$HOME/.local/share/mise}"
   new_path="$HOME/bin:$HOME/.local/bin:$mise_data/shims"
