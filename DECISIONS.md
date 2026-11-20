@@ -460,10 +460,10 @@ starts keep the PATH of the program that started Claude Code.
 Before the hook, a wrapper at `~/bin/claude` put the shims on PATH and started
 `~/.local/bin/claude`. T3 Code offers `claude update` only when the Claude
 command is the vendor command, under `~/.local/share/claude/` or
-`claude/versions/`, so with the wrapper it showed only a manual update. The
-T3 setting `providerInstances.claudeAgent.config.binaryPath` now names
-`~/.local/bin/claude`, and `mise.toml` removes the old link with
-`mode = "absent"`. `bin/install-standalone` and `harness update` use the path
+`claude/versions/`, so with the wrapper it showed only a manual update.
+`mise.toml` removes the old link with `mode = "absent"`. T3 Code then finds
+`claude` on PATH at `~/.local/bin/claude`, so it needs no binary path setting.
+`bin/install-standalone` and `harness update` use the path
 `~/.local/bin/claude` from `apps/standalone.tsv`, and `claude update` and the
 automatic update change only that path.
 

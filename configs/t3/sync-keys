@@ -27,8 +27,6 @@ public .providerInstances.codex.config.launchArgs
 public .providerInstances.codex.config.customModels
 public .providerInstances.claudeAgent.driver
 public .providerInstances.claudeAgent.config.customModels
-# T3 Code offers `claude update` only when it runs the vendor command.
-public-home .providerInstances.claudeAgent.config.binaryPath
 public .providerInstances.cursor.driver
 public .providerInstances.cursor.displayName
 public .providerInstances.cursor.enabled
