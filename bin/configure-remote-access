@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Prepares the Mac mini for use through SSH with no person at the machine:
+# Prepares a devstation Mac, such as the Mac mini, for use through SSH with no person at the machine:
 # Remote Login on, no system sleep, a restart after a power failure, and
 # automatic login. The login jobs (the T3 server, tokenburnmarket, the process
 # log) start only when a user session exists, so the Mac must log in by itself
-# after a restart. Runs only on the macmini profile. Bash 3.2 compatible.
+# after a restart. Runs only on the devstation role. Bash 3.2 compatible.
 #
 # Usage: configure-remote-access [--apply|--dry-run|--status]
 # Exit 20 means deferred: one setting needs a manual action first.
@@ -31,8 +31,8 @@ if [[ "$(uname -s)" != Darwin ]]; then
 fi
 . "$repo_root/bin/lib/dotfiles-profile.sh"
 profile="$(dotfiles_profile "$repo_root")" || exit
-if [[ "$profile" != macmini ]]; then
-  printf 'configure-remote-access changes only the macmini profile. This profile is %s.\n' "$profile" >&2
+if [[ "$profile" != devstation ]]; then
+  printf 'configure-remote-access changes only the devstation role. This role is %s.\n' "$profile" >&2
   exit 1
 fi
 

@@ -96,54 +96,57 @@ project:
 - `mise.macos.toml` and `mise.linux.toml` have the platform entries. The root
   `.miserc.toml` sets `auto_env`, so mise loads the platform file by itself.
 - `mise.devhost.toml` has the entries of the development machines: every
-  profile except air. See [Development layer](#development-layer).
-- `mise.macowl.toml`, `mise.macmini.toml`, `mise.air.toml`, and
-  `mise.container.toml` are the profiles. The ignored `.miserc.local.toml`
-  selects one, after its layers, for example `env = ["devhost", "macowl"]`. A
-  profile file can replace an entry of a shared file, as the container does for
-  `~/.codex/AGENTS.md`.
+  role except lightshell. See [Development layer](#development-layer).
+- `mise.mainhost.toml`, `mise.devstation.toml`, and `mise.lightshell.toml` are
+  the roles, and `mise.container.toml` is the container layer. The ignored
+  `.miserc.local.toml` selects one, after its layers, for example
+  `env = ["devhost", "mainhost"]`. A role file can replace an entry of a
+  shared file. See [Roles and fleet](#roles-and-fleet).
 
 Each `[dotfiles]` entry names its source in `configs/<app>/`. An earlier layout
 kept one mise file in each app folder. That needed 21 module files, 24 links in
 `mise/setup/conf.d/` to load them, and an ignore list so mise did not load the
-module files as project config. One file per platform and per profile gives the
+module files as project config. One file per platform and per role gives the
 same result without those parts.
 
 `~/.config/mise` links to `configs/mise/config/`, the global config folder.
 It holds the runtime tool list `config.toml`, the development list
-`config.devhost.toml`, each profile's `config.<profile>.toml`, their locks, and
+`config.devhost.toml`, each role's `config.<role>.toml`, their locks, and
 the lock sidecars. The runtime list
 also holds the tasks, such as `mise run dot:status`, so they work from every
 folder. mise loads `mise/config.toml` from any parent folder as project config,
 so the folder is `configs/mise/config/`, not `configs/mise/`. One folder link
-replaces a link per file, and a new profile needs no new link.
+replaces a link per file, and a new role needs no new link.
 
 `bin/repo-mise` runs the pinned mise from the repository root. It loads only
 this repository's files: no global or system config, and no config file in a
-parent folder. `bin/lib/dotfiles-profile.sh` selects the profile before any
+parent folder. `bin/lib/dotfiles-profile.sh` selects the role before any
 write. `repo-mise --global` uses `configs/mise/config/` as the config folder
-and sets `MISE_ENV` to the profile's layers and the profile, so it loads the same files as `~/.config/mise`, and no other global config.
-When no profile is selected yet, `repo-mise --global` still runs, with an
+and sets `MISE_ENV` to the role's layers and the role, so it loads the same files as `~/.config/mise`, and no other global config.
+When no role is selected yet, `repo-mise --global` still runs, with an
 empty `MISE_ENV`, so it loads only `config.toml`. Such a run does not check the
-devhost or profile files.
+devhost or role files.
 
-A tool for one profile goes in `configs/mise/config/config.<profile>.toml`. The
-root profile files cannot hold it: their `[tools]` load only inside this
+A tool for one role goes in `configs/mise/config/config.<role>.toml`. The
+root role files cannot hold it: their `[tools]` load only inside this
 repository. The folder's `miserc.local.toml` is a tracked link to the ignored
-`.miserc.local.toml`, which holds `env = ["devhost", "<profile>"]`, or
-`env = ["air"]` on the Air. mise reads it before any config, sets the
-environments, and loads their files. `bin/link-dotfiles` writes this line from
-the profile when the file is missing, as on a container, or when the line
-lacks the layers. Each profile has its own lock, because
+`.miserc.local.toml`, which holds the layers and the role, such as
+`env = ["devhost", "mainhost"]`, or `env = ["lightshell"]` on the Air. mise
+reads it before any config, sets the environments, and loads their files.
+`bin/link-dotfiles` writes this line from the role when the file is missing,
+as on a container, or when the line lacks the layers or names an old profile.
+Each role has its own lock, because
 `mise install` prunes lock entries that the loaded config does not name: with
-one shared lock, each machine would remove the tools of the other profiles. A
+one shared lock, each machine would remove the tools of the other roles. A
 `conf.d` file has this problem, because it shares the global lock. The
 environment applies in every folder, so a project file named
-`mise.<profile>.toml` also loads. For this reason the Mac profile has the
-machine's name, `macowl`, which no other project uses. mise also exports the
-profile to every project: tasks and `mise exec` see `MISE_ENV=<profile>`, and
+`mise.<role>.toml` also loads. For this reason the role names are unusual
+words that no other project uses. mise also exports the
+role to every project: tasks and `mise exec` see `MISE_ENV`, and
 templates see `mise_env`. A project that tests `MISE_ENV` or `mise_env` for
-its own environments gets the profile name.
+its own environments gets the role list. mise `env_sets` could name the role
+lists, but the scripts still need the role to pick the app lists and
+restores, so the env line stays the one source.
 
 Two settings keep tools working inside the repository. mise refuses an
 untrusted file with `[dotfiles]` entries, and then every shim in this folder
@@ -198,7 +201,8 @@ section can gain new fields, such as exporter headers. So a public rule names
 one setting, and a setting on neither list is counted until you mark it. A
 setting can be a list of records, such as T3 model favorites. A record can
 also gain new fields, so the save checks every key and text in each record.
-On macowl, the source of the shared T3 settings, a login job runs
+On the MacBook, the source of the shared T3 settings, a login job from its
+fleet host folder runs
 `bin/autosave-t3-settings` each minute. It calls `bin/save-settings` only when
 the live T3 file changed, so a change in T3 reaches the repository without a
 manual save. It never commits: the owner reviews each diff before the other
@@ -277,16 +281,16 @@ container is the only Linux host.
   that mise cannot install, and `mise bootstrap` installs them with apt. Linux
   has no Homebrew and no Nix.
 - The same runtime tool lists serve both systems. Mac-only tools carry
-  `os = "macos"`. The platform and profile files add the file entries.
-  `configs/mise/config/config.<profile>.toml` adds tools for one profile.
-- mise renders `~/.codex/AGENTS.md` from the shared rules and the host rules.
-  Claude reads the same file through the `~/.claude/CLAUDE.md` link.
+  `os = "macos"`. The platform and role files add the file entries.
+  `configs/mise/config/config.<role>.toml` adds tools for one role.
+- fleet renders `~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md` from the shared
+  rules and the host rules.
 - Linux hosts use Git over HTTPS with the GitHub CLI token. Agents there start
   without an SSH agent, so a protected SSH key would block every push, and an
   unprotected key would add a second credential next to the token.
 - Kernel 4.4 on the NAS has no user namespaces, so the agent sandboxes cannot
-  run there. The container is the boundary, so its Codex config sets
-  `sandbox_mode = "danger-full-access"`.
+  run there. The container is the boundary, so the `nasbox` folder in fleet
+  sets `sandbox_mode = "danger-full-access"`.
 - The container has no systemd, so mise `[daemons]` (experimental) in
   `mise.container.toml` run T3 and the tokenburnmarket sync daemon under
   pitchfork. The compose command starts and stops them. Each daemon still runs
@@ -502,7 +506,7 @@ aliases (`npm`, `pnpm`, `cargo`, ...) stay there, because `sfw` adds about
 mise, Bun, and pnpm. Current behavior differs for Claude Code: its snapshot
 shell sources `~/.zshrc`, so Claude Code shells have both groups too.
 
-A login job on macowl and the Mac mini logs free memory and the busiest processes each minute
+A login job from fleet (`extras/dev-mac`) logs free memory and the busiest processes each minute
 into `~/.local/state/dotfiles/process-log/`, for 7 days. It keeps process names
 and parent names, never command arguments.
 
@@ -563,24 +567,35 @@ Codex instance's driver and launch arguments; its other state stays local.
 Claude uses private native `env` settings.
 See [NAS agent proxy](apps/remote-development.md#nas-agent-proxy).
 
-## Mac profiles
+## Roles and fleet
 
-macowl is the personal MacBook Pro. The Mac mini is a development machine that
-you use through SSH and sometimes at its monitor. The MacBook Air is not a
-development machine: it opens a terminal, a browser, and Cursor, and reads
-code. The shared Mac lists hold what all three need: the root `Brewfile`,
-`apps/manifest.tsv`, `mise.macos.toml`, and the tools in
-`configs/mise/config/config.toml`. The devhost layer holds what macowl and the
-Mac mini also need. An entry for one Mac goes in that profile's files. A shared
-list with one extra file per layer and per profile keeps one place for each
-app. A complete list per profile would repeat most entries, and the copies
-would drift.
+This repository is public and holds roles, not machines. A main Mac
+(`mainhost`, the MacBook) holds the SSH keys to the other hosts and a fleet
+checkout. A devstation (the Mac mini, and `nasbox` with the container layer)
+is a development machine that you reach over SSH. The MacBook Air
+(`lightshell`) is not a development machine: it opens a terminal, a browser,
+and Cursor, and reads code, and it has no fleet checkout. The shared Mac lists
+hold what all of them need: the root `Brewfile`, `apps/manifest.tsv`,
+`mise.macos.toml`, and the tools in `configs/mise/config/config.toml`. The
+devhost layer holds what the development machines also need. A shared list
+with one extra file per layer and per role keeps one place for each app. A
+complete list per role would repeat most entries, and the copies would drift.
 
-The Mac mini has no dictation apps, no Synology Drive, and no Mackup, so setup
-restores only the Raycast export there. Its Raycast exports go to iCloud Drive.
-It runs the T3 server as a login service, with no desktop app. The T3 server,
-tokenburnmarket, and the process log are login jobs, and they start only in a
-user session. So the Mac mini logs in automatically after a restart, and macOS
+The private fleet repo holds what makes one machine different, and all agent
+rules: fan curves, the T3 settings autosave job (only one Mac may save the
+shared settings), the AeroSpace, Karabiner, and process log files of the
+development Macs, the `nasbox` Codex sandbox setting, and the NAS Compose
+files. `mise.mainhost.toml` clones fleet with `[bootstrap.repos]`, and
+`mise run fleet:apply` there applies the machine's folder. Runtime tools and
+app lists stay in the roles: a fleet host folder is a mise project, so its
+`[tools]` work only inside it, and moving apps there would swap Homebrew for
+mise's `brew-cask` manager.
+
+A devstation Mac has no dictation apps, no Synology Drive, and no Mackup, so
+setup restores only the Raycast export there. Its Raycast exports go to iCloud
+Drive. It runs the T3 server as a login service, with no desktop app. The T3
+server, tokenburnmarket, and the process log are login jobs, and they start
+only in a user session. So it logs in automatically after a restart, and macOS
 allows automatic login only with FileVault off. `bin/configure-remote-access`
 stops and reports when FileVault is on. It never turns FileVault off, because
 that choice gives a person at the machine your session.
@@ -588,34 +603,35 @@ that choice gives a person at the machine your session.
 A login job then locks the screen, so the session exists but the desktop needs
 the password. `bin/lock-screen` calls `SACLockScreenImmediate` from the private
 login framework. No public command locks the screen without a dependency on
-the display state, and the Mac mini often has no display. An Apple update can
+the display state, and a devstation often has no display. The job is in
+`mise.devstation.toml`, beside the automatic login that setup turns on. An Apple update can
 remove the function; the screen then stays unlocked after a start, and nothing
 else breaks.
 
 ### Development layer
 
-The development machines (macowl, macmini, and container) share more than the
-Air: the development tools, the agent rules and skills, the T3, OpenCode, and
+The development machines (mainhost and devstation) share more than the
+Air: the development tools, the skills, the T3, OpenCode, and
 pi settings, and apps such as AeroSpace, OrbStack, and Vorssaint. These are in
 a `devhost` layer: `mise.devhost.toml`, `configs/mise/config/config.devhost.toml`
 with its own `mise.devhost.lock`, `apps/devhost.Brewfile`, and
 `apps/manifest.devhost.tsv`. mise loads more than one environment in order, so
-`env = ["devhost", "macowl"]` loads the layer, then the profile, and the
-profile wins for an entry with the same name. One layer keeps one copy and one
-lock for each development tool. A copy in each profile file would need three
+`env = ["devhost", "mainhost"]` loads the layer, then the role, and the
+role wins for an entry with the same name. One layer keeps one copy and one
+lock for each development tool. A copy in each role file would need three
 edits and three locks for each upgrade.
 
 The layer is not named `dev`, because mise loads `mise.<env>.toml` in every
 project folder, and projects often have a `mise.dev.toml`. Linux also loads
 `mise.devhost.toml`, and a `[dotfiles]` entry has no OS filter. So the
-AeroSpace and Karabiner links are in `mise.macowl.toml` and
-`mise.macmini.toml`. The layer's `[bootstrap.settings.macos]` tables are safe on
+AeroSpace and Karabiner links are in the fleet extra `dev-mac`, which only
+the development Macs pick. The layer's `[bootstrap.settings.macos]` tables are safe on
 Linux, because only `macos/defaults.sh` applies them, and only on a Mac.
 `bin/save-settings` saves the merges of `mise.toml` and `mise.devhost.toml`.
 
 The Air restores no backups, and setup skips tokenburnmarket and the mobile
 step there. Its Git identity is in `configs/git/air.gitconfig`, which
-`mise.air.toml` links to `~/.config/git/profile`. `configs/git/gitconfig`
+`mise.lightshell.toml` links to `~/.config/git/profile`. `configs/git/gitconfig`
 includes that path before `~/.gitconfig.local`, so a local identity still wins.
 
 ## Portable state

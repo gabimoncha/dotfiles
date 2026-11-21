@@ -1,4 +1,4 @@
-# Apps for the development Macs (the devhost layer): macowl and macmini.
+# Apps for the development Macs (the devhost layer): the mainhost and devstation Macs.
 # key	type	token_or_url	app_bundle	notes
 aerospace	cask	nikitabobko/tap/aerospace	AeroSpace	Homebrew cask; the mise registry has no aerospace entry.
 gcc	formula	gcc	-	Homebrew formula; the mise registry has no gcc entry.

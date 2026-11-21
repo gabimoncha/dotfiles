@@ -1,4 +1,4 @@
-# Entries for the macowl profile only: personal, media, design, and dictation apps,
+# Entries for the mainhost role only: personal, media, design, and dictation apps,
 # Synology, and the T3 Code desktop app. The root Brewfile has the entries for
 # every Mac. Each third-party tap here was reviewed, as in the root Brewfile.
 tap "anomalyco/tap", trusted: true

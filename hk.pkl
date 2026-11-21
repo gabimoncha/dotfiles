@@ -15,7 +15,6 @@ local shellFiles =
     "configs/gh/gh",
     "configs/gh/dotfiles-gh-real",
     "configs/harness/harness",
-    "configs/karabiner/*.sh",
     "configs/npx/npx",
     "configs/tsrs/tsgo",
     "configs/zsh/telemetry.sh",

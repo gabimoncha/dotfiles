@@ -1,4 +1,4 @@
-# Apps for the macowl profile only. apps/manifest.tsv has the apps for every Mac.
+# Apps for the mainhost role only. apps/manifest.tsv has the apps for every Mac.
 # key	type	token_or_url	app_bundle	notes
 davinci-resolve	manual	https://www.blackmagicdesign.com/products/davinciresolve	DaVinci Resolve	Blackmagic requires a vendor download/account flow; install manually or use Codex-assisted browser automation after bootstrap.
 discord	cask	discord	Discord	Homebrew cask.

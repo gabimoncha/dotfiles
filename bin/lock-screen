@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Locks the screen of the Mac mini after automatic login. The account stays
+# Locks the screen of a devstation Mac after automatic login. The account stays
 # logged in, so the login jobs, SSH, and the T3 server continue to work. A
-# login job in mise.macmini.toml runs this script. launchd also runs the job
+# login job in mise.devstation.toml runs this script. launchd also runs the job
 # when setup loads it, so without --now the script locks only in the first
 # minutes after a start. Bash 3.2 compatible.
 #

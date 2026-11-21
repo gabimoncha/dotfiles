@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Save the public T3 settings into this repository when T3 changes them.
-# A login job in mise.macowl.toml runs this every minute through the
+# A login job in the MacBook's fleet host folder runs this every minute through the
 # ~/bin/dotfiles-t3-autosave link. It writes configs/t3/settings.json and
 # never commits. Review and commit the change yourself.
 #

@@ -10,12 +10,13 @@ each setting lives. [DECISIONS.md](DECISIONS.md) explains the design.
 mise.toml             file links and shell checkouts for every host
 mise.macos.toml       Mac file links and macOS preferences
 mise.linux.toml       apt packages and the login shell for Linux
-mise.devhost.toml     file links for the development machines: every profile but air
-mise.<profile>.toml   one file per machine: macowl, macmini, air, container
+mise.devhost.toml     file links for the development machines: every role but lightshell
+mise.<role>.toml      one file per role: mainhost, devstation, lightshell, and the
+                      container layer
 configs/<app>/        the settings files, one folder per app
 Brewfile              Homebrew formulae, casks, taps, and App Store apps for every Mac
 apps/                 the app manifests, vendor-installed tools, and the app
-                      lists of the devhost layer and of one profile
+                      lists of the devhost layer and of one role
 bin/                  setup and repair scripts
 macos/                the macOS defaults script and the telemetry login script
 local/                ignored local files; only the examples are tracked
@@ -29,52 +30,57 @@ into their settings, so mise merges selected keys from `configs/claude/`,
 `./bin/save-settings` copies your changes back without the private keys. See
 [Agent settings](#agent-settings).
 
-## Profiles
+## Roles
 
-| Profile     | Machine                   | Status                         |
-| ----------- | ------------------------- | ------------------------------ |
-| `macowl`    | MacBook Pro               | Set up.                        |
-| `macmini`   | Mac mini                  | Ready for its first setup run. |
-| `air`       | MacBook Air               | Ready for its first setup run. |
-| `container` | NAS development container | Set up.                        |
+| Role         | Machines                        | Layers                         |
+| ------------ | ------------------------------- | ------------------------------ |
+| `mainhost`   | the MacBook, a later office Mac | devhost, mainhost              |
+| `devstation` | the Mac mini                    | devhost, devstation            |
+| `container`  | `nasbox`, the NAS container     | devhost, devstation, container |
+| `lightshell` | the MacBook Air                 | lightshell                     |
 
-Save the machine's profile in the ignored `.miserc.local.toml`. A Linux
-container without this file uses `container`. `DOTFILES_PROFILE=macowl` selects a
-profile for one command.
+Save the machine's role in the ignored `.miserc.local.toml`. A Linux
+container without this file uses `container`. `DOTFILES_PROFILE=mainhost`
+selects a role for one command. `bin/link-dotfiles` writes the layers into
+the env line, and it rewrites an old profile name, such as `macowl`, to its
+role.
 
 ```bash
-printf 'env = ["macowl"]\n' > .miserc.local.toml
+printf 'env = ["mainhost"]\n' > .miserc.local.toml
 ```
 
-A profile loads up to three layers of files. The Air skips the devhost layer.
 A later layer adds to the earlier ones, and replaces an entry with the same
 name. The Brewfiles and app manifests apply only on a Mac:
 
-| Layer      | Hosts                      | Files                                                                                                                        |
-| ---------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Every host | all profiles               | `mise.toml`, `mise.macos.toml` or `mise.linux.toml`, `Brewfile`, `apps/manifest.tsv`, `configs/mise/config/config.toml`      |
-| devhost    | macowl, macmini, container | `mise.devhost.toml`, `apps/devhost.Brewfile`, `apps/manifest.devhost.tsv`, `configs/mise/config/config.devhost.toml`         |
-| Profile    | one machine                | `mise.<profile>.toml`, `apps/<profile>.Brewfile`, `apps/manifest.<profile>.tsv`, `configs/mise/config/config.<profile>.toml` |
+| Layer      | Files                                                                                                                   |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Every host | `mise.toml`, `mise.macos.toml` or `mise.linux.toml`, `Brewfile`, `apps/manifest.tsv`, `configs/mise/config/config.toml` |
+| devhost    | `mise.devhost.toml`, `apps/devhost.Brewfile`, `apps/manifest.devhost.tsv`, `configs/mise/config/config.devhost.toml`    |
+| Role       | `mise.<role>.toml`, `apps/<role>.Brewfile`, `apps/manifest.<role>.tsv`, `configs/mise/config/config.<role>.toml`        |
 
 The every-host layer holds a terminal, a browser, Cursor, and a short list of
-command-line tools. The devhost layer holds the development tools, the agent
-rules and skills, the T3, OpenCode, and pi settings, and the dev Mac apps such
-as AeroSpace, Karabiner, OrbStack, and Vorssaint. `bin/link-dotfiles` writes
-the layers into the env line, for example `env = ["devhost", "macowl"]`. The
-name is `devhost` and not `dev`, because mise also loads `mise.<env>.toml` in
-every project folder.
+command-line tools. The devhost layer holds the development tools, the skills,
+the T3, OpenCode, and pi settings, and the dev Mac apps such as AeroSpace,
+Karabiner, OrbStack, and Vorssaint. The name is `devhost` and not `dev`,
+because mise also loads `mise.<env>.toml` in every project folder.
 
-macowl adds its personal, media, and dictation apps, Synology Drive, and the
-T3 Code desktop app. The Mac mini gets the shared and devhost lists only. The
-[Mac mini guide](apps/remote-development.md#mac-mini) covers its T3 server,
-proxy key, and remote access.
+A main Mac adds its personal, media, and dictation apps, Synology Drive, the
+T3 Code desktop app, and a clone of the private fleet repo. A devstation gets
+the shared and devhost lists only. The
+[devstation guide](apps/remote-development.md#devstation-mac) covers its T3
+server, proxy key, and remote access.
 
-The MacBook Air (`air`) is not a development machine, so it does not load the
-devhost layer. It adds Paper, Synology Drive, and Synology Image Assistant,
-Touch ID for `sudo`, pnpm as the default package manager
-(`configs/mise/config/config.air.toml`), and the `rbrtpop` Git identity
-(`configs/git/air.gitconfig`). It installs Codex CLI and Claude Code with
-their shared settings, but no agent rules or skills. Setup skips the restores,
+fleet holds what makes one machine different: the agent rules, the AeroSpace
+and Karabiner files, fan curves, and login jobs that only one machine runs.
+On a main Mac, setup clones it into `~/code/personal/fleet`. Its README covers
+`mise run fleet:apply`.
+
+The MacBook Air (`lightshell`) is not a development machine, so it does not
+load the devhost layer and has no fleet checkout. It adds Paper, Synology
+Drive, and Synology Image Assistant, Touch ID for `sudo`, pnpm as the default
+package manager (`configs/mise/config/config.lightshell.toml`), and the
+`rbrtpop` Git identity (`configs/git/air.gitconfig`). It installs Codex CLI
+and Claude Code with their shared settings, but no agent rules or skills. Setup skips the restores,
 tokenburnmarket, and the mobile step on the Air. The Air also keeps its own
 text, mouse, trackpad, and Dock settings, its screenshot folder, its Finder
 sidebar, and its display sleep, and setup makes no `~/code` folders on it.
@@ -93,7 +99,7 @@ Checkouts live in `~/code`:
 ```
 
 Setup creates `work`, `personal`, `contrib`, and `ref` when they are missing,
-and `client` on macowl only. It creates none of them on the MacBook Air.
+and `client` on a main Mac only. It creates none of them on the MacBook Air.
 
 This repository goes in `~/code/personal/dotfiles`. `~/.config/mise` links
 into the checkout, and the shell and the mise tasks read the checkout's path
@@ -192,16 +198,16 @@ usage source and management key, project overrides, sharing and linked
 environments, and device and Keychain settings. `configs/t3/sync-keys` lists
 each setting.
 
-On macowl, a login job saves T3's public settings for you. Each minute, it
+On the MacBook, a login job from its fleet host folder saves T3's public
+settings for you. Each minute, it
 checks `~/.t3/userdata/settings.json`. When the file changed, it runs
 `./bin/save-settings ~/.t3/userdata/settings.json`, which updates
 `configs/t3/settings.json`. The job never commits. Review `git diff configs/t3`
 and commit when you want the other machines to get the change. When a save
 fails, macOS shows a notification, and `.local/settings-sync/t3-autosave.log`
 has the reason. Settings on neither list are only counted in that log. Run
-`./bin/save-settings --show-new` to see them. To install the job, run
-`./bin/link-dotfiles ~/bin/dotfiles-t3-autosave`, then
-`./bin/repo-mise bootstrap macos launchd-agents apply --yes`.
+`./bin/save-settings --show-new` to see them. `mise run fleet:apply` in fleet
+installs the job.
 
 The Codex launch arguments keep the 60-second unload delay and select CLIProxyAPI. The
 global Codex provider stays `openai`, so the desktop app can use ChatGPT
@@ -265,8 +271,8 @@ macOS defaults. It then fast-forwards the shell checkouts, and on Linux it
 upgrades the apt packages in the mise files.
 It does not upgrade every installed package. The shell's daily
 background check only reports new commits. `./bin/prepare-sync` compares the
-live inventory with `Brewfile`, `apps/devhost.Brewfile`, the profile's
-`apps/<profile>.Brewfile`, `apps/mobile.Brewfile` (not on the Air), and the
+live inventory with `Brewfile`, `apps/devhost.Brewfile`, the role's
+`apps/<role>.Brewfile`, `apps/mobile.Brewfile` (not on the Air), and the
 mise lists, and saves a copy of these Brewfiles under
 `.sync-backups/`. For mise, it lists the configured tools that are missing, the
 installed versions that no config uses, and the tools whose registry backend
@@ -288,13 +294,21 @@ retry. On a macOS beta, `--allow-macos-beta` lets one run continue. Setup does n
 mkdir -p ~/code/personal
 git clone https://github.com/gabimoncha/dotfiles.git ~/code/personal/dotfiles
 cd ~/code/personal/dotfiles
-printf 'env = ["macowl"]\n' > .miserc.local.toml
+printf 'env = ["mainhost"]\n' > .miserc.local.toml
 ./bin/setup
 ```
 
-On the Mac mini, save `env = ["macmini"]` instead, and on the MacBook Air,
-`env = ["air"]`. See the
-[Mac mini guide](apps/remote-development.md#mac-mini).
+On a devstation Mac, save `env = ["devstation"]` instead, and on the MacBook
+Air, `env = ["lightshell"]`. See the
+[devstation guide](apps/remote-development.md#devstation-mac). On a main Mac,
+setup then clones fleet, after it uploads the SSH key to GitHub. Run
+`mise run fleet:apply <host>` in `~/code/personal/fleet` after setup.
+
+A devstation gets its fleet folder from a main Mac. After setup and the
+GitHub login (`./bin/auth-setup`), clone fleet into `~/code/personal/fleet`
+on the devstation, add its host folder in fleet on the main Mac, and run
+`mise run fleet:update <host>` there. Until then the devstation has no agent
+rules, and `nasbox` keeps the Codex sandbox on, which fails on its kernel.
 
 Run setup as your normal user, not with `sudo`. If Git or setup opens the
 Command Line Tools installer, finish it and retry the command.
@@ -312,7 +326,7 @@ Ctrl-C. Preflight reports a file that a killed run left behind. Set
 the terminal.
 
 The first phase installs the foundation tools: Homebrew, standalone mise, an
-isolated GitHub CLI, Codex CLI, and Claude Code. On every profile except air,
+isolated GitHub CLI, Codex CLI, and Claude Code. On every role except lightshell,
 it also installs Cursor Agent and OpenCode v2.
 It also installs one app, Raycast, and changes an attribute of it, so that
 macOS shows the App Management prompt in this phase and not in the middle of
@@ -369,7 +383,9 @@ telemetry step runs even after a failure.
 
 Setup also runs on Debian and Ubuntu, for example the NAS container in
 [remote development](apps/remote-development.md). Run it as your normal user.
-It needs `sudo` for apt and the login shell.
+It needs `sudo` for apt and the login shell. A container selects the
+`container` role by itself. Another Linux host saves `env = ["devstation"]`
+first. Then add its fleet folder as for a devstation Mac.
 
 ```bash
 mkdir -p ~/code/personal
@@ -383,7 +399,7 @@ Linux runs every step in one run. It has no App Store or restart step.
 
 1. `bin/linux-prerequisites` installs Ruby, Git, and curl with apt. Setup's
    diagnostics run on `/usr/bin/ruby`, as they do on macOS.
-2. mise installs the system packages in `mise.linux.toml` and the profile file,
+2. mise installs the system packages in `mise.linux.toml` and the role files,
    and makes zsh the login shell.
 3. Setup installs the runtime tools, the agent CLIs, and T3
    (`apps/standalone.tsv`), then links the shared files.
@@ -393,16 +409,14 @@ Linux runs every step in one run. It has no App Store or restart step.
    skips this step.
 
 Tools marked `os = "macos"` in `configs/mise/config/config.toml` and
-`config.devhost.toml` stay on the Mac. Tools for one profile are in
-`configs/mise/config/config.<profile>.toml`.
+`config.devhost.toml` stay on the Mac. Tools for one role are in
+`configs/mise/config/config.<role>.toml`.
 Entries in `mise.macos.toml` do not load on Linux.
 
-On each development host, mise links `~/.claude/CLAUDE.md` to `~/.codex/AGENTS.md`.
-On the container, mise renders `~/.codex/AGENTS.md` from
-`configs/agents/instructions.md` and the host rules in
-`configs/agents/container.md`. The container also turns off the Codex sandbox in
-`configs/codex/container.toml`, because its kernel cannot start it.
-On other hosts, `configs/codex/defaults.toml` sets `workspace-write` only when
+fleet renders the agent rules into `~/.codex/AGENTS.md` and
+`~/.claude/CLAUDE.md` on each development host. On `nasbox`, fleet also turns
+off the Codex sandbox, because its kernel cannot start it. On other hosts,
+`configs/codex/defaults.toml` sets `workspace-write` only when
 `~/.codex/config.toml` has no sandbox value. `./bin/save-settings` does not save
 the sandbox value.
 
@@ -472,7 +486,7 @@ Authentication output is omitted. Review logs before you share them.
 | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `./bin/preflight`                                       | Check macOS updates, the repository prerequisites, the mise keys, and the lock sidecars.                                                                                                                                                              |
 | `./bin/repo-mise run check`                             | Run the repository checks: `git diff --check`, the task checks, and `./bin/preflight`.                                                                                                                                                                |
-| `./bin/repo-mise doctor project`                        | Check the installed tools, mobile readiness on a Mac, and app state on macowl.                                                                                                                                                                        |
+| `./bin/repo-mise doctor project`                        | Check the installed tools, mobile readiness on a Mac, and app state on a main Mac.                                                                                                                                                                    |
 | `./bin/repo-mise bootstrap status`                      | Compare this machine with the checkouts, files, preferences, and login jobs in the mise files.                                                                                                                                                        |
 | `./bin/link-dotfiles [--status \| --diff \| --dry-run]` | Apply, check, or preview the managed files.                                                                                                                                                                                                           |
 | `./bin/repo-mise bootstrap repos status`                | Check the Oh My Zsh, plugin, and TPM checkouts.                                                                                                                                                                                                       |
@@ -546,9 +560,9 @@ Add packages in this order: the Mac App Store, then mise, then Homebrew. The
 agent CLIs and mise itself are vendor-installed exceptions in
 `apps/standalone.tsv`. Put an app for every Mac, the Air too, in the root
 `Brewfile`, an app for the development Macs in `apps/devhost.Brewfile`, and an
-app for one Mac in `apps/<profile>.Brewfile`. On macowl, the T3 nightly
+app for one role in `apps/<role>.Brewfile`. On a main Mac, the T3 nightly
 desktop app is a Homebrew cask, and Hex and Scrawl come from their vendor
-taps, `anomalyco/tap` and `kitlangton/tap`. The Mac mini runs the T3 server
+taps, `anomalyco/tap` and `kitlangton/tap`. A devstation runs the T3 server
 from `apps/standalone.tsv` instead.
 `vscode "publisher.extension"` lines in the Brewfile select Cursor extensions.
 
@@ -558,19 +572,21 @@ writes newer versions into that tracked file. To add a tool for every host,
 add it to `configs/mise/config/config.toml`. To add a development tool, add it
 to `config.devhost.toml`, which locks into `mise.devhost.lock`. Then run
 `./bin/repo-mise --global lock --global` in the checkout that you edit, with a
-development profile such as `DOTFILES_PROFILE=macowl`, and commit the config, the lockfiles, and the sidecar
+development role such as `DOTFILES_PROFILE=mainhost`, and commit the config, the lockfiles, and the sidecar
 folder `configs/mise/config/locks/`.
 The sidecars hold the locked dependencies of the pipx tools. An older
 lockfile moves the tools back to its versions.
 
-A tool for one profile goes in `configs/mise/config/config.<profile>.toml`,
-for example Ollama and Mackup for macowl. The folder's
+A tool for one role goes in `configs/mise/config/config.<role>.toml`,
+for example Ollama and Mackup for mainhost. The folder's
 `miserc.local.toml` links to this repository's `.miserc.local.toml`, so mise
-sets its environments to the layers and the profile, and loads those files in
+sets its environments to the layers and the role, and loads those files in
 every folder. mise keeps their versions in `mise.devhost.lock` and
-`mise.<profile>.lock`, so another profile never prunes them. A profile without
-tools of its own, such as macmini and container, has no config file here.
-`config.air.toml` holds settings only.
+`mise.<role>.lock`, so another role never prunes them. A role without
+tools of its own, such as devstation and container, has no config file here.
+`config.lightshell.toml` holds settings only. A tool that only one machine
+needs still goes in its role, because fleet host folders are mise projects and
+their tools work only inside them.
 
 After an interactive `mise install` or `mise up`, and after `mise run dot:update`,
 `./bin/save-lock` commits a changed lockfile and pushes it to `main`, so the
@@ -600,7 +616,7 @@ launcher. `./bin/link-t3-command [--dry-run]` repairs the link and keeps any
 other `t3` command. To adopt an existing app bundle, run
 `brew install --cask --adopt t3-code@nightly`.
 
-CLIProxyAPI has a separate Docker Compose example for the NAS. Its management
+CLIProxyAPI runs on the NAS. fleet holds its Compose file. Its management
 UI owns provider logins and account selection. Codex uses OpenAI subscriptions,
 and Claude Code uses Anthropic subscriptions. Private client settings select
 the NAS endpoint through Tailscale. Normal dotfiles setup does not deploy the
@@ -614,8 +630,8 @@ installing it, and `--check` checks the installed app. Quit Steam before a
 replacement. See [DECISIONS.md](DECISIONS.md#native-steam-installer).
 
 Setup adds the apps in `[bootstrap.settings.macos.login_items]` of
-`mise.macos.toml`, `mise.devhost.toml`, and the profile file as login items. It leaves other
-login items alone. On macowl and the Mac mini, it also sets the Dock apps in
+`mise.macos.toml`, `mise.devhost.toml`, and the role file as login items. It leaves other
+login items alone. On the development Macs, it also sets the Dock apps in
 `[bootstrap.settings.macos.dock]` of `mise.devhost.toml`, in that order. Run
 `./bin/repo-mise bootstrap macos defaults status` to compare this Mac with
 them. Privacy permissions are manual for every app.

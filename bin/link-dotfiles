@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Apply this machine's managed files with mise: the [dotfiles] entries in
 # mise.toml, mise.macos.toml or mise.linux.toml, mise.devhost.toml on every
-# profile except air, and the profile's file.
+# role except lightshell, and the role's files.
 #
 # mise refuses to put a link where a real file or folder is, and one refused
 # entry stops the whole apply. mise also overwrites copies and templates and
@@ -245,11 +245,11 @@ move_old_local_files() {
 }
 
 # ~/.config/mise/miserc.local.toml links to this file, so mise loads the
-# profile's config in every folder. A container can run setup without the file,
-# so save the profile that dotfiles_profile selected. The env line also lists
-# the profile's layers, so update an older line such as env = ["macowl"].
-# DOTFILES_PROFILE selects a profile for one command, so an existing file keeps
-# its own profile. Keep the other lines of the file, in their order.
+# role's config in every folder. A container can run setup without the file,
+# so save the role that dotfiles_profile selected. The env line also lists
+# the role's layers, so update an older line such as env = ["devhost", "macowl"]
+# to env = ["devhost", "mainhost"]. DOTFILES_PROFILE selects a role for one
+# command, so an existing file keeps its own role. Keep the other lines of the file, in their order.
 save_profile() {
   local file="$repo_root/.miserc.local.toml" profile="$DOTFILES_PROFILE"
   local expected line out="" in_table=0 tmp
