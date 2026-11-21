@@ -1,5 +1,7 @@
-# Profile: the NAS development container nasbox (Debian, user box). It has no
-# systemd, and its kernel cannot start the agent sandboxes.
+# Layer: container, a Linux development container with no systemd. nasbox
+# loads it after the devstation role. What nasbox needs alone, such as its
+# agent rules and the Codex sandbox setting for its kernel, is in its fleet
+# host folder.
 
 [bootstrap.packages]
 # bin/dotfiles-update upgrades these container packages.
@@ -10,8 +12,6 @@
 "apt:tzdata" = "latest"
 
 [vars]
-dotfiles_shared_instructions = "{{ config_root }}/configs/agents/instructions.md"
-dotfiles_host_instructions = "{{ config_root }}/configs/agents/container.md"
 dotfiles_bin = "{{ config_root }}/bin"
 
 [settings]
@@ -56,10 +56,3 @@ run = "exec {{ vars.dotfiles_bin | quote }}/tokenburnmarket-supervise"
 env = { MISE_AUTO_INSTALL = "0" }
 retry = true
 logs = { line_retention = 20000 }
-
-[dotfiles]
-# Render the shared and host rules for both agents.
-"~/.codex/AGENTS.md" = { source = "configs/agents/instructions.md.tera", mode = "template" }
-# Remove the old host link after CLAUDE.md points to the rendered rules.
-"~/.claude/rules/host.md" = { mode = "absent", depends = ["~/.claude/CLAUDE.md"] }
-"~/.codex/config.toml/host" = { source = "configs/codex/container.toml", merge = true, permissions = "0600" }

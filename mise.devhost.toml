@@ -1,6 +1,6 @@
-# Files for the development machines: every profile except air. The devhost
-# environment loads before the profile, so a profile file can replace an entry
-# here, as mise.container.toml does for ~/.codex/AGENTS.md.
+# Files for the development machines: the mainhost and devstation roles. The
+# devhost environment loads before the role, so a role file can replace an
+# entry here. The agent rules come from fleet.
 
 [dotfiles]
 "~/.androidrc" = { source = "configs/android/androidrc", mode = "symlink" }
@@ -12,10 +12,6 @@
 # tools, and one missing source stops the whole apply.
 "~/.local/bin/aether" = { source = "~/.local/bin/mise", mode = "symlink" }
 
-"~/.codex/AGENTS.md" = { source = "configs/agents/instructions.md", mode = "symlink" }
-"~/.claude/CLAUDE.md" = { source = "~/.codex/AGENTS.md", mode = "symlink", relative = true, depends = [
-  "~/.codex/AGENTS.md",
-] }
 # Agent skills. The skills CLI writes through these two links
 # into the repository, so commit configs/agents after `skills add`, `update`,
 # or `remove`. Claude Code reads only ~/.claude/skills, so each skill also gets

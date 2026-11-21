@@ -1,6 +1,6 @@
 # macOS only. mise loads this file on every Mac. macos/defaults.sh applies the
 # [bootstrap.settings.macos] preferences, Dock apps, and login items of this
-# file, of mise.devhost.toml, and of the profile file, then sets input sources
+# file, of mise.devhost.toml, and of the role file, then sets input sources
 # and display sleep, which mise cannot set. The text, mouse, trackpad, and Dock
 # settings are in mise.devhost.toml, so the MacBook Air keeps its own.
 

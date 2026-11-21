@@ -1,4 +1,4 @@
-# The MacBook Air's Git identity. mise.air.toml links this file to
+# The MacBook Air's Git identity. mise.lightshell.toml links this file to
 # ~/.config/git/profile, which configs/git/gitconfig includes.
 [user]
 	name = rbrtpop

@@ -26,7 +26,7 @@
 [hook "hk-prepare-commit-msg"]
 	command = test \"${HK:-1}\" = \"0\" || ~/.local/share/mise/shims/hk run prepare-commit-msg --from-hook
 	event = prepare-commit-msg
-# The profile's Git settings, such as the Air's identity (configs/git/air.gitconfig),
+# The role's Git settings, such as the Air's identity (configs/git/air.gitconfig),
 # and the macOS commit signing settings (configs/git/macos.gitconfig). Git skips
 # a missing file, so Linux hosts do not sign. ~/.gitconfig.local comes last, so
 # it wins.

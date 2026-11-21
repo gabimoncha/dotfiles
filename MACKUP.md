@@ -52,7 +52,8 @@ mode or add apps whose files this repository already links.
 ./bin/file-restore mackup --force
 ```
 
-Cursor settings belong here; AeroSpace and Ghostty belong to the repository.
+Cursor settings belong here; Ghostty belongs to this repository, and
+AeroSpace to fleet.
 OBS uses Mackup's built-in profile for preferences, profiles and scenes, not
 plugins, logs or caches. SSH uses Mackup's built-in profile: `~/.ssh/config`
 and `~/.ssh/authorized_keys`. It does not copy keys. On a new Mac, make or
@@ -91,7 +92,7 @@ Opening the import dialog is not proof that the import completed.
 ./bin/file-restore codex --replace /path/to/codex-state.tar.gz.age
 ```
 
-`age -p` encrypts the allowlisted config, keybindings, instructions, rules,
+`age -p` encrypts the allowlisted config, keybindings, rules,
 memories and automation definitions. Authentication, sessions, databases,
 worktrees, plugins, global app/workspace state and installer packages are
 excluded. The repository tracks the global skills in `configs/agents/skills/`.

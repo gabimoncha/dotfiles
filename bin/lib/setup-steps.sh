@@ -470,18 +470,24 @@ install_and_check_mise_tools() {
   return "$check_status"
 }
 
-# Update only missing checkouts. Native repos apply stops at the first conflict.
+# Update only missing checkouts. Native repos apply stops at the first conflict,
+# and it takes no path to apply one checkout. A conflict at the fleet checkout
+# of a main Mac fails the step, because fleet holds this machine's settings.
 install_shell_framework() {
   local status_json missing_list path missing=()
   status_json="$("${repo_root}/bin/repo-mise" bootstrap repos status --json)" || return
   missing_list="$(/usr/bin/ruby -rjson -e '
+    failed = false
     JSON.parse(STDIN.read).fetch("repos").each do |repo|
       case repo["state"]
       when "missing" then puts repo["path"]
       when "current" then nil
-      else warn "!! Leaving #{repo["path"]} as it is: #{repo["state"]} #{repo["reason"]}".strip
+      else
+        warn "!! Leaving #{repo["path"]} as it is: #{repo["state"]} #{repo["reason"]}".strip
+        failed = true if repo["path"].end_with?("/code/personal/fleet")
       end
     end
+    exit 1 if failed
   ' <<<"$status_json")" || return
   while IFS= read -r path; do
     [[ -n "$path" ]] && missing+=("$path")
@@ -634,11 +640,11 @@ setup_standalone_agents() {
 }
 setup_telemetry() { "${repo_root}/bin/configure-telemetry"; }
 # The checkout folders: work projects, personal projects, forks and friends'
-# repositories, and read-only third-party clones. Only macowl has client
+# repositories, and read-only third-party clones. Only a main Mac has client
 # projects.
 setup_code_folders() {
   mkdir -p "$HOME/code/work" "$HOME/code/personal" "$HOME/code/contrib" "$HOME/code/ref" || return
-  [[ "$DOTFILES_PROFILE" != macowl ]] || mkdir -p "$HOME/code/client"
+  [[ "$DOTFILES_PROFILE" != mainhost ]] || mkdir -p "$HOME/code/client"
 }
 setup_t3_service() { "${repo_root}/bin/setup-t3-service"; }
 setup_remote_access() { "${repo_root}/bin/configure-remote-access"; }

@@ -38,12 +38,14 @@ DOTFILES_SKIP_MACOS_DEFAULTS=1 "${repo_root}/bin/setup" --continue "$@"
 
 # mise bootstrap repos update always fetches tags. Its CLI reference has no
 # option to skip them. Use repos exec to pull each current, unpinned branch.
+# fleet updates only through `mise run fleet:apply`, which writes its stamp.
 log "Updating the shell framework checkouts"
 current_repos=()
 repos_listed=0
 if repo_list="$("${repo_root}/bin/repo-mise" bootstrap repos status --json |
   /usr/bin/ruby -rjson -e '
     JSON.parse(STDIN.read).fetch("repos").each do |repo|
+      next if repo["path"].end_with?("/code/personal/fleet")
       puts repo["path"] if repo["state"] == "current" && repo["ref"].nil?
     end
   ')"; then

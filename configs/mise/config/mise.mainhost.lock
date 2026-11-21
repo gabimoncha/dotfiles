@@ -54,4 +54,4 @@ url_api = "https://api.github.com/repos/ollama/ollama/releases/assets/663837940"
 version = "0.11.3"
 backend = "pipx:mackup"
 specifiers = ["latest"]
-uv = { path = "locks/mise.macowl/pipx-mackup/0.11.3", digest = "sha256:e7896111790187419645f8d23ab09948615cf8ab824ea1c0f6c6aac1f0504b78" }
+uv = { path = "locks/mise.mainhost/pipx-mackup/0.11.3", digest = "sha256:7694b4f69d1bde04337d70a0bf2c95a7ea29231df55383caadd2a6b90135bfd6" }

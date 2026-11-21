@@ -8,15 +8,17 @@
 # /proc instead, before a script signals a process.
 
 # Gives this shell the mise environment of the container daemons: the user's
-# own mise setup, MISE_ENV set to the profile $1, and none of the caller's
-# other MISE_* settings, such as those of ./bin/repo-mise. Call it in a
-# subshell, or before exec.
+# own mise setup, MISE_ENV set to the layers and the role $1, such as
+# devhost,devstation,container, and none of the caller's other MISE_*
+# settings, such as those of ./bin/repo-mise. The caller sources
+# dotfiles-profile.sh first. Call it in a subshell, or before exec.
 daemon_env() {
-  local name
+  local name envs
+  envs="$(dotfiles_profile_mise_env "$1")" || return
   for name in $(compgen -e); do
     case "$name" in MISE_*) unset "$name" ;; esac
   done
-  export MISE_ENV="$1"
+  export MISE_ENV="$envs"
 }
 
 # True while process $1 exists and is not a zombie. kill -0 succeeds for a

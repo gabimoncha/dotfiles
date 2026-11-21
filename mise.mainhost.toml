@@ -1,0 +1,58 @@
+# Role: mainhost, a main Mac. It holds the SSH keys to the other hosts and a
+# fleet checkout, so it runs fleet:update. It adds these entries to mise.toml,
+# mise.macos.toml, and mise.devhost.toml. Its runtime tools are in
+# configs/mise/config/config.mainhost.toml, and its apps are in
+# apps/mainhost.Brewfile and apps/manifest.mainhost.tsv. What one main Mac
+# needs alone is in its fleet host folder.
+
+# fleet is private, so the clone uses SSH. Setup clones it after it uploads
+# this Mac's SSH key to GitHub. Then run `mise run fleet:apply <host>` in it.
+[bootstrap.repos]
+"~/code/personal/fleet" = { url = "git@github.com:gabimoncha/fleet.git" }
+
+[dotfiles]
+# Dictation and the Mackup backup, which stores its files in Synology Drive.
+"~/Documents/superwhisper/settings/settings.json" = { source = "configs/superwhisper/settings.json", mode = "symlink" }
+"~/.mackup.cfg" = { source = "configs/mackup/mackup.cfg", mode = "symlink" }
+
+# Login items for a main Mac. mise adds them to the list in mise.macos.toml.
+[bootstrap.settings.macos.login_items]
+apps = [
+  "/Applications/Mole.app",
+  "/Applications/Notion Calendar.app",
+  "/Applications/superwhisper.app",
+  "/Applications/Synology Drive Client.app",
+  "/Applications/Synology Image Assistant.app",
+  "/Applications/T3 Code (Nightly).app",
+  "/Applications/Typeless.app",
+]
+
+# Touch ID for sudo. Apple's /etc/pam.d/sudo includes sudo_local, and a macOS
+# update keeps that file. mise keeps this block in it and leaves the other
+# lines alone. bin/configure-sudo-touch-id checks the include, then applies it.
+[bootstrap.files."/etc/pam.d/sudo_local"]
+id = "touch-id"
+block = "auth       sufficient     pam_tid.so"
+owner = "root"
+group = "wheel"
+mode = "0644"
+
+[bootstrap.settings.macos.defaults."com.apple.assistant.support"]
+"Dictation Enabled" = true
+
+[bootstrap.settings.macos.defaults."com.apple.speech.recognition.AppleSpeechRecognition.prefs"]
+DictationIMNetworkBasedLocaleIdentifier = "ro_RO"
+DictationIMPreferredLanguageIdentifiers = ["ro_RO", "en_US"]
+VisibleNetworkSRLocaleIdentifiers = { ro_RO = true, en_US = true }
+
+[doctor.checks.app-state]
+description = "App configs link to this checkout, and the app-state backups exist"
+run = "bin/app-state-doctor"
+hint = "Run ./bin/app-state-doctor for the details"
+timeout = "60s"
+
+[doctor.checks.mobile]
+description = "Xcode, the simulators, and the Android SDK are ready"
+run = "bin/check-mobile-ready"
+hint = "Run ./bin/install-mobile-dev, or ./bin/setup --continue"
+timeout = "120s"
