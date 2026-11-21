@@ -266,8 +266,6 @@ setup_linux() {
   # Linux gets only the Android SDK. The download runs after the other steps.
   if [[ "${DOTFILES_SKIP_MOBILE_DEV:-0}" == 1 ]]; then
     skip_step mobile_setup --skip-mobile-dev
-  elif [[ "$DOTFILES_PROFILE" == lightshell ]]; then
-    skip_step mobile_setup 'the Air is not a development machine'
   else
     step --optional mobile_setup capture setup_mobile
   fi

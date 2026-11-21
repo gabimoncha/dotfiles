@@ -556,10 +556,10 @@ owns installation, restarts, and logs. Separate mounts keep provider OAuth
 files outside `nasbox`, where coding agents have passwordless sudo. Proxy
 updates do not require a restart of the development container.
 
-The Compose example publishes only on NAS loopback and joins the existing
+The proxy publishes only on NAS loopback and joins the existing
 development network for `nasbox` clients. The NAS's existing Tailscale Serve
-provides remote HTTPS access. Dotfiles keeps public provider
-settings and deployment examples. Private client URLs, keys, and the live
+provides remote HTTPS access. Dotfiles keeps the public provider settings;
+fleet keeps the Compose file. Private client URLs, keys, and the live
 server configuration stay outside Git. Codex uses `env_key` for its proxy key.
 T3's shared launch arguments select the proxy. The global Codex provider stays
 `openai` so the desktop app can use ChatGPT sign-in. T3 shares only the default

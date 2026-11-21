@@ -490,7 +490,6 @@ Authentication output is omitted. Review logs before you share them.
 | `./bin/repo-mise bootstrap status`                      | Compare this machine with the checkouts, files, preferences, and login jobs in the mise files.                                                                                                                                                        |
 | `./bin/link-dotfiles [--status \| --diff \| --dry-run]` | Apply, check, or preview the managed files.                                                                                                                                                                                                           |
 | `./bin/repo-mise bootstrap repos status`                | Check the Oh My Zsh, plugin, and TPM checkouts.                                                                                                                                                                                                       |
-| `./bin/repo-mise bootstrap macos defaults status`       | Compare macOS preferences with `mise.macos.toml`.                                                                                                                                                                                                     |
 | `./macos/defaults.sh`                                   | Apply macOS preferences, input sources, the Dock, and display sleep.                                                                                                                                                                                  |
 | `./bin/github-bootstrap install-gh`                     | Repair the isolated GitHub CLI install.                                                                                                                                                                                                               |
 | `./bin/auth-setup --api-only`                           | Repair the GitHub API login.                                                                                                                                                                                                                          |
@@ -640,9 +639,5 @@ them. Privacy permissions are manual for every app.
 helpers, package runners, and Android paths. [SECURITY.md](SECURITY.md) lists
 the state that must stay out of Git.
 
-## Before you commit
-
-Run `bash -n` on the changed scripts, `./bin/preflight`, and `git diff --check`.
-Run `./bin/link-dotfiles --dry-run` for a config change, and
-`./bin/setup --dry-run` or `./bin/setup --continue --dry-run` for a setup
-change. The setup previews query Apple's update catalog and write logs.
+Before you commit, run the checks in the Validation section of
+[AGENTS.md](AGENTS.md#validation).

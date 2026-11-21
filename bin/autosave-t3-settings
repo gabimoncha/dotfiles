@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Save the public T3 settings into this repository when T3 changes them.
-# A login job in the MacBook's fleet host folder runs this every minute through the
-# ~/bin/dotfiles-t3-autosave link. It writes configs/t3/settings.json and
-# never commits. Review and commit the change yourself.
+# A login job in the MacBook's fleet host folder runs this every minute. It
+# writes configs/t3/settings.json and never commits. Review and commit the
+# change yourself.
 #
 # Usage: autosave-t3-settings
 #
@@ -12,7 +12,8 @@
 # .local/settings-sync/t3-autosave.log.
 set -uo pipefail
 
-# The job starts this script through a link in ~/bin.
+# The job from before fleet starts this script through the ~/bin link
+# dotfiles-t3-autosave, until fleet:apply replaces it.
 self="${BASH_SOURCE[0]}"
 while [[ -L "$self" ]]; do
   link="$(readlink "$self")"
