@@ -5,7 +5,7 @@ model_auto_compact_token_limit = 450000
 model_reasoning_effort = "medium"
 service_tier = "priority"
 approval_policy = "on-request"
-approvals_reviewer = "user"
+approvals_reviewer = "auto_review"
 
 [features]
 memories = false
