@@ -752,21 +752,20 @@ url = "https://github.com/cloudflare/cloudflared/releases/download/2026.10.2/clo
 url_api = "https://api.github.com/repos/cloudflare/cloudflared/releases/assets/658837930"
 
 [[tools.cmake]]
-version = "4.4.5"
+version = "4.5.0"
 backend = "aqua:Kitware/CMake"
 specifiers = ["latest"]
 
 [tools.cmake."platforms.linux-x64"]
-checksum = "sha256:ed85135c5a5135b45e50423cb406dea04ca3338da0b8ef3c9ede963559680be0"
+checksum = "sha256:81f0d5b0960fb6adc8197030ffc827fba937640d51e73e39e0e9e40d88c66f6f"
 checksum_source = "mise-versions"
-url = "https://github.com/Kitware/CMake/releases/download/v4.4.5/cmake-4.4.5-linux-x86_64.tar.gz"
-url_api = "https://api.github.com/repos/Kitware/CMake/releases/assets/682699189"
+url = "https://github.com/Kitware/CMake/releases/download/v4.5.0/cmake-4.5.0-linux-x86_64.tar.gz"
+url_api = "https://api.github.com/repos/Kitware/CMake/releases/assets/740686519"
 
 [tools.cmake."platforms.macos-arm64"]
-checksum = "sha256:679e77a96b9ef9484cc6c1445255fc4f84206b48a65420efbedf16bdab55fbff"
-checksum_source = "mise-versions"
-url = "https://github.com/Kitware/CMake/releases/download/v4.4.5/cmake-4.4.5-macos-universal.tar.gz"
-url_api = "https://api.github.com/repos/Kitware/CMake/releases/assets/682699600"
+checksum = "sha256:a645d69fd21e521759cc0c64e7c60462d43faf0c7214ac05f75c80f7c5037dde"
+url = "https://github.com/Kitware/CMake/releases/download/v4.5.0/cmake-4.5.0-macos-universal.tar.gz"
+url_api = "https://api.github.com/repos/Kitware/CMake/releases/assets/740688616"
 
 [[tools.cocoapods]]
 version = "1.17.0"
@@ -971,7 +970,7 @@ url = "https://github.com/direnv/direnv/releases/download/v2.38.2/direnv.darwin-
 url_api = "https://api.github.com/repos/direnv/direnv/releases/assets/627455431"
 
 [[tools.exiftool]]
-version = "13.63"
+version = "13.64"
 backend = "conda:exiftool"
 specifiers = ["latest"]
 
@@ -979,8 +978,8 @@ specifiers = ["latest"]
 channel = "conda-forge"
 
 [tools.exiftool."platforms.macos-arm64"]
-checksum = "sha256:733f8e0e11194e9a1264eabc269dfc8e846ba36d10bb8b80b1699b8ebe81f541"
-url = "https://conda.anaconda.org/conda-forge/osx-arm64/exiftool-13.63-pl5321hce30654_0.conda"
+checksum = "sha256:808564a9702364073dc4d090f810331250d1c139b15b28bd470ecb14ecafb06f"
+url = "https://conda.anaconda.org/conda-forge/osx-arm64/exiftool-13.64-pl5321hce30654_0.conda"
 conda_deps = ["perl-5.32.1-10_hb001647_perl5"]
 
 [[tools.gcloud]]
@@ -1238,12 +1237,12 @@ backend = "npm:agent-desktop"
 specifiers = ["latest"]
 
 [[tools."npm:cf"]]
-version = "1.0.0-beta.32"
+version = "1.0.0-rc.3"
 backend = "npm:cf"
 specifiers = ["latest"]
 
 [[tools."npm:ctx7"]]
-version = "0.11.0"
+version = "0.12.2"
 backend = "npm:ctx7"
 specifiers = ["latest"]
 
@@ -1253,12 +1252,12 @@ backend = "npm:ios-deploy"
 specifiers = ["latest"]
 
 [[tools."npm:oh-my-t3"]]
-version = "0.7.0"
+version = "0.7.1"
 backend = "npm:oh-my-t3"
 specifiers = ["latest"]
 
 [[tools."npm:skills"]]
-version = "1.8.1"
+version = "1.9.0"
 backend = "npm:skills"
 specifiers = ["latest"]
 
@@ -1268,14 +1267,14 @@ backend = "npm:tokenburnmarket"
 specifiers = ["latest"]
 
 [[tools.pandoc]]
-version = "3.13"
+version = "3.14"
 backend = "github:jgm/pandoc"
 specifiers = ["latest"]
 
 [tools.pandoc."platforms.macos-arm64"]
-checksum = "sha256:f436d18bebbfb3ddd326597686dacab9fac5dc23bd060495020f35a28a43a7c3"
-url = "https://github.com/jgm/pandoc/releases/download/3.13/pandoc-3.13-arm64-macOS.zip"
-url_api = "https://api.github.com/repos/jgm/pandoc/releases/assets/679543143"
+checksum = "sha256:58d6593884fec9d4424b641b92503c316d9c36decb2891ff8d73ae74dd3b6304"
+url = "https://github.com/jgm/pandoc/releases/download/3.14/pandoc-3.14-arm64-macOS.zip"
+url_api = "https://api.github.com/repos/jgm/pandoc/releases/assets/738063061"
 provenance = "github-attestations"
 
 [[tools.perl]]
@@ -1381,7 +1380,7 @@ conda_deps = [
 ]
 
 [[tools.portless]]
-version = "0.17.0"
+version = "0.18.1"
 backend = "npm:portless"
 specifiers = ["latest"]
 
@@ -1433,7 +1432,7 @@ conda_deps = [
 ]
 
 [[tools.rust]]
-version = "1.99.1"
+version = "1.100.0"
 backend = "core:rust"
 specifiers = ["latest"]
 
@@ -1512,7 +1511,7 @@ url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/704009442"
 provenance = "github-attestations"
 
 [[tools.vercel]]
-version = "65.14.0"
+version = "66.2.0"
 backend = "npm:vercel"
 specifiers = ["latest"]
 
@@ -1521,19 +1520,19 @@ allow_builds = '["esbuild"]'
 trust_policy_excludes = '["undici"]'
 
 [[tools.worktrunk]]
-version = "0.81.0"
+version = "0.82.0"
 backend = "packslip:github.com/max-sixty/worktrunk"
 specifiers = ["latest"]
 
 [tools.worktrunk."platforms.linux-x64"]
-checksum = "sha256:0c253f216985ce9cd7b202a11606b5ce6aa934b1019fd1fbb9b7ce2b47b1c74a"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.81.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
+checksum = "sha256:d1e38cf36d8c14ef0682a6d6617f8a512b1a971feb3dfa437419d00136e19a3e"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.82.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
 signer = "sigstore-oidc:https://github.com/max-sixty/worktrunk/.github/workflows/release.yaml"
 repository_ids = { repository = "1078528927" }
 
 [tools.worktrunk."platforms.macos-arm64"]
-checksum = "sha256:b9c3f2f8071554cf88500466d65d35e18ad5edad5762479a1f14bcddd5ab7882"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.81.0/worktrunk-aarch64-apple-darwin.tar.xz"
+checksum = "sha256:6945bc82e0513d0b974c99fb1d30de24e448697fd533ed6b3f442c66a1b3620c"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.82.0/worktrunk-aarch64-apple-darwin.tar.xz"
 signer = "sigstore-oidc:https://github.com/max-sixty/worktrunk/.github/workflows/release.yaml"
 repository_ids = { repository = "1078528927" }
 
@@ -1546,14 +1545,14 @@ specifiers = ["4.153.0"]
 allow_builds = '["esbuild", "sharp", "workerd"]'
 
 [[tools.xcodegen]]
-version = "2.46.0"
+version = "2.48.0"
 backend = "aqua:yonaskolb/XcodeGen"
 specifiers = ["latest"]
 
 [tools.xcodegen."platforms.macos-arm64"]
-checksum = "sha256:4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806"
-url = "https://github.com/yonaskolb/XcodeGen/releases/download/2.46.0/xcodegen.zip"
-url_api = "https://api.github.com/repos/yonaskolb/XcodeGen/releases/assets/478866069"
+checksum = "sha256:620c9f0dc10849f94728ab5df52d225ebab8187439dd6fee1925e59e80dff892"
+url = "https://github.com/yonaskolb/XcodeGen/releases/download/2.48.0/xcodegen.zip"
+url_api = "https://api.github.com/repos/yonaskolb/XcodeGen/releases/assets/767651385"
 
 [[tools.xcodes]]
 version = "2.2.0"
