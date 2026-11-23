@@ -66,8 +66,12 @@ dotfiles_profile_mise_env() {
 
 # Prints the env line that .miserc.local.toml holds for a profile.
 dotfiles_profile_miserc_line() {
-  local env line="" IFS=,
-  for env in $(dotfiles_profile_mise_env "${1:-}"); do
+  local env envs line=""
+  # Get the list before IFS changes. A called function sees this local IFS,
+  # and the layer loop in dotfiles_profile_mise_env splits on newlines.
+  envs="$(dotfiles_profile_mise_env "${1:-}")" || return
+  local IFS=,
+  for env in $envs; do
     line="${line:+$line, }\"$env\""
   done
   printf 'env = [%s]\n' "$line"
