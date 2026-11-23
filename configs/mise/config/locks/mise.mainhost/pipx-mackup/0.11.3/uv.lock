@@ -3,7 +3,7 @@ revision = 5
 requires-python = ">=3.10"
 
 [options]
-exclude-newer = "2026-11-11T09:01:54.805712Z"
+exclude-newer = "2026-11-17T13:10:00.555328Z"
 
 [[package]]
 name = "docopt-ng"

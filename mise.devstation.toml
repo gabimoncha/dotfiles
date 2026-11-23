@@ -1,0 +1,22 @@
+# Role: devstation, a development machine that you reach over SSH from a main
+# Mac: the Mac mini, and nasbox with the container layer. It uses mise.toml,
+# the platform file, and mise.devhost.toml as they are, with the apps of the
+# root Brewfile and apps/devhost.Brewfile only. It has no SSH keys to other
+# hosts. What one devstation needs alone is in its fleet host folder.
+#
+# On a Mac, the T3 server runs as a login service: see the t3 row in
+# apps/standalone.tsv and bin/setup-t3-service. bin/configure-remote-access
+# turns on Remote Login and automatic login, and stops system sleep.
+
+# Automatic login shows the desktop with no password. This job locks the screen
+# right after login, and the session stays active behind the lock. mise renders
+# config_root as this checkout. Linux skips launchd agents.
+[bootstrap.macos.launchd.agents.lock-screen]
+program = "{{ config_root }}/bin/lock-screen"
+run_at_load = true
+
+[doctor.checks.mobile]
+description = "Xcode, the simulators, and the Android SDK are ready"
+run = "bin/check-mobile-ready"
+hint = "Run ./bin/install-mobile-dev, or ./bin/setup --continue"
+timeout = "120s"

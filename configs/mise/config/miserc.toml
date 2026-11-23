@@ -1,0 +1,8 @@
+# The old profile names of an existing miserc.local.toml, such as
+# env = ["devhost", "macowl"], load the new role files, so plain mise commands
+# work before bin/link-dotfiles rewrites the line. Remove these sets after
+# every host has run bin/link-dotfiles once.
+[env_sets]
+macowl = ["mainhost"]
+macmini = ["devstation"]
+air = ["lightshell"]

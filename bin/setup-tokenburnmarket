@@ -120,10 +120,10 @@ if [[ "$mode" == mise-daemon ]]; then
   # The entrypoint of the container starts the daemons after a restart.
   boot_note() {
     tr '\0' ' ' </proc/1/cmdline 2>/dev/null | grep -q 'daemons start' && return 0
-    echo 'The container does not start the mise daemons after a restart. In the compose'
-    echo 'file on the host, replace the whole command block with the one in'
-    echo 'local/nasbox.compose.yaml.example, and add stop_grace_period: 130s. Then rebuild'
-    echo 'the project, and keep the volumes. A restart keeps the old command.'
+    echo 'The container does not start the mise daemons after a restart. On a main Mac,'
+    echo 'run `mise run fleet:update synology` to send the current compose file, then'
+    echo 'rebuild the nasbox project in DSM, and keep the volumes. A restart keeps the'
+    echo 'old command.'
   }
   # The CLI reads its sign-in from XDG_CONFIG_HOME when that is an absolute
   # path, and from ~/.config otherwise. pitchfork keeps the environment of the

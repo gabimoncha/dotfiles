@@ -1,5 +1,5 @@
 # Entries for the development Macs: the profiles that load the devhost layer,
-# macowl and macmini. The root Brewfile has the entries for every Mac. Each
+# the mainhost and devstation Macs. The root Brewfile has the entries for every Mac. Each
 # third-party tap here was reviewed, as in the root Brewfile.
 tap "felixkratz/formulae", trusted: true
 tap "grishka/grishka", trusted: true

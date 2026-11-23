@@ -1,4 +1,4 @@
-# Apps for the air profile only.
+# Apps for the lightshell role only.
 # key	type	token_or_url	app_bundle	notes
 synology-drive	cask	synology-drive	Synology Drive Client	Homebrew cask.
 synology-image-assistant	cask	synology-image-assistant	Synology Image Assistant	Homebrew cask.

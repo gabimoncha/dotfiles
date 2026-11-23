@@ -1,6 +1,6 @@
-# Runtime tools for the development machines: every profile except air.
+# Runtime tools for the development machines: every role except lightshell.
 # dotfiles_profile_mise_env in bin/lib/dotfiles-profile.sh adds the devhost
-# environment before the profile, so mise loads this file after config.toml
+# environment before the role, so mise loads this file after config.toml
 # and locks its tools in mise.devhost.lock. The settings in config.toml apply
 # here too.
 
@@ -52,7 +52,7 @@ pitchfork = { version = "latest", os = "linux" }
 java = "zulu-17"
 
 # Every development Mac. Add a tool to the list above when a Linux box needs
-# it. A tool for one Mac only goes in config.<profile>.toml.
+# it. A tool for one role only goes in config.<role>.toml.
 perl = { version = "5.44.0", os = "macos" }
 ccache = { version = "latest", os = "macos" }
 cocoapods = { version = "latest", os = "macos" }

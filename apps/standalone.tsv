@@ -1,20 +1,20 @@
 # Tools that a vendor installer owns. bin/install-standalone reads this file.
 # Vendor installs keep the metadata that each tool's self-update needs.
-# os: all, or a comma list of macos, linux, and profile names. The Air gets
-# only the rows marked all: mise, Codex CLI, and Claude Code.
+# os: all, or a comma list of macos, linux, and role names. The Air
+# (lightshell) gets only the rows marked all: mise, Codex CLI, and Claude Code.
 # phase: first (before mise tools) or after-mise.
 # root: the command must resolve to a path inside it. installer: the vendor
 # script URL, or "pinned" for the digest-checked release in bin/lib/mise-pin.sh.
 # update: arguments for the tool's own update command, or "-" when the tool
 # updates itself. The T3 app updates the T3 server through its service
-# launcher, with a database backup and rollback. The Mac mini runs the T3
-# server with no desktop app. The T3 Code app on macowl is a Homebrew cask in
-# apps/macowl.Brewfile, not a row here.
+# launcher, with a database backup and rollback. A devstation runs the T3
+# server with no desktop app. The T3 Code app on a main Mac is a Homebrew cask
+# in apps/mainhost.Brewfile, not a row here.
 # name	os	phase	command	root	installer	update
 mise	all	first	~/.local/bin/mise	~/.local/bin/mise	pinned	-
 codex	all	first	~/.local/bin/codex	~/.codex/packages/standalone	https://chatgpt.com/codex/install.sh	update
 claude	all	first	~/.local/bin/claude	~/.local/share/claude	https://claude.ai/install.sh	upgrade
-cursor	linux,macowl,macmini	first	~/.local/bin/agent	~/.local/share/cursor-agent	https://cursor.com/install	update
-opencode	linux,macowl,macmini	first	~/.opencode/bin/opencode	~/.opencode/bin	https://opencode.ai/v2/install	upgrade
-pi	linux,macowl,macmini	after-mise	~/.pi/agent/bin/pi	~/.pi/agent	https://pi.dev/install.sh	update --all
-t3	linux,macmini	first	~/.local/bin/t3	~/.t3/runtime/versions	https://t3.codes/install.sh	-
+cursor	linux,mainhost,devstation	first	~/.local/bin/agent	~/.local/share/cursor-agent	https://cursor.com/install	update
+opencode	linux,mainhost,devstation	first	~/.opencode/bin/opencode	~/.opencode/bin	https://opencode.ai/v2/install	upgrade
+pi	linux,mainhost,devstation	after-mise	~/.pi/agent/bin/pi	~/.pi/agent	https://pi.dev/install.sh	update --all
+t3	linux,devstation	first	~/.local/bin/t3	~/.t3/runtime/versions	https://t3.codes/install.sh	-

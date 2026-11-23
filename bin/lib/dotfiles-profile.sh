@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
-# The machine profile selects one mise.<profile>.toml file at the repository
-# root: macowl, macmini, and air on macOS, and container on Linux. A macOS
-# profile can also have app lists in apps/. The development machines, every
-# profile except air, also load the devhost layer before their own files.
-# Bash 3.2 compatible.
+# The machine's role selects its mise.<role>.toml file at the repository root:
+# mainhost and lightshell on macOS, devstation on macOS or Linux, and
+# container, a devstation in a Linux container. A macOS role can also have app
+# lists in apps/. The scripts call the role the profile. What one machine needs
+# alone is in its fleet host folder. Bash 3.2 compatible.
 
-# Accept the profile names that older versions of this repository used.
+# Accept the names that older versions of this repository used.
 dotfiles_profile_normalize() {
   case "${1:-}" in
-    macos/pro | pro) printf 'macowl\n' ;;
-    macos/air) printf 'air\n' ;;
+    macos/pro | pro | macowl) printf 'mainhost\n' ;;
+    macmini) printf 'devstation\n' ;;
+    macos/air | air) printf 'lightshell\n' ;;
     linux/container | linux-container) printf 'container\n' ;;
     *) printf '%s\n' "${1:-}" ;;
   esac
@@ -19,33 +20,36 @@ dotfiles_profile_normalize() {
 dotfiles_profile_validate() {
   local profile="${1:-}" system="${2:-$(uname -s)}"
   case "$profile" in
-    macowl | macmini | air)
+    mainhost | lightshell)
       [[ "$system" == Darwin ]] || {
-        printf 'dotfiles: profile %s requires macOS.\n' "$profile" >&2
+        printf 'dotfiles: role %s requires macOS.\n' "$profile" >&2
         return 2
       }
       ;;
+    devstation) ;;
     container)
       [[ "$system" == Linux ]] || {
-        printf 'dotfiles: profile %s requires Linux.\n' "$profile" >&2
+        printf 'dotfiles: role %s requires Linux.\n' "$profile" >&2
         return 2
       }
       ;;
     *)
-      printf 'dotfiles: unsupported profile: %s. Use macowl, macmini, air, or container.\n' "$profile" >&2
+      printf 'dotfiles: unsupported role: %s. Use mainhost, devstation, lightshell, or container.\n' "$profile" >&2
       return 2
       ;;
   esac
 }
 
-# Prints the shared layers that a profile loads before its own files, one per
+# Prints the shared layers that a role loads before its own files, one per
 # line. The devhost layer holds what the development machines share:
 # mise.devhost.toml, configs/mise/config/config.devhost.toml, and the devhost
 # app lists in apps/. The name is unusual on purpose: mise loads the
 # mise.<env>.toml of every project folder too, and projects often use dev.
+# A container is a devstation, so it loads that role first.
 dotfiles_profile_layers() {
   case "${1:-}" in
-    air) ;;
+    lightshell) ;;
+    container) printf 'devhost\ndevstation\n' ;;
     *) printf 'devhost\n' ;;
   esac
 }
@@ -88,18 +92,18 @@ dotfiles_profile_app_lists() {
   done
 }
 
-# Prints the backup groups that setup restores on a profile. The Mac mini has
-# no Synology Drive and no Mackup, so it restores only the Raycast export. The
+# Prints the backup groups that setup restores for a role. A devstation has no
+# Synology Drive and no Mackup, so it restores only the Raycast export. The
 # Air starts fresh and restores nothing.
 dotfiles_profile_restores() {
   case "${1:-}" in
-    macmini) printf 'raycast\n' ;;
-    air) ;;
+    devstation) printf 'raycast\n' ;;
+    lightshell) ;;
     *) printf 'mackup raycast codex\n' ;;
   esac
 }
 
-# Prints the profile. DOTFILES_PROFILE wins, then the last name of the env list
+# Prints the role. DOTFILES_PROFILE wins, then the last name of the env list
 # in the ignored .miserc.local.toml. A Linux container without either uses container.
 dotfiles_profile() {
   local root="${1:-}" profile="${DOTFILES_PROFILE:-}" saved line system
@@ -126,7 +130,7 @@ dotfiles_profile() {
       fi
     done <"$saved"
     [[ -n "$profile" ]] || {
-      printf 'dotfiles: .miserc.local.toml has no profile. Add a line such as env = ["macowl"].\n' >&2
+      printf 'dotfiles: .miserc.local.toml has no role. Add a line such as env = ["mainhost"].\n' >&2
       return 2
     }
   fi
@@ -134,7 +138,9 @@ dotfiles_profile() {
     if [[ "$system" == Linux && (-f /.dockerenv || -f /run/.containerenv) ]]; then
       profile=container
     else
-      printf 'dotfiles: select a profile. Save env = ["macowl"] in %s, or set DOTFILES_PROFILE.\n' "$saved" >&2
+      local example=mainhost
+      [[ "$system" != Linux ]] || example=devstation
+      printf 'dotfiles: select a role. Save env = ["%s"] in %s, or set DOTFILES_PROFILE.\n' "$example" "$saved" >&2
       return 2
     fi
   fi

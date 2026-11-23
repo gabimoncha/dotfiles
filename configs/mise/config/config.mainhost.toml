@@ -1,5 +1,5 @@
-# Runtime tools for the macowl profile only. miserc.local.toml selects the
-# profile, so mise loads this file and locks its tools in mise.macowl.lock.
+# Runtime tools for the mainhost role only. miserc.local.toml selects the
+# role, so mise loads this file and locks its tools in mise.mainhost.lock.
 # The settings in config.toml apply here too.
 
 [tools]

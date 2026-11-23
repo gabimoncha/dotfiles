@@ -1,7 +1,9 @@
 # Repository rules
 
 This repository owns setup, tool inventories, and selected app settings for
-the owner's Macs and for Linux hosts in Docker containers. Read
+the owner's Macs and for Linux hosts in Docker containers, by role. This repo
+is public. What makes one machine different, and all agent rules, are in the
+private fleet repo (`~/code/personal/fleet` on a main Mac). Read
 [README.md](README.md) for the workflow and [DECISIONS.md](DECISIONS.md)
 before changing ownership, bootstrap boundaries, or other design decisions.
 For mise behavior, the source of truth is the mise documentation at
@@ -9,32 +11,31 @@ For mise behavior, the source of truth is the mise documentation at
 
 ## Where things live
 
-| To change                                                       | Edit                                                                                                                               |
-| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| An app's settings file                                          | `configs/<app>/`                                                                                                                   |
-| Where a file goes in HOME                                       | the `[dotfiles]` entry in a root mise file                                                                                         |
-| Entries for every host, the MacBook Air too                     | `mise.toml`                                                                                                                        |
-| Entries for the development machines (every profile except air) | `mise.devhost.toml`                                                                                                                |
-| Entries for one platform                                        | `mise.macos.toml` or `mise.linux.toml`                                                                                             |
-| Entries for one machine                                         | the profile file: `mise.macowl.toml`, `mise.macmini.toml`, `mise.air.toml`, or `mise.container.toml`                               |
-| Agent and T3 settings that sync between machines                | the merge sources in `configs/claude/`, `configs/codex/`, and `configs/t3/`; save them with `./bin/save-settings`                  |
-| Which agent settings sync                                       | `configs/<app>/sync-keys`: one `public` rule per setting, including each key of the merge source, and `private` rules for sections |
-| Agent rules for every development host                          | `configs/agents/instructions.md`                                                                                                   |
-| Agent rules for one host                                        | `configs/agents/<profile>.md`                                                                                                      |
-| Installed agent skills                                          | `configs/agents/skills/` and `configs/agents/skill-lock.json`, through the `skills` CLI                                            |
-| Runtime tools and mise tasks                                    | `configs/mise/config/config.toml` for every host; `config.devhost.toml` for the development machines                               |
-| Runtime tools for one profile                                   | `configs/mise/config/config.<profile>.toml`                                                                                        |
-| Homebrew formulae, casks, and App Store apps                    | `Brewfile` for every Mac; `apps/devhost.Brewfile` for macowl and macmini; `apps/<profile>.Brewfile` for one Mac                    |
-| Manifest apps                                                   | `apps/manifest.tsv` for every Mac; `apps/manifest.devhost.tsv` and `apps/manifest.<profile>.tsv` as for the Brewfiles              |
-| Apt packages                                                    | `mise.linux.toml` or the profile file                                                                                              |
-| macOS preferences, Dock apps, and login items                   | `[bootstrap.settings.macos]` in `mise.macos.toml`, `mise.devhost.toml`, or the profile file, and `macos/defaults.sh`               |
-| Agent CLIs, mise, and other vendor-installed tools              | `apps/standalone.tsv`                                                                                                              |
-| Setup steps                                                     | `bin/`                                                                                                                             |
+| To change                                          | Edit                                                                                                                               |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| An app's settings file                             | `configs/<app>/`                                                                                                                   |
+| Where a file goes in HOME                          | the `[dotfiles]` entry in a root mise file                                                                                         |
+| Entries for every host, the MacBook Air too        | `mise.toml`                                                                                                                        |
+| Entries for the development machines               | `mise.devhost.toml` (the mainhost and devstation roles)                                                                            |
+| Entries for one platform                           | `mise.macos.toml` or `mise.linux.toml`                                                                                             |
+| Entries for one role                               | `mise.mainhost.toml`, `mise.devstation.toml`, `mise.lightshell.toml`, or the container layer `mise.container.toml`                 |
+| Entries for one machine, and agent rules           | the fleet repo, not this one                                                                                                       |
+| Agent and T3 settings that sync between machines   | the merge sources in `configs/claude/`, `configs/codex/`, and `configs/t3/`; save them with `./bin/save-settings`                  |
+| Which agent settings sync                          | `configs/<app>/sync-keys`: one `public` rule per setting, including each key of the merge source, and `private` rules for sections |
+| Installed agent skills                             | `configs/agents/skills/` and `configs/agents/skill-lock.json`, through the `skills` CLI                                            |
+| Runtime tools and mise tasks                       | `configs/mise/config/config.toml` for every host; `config.devhost.toml` for the development machines                               |
+| Runtime tools for one role                         | `configs/mise/config/config.<role>.toml`                                                                                           |
+| Homebrew formulae, casks, and App Store apps       | `Brewfile` for every Mac; `apps/devhost.Brewfile` for the development Macs; `apps/<role>.Brewfile` for one role                    |
+| Manifest apps                                      | `apps/manifest.tsv` for every Mac; `apps/manifest.devhost.tsv` and `apps/manifest.<role>.tsv` as for the Brewfiles                 |
+| Apt packages                                       | `mise.linux.toml` or the role file                                                                                                 |
+| macOS preferences, Dock apps, and login items      | `[bootstrap.settings.macos]` in `mise.macos.toml`, `mise.devhost.toml`, or the role file, and `macos/defaults.sh`                  |
+| Agent CLIs, mise, and other vendor-installed tools | `apps/standalone.tsv`                                                                                                              |
+| Setup steps                                        | `bin/`                                                                                                                             |
 
 Apply file changes with `./bin/link-dotfiles`. Preview them first with
 `./bin/link-dotfiles --dry-run`. Apply them only from the main checkout,
 after the change merges. Run other mise commands for this repository
-through `./bin/repo-mise`, which loads the selected profile and the pinned mise.
+through `./bin/repo-mise`, which loads the selected role and the pinned mise.
 
 ## Add a config file
 
@@ -111,10 +112,13 @@ Read mise state with `--json`, for example `ls --json` or
   DECISIONS.md for a script or a Homebrew entry, and the pinned tool versions.
 - Add GUI apps through mas when available, then use mise for supported tools,
   then Homebrew. Coding agent CLIs, mise, and the T3 server on Linux and on
-  the Mac mini are standalone exceptions, listed in `apps/standalone.tsv`.
-  The T3 nightly desktop app stays in Homebrew, for macowl only.
-- The Mac mini gets only the shared Mac lists. Put an app, tool, or setting
-  that only macowl needs in the macowl files, not in a shared list.
+  a devstation Mac are standalone exceptions, listed in `apps/standalone.tsv`.
+  The T3 nightly desktop app stays in Homebrew, for the mainhost role only.
+- A devstation gets only the shared Mac lists. Put an app, tool, or setting
+  that only a main Mac needs in the mainhost files, not in a shared list. Put
+  what one machine needs alone in its fleet host folder.
+- Put nothing private here: no host addresses, private identities, or agent
+  rules. Those go in fleet.
 - Steam uses `bin/install-steam` for Valve's verified ARM64 bootstrapper.
   Preserve its update channel and quarantine. Keep Rosetta installation manual.
 - Keep Brewfile entries alphabetized within sections unless deliberately grouped.
@@ -139,7 +143,7 @@ Read mise state with `--json`, for example `ls --json` or
   from a new source, check that its license allows redistribution and add it to
   `licenses/skills/`.
 - Keep local companions under ignored `local/`; only examples belong in Git.
-- Keep the profile checks in `bin/lib/dotfiles-profile.sh` before setup writes.
+- Keep the role checks in `bin/lib/dotfiles-profile.sh` before setup writes.
 - The MacBook Air is not a development machine. Put a development tool, link,
   or app in the devhost layer (`mise.devhost.toml`, `config.devhost.toml`,
   `apps/devhost.Brewfile`), not in a file for every host.

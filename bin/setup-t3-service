@@ -47,5 +47,5 @@ cat <<'EOF'
 
 Next steps, which need your choices and private values:
 1. Run `t3 up` to choose how your other devices reach this server.
-2. Give the service the proxy key. See "Mac mini" in apps/remote-development.md.
+2. Give the service the proxy key. See "Devstation Mac" in apps/remote-development.md.
 EOF

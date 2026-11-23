@@ -1,6 +1,6 @@
 # Entries for every Mac, the MacBook Air too. The development Macs add
-# apps/devhost.Brewfile, and a profile adds its own entries in
-# apps/<profile>.Brewfile, for example apps/macowl.Brewfile. Setup installs all
+# apps/devhost.Brewfile, and a role adds its own entries in
+# apps/<role>.Brewfile, for example apps/mainhost.Brewfile. Setup installs all
 # of these files. See dotfiles_profile_app_lists in bin/lib/dotfiles-profile.sh.
 # Homebrew owns GUI apps, App Store apps, system packages, and CLIs that are not
 # already managed by mise or standalone installer exceptions. Runtimes and

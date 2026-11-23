@@ -59,12 +59,13 @@ standalone_expand() {
 }
 
 # Prints this machine's rows as: name, phase, command, root, installer, update.
-# The os column is all, or a comma list of OS names and profile names. Without
-# a selected profile, as before setup selects one, only the OS names match.
+# The os column is all, or a comma list of OS names and role names. Without
+# a selected role, as before setup selects one, only the OS names match.
+# dotfiles_profile reads DOTFILES_PROFILE too, and turns an old name into its role.
 standalone_rows() {
   local os profile name row_os phase command root installer update
   os="$(standalone_os)"
-  profile="${DOTFILES_PROFILE:-$(dotfiles_profile "$repo_root" 2>/dev/null)}" || profile=""
+  profile="$(dotfiles_profile "$repo_root" 2>/dev/null)" || profile=""
   while IFS=$'\t' read -r name row_os phase command root installer update || [[ -n "${name:-}" ]]; do
     [[ -z "$name" || "$name" == \#* ]] && continue
     case ",$row_os," in

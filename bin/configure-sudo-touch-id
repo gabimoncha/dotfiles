@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Enables Touch ID for sudo. The block is the [bootstrap.files] entry for
-# /etc/pam.d/sudo_local in the profile's mise file (mise.macowl.toml or
-# mise.air.toml); mise keeps it between its markers and leaves the other lines
+# /etc/pam.d/sudo_local in the role's mise file (mise.mainhost.toml or
+# mise.lightshell.toml); mise keeps it between its markers and leaves the other lines
 # alone. This script adds what mise does not do: it checks that Apple's
 # /etc/pam.d/sudo includes sudo_local, comments out an unmarked pam_tid.so line
 # from an older setup, and turns Touch ID off with --disable.

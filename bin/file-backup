@@ -225,13 +225,6 @@ codex_backup() {
     warn "Skipping missing source ${HOME}/.codex/keybindings.json"
   fi
 
-  if codex_copy_path "${HOME}/.codex/AGENTS.md" ".codex/AGENTS.md"; then
-    log "Included ${HOME}/.codex/AGENTS.md"
-    included_paths+=(".codex/AGENTS.md")
-  else
-    warn "Skipping missing source ${HOME}/.codex/AGENTS.md"
-  fi
-
   if codex_copy_path "${HOME}/.codex/rules" ".codex/rules"; then
     log "Included ${HOME}/.codex/rules"
     included_paths+=(".codex/rules")
@@ -319,6 +312,8 @@ codex_entry_is_allowed() {
   [[ "$entry" == ".agents" ]] && return 0
   [[ "$entry" == ".codex/config.toml" ]] && return 0
   [[ "$entry" == ".codex/keybindings.json" ]] && return 0
+  # Older archives contain the agent rules. fleet renders them now, so restore
+  # skips them.
   [[ "$entry" == ".codex/AGENTS.md" ]] && return 0
   # Legacy archives may contain this file; restore intentionally skips it.
   [[ "$entry" == ".codex/.codex-global-state.json" ]] && return 0
@@ -616,7 +611,6 @@ codex_restore() {
 
   codex_restore_path ".codex/config.toml" "$backup_root" "$replace"
   codex_restore_path ".codex/keybindings.json" "$backup_root" "$replace"
-  codex_restore_path ".codex/AGENTS.md" "$backup_root" "$replace"
   codex_restore_path ".codex/rules" "$backup_root" "$replace"
   codex_restore_path ".codex/memories" "$backup_root" "$replace"
   codex_restore_path ".codex/automations" "$backup_root" "$replace"

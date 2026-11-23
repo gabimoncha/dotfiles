@@ -48,16 +48,16 @@ ensure_keyboard_input_sources
 profile="$(dotfiles_profile "${script_dir}/.." 2>/dev/null || true)"
 
 # The MacBook Air keeps the macOS screenshot folder.
-if [[ "$profile" == air ]]; then
+if [[ "$profile" == lightshell ]]; then
   log "Keeping the macOS screenshot folder on the MacBook Air"
 else
   log "Applying screenshot defaults"
   "${script_dir}/../bin/configure-screenshots"
 fi
 
-# macowl and the Mac mini keep the display on. The MacBook Air keeps the macOS
+# The development Macs keep the display on. The MacBook Air keeps the macOS
 # display sleep, to save its battery.
-if [[ "$profile" == air ]]; then
+if [[ "$profile" == lightshell ]]; then
   log "Keeping the macOS display sleep settings on the MacBook Air"
 else
   log "Applying display sleep defaults"

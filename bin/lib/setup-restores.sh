@@ -4,7 +4,6 @@
 codex_portable_state_exists() {
   [[ -e "${HOME}/.codex/config.toml" ]] ||
     [[ -e "${HOME}/.codex/keybindings.json" ]] ||
-    [[ -e "${HOME}/.codex/AGENTS.md" ]] ||
     [[ -d "${HOME}/.codex/rules" ]] ||
     [[ -d "${HOME}/.codex/memories" ]] ||
     [[ -d "${HOME}/.codex/automations" ]]

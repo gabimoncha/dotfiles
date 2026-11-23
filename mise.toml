@@ -1,9 +1,9 @@
 # Files and checkouts for every host, the MacBook Air too. Apply them with
 # ./bin/link-dotfiles. mise also loads mise.macos.toml or mise.linux.toml for
-# the platform, mise.devhost.toml on the development machines (every profile
-# except air), and the profile file that the ignored .miserc.local.toml
-# selects: mise.macowl.toml, mise.macmini.toml, mise.air.toml, or
-# mise.container.toml.
+# the platform, mise.devhost.toml on the development machines (every role
+# except lightshell), and the role files that the ignored .miserc.local.toml
+# selects: mise.mainhost.toml, mise.devstation.toml, mise.lightshell.toml, and
+# the container layer mise.container.toml.
 # bin/repo-mise requires the pinned mise. A soft minimum only warns, so tools
 # in this folder keep working while an older mise is installed.
 min_version = { soft = "2026.11.8" }
@@ -34,9 +34,9 @@ min_version = { soft = "2026.11.8" }
 "~/.config/nvim" = { source = "configs/nvim", mode = "symlink" }
 "~/.config/tsrs/tsgo" = { source = "configs/tsrs/tsgo", mode = "symlink" }
 
-# The global mise config folder: runtime tools and settings, each profile's
-# config.<profile>.toml, and their locks. Its miserc.local.toml links to this
-# repository's .miserc.local.toml, so mise loads this machine's profile file.
+# The global mise config folder: runtime tools and settings, each role's
+# config.<role>.toml, and their locks. Its miserc.local.toml links to this
+# repository's .miserc.local.toml, so mise loads this machine's role files.
 "~/.config/mise" = { source = "configs/mise/config", mode = "symlink" }
 
 "~/bin/harness" = { source = "configs/harness/harness", mode = "symlink" }
@@ -49,8 +49,8 @@ min_version = { soft = "2026.11.8" }
 # and creates a missing file with mode 0600, because it can hold tokens.
 "~/.claude/settings.json/dotfiles" = { source = "configs/claude/settings.json", merge = true, permissions = "0600" }
 "~/.codex/config.toml/dotfiles" = { source = "configs/codex/config.toml", merge = true, permissions = "0600" }
-# A "/defaults" entry sets a key only when the file has none, so a profile can
-# override it. bin/save-settings never saves these sources.
+# A "/defaults" entry sets a key only when the file has none, so a fleet host
+# can override it. bin/save-settings never saves these sources.
 "~/.codex/config.toml/defaults" = { source = "configs/codex/defaults.toml", merge = "missing", permissions = "0600" }
 
 [bootstrap.repos]
@@ -105,7 +105,7 @@ exit "$status"
 '''
 
 # Readiness checks: ./bin/repo-mise doctor project. Each check only reads
-# state. The platform and profile files add their own checks.
+# state. The platform and role files add their own checks.
 [doctor.checks.mise-tools]
 description = "The configured mise tools are installed"
 run = "./bin/repo-mise --global install --dry-run-code"

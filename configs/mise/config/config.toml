@@ -4,8 +4,8 @@ min_version = "2026.11.8"
 
 [tools]
 # Tools for every host, the MacBook Air too. The development machines add
-# config.devhost.toml, and a profile adds config.<profile>.toml. Each file has
-# its own lock: mise.lock, mise.devhost.lock, and mise.<profile>.lock.
+# config.devhost.toml, and a role adds config.<role>.toml. Each file has
+# its own lock: mise.lock, mise.devhost.lock, and mise.<role>.lock.
 # Mac and Linux. Node.js 26 ships no Corepack, and mise enables Corepack only
 # with node.corepack, so the pnpm and npm entries own those commands.
 pnpm = "latest"
@@ -81,7 +81,7 @@ paranoid = ["plugins"]
 # No tool here uses an asdf plugin. mise then never installs a tool with one.
 disable_backends = ["asdf"]
 # `mise exec` and `mise run` install missing tools from every config layer,
-# including the profile tools of this repository. In a project, a large profile
+# including the role tools of this repository. In a project, a large role
 # tool then blocks each `mise exec` call. Only `mise install` installs these
 # tools. Use the full backend name, such as `github:owner/repo`.
 auto_install_disable_tools = ["ollama"]

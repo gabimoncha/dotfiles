@@ -2,13 +2,13 @@
 # Run the pinned standalone mise on this repository's config only.
 #
 #   ./bin/repo-mise <mise arguments...>
-#     Loads mise.toml, mise.macos.toml or mise.linux.toml, the profile's
-#     layers (mise.devhost.toml), and the profile's mise.<profile>.toml from the
+#     Loads mise.toml, mise.macos.toml or mise.linux.toml, the role's
+#     layers (mise.devhost.toml), and the role's mise.<role>.toml from the
 #     repository root. Example: dot status
 #   ./bin/repo-mise --global <mise arguments...>
 #     Uses configs/mise/config as the config folder, as ~/.config/mise does:
-#     config.toml, config.devhost.toml for every profile except air, and the
-#     profile's config.<profile>.toml, when they exist.
+#     config.toml, config.devhost.toml for every role except lightshell, and
+#     the role's config.<role>.toml, when they exist.
 #     Example: --global install
 set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -50,7 +50,7 @@ if ! mise_at_pin "$mise_bin"; then
     "$mise_bin" "$pinned_mise_version" >&2
   exit 1
 fi
-# The profile's layers load before its own files: devhost,macowl.
+# The role's layers load before its own files: devhost,mainhost.
 mise_env=""
 [[ -z "$profile" ]] || mise_env="$(dotfiles_profile_mise_env "$profile")"
 if [[ "$scope" == global ]]; then

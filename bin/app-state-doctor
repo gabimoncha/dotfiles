@@ -84,23 +84,6 @@ check_ghostty() {
   info "Run ./bin/link-dotfiles."
 }
 
-check_aerospace() {
-  local source="${repo_root}/configs/aerospace/aerospace.toml"
-  local target="${HOME}/.aerospace.toml"
-
-  if managed_link_matches "$target" "$source"; then
-    ok "AeroSpace config is linked at ~/.aerospace.toml"
-    return 0
-  fi
-
-  if [[ -e "$target" || -L "$target" ]]; then
-    warn "AeroSpace config exists but is not linked to this repo"
-  else
-    warn "AeroSpace config is missing at ~/.aerospace.toml"
-  fi
-  info "Run ./bin/link-dotfiles."
-}
-
 check_tmux() {
   local missing=()
   local plugin
@@ -182,7 +165,6 @@ check_sudo_touch_id() {
 
 check_tmux
 if [[ "$(uname -s)" == Darwin ]]; then
-  check_aerospace
   check_ghostty
   check_raycast
   check_sudo_touch_id

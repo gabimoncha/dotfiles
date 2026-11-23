@@ -1,7 +1,7 @@
 # Local SSH access for remote development
 
 SSH identities and host settings stay local, not managed or linked by dotfiles.
-On macowl, Mackup backs up `~/.ssh/config` to your private backup storage.
+On a main Mac, Mackup backs up `~/.ssh/config` to your private backup storage.
 `bin/configure-ssh-host` is an explicit opt-in helper, never run by setup. Use it
 when an existing private key needs to live in your actual user home rather than
 an agent/runtime home. It does not trust `$HOME`: `--home` is mandatory.
@@ -81,35 +81,10 @@ See [Ghostty's SSH guide](https://ghostty.org/docs/features/ssh) for details.
 
 ## NAS T3 container
 
-`local/nasbox.compose.yaml.example` is a sanitized deployment example.
-Keep the machine-specific copy under ignored `local/nasbox/` and
-upload its `compose.yaml` to the Container Manager project `nasbox` in
-`/volume1/docker/nasbox`.
-Replace the documentation-only LAN address and public-key placeholder first.
-Do not commit actual host addresses, identities, keys, or pairing links.
-
-The example preserves the existing named home and SSH host-key volumes and
-workspace bind mount. The compose file does not install T3 or the agent CLIs;
-`./bin/setup` installs them in the persistent home (see "Dotfiles on the box").
-A restart keeps the container's command, ports, and stop grace period. A
-change to any of them in the compose file takes effect only after a project
-rebuild. Do not delete persistent volumes. After a rebuild,
-`docker inspect nasbox --format '{{.Config.StopTimeout}}'` prints the grace
-period in seconds.
-
-### Check a stale container name after a rebuild
-
-If DSM shows `<old-id>_nasbox` and the project editor will not open,
-look up the running container by name. Run this on the NAS in a one-time
-DSM Task Scheduler task as `root`:
-
-```sh
-synowebapi --exec api=SYNO.Docker.Container version=1 method=get name=nasbox |
-  jq '{success,code:.error.code}'
-```
-
-If the lookup returns `success: true`, reopen **Container**, then
-**Project > nasbox > YAML Configurations**. Delete the root task after use.
+The private fleet repo holds the Compose file of the `nasbox` project and
+its deploy steps (`hosts/synology/`). The compose file does not install T3 or
+the agent CLIs; `./bin/setup` installs them in the persistent home (see
+"Dotfiles on the box").
 
 ### Daemons
 
@@ -128,11 +103,10 @@ daemon's 95 seconds.
 To move the NAS to these daemons, first update the checkout in the box:
 `git -C ~/code/personal/dotfiles pull`, then check that
 `~/code/personal/dotfiles/bin/container-daemons` exists. The new command
-starts nothing without it. Then replace the whole `command` block in the
-compose file on the NAS with the one in the example, and add
-`stop_grace_period: 130s`. The old command started two loops from
-`~/.local/bin`, and a rebuild with only the new grace period keeps them. Then
-rebuild the project, and keep the volumes.
+starts nothing without it. Then, on a main Mac, send the fleet Compose file
+with `mise run fleet:update synology`, and rebuild the project in DSM. Keep
+the volumes. Do not paste the fleet file into DSM by hand: it is a template
+that the send renders.
 
 Run every daemons command through `./bin/container-daemons`, not
 `./bin/repo-mise daemons`. The supervisor keeps the environment of the command
@@ -218,35 +192,11 @@ After a change to `bin/t3-dev-supervise` or to the daemons in
 `mise.container.toml`, pull the checkout and run
 `./bin/container-daemons restart t3`.
 
-SSH publishes port 2222 and T3 publishes port 3773 on the NAS interfaces, for
-LAN and Tailscale access. Do not bind SSH only to the NAS's Tailscale address:
-after a NAS restart, Docker can start before Tailscale, and then the container
-does not start. SSH accepts only the key in `authorized_keys` and only the
-user `box`. Keep router forwarding/UPnP exposure disabled. Port 3773 is not a
-public HTTPS endpoint. Tailscale ACLs and DSM firewall rules still apply.
-
-To use the LAN at home and Tailscale away from home with one alias, put a
-`Match` block before the `Host` block in `~/.ssh/config` on the Mac:
-
-```sshconfig
-Match originalhost nasbox exec "nc -z -G 1 LAN_IP 2222 >/dev/null 2>&1"
-  HostName LAN_IP
-
-Host nasbox
-  HostName NAS_TAILSCALE_NAME
-  User box
-  Port 2222
-  IdentityFile ~/.ssh/KEY_NAME
-```
-
-Before each connection, `nc` checks for 1 second whether port 2222 answers on
-the LAN. If it does, the `Match` block sets the LAN address, because SSH uses
-the first value it finds. Otherwise SSH uses the NAS's Tailscale MagicDNS name,
-such as `NAS_NAME.TAILNET.ts.net`. On Linux, use `nc -z -w 1`. A wrong
-device at the same LAN address fails the host-key check. `ssh -G nasbox` shows
-which address SSH picks. `bin/configure-ssh-host` refuses a config with `Match`
-blocks, so run it before you add this block, or remove the block first.
-Mackup backs up `~/.ssh/config` on macowl (see [MACKUP.md](../MACKUP.md)). Memory and total RAM+swap
+The ports, the SSH alias of a main Mac, and the key setup are in fleet.
+`bin/configure-ssh-host` refuses a config with `Match` blocks, such as the
+fleet alias for `nasbox`, so run it before you add that block, or remove the
+block first. Mackup backs up `~/.ssh/config` on a main Mac (see
+[MACKUP.md](../MACKUP.md)). Memory and total RAM+swap
 are both capped at 6 GiB. This is a ceiling, not reserved RAM; on an 8 GiB NAS,
 full container usage leaves roughly 2 GiB for DSM and all other workloads.
 The container has no Docker socket or personal shares.
@@ -269,48 +219,8 @@ After deployment, verify LAN SSH, the 6 GiB cgroup limits, the T3 Connect log
 line, direct T3 discovery, and remote access from a device on the same tailnet. Successful LAN discovery
 alone does not prove Tailscale routing, authentication, or a working agent task.
 
-### Container account
-
-The non-root account is `box` (UID/GID 1000), with home `/home/box`.
-Startup renames the base image's `node` account without changing its numeric
-identity. The same `dev-home` volume mounts at `/home/box`; `/home/node` is a
-compatibility symlink for existing absolute launcher paths and saved settings.
-The image's original home directory is retained as `/home/node.image-default`
-in the disposable container layer. Do not remove the compatibility symlink
-without auditing existing launchers and settings.
-
-Use `User box` in the local SSH alias. Until that local setting is updated,
-`ssh box@HOST_ALIAS` overrides the old username. T3's direct routes do not use
-an SSH username; any manually configured SSH route also needs the new user.
-The project, the container, the hostname, the network, and the volumes
-`nasbox_dev-home` and `nasbox_ssh-host-keys` use the name `nasbox`. The Compose
-file names the volumes with `external: true`, so Compose never makes or deletes
-them, even when the project is deleted. Docker cannot rename a volume. To move
-data to a new volume, stop the box and copy it with `cp -a` in a temporary
-container that mounts the old volume read-only. The image is `node:latest` with
-`pull_policy: always`, so each build gets the newest Node.js image on the
-current Debian release. The box does not run
-the image's Node. This account rename does not change installed runtimes or
-privileges.
-
-### Passwordless sudo inside the container
-
-Compose startup installs `sudo` and creates `/etc/sudoers.d/90-nasbox-box`, owned
-by root with mode 0440, containing `box ALL=(ALL:ALL) NOPASSWD: ALL`.
-It validates the rule and complete sudo configuration with `visudo`, then tests
-`sudo -n id -u` as `box` before starting services. The container log prints
-`box passwordless sudo verified` only after that test succeeds.
-
-This intentionally lets every process running as `box`, including coding
-agents, become root inside the container. It does not add host mounts, a Docker
-socket, privileged-container mode, or DSM SSH. It does weaken isolation within
-the container and permits changes to mounted workspace files as root. System
-packages installed through sudo live in the disposable container layer unless
-also included in startup or a custom image.
-
-To revoke this grant durably, remove the sudoers creation/test block from the
-Compose source and recreate the existing project without deleting its volumes.
-Removing only the live sudoers file is temporary: startup creates it again.
+The account `box`, its volumes, and its passwordless `sudo` come from the
+Compose file. fleet's `hosts/synology/README.md` covers them.
 
 ### Dotfiles on the box
 
@@ -327,9 +237,8 @@ Setup installs Ruby, Git, and curl (`bin/linux-prerequisites`), zsh,
 build-essential, and unzip (`mise.linux.toml`), makes zsh the login shell,
 installs the shared mise tools, and installs the tools in
 `apps/standalone.tsv`: mise, Codex, Claude Code, Cursor Agent, OpenCode, Pi,
-and T3. It links the shared dotfiles and skips the Mac-only ones. Agents read
-the box rules from `configs/agents/container.md`; see the Linux section of
-the README.
+and T3. It links the shared dotfiles and skips the Mac-only ones. The agent
+rules of the box come from its fleet host folder.
 
 The apt packages and the login shell live in the container layer. After a
 project rebuild or a container recreate, SSH works with bash again. Rerun
@@ -343,50 +252,18 @@ tools without a GitHub token.
 
 The Codex CLI sandbox cannot run here: the kernel has no user namespaces and
 the container has no capabilities, so even a setuid `bwrap` fails. The
-container is the boundary, so `bin/link-dotfiles` sets
-`sandbox_mode = "danger-full-access"` in `~/.codex/config.toml` from
-`configs/codex/container.toml`.
+container is the boundary, so the `nasbox` folder in fleet sets
+`sandbox_mode = "danger-full-access"` in `~/.codex/config.toml`.
 
 `harness update` skips T3, so a `mise install` never restarts the server. An
 update from the app restarts it, and running agent tasks stop.
 
 ## NAS agent proxy
 
-Deploy the [official image](https://help.router-for.me/docker/docker-compose.html)
-as a separate Container Manager project. Docker installs and restarts it.
-The NAS keeps its configuration and OAuth files outside `nasbox`.
-
-1. Copy `local/cliproxyapi.compose.yaml.example` to ignored
-   `local/cliproxyapi/docker-compose.yml`. Copy `local/cliproxyapi.config.yaml.example`
-   to `local/cliproxyapi/config/config.yaml`.
-2. Replace both key placeholders with different keys from your secret manager.
-   Keep the configuration mode 0600 and the config and auth folders mode 0700.
-3. Upload this private folder to the NAS and create its Container Manager
-   project. It joins the `nasbox` network, so create the `nasbox` project first.
-   Keep `config/` and `auths/` on persistent NAS storage. Use the logs and
-   terminal in Container Manager to debug it.
-4. The image is `latest` with `pull_policy: always`. Build the project again
-   to update it. The build stops the proxy for about a minute, and the clients
-   that use it fail during that time. No changes to the `nasbox` project are
-   needed.
-
-The API port binds to NAS loopback. Use the NAS's existing
-[Tailscale Serve](https://tailscale.com/kb/1312/serve) for HTTPS access from the
-tailnet. On the NAS host, inspect `tailscale serve status` first. If port 8443
-is unused, configure `tailscale serve --bg --https=8443 http://127.0.0.1:8317`.
-These are host commands, not commands inside `nasbox`. Keep the returned URL
-private. Verify tailnet access before activating clients; NAS Serve setup has
-not been applied by dotfiles. Do not enable public Funnel access.
-The first Serve command can print an approval URL and wait. Open that URL to
-enable Serve before expecting the command or its Task Scheduler email to finish.
-
-Open `/management.html` at that URL and enter the management key. Sign in to
-the OpenAI and Anthropic accounts in the
-[web UI](https://help.router-for.me/management/webui.html), using its callback
-URL submission for remote logins. Only the API port needs publishing.
-Use credential prefixes such as `work` and `personal` and select the matching
-model name in each agent to choose an account group. Unprefixed requests can
-use any eligible account; priority alone does not prevent fallback.
+CLIProxyAPI runs as its own Container Manager project on the NAS. Its
+Compose file, Tailscale Serve, and account sign-in steps are in fleet
+(`hosts/synology/README.md`). Unprefixed requests can use any eligible
+account; priority alone does not prevent fallback.
 
 Configure only Codex and Claude Code after the proxy is reachable:
 
@@ -448,7 +325,8 @@ The shared Codex provider enables Responses WebSockets. Start a fresh T3
 provider process after applying the Codex settings.
 
 For an existing hub, merge the `routing` and `observability` sections from
-`local/cliproxyapi.config.yaml.example` into its private configuration. Preserve
+the fleet file `hosts/synology/cliproxyapi/config.yaml.example` into its
+private configuration. Preserve
 its keys, accounts, and other settings. CLIProxyAPI hot-reloads configuration.
 Updating the example alone does not change the deployed NAS configuration.
 
@@ -456,12 +334,12 @@ Full request logging and debug logging stay off. Docker retains application
 stdout with its existing rotation limits. Error log files can still contain
 request content. Keep those files private and inspect them before sharing.
 
-## Mac mini
+## Devstation Mac
 
-The Mac mini uses the `macmini` profile. It runs the T3 server with no desktop
+The Mac mini uses the `devstation` role. It runs the T3 server with no desktop
 app, and you use it through SSH. `./bin/setup --continue` runs two steps for
-this profile only: `t3_service` and `remote_access`. Both steps are untested on
-a real Mac mini.
+this role only, on a Mac: `t3_service` and `remote_access`. Both steps are
+untested on a real Mac mini.
 
 ### T3 server
 
@@ -489,7 +367,7 @@ mini needs Tailscale signed in before the agents work.
 
 `bin/configure-remote-access` turns on Remote Login, turns off system sleep,
 makes the Mac restart after a power failure, and turns on automatic login. It
-changes only the `macmini` profile. `--status` reports each setting and
+changes only the `devstation` role. `--status` reports each setting and
 `--dry-run` previews the changes.
 
 The T3 server, tokenburnmarket, and the process log are login jobs. They start
@@ -503,7 +381,7 @@ asks for the account password.
 The script's header comment lists the commands that undo each change.
 
 Automatic login shows the desktop with no password. The login job
-`lock-screen` in `mise.macmini.toml` runs `bin/lock-screen`, which locks the
+`lock-screen` in `mise.devstation.toml` runs `bin/lock-screen`, which locks the
 screen in the first minutes after a start. The account stays logged in behind
 the lock, so SSH, the T3 server, and the other login jobs continue to work.
 Tools that read or click the real screen, such as `agent-desktop`, see the lock
