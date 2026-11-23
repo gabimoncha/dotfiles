@@ -4,7 +4,7 @@ model_context_window = 500000
 model_auto_compact_token_limit = 450000
 model_reasoning_effort = "medium"
 service_tier = "priority"
-approval_policy = "on-request"
+approval_policy = "never"
 approvals_reviewer = "auto_review"
 
 [features]
