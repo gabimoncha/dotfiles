@@ -249,6 +249,29 @@ rules. Those steps stay in scripts. Shell startup activates mise; see
 After a pull that moves sources, the old HOME links are broken until
 `./bin/link-dotfiles` runs. It points them at the new sources.
 
+### Why not chezmoi
+
+[chezmoi](https://www.chezmoi.io) manages only files. mise `[dotfiles]`
+already does that work here, with links, merges, templates, and file modes. A
+second file manager would add a second place to edit and a second apply
+command. chezmoi cannot replace the rest of mise `[bootstrap]`: packages,
+macOS defaults, login jobs, Git checkouts, and remote apply.
+
+The main feature of chezmoi is one repository with templates for each
+machine. This repository holds roles, and the private fleet repo holds what
+makes one machine different. With chezmoi, the machine differences would come
+back into one repository, and this public repository would need encryption
+for them. chezmoi has no Infisical integration. Its `re-add` command saves the
+whole file, private keys too, so the agent settings would still need
+`bin/save-settings`.
+
+Look at chezmoi again only for the files, and keep mise for the rest, if
+one of these occurs:
+
+- mise removes or changes `[dotfiles]`, or its bugs block the work.
+- A Windows machine joins the fleet.
+- The repository must hold encrypted files.
+
 ### Native Steam installer
 
 Steam is a standalone exception. The Homebrew cask installs an Intel-only
