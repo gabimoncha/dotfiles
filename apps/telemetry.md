@@ -12,6 +12,8 @@ Start a new shell and reopen apps after setup. A user LaunchAgent applies the ma
 
 The login job is `~/Library/LaunchAgents/dev.mise.telemetry-env.plist`. `./bin/configure-telemetry` runs `./bin/load-login-jobs`, which asks mise to write and load it from `[bootstrap.macos.launchd.agents.telemetry-env]` in `mise.macos.toml`. The same run removes the older `com.dotfiles.telemetry-env` job. The job sets only the keys in `telemetry.sh`. To remove it, run `launchctl bootout gui/$(id -u)/dev.mise.telemetry-env` and delete the plist. `launchctl unsetenv <variable>` clears one variable for the current session. For GUI apps, `AZ_CRS_ARGUMENTS` keeps only the properties already in the launchd environment, not those of the shell that runs setup.
 
+T3 Code also gets a host block, in case a release ignores its opt-outs. On a Mac, `./bin/configure-telemetry` asks mise to write the `t3-telemetry` block of `mise.macos.toml` into `/etc/hosts`. The block points `ingest.t3.codes` at `0.0.0.0` and `::`. mise uses `sudo` for the write. In a Docker container, Docker owns `/etc/hosts`, so the Compose file sets the same host in `extra_hosts`. To remove the block, delete it and its two marker lines from `/etc/hosts`.
+
 ## Automatic controls
 
 The environment values are in [telemetry.sh](../configs/zsh/telemetry.sh). The exact scope and all source links are in [telemetry-audit.json](telemetry-audit.json). These controls do not disable service requests or update checks.

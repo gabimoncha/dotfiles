@@ -102,6 +102,23 @@ telemetry_gui_environment() {
   else printf 'Configured the GUI telemetry environment; reopen apps to use the new values.\n'; fi
 }
 
+# The T3 Code block in /etc/hosts, from mise.macos.toml. mise has no option to
+# apply one file entry, so the role's Touch ID block applies here too. The
+# touch_id step of setup runs earlier and checks that block first.
+telemetry_hosts_block() {
+  if [[ "$DOTFILES_RUN_MODE" == dry-run ]]; then
+    "$repo_root/bin/repo-mise" bootstrap files apply --dry-run || status=1
+    return 0
+  fi
+  # mise uses sudo for the write. Without a terminal, sudo must need no password.
+  if "$repo_root/bin/repo-mise" bootstrap files apply --yes; then
+    printf 'Configured the T3 Code telemetry block in /etc/hosts\n'
+  else
+    printf 'Could not write the T3 Code telemetry block in /etc/hosts; rerun ./bin/configure-telemetry in a terminal.\n' >&2
+    status=1
+  fi
+}
+
 # Claude Code and Codex read their opt-outs from their settings files.
 # bin/link-dotfiles merges the keys of configs/claude/settings.json and
 # configs/codex/config.toml into them.
@@ -140,5 +157,6 @@ if [[ -d "${DOTFILES_APPLICATIONS_DIR:-/Applications}/Cursor.app" ]]; then
 fi
 # The login job sets the GUI app environment, which exists only on macOS.
 [[ "$(uname -s)" != Darwin ]] || telemetry_gui_environment
+[[ "$(uname -s)" != Darwin ]] || telemetry_hosts_block
 printf 'Manual settings and unavailable controls: see %s/apps/telemetry.md\n' "$repo_root"
 exit "$status"

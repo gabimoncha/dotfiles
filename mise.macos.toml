@@ -17,6 +17,17 @@
 program = "~/bin/dotfiles-telemetry-env"
 run_at_load = true
 
+# Sends the T3 Code telemetry host to an address that never answers, in case a
+# T3 release ignores the opt-outs in telemetry.sh. mise keeps this block and
+# leaves the rest of the file alone. bin/configure-telemetry applies it. On a
+# Docker host, Docker owns /etc/hosts: use extra_hosts in the Compose file.
+[bootstrap.files."/etc/hosts"]
+id = "t3-telemetry"
+block = """
+0.0.0.0 ingest.t3.codes
+:: ingest.t3.codes
+"""
+
 # Loads the SSH keys whose passphrases are in the Keychain into the SSH agent at
 # login. Then Git can sign a commit before any ssh command loads the key.
 # bin/load-login-jobs applies it.
