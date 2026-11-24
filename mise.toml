@@ -49,6 +49,7 @@ min_version = { soft = "2026.11.8" }
 # and creates a missing file with mode 0600, because it can hold tokens.
 "~/.claude/settings.json/dotfiles" = { source = "configs/claude/settings.json", merge = true, permissions = "0600" }
 "~/.codex/config.toml/dotfiles" = { source = "configs/codex/config.toml", merge = true, permissions = "0600" }
+"~/.codex/config.toml/cliproxyapi-catalog" = { source = "configs/codex/cliproxyapi-catalog.toml.tmpl", merge = true, template = "tera", permissions = "0600" }
 # A "/defaults" entry sets a key only when the file has none, so a fleet host
 # can override it. bin/save-settings never saves these sources.
 "~/.codex/config.toml/defaults" = { source = "configs/codex/defaults.toml", merge = "missing", permissions = "0600" }

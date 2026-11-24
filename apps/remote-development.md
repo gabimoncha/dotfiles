@@ -294,6 +294,11 @@ clients after configuration.
 `./bin/save-settings` excludes the private URLs and tokens.
 Shared settings still use `./bin/link-dotfiles` and `./bin/save-settings`.
 
+When you apply dotfiles, mise adds `/models` to the local Codex proxy URL to
+set `model_catalog_url`. This lets Codex show the proxy's model options,
+including Ultrafast for supported models. Reapply the Codex settings after
+you add or change the proxy URL.
+
 T3's shared settings target `~/.t3/userdata/settings.json` on macOS and Linux.
 They preserve `-c thread_unload_delay_secs=60` and add
 `-c 'model_provider="cliproxyapi"'`. The global Codex provider is `openai` so

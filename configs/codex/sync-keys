@@ -81,6 +81,7 @@ public .model_providers.cliproxyapi.env_key
 public .model_providers.cliproxyapi.supports_websockets
 # T3 selects the proxy through its launch arguments. Its connection stays local.
 private .model_providers.cliproxyapi.base_url
+private .model_providers.cliproxyapi.model_catalog_url
 private .model_providers.cliproxyapi.http_headers
 private .model_providers.cliproxyapi.env_http_headers
 private .model_providers.cliproxyapi.experimental_bearer_token

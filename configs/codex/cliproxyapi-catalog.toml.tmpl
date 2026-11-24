@@ -1,0 +1,9 @@
+{% set path = env.HOME ~ "/.codex/config.toml" -%}
+{% if path is file -%}
+{% set config = read_toml(path=path) -%}
+{% set base_url = config.model_providers.cliproxyapi.base_url | default(value="") -%}
+{% if base_url -%}
+[model_providers.cliproxyapi]
+model_catalog_url = {{ (base_url | trim_end(pat="/") ~ "/models") | json_encode }}
+{% endif -%}
+{% endif -%}
