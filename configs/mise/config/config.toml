@@ -85,10 +85,10 @@ disable_backends = ["asdf"]
 # tool then blocks each `mise exec` call. Only `mise install` installs these
 # tools. Use the full backend name, such as `github:owner/repo`.
 auto_install_disable_tools = ["ollama"]
-# The repository root holds a mise.toml. Trust it, so tools work in that folder.
-# Work and client projects are trusted too. ~/code/contrib and ~/code/ref hold
-# other people's repositories, so mise asks before it loads a config there.
-trusted_config_paths = ["~/code/personal/dotfiles", "~/code/work", "~/code/client"]
+# Personal, work, and client repositories and their T3 worktrees are trusted.
+# ~/code/contrib and ~/code/ref hold other people's repositories, so mise asks
+# there, but a T3 worktree of such a repository is trusted.
+trusted_config_paths = ["~/code/personal", "~/code/work", "~/code/client", "~/.t3/worktrees"]
 # Linux boxes install from the same lockfile.
 lockfile_platforms = ["macos-arm64", "linux-x64"]
 use_versions_host_track = false
