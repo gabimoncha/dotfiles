@@ -1252,9 +1252,9 @@ backend = "npm:ios-deploy"
 specifiers = ["latest"]
 
 [[tools."npm:oh-my-t3"]]
-version = "0.8.0"
+version = "0.8.1"
 backend = "npm:oh-my-t3"
-specifiers = ["0.8.0"]
+specifiers = ["0.8.1"]
 
 [[tools."npm:skills"]]
 version = "1.9.0"

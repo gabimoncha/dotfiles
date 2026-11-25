@@ -87,4 +87,4 @@ exiftool = { version = "latest", os = "macos" }
 minisign = { version = "latest", os = "macos" }
 poppler = { version = "latest", os = "macos" }
 xcodegen = { version = "latest", os = "macos" }
-"npm:oh-my-t3" = "0.8.0"
+"npm:oh-my-t3" = "0.8.1"
