@@ -17,3 +17,4 @@ branch on 2026-11-15. Some skill folders also keep their own license files.
 | `show-me`                                                                                          | `humanlayer/skills`       | MIT        | `humanlayer-skills.txt`                                         |
 | `statechart`                                                                                       | `cursor/plugins`          | MIT        | `cursor-plugins.txt`, from `harness/pstack/claude-code/LICENSE` |
 | `untangle-codebase`                                                                                | `caldoai/skills`          | MIT        | `caldoai-skills.txt`                                            |
+| `varlock`                                                                                          | `dmno-dev/varlock`        | MIT        | `dmno-dev-varlock.txt`, copied on 2026-11-25                    |
