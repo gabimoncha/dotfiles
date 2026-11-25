@@ -81,8 +81,8 @@ See [Ghostty's SSH guide](https://ghostty.org/docs/features/ssh) for details.
 
 ## NAS T3 container
 
-The private fleet repo holds the Compose file of the `nasbox` project and
-its deploy steps (`hosts/synology/`). The compose file does not install T3 or
+The private fleet repo holds the Compose template of the `nasbox` project and
+its deploy steps (`compose/`). The compose file does not install T3 or
 the agent CLIs; `./bin/setup` installs them in the persistent home (see
 "Dotfiles on the box").
 
@@ -103,10 +103,10 @@ daemon's 95 seconds.
 To move the NAS to these daemons, first update the checkout in the box:
 `git -C ~/code/personal/dotfiles pull`, then check that
 `~/code/personal/dotfiles/bin/container-daemons` exists. The new command
-starts nothing without it. Then, on a main Mac, send the fleet Compose file
-with `mise run fleet:update synology`, and rebuild the project in DSM. Keep
-the volumes. Do not paste the fleet file into DSM by hand: it is a template
-that the send renders.
+starts nothing without it. Then, on a main Mac, run `mise run fleet:compose`
+in fleet. Paste the rendered `compose/nasbox/compose.yaml` into the project in
+DSM, and build it again. Keep the volumes. Do not paste the template
+`compose.yaml.tera`: it still has template syntax.
 
 Run every daemons command through `./bin/container-daemons`, not
 `./bin/repo-mise daemons`. The supervisor keeps the environment of the command
@@ -220,7 +220,7 @@ line, direct T3 discovery, and remote access from a device on the same tailnet. 
 alone does not prove Tailscale routing, authentication, or a working agent task.
 
 The account `box`, its volumes, and its passwordless `sudo` come from the
-Compose file. fleet's `hosts/synology/README.md` covers them.
+Compose file. fleet's `compose/README.md` covers them.
 
 ### Dotfiles on the box
 
@@ -262,7 +262,7 @@ update from the app restarts it, and running agent tasks stop.
 
 CLIProxyAPI runs as its own Container Manager project on the NAS. Its
 Compose file, Tailscale Serve, and account sign-in steps are in fleet
-(`hosts/synology/README.md`). Unprefixed requests can use any eligible
+(`compose/README.md`). Unprefixed requests can use any eligible
 account; priority alone does not prevent fallback.
 
 Configure only Codex and Claude Code after the proxy is reachable:
@@ -330,7 +330,7 @@ The shared Codex provider enables Responses WebSockets. Start a fresh T3
 provider process after applying the Codex settings.
 
 For an existing hub, merge the `routing` and `observability` sections from
-the fleet file `hosts/synology/cliproxyapi/config.yaml.example` into its
+the fleet file `compose/cliproxyapi/config.yaml.example` into its
 private configuration. Preserve
 its keys, accounts, and other settings. CLIProxyAPI hot-reloads configuration.
 Updating the example alone does not change the deployed NAS configuration.

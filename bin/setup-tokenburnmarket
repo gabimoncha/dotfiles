@@ -121,9 +121,9 @@ if [[ "$mode" == mise-daemon ]]; then
   boot_note() {
     tr '\0' ' ' </proc/1/cmdline 2>/dev/null | grep -q 'daemons start' && return 0
     echo 'The container does not start the mise daemons after a restart. On a main Mac,'
-    echo 'run `mise run fleet:update synology` to send the current compose file, then'
-    echo 'rebuild the nasbox project in DSM, and keep the volumes. A restart keeps the'
-    echo 'old command.'
+    echo 'run `mise run fleet:compose` in fleet, paste compose/nasbox/compose.yaml into'
+    echo 'the nasbox project in DSM, then build it again, and keep the volumes. A'
+    echo 'restart keeps the old command.'
   }
   # The CLI reads its sign-in from XDG_CONFIG_HOME when that is an absolute
   # path, and from ~/.config otherwise. pitchfork keeps the environment of the
