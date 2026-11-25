@@ -149,6 +149,8 @@ Read mise state with `--json`, for example `ls --json` or
   `apps/devhost.Brewfile`), not in a file for every host.
 - Never commit credentials, private identities, backup payloads, or machine-local
   state. See [SECURITY.md](SECURITY.md).
+- Read a secret only through varlock. Never print a secret value, not even a
+  dummy one.
 - Keep test fixtures and diagnostic scratch files in system temporary directories.
   Setup logs use ignored `.local/setup-runs/` with automatic retention.
 - In a test with a temporary `HOME`, do not link the real `~/.local` or mise

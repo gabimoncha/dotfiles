@@ -16,6 +16,7 @@ export WRANGLER_SEND_ERROR_REPORTS=false
 export CF_SEND_TELEMETRY=false
 export PI_TELEMETRY=0
 export CTX7_TELEMETRY_DISABLED=1
+export VARLOCK_TELEMETRY_DISABLED=true
 export TURBO_TELEMETRY_DISABLED=1
 export GH_TELEMETRY=false
 # Docker CLI metric export is opt-in through this endpoint.
