@@ -1194,17 +1194,17 @@ url = "https://github.com/Infisical/cli/releases/download/v0.45.8/cli_0.45.8_dar
 url_api = "https://api.github.com/repos/Infisical/cli/releases/assets/743853858"
 
 [[tools.java]]
-version = "zulu-17.70.113.0"
+version = "zulu-17.70.201.0"
 backend = "core:java"
 specifiers = ["zulu-17"]
 
 [tools.java."platforms.linux-x64"]
-checksum = "sha256:81946095839140100ebff36ff52007676e260bbe482675dbc04772595ed94390"
-url = "https://cdn.azul.com/zulu/bin/zulu17.70.113-ca-jdk17.0.21.0.3-linux_x64.tar.gz"
+checksum = "sha256:2837aee74267e02106ee6006809bb0de23ccfa43bf5005621517194b79975695"
+url = "https://cdn.azul.com/zulu/bin/zulu17.70.201-ca-jdk17.0.21.1-linux_x64.tar.gz"
 
 [tools.java."platforms.macos-arm64"]
-checksum = "sha256:f4a4d641d4441f480939176208f333aa9403e0a68d27e87245cec98cc994f943"
-url = "https://cdn.azul.com/zulu/bin/zulu17.70.113-ca-jdk17.0.21.0.3-macosx_aarch64.tar.gz"
+checksum = "sha256:098dbf65069d8e0886aaa7f1fd90adc8d8e41e4b80a1bca8d88e308f3c91f97c"
+url = "https://cdn.azul.com/zulu/bin/zulu17.70.201-ca-jdk17.0.21.1-macosx_aarch64.tar.gz"
 
 [[tools.minisign]]
 version = "0.12"
@@ -1238,7 +1238,7 @@ backend = "npm:agent-desktop"
 specifiers = ["latest"]
 
 [[tools."npm:cf"]]
-version = "1.0.0-rc.3"
+version = "1.0.0-rc.5"
 backend = "npm:cf"
 specifiers = ["latest"]
 
@@ -1306,13 +1306,13 @@ specifiers = ["latest"]
 uv = { path = "locks/mise.devhost/pipx-tldr/3.4.4", digest = "sha256:c06b755b1f873d2ce1b5aa6305ca0e0f064e09846ce43d9739bdd738afd70ada" }
 
 [[tools.pitchfork]]
-version = "2.34.0"
+version = "2.36.0"
 backend = "packslip:github.com/jdx/pitchfork"
 specifiers = ["latest"]
 
 [tools.pitchfork."platforms.linux-x64"]
-checksum = "sha256:2e5182e32909ff259357c6761b0e8c8c68d3b352223f72bfba6683e702031ad3"
-url = "https://github.com/jdx/pitchfork/releases/download/v2.34.0/pitchfork-x86_64-unknown-linux-gnu.tar.gz"
+checksum = "sha256:55e12b9467d86d9aeda468e586d603a2107962de0305dc92c9fe84b7a3b35a17"
+url = "https://github.com/jdx/pitchfork/releases/download/v2.36.0/pitchfork-x86_64-unknown-linux-gnu.tar.gz"
 signer = "sigstore-oidc:https://github.com/jdx/pitchfork/.github/workflows/release.yml"
 repository_ids = { repository = "899500793" }
 
