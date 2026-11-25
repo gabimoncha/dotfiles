@@ -30,6 +30,10 @@ yamlfmt = "latest"
 "pipx:httpie" = { version = "latest", python = "3.15", with = ["certifi==2026.10.19"] }
 "github:boyter/scc" = "latest"
 "github:flowcopilot/aether" = "latest"
+# Reads the fleet secrets from Infisical. The repository also releases its
+# plugins, and one of them is often the GitHub "Latest" release, so read only
+# the CLI tags.
+"github:dmno-dev/varlock" = { version = "latest", version_prefix = "varlock@" }
 "conda:aria2" = "latest"
 "conda:sox" = "latest"
 "conda:tig" = "latest"

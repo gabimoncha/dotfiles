@@ -3,8 +3,8 @@
   "scope": "Tracked mise/Brewfile/app inventories, explicit setup tools, and managed shell/tmux plugins. Excludes project dependencies, other plugins, the Neovim plugins of configs/nvim/, and unrelated manually installed tools. Excludes tools from the GitHub owners gabimoncha, flowcopilot, and TudorAndrei, which belong to the owner's team. Excludes T3 Code, the t3-cli and t3-code@nightly entries, because the owner allows its product usage data.",
   "verification": "Official documentation and upstream source reviews; fake-command tests only. No live installations, account changes, personal settings edits, or network-capture tests.",
   "coverage": {
-    "total": 173,
-    "reviewed": 173,
+    "total": 174,
+    "reviewed": 174,
     "pending": 0
   },
   "limitations": [
@@ -876,6 +876,29 @@
         "checked_date": "2026-10-03"
       },
       "setup_actions": {}
+    },
+    {
+      "id": "varlock",
+      "tool": "github:dmno-dev/varlock",
+      "source": "mise",
+      "kind": "cli",
+      "research": {
+        "tool": "varlock CLI",
+        "status": "supported",
+        "mechanism": "Persist export VARLOCK_TELEMETRY_DISABLED=true in the managed shell environment before varlock starts. Upstream also honors DO_NOT_TRACK, which telemetry.sh already exports, and telemetryDisabled in ~/.config/varlock/config.json, written by varlock telemetry disable.",
+        "sources": [
+          "https://github.com/dmno-dev/varlock/blob/varlock%401.25.0/packages/varlock/src/cli/helpers/telemetry.ts",
+          "https://github.com/dmno-dev/varlock/blob/main/packages/varlock-website/src/content/docs/guides/telemetry.mdx"
+        ],
+        "notes": "The CLI sends anonymous usage events: the command, plugin names and versions, schema feature signals, an error category, and system information, with anonymous user, project, and org IDs. Upstream states that it never sends config files or environment variable values. When a short command exits first, a detached varlock --flush-telemetry process sends the events. With telemetry off, varlock records no events and starts no process. Requests to Infisical and the first download of a plugin are required service traffic. No tool execution or network capture was performed.",
+        "checked_date": "2026-11-25"
+      },
+      "setup_actions": {
+        "environment": {
+          "VARLOCK_TELEMETRY_DISABLED": "true"
+        },
+        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
+      }
     },
     {
       "id": "portless",
