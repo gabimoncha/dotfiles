@@ -1,10 +1,10 @@
 {
   "checked_date": "2026-10-03",
-  "scope": "Tracked mise/Brewfile/app inventories, explicit setup tools, and managed shell/tmux plugins. Excludes project dependencies, other plugins, the Neovim plugins of configs/nvim/, and unrelated manually installed tools. Excludes tools from the GitHub owners gabimoncha, flowcopilot, and TudorAndrei, which belong to the owner's team.",
+  "scope": "Tracked mise/Brewfile/app inventories, explicit setup tools, and managed shell/tmux plugins. Excludes project dependencies, other plugins, the Neovim plugins of configs/nvim/, and unrelated manually installed tools. Excludes tools from the GitHub owners gabimoncha, flowcopilot, and TudorAndrei, which belong to the owner's team. Excludes T3 Code, the t3-cli and t3-code@nightly entries, because the owner allows its product usage data.",
   "verification": "Official documentation and upstream source reviews; fake-command tests only. No live installations, account changes, personal settings edits, or network-capture tests.",
   "coverage": {
-    "total": 175,
-    "reviewed": 175,
+    "total": 173,
+    "reviewed": 173,
     "pending": 0
   },
   "limitations": [
@@ -2536,30 +2536,6 @@
       "setup_actions": {}
     },
     {
-      "id": "t3_code_nightly",
-      "tool": "t3-code@nightly",
-      "source": "cask",
-      "kind": "app",
-      "research": {
-        "tool": "T3 Code nightly desktop app",
-        "status": "supported",
-        "mechanism": "Start the actual installed desktop executable with T3CODE_TELEMETRY_ENABLED=false and T3CODE_OTEL_SDK_DISABLED=true in its process environment, and fully quit/restart after changing them. Persist both assignments in a managed app launcher so the GUI and embedded backend inherit them. Shell exports alone do not configure launches from Finder, Spotlight or the Dock. No documented app-persistent analytics/crash preference or safe preferences-file key was found in the checked sources.",
-        "sources": [
-          "https://raw.githubusercontent.com/pingdotgg/t3code/main/apps/server/src/telemetry/AnalyticsService.ts",
-          "https://github.com/pingdotgg/t3code/blob/main/docs/operations/observability.md"
-        ],
-        "notes": "T3CODE_TELEMETRY_ENABLED defaults true in current source and false prevents PostHog event recording/delivery in the backend, including desktop client events. T3CODE_OTEL_SDK_DISABLED=true disables separate opt-in OTLP traces/metrics/logs from both backend and desktop main process, overriding endpoints supplied by environment or Settings. Local traces/stdout logs remain. No separate documented automatic crash-reporting control found; local diagnostics are separate. Remote servers need their own environment controls. Provider/authentication, managed relay and update downloads remain service traffic. Current main audited; installed nightly not run or verified.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {
-        "environment": {
-          "T3CODE_TELEMETRY_ENABLED": "false",
-          "T3CODE_OTEL_SDK_DISABLED": "true"
-        },
-        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
-      }
-    },
-    {
       "id": "tailscale_app",
       "tool": "tailscale-app",
       "source": "cask",
@@ -2909,30 +2885,6 @@
       "setup_actions": {
         "environment": {
           "PI_TELEMETRY": "0"
-        },
-        "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
-      }
-    },
-    {
-      "id": "t3_cli",
-      "tool": "t3-cli",
-      "source": "setup",
-      "kind": "cli",
-      "research": {
-        "tool": "t3-cli",
-        "status": "supported",
-        "mechanism": "Persist export T3CODE_TELEMETRY_ENABLED=false before starting t3 to disable PostHog analytics. Also persist export T3CODE_OTEL_SDK_DISABLED=true to disable all optional OTLP trace/metric/log exports, including configured endpoints. Restart the server after environment changes.",
-        "sources": [
-          "https://github.com/pingdotgg/t3code/blob/main/apps/server/src/telemetry/AnalyticsService.ts",
-          "https://github.com/pingdotgg/t3code/blob/main/docs/operations/observability.md"
-        ],
-        "notes": "Current upstream source enables anonymous PostHog analytics by default; false prevents event delivery. This source distinguishes CLI/web and desktop clients. OTLP export is a separate opt-in mechanism; its kill switch preserves local trace files and stdout logs. Provider requests and update downloads are separate service traffic. Audited current main source, not a pinned installed nightly build; no live installation was tested.",
-        "checked_date": "2026-10-03"
-      },
-      "setup_actions": {
-        "environment": {
-          "T3CODE_TELEMETRY_ENABLED": "false",
-          "T3CODE_OTEL_SDK_DISABLED": "true"
         },
         "gui_environment": "One-shot user LaunchAgent dev.mise.telemetry-env, which mise installs, applies the reviewed variables; reopen existing apps. Login-start races can retain the previous environment."
       }
