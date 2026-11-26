@@ -7,10 +7,6 @@
     {
       "provider": "codex",
       "model": "gpt-6.2-sol"
-    },
-    {
-      "provider": "codex",
-      "model": "gpt-6.2-astra"
     }
   ],
   "defaultModelSelection": {
@@ -32,7 +28,9 @@
         "gpt-6-luna",
         "gpt-6-astra",
         "gpt-6.1-sol",
-        "gpt-6-sol"
+        "gpt-6-sol",
+        "claude-fable-5-2",
+        "claude-opus-5-5"
       ],
       "modelOrder": [
         "gpt-6.2-astra",
@@ -130,7 +128,8 @@
         "muse-wonder-1.0",
         "glm-5p3-flash",
         "deepseek-v41-flash-1017",
-        "gemini-4-carbon"
+        "gemini-4-carbon",
+        "gemini-4-hydrogen"
       ],
       "modelOrder": [
 
