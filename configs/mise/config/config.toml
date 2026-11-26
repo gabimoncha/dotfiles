@@ -53,7 +53,7 @@ yq = "latest"
 # Git hooks for repos with an hk.pkl, including this one.
 hk = "latest"
 # mise installs the precompiled Ruby (see [settings.ruby] below).
-ruby = "3.4.12"
+ruby = "3.4.13"
 # Expo builds and submissions.
 "npm:eas-cli" = "latest"
 # Every Mac.
