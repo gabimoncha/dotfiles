@@ -25,13 +25,10 @@ happened before, and what happens now.>
 - a flowchart for data flow and how components interact
 - a table or a diff when no diagram fits>
 
-<details>
-<summary>Technical notes</summary>
+### Technical notes
 
 <Up to five bullets for reviewers: code names, internal terms, and edge
 cases.>
-
-</details>
 
 ## Before and after
 
@@ -78,7 +75,7 @@ stateDiagram-v2
 
 If no, pick a view from [references/visuals.md](references/visuals.md): pseudocode, a call tree, a component tree, a file tree, a Mermaid flowchart or sequence diagram, or a diff.
 
-End What changes with a closed "Technical notes" block. Delete it when the stories and the diagram say everything.
+End What changes with a "Technical notes" heading, not a collapsible `<details>` block. Delete it when the stories and the diagram say everything.
 
 ### Before and after
 
