@@ -97,9 +97,10 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/gabimoncha/skills.git",
       "skillPath": "skills/essentials/pr/SKILL.md",
-      "skillFolderHash": "40000d061370342b55a804a65b5e2bf44ac5dc63",
+      "skillFolderHash": "373305f9e83da48b967aaeee50498f9994caa9de",
       "installedAt": "2026-10-26T17:05:49.359Z",
-      "updatedAt": "2026-11-03T14:21:22.251Z"
+      "updatedAt": "2026-11-26T14:28:17.739Z",
+      "commit": "62e3b2cd54a507bcf619f407772a4d13ca1f10a1"
     },
     "writing-for-agents": {
       "source": "mattpocock/skills",
