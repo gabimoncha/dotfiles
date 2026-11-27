@@ -62,7 +62,9 @@ java = "zulu-17"
 perl = { version = "5.44.0", os = "macos" }
 ccache = { version = "latest", os = "macos" }
 cocoapods = { version = "latest", os = "macos" }
-coreutils = { version = "latest", os = "macos" }
+# 0.13.0 has no macOS assets: https://github.com/uutils/coreutils/issues/16744.
+# Go back to "latest" when a release has them.
+coreutils = { version = "0.12.0", os = "macos" }
 xcodes = { version = "latest", os = "macos" }
 awscli = { version = "2.38.4", os = "macos" }
 gcloud = { version = "589.0.0", os = "macos" }
