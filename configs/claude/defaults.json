@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(~/.claude/skills/**)",
+      "Read(~/.agents/skills/**)",
+      "Read(~/code/personal/dotfiles/configs/agents/skills/**)"
+    ]
+  }
+}

@@ -699,6 +699,17 @@ a skills folder. The hook never fails, because `bin/link-dotfiles` undoes the
 apply when mise fails. `symlink-each` mode would make real folders with a link
 for each file, and the CLI deletes those folders when it updates a skill.
 
+The links put the real path of each skill file in this repository. The Skill
+tool loads `SKILL.md` without a prompt, but Claude Code asks before the Read
+tool opens a skill's reference file from any other project. An allow rule
+on a symlinked path applies only when the link path and its target both
+match, so `configs/claude/defaults.json` holds Read rules for
+`~/.claude/skills`, `~/.agents/skills`, and `configs/agents/skills` in this
+checkout. Permission rules are private, and a merge replaces a whole list, so
+the entry is a `/defaults` merge: it sets `permissions.allow` only on a host
+that has no allow list, and `bin/save-settings` never saves it. A host that
+already has an allow list needs the three rules added by hand.
+
 Every host gets the same skills, including the container. At the first apply,
 `bin/link-dotfiles` moves each machine's old `~/.agents/skills` folder and lock
 to its link backup, so a skill that the repository lacks stays there. `creative-act` stays out because its source has no license, and this

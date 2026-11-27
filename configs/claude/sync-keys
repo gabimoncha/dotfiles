@@ -35,7 +35,8 @@ public .env.DISABLE_ERROR_REPORTING
 public .env.CLAUDE_CODE_ENABLE_TELEMETRY
 public .env.CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY
 public .env.CLAUDE_CODE_THRIFTY_SONIC
-# Paths and permission rules stay on each machine.
+# Paths and permission rules stay on each machine. configs/claude/defaults.json
+# sets the skill Read rules only once. Each host owns its allow list.
 private .permissions.allow
 private .permissions.deny
 private .permissions.ask

@@ -19,6 +19,14 @@
 "~/.agents/skills" = { source = "configs/agents/skills", mode = "symlink" }
 "~/.agents/.skill-lock.json" = { source = "configs/agents/skill-lock.json", mode = "symlink" }
 "~/.claude/skills/*" = { source = "configs/agents/skills/*", mode = "symlink" }
+# Claude Code asks before it reads a file outside the project, and a skill's
+# real folder is in this repository. An allow rule on a symlinked path applies
+# only when the link path and its target both match
+# (https://code.claude.com/docs/en/permissions#how-rules-match-a-symlinked-path),
+# so the Read rules name the link folders and the real folder. A "/defaults"
+# entry sets the allow list only when the file has none, and each host owns
+# the list after that.
+"~/.claude/settings.json/defaults" = { source = "configs/claude/defaults.json", merge = "missing", permissions = "0600" }
 # These apps rewrite their settings. mise sets only the keys in the sources,
 # and creates a missing file with mode 0600, because it can hold tokens.
 "~/.t3/userdata/settings.json/dotfiles" = { source = "configs/t3/settings.json", merge = true, permissions = "0600" }
