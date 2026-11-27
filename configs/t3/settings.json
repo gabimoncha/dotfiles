@@ -7,6 +7,10 @@
     {
       "provider": "codex",
       "model": "gpt-6.2-sol"
+    },
+    {
+      "provider": "claudeAgent",
+      "model": "claude-fable-5-2"
     }
   ],
   "defaultModelSelection": {
