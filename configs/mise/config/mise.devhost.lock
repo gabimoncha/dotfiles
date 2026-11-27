@@ -945,7 +945,7 @@ conda_deps = []
 [[tools.coreutils]]
 version = "0.12.0"
 backend = "aqua:uutils/coreutils"
-specifiers = ["latest"]
+specifiers = ["0.12.0"]
 
 [tools.coreutils."platforms.macos-arm64"]
 checksum = "sha256:7caea447564405b3eb50cce2a89d314df07d1b7a67090dc4cc7c82eba7014052"
@@ -1255,7 +1255,7 @@ backend = "npm:agent-desktop"
 specifiers = ["latest"]
 
 [[tools."npm:cf"]]
-version = "1.0.0-rc.5"
+version = "1.0.0-rc.6"
 backend = "npm:cf"
 specifiers = ["latest"]
 
@@ -1280,7 +1280,7 @@ backend = "npm:skills"
 specifiers = ["latest"]
 
 [[tools."npm:tokenburnmarket"]]
-version = "0.5.0"
+version = "0.5.1"
 backend = "npm:tokenburnmarket"
 specifiers = ["latest"]
 
@@ -1529,7 +1529,7 @@ url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/704009442"
 provenance = "github-attestations"
 
 [[tools.vercel]]
-version = "66.2.0"
+version = "66.6.0"
 backend = "npm:vercel"
 specifiers = ["latest"]
 
@@ -1538,19 +1538,19 @@ allow_builds = '["esbuild"]'
 trust_policy_excludes = '["undici"]'
 
 [[tools.worktrunk]]
-version = "0.82.0"
+version = "0.83.0"
 backend = "packslip:github.com/max-sixty/worktrunk"
 specifiers = ["latest"]
 
 [tools.worktrunk."platforms.linux-x64"]
-checksum = "sha256:d1e38cf36d8c14ef0682a6d6617f8a512b1a971feb3dfa437419d00136e19a3e"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.82.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
+checksum = "sha256:e0dd5e5eb365890ddc7b255183c227e441fbb7da04cab5b72e54fa80fd21818b"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.83.0/worktrunk-x86_64-unknown-linux-musl.tar.xz"
 signer = "sigstore-oidc:https://github.com/max-sixty/worktrunk/.github/workflows/release.yaml"
 repository_ids = { repository = "1078528927" }
 
 [tools.worktrunk."platforms.macos-arm64"]
-checksum = "sha256:6945bc82e0513d0b974c99fb1d30de24e448697fd533ed6b3f442c66a1b3620c"
-url = "https://github.com/max-sixty/worktrunk/releases/download/v0.82.0/worktrunk-aarch64-apple-darwin.tar.xz"
+checksum = "sha256:5e489089672b553b6277595875ef3479df011755153021c84def90eddaeef7b8"
+url = "https://github.com/max-sixty/worktrunk/releases/download/v0.83.0/worktrunk-aarch64-apple-darwin.tar.xz"
 signer = "sigstore-oidc:https://github.com/max-sixty/worktrunk/.github/workflows/release.yaml"
 repository_ids = { repository = "1078528927" }
 
