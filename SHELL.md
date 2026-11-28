@@ -8,9 +8,9 @@ Open a new terminal after changing configuration.
 
 ## Local configuration and accounts
 
-Put local exports and secrets in ignored `~/.config/local/*.zsh` or
-`local/*.zsh`. Start from
-[secrets.zsh.example](local/secrets.zsh.example).
+Put local exports in ignored `~/.config/local/*.zsh` or `local/*.zsh` files.
+Interactive zsh loads each one. On a fleet host, fleet writes the secret files
+there from Infisical.
 Use the zsh `path` array for tracked PATH changes; keep private values out of Git.
 
 Git commit identity, SSH identity, and GitHub API identity are separate.
@@ -38,15 +38,6 @@ and can execute the selected entry after confirmation. Implementations are in
 patch, then opens it in Neovim before Git hooks run. Save with `:wq` to commit
 using the edited message; quit the untouched buffer with `:q` to abort.
 The helper runs Codex ephemerally in a read-only sandbox.
-
-`infisical-work` and `infisical-personal` support `run`, `export`, and `secrets`.
-They read the corresponding `INFISICAL_WORK_TOKEN` / `INFISICAL_PERSONAL_TOKEN`
-and optional `*_API_URL` from local configuration. For example:
-
-```zsh
-infisical-work run --env=dev -- bun dev
-infisical-personal secrets get SOME_KEY --env=dev
-```
 
 ## Package runners
 
