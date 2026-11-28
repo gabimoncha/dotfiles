@@ -7,10 +7,11 @@
 # release's install.sh digest in GitHub's release metadata. Raise the pin only
 # when this repository needs a newer release. mise updates itself without the
 # four-day delay, so the installed mise is often newer than the pin.
-# 2026.11.8 is the first release that reads [bootstrap.settings.macos], which
-# the macOS files use.
-pinned_mise_version=2026.11.8
-pinned_installer_sha256=2c36cbf7b9b1ab5c8aed6db5004e15fcdab9311242d1fb90dfadb19de6afb7cc
+# The macOS files need 2026.11.8, the first release that reads
+# [bootstrap.settings.macos]. The pin is 2026.11.14, the release that every
+# fleet host runs, so a new machine gets the mise that the others use.
+pinned_mise_version=2026.11.14
+pinned_installer_sha256=ef67c7eb5845bd1332b6adc07bbf044a3ae10acdd4e8281a9ad6ba035205d101
 
 # An older mise can refuse the current global config, so read only its version.
 mise_installed_version() {

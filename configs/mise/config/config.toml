@@ -1,6 +1,6 @@
 # An older mise cannot parse self_update.minimum_release_age. With this floor it
 # stops with an upgrade message. Run ./bin/install-standalone mise to install the pin.
-min_version = "2026.11.8"
+min_version = "2026.11.14"
 
 [tools]
 # Tools for every host, the MacBook Air too. The development machines add

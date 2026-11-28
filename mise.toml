@@ -6,7 +6,7 @@
 # the container layer mise.container.toml.
 # bin/repo-mise requires the pinned mise. A soft minimum only warns, so tools
 # in this folder keep working while an older mise is installed.
-min_version = { soft = "2026.11.8" }
+min_version = { soft = "2026.11.14" }
 
 [dotfiles]
 "~/.zshenv" = { source = "configs/zsh/zshenv", mode = "symlink" }
